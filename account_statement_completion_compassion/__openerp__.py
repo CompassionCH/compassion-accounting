@@ -29,12 +29,12 @@
 
 {
     "name": "Account Statement Additions for Compassion CH",
-    "version": "1.3",
+    "version": "1.5",
     "author": "Emanuel Cino",
     "category": "Finance",
     "website": "http://www.compassion.ch",
     "depends": ['account_statement_base_completion',
-                'sponsorship_compassion',
+                'crm_compassion',
                 ],
     "data": ['view/statement_view.xml',
              'view/invoice_view.xml',

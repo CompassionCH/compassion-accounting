@@ -86,7 +86,8 @@ class AccountStatementLine(orm.Model):
     _columns = {
         'product_id': fields.many2one('product.product', _('Product')),
         'contract_id': fields.many2one('recurring.contract', _('Sponsorship')),
-        'invoice_id': fields.many2one('account.invoice', 'Invoice')
+        'user_id': fields.many2one('res.partner', _('Ambassador')),
+        'invoice_id': fields.many2one('account.invoice', 'Invoice'),
     }
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -150,6 +151,7 @@ class AccountStatementLine(orm.Model):
             'price_subtotal': b_line.amount,
             'contract_id': b_line.contract_id and
             b_line.contract_id.id or False,
+            'user_id': b_line.user_id and b_line.user_id.id or False,
             'quantity': 1,
             'uos_id': False,
             'product_id': b_line.product_id.id,
