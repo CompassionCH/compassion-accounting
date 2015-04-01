@@ -11,8 +11,11 @@
 		<field name="name">group.contract.form</field>
 		<field name="model">recurring.contract.group</field>
 		<field name="arch" type="xml">
-			<form string="Contract groups" version="7.0">
+			<form string="Contract groups" version="7.0">      
 			<sheet>
+                <div class="oe_right oe_button_box">
+                    <button name="button_generate_invoices" type='object' string="Generate invoices"/>
+                </div>
 				<h1><field name="ref" /></h1>
 				<group name="info">
 					<group>
@@ -22,7 +25,7 @@
 							<field name="recurring_value" class="oe_inline" />
 							<field name="recurring_unit" class="oe_inline" />
 						</div>
-						<field name="advance_billing" />
+						<field name="advance_billing"/>
 					</group>
 					<group>
 						<field name="partner_id" domain="[('customer', '=', True)]"/>
