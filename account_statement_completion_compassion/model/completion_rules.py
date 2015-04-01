@@ -371,6 +371,7 @@ class AccountStatementCompletionRule(orm.Model):
         partner_ids = partner_obj.search(
             cr, uid, [('name', '!=', 'Compassion')],
             context=context)
+        matched_partner_ids = list()
 
         for partner in partner_obj.browse(
                 cr, uid, partner_ids, context=context):
@@ -384,14 +385,20 @@ class AccountStatementCompletionRule(orm.Model):
             result = self._search_vals_in_label(
                 cr, uid, vals, label, context)
             if result:
-                res['partner_id'] = partner.id
+                matched_partner_ids.append(partner.id)
             else:
                 vals = re.escape(partner.name)
                 result = self._search_vals_in_label(
                     cr, uid, vals, label, context)
                 if result:
-                    res['partner_id'] = partner.id
+                    matched_partner_ids.append(partner.id)
 
+        if len(matched_partner_ids) == 1:
+            res['partner_id'] = matched_partner_ids[0]
+        elif matched_partner_ids:
+            raise ErrorTooManyPartner(
+                ('Line named "%s" was matched by '
+                 'more than one sponsor') % st_line['name'])
         return res
 
     def _search_vals_in_label(self, cr, uid, vals, label, context=None):
