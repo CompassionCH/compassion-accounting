@@ -18,6 +18,7 @@ from openerp import netsvc
 from sponsorship_compassion.model.product import GIFT_TYPES
 from datetime import datetime
 import time
+import re
 
 
 class AccountStatementCompletionRule(orm.Model):
@@ -43,6 +44,8 @@ class AccountStatementCompletionRule(orm.Model):
             ('get_from_move_line_ref',
              'Compassion: From line reference '
              '(based on previous move_line references)'),
+            ('get_sponsor_name',
+             'Compassion: Match sponsor name '),
         ])
         return res
 
@@ -360,3 +363,39 @@ class AccountStatementCompletionRule(orm.Model):
             cr, uid, inv_line_data, context=context)
 
         return res
+
+    def get_sponsor_name(self, cr, uid, st_line, context=None):
+        res = dict()
+        label = st_line['label']
+        partner_obj = self.pool.get('res.partner')
+        partner_ids = partner_obj.search(
+            cr, uid, [('name', '!=', 'Compassion')],
+            context=context)
+
+        for partner in partner_obj.browse(
+                cr, uid, partner_ids, context=context):
+            vals = re.escape(partner.name)
+
+            if partner.bank_statement_label:
+                vals = '|'.join(
+                    re.escape(x.strip())
+                    for x in partner.bank_statement_label.split(';'))
+
+            result = self._search_vals_in_label(
+                cr, uid, vals, label, context)
+            if result:
+                res['partner_id'] = partner.id
+            else:
+                vals = re.escape(partner.name)
+                result = self._search_vals_in_label(
+                    cr, uid, vals, label, context)
+                if result:
+                    res['partner_id'] = partner.id
+
+        return res
+
+    def _search_vals_in_label(self, cr, uid, vals, label, context=None):
+        pattern = ".*%s.*" % vals
+        prog = re.compile(pattern, re.I | re.M)
+        result = prog.search(label)
+        return result
