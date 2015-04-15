@@ -116,6 +116,14 @@ class recurring_contract(orm.Model):
                                       for line in contract.contract_line_ids])
         return total
 
+    def _get_last_paid_invoice(self, cr, uid, ids, name, args, context=None):
+        res = dict()
+        for contract in self.browse(cr, uid, ids, context):
+            res[contract.id] = max([invl.due_date
+                                 for invl in contract.invoice_line_ids
+                                 if invl.state == 'paid'] or [False])
+        return res 
+        
     _columns = {
         'reference': fields.char(
             _('Reference'), required=True, readonly=True,
@@ -131,6 +139,9 @@ class recurring_contract(orm.Model):
         'next_invoice_date': fields.date(
             _('Next invoice date'), readonly=False,
             states={'draft': [('readonly', False)]}),
+        'last_paid_invoice_date': fields.function(
+            _get_last_paid_invoice, type='date',
+            string=_('Last paid invoice date')),
         'partner_id': fields.many2one(
             'res.partner', string=_('Partner'), required=True,
             readonly=True, states={'draft': [('readonly', False)]},
