@@ -27,6 +27,9 @@ class contract_group(orm.Model):
     _description = 'A group of contracts'
     _inherit = 'mail.thread'
     _rec_name = 'ref'
+    
+    def _get_gen_states(self):
+        return ['active']
 
     def _get_next_invoice_date(self, cr, uid, ids, name, args, context=None):
         res = {}
@@ -37,12 +40,21 @@ class contract_group(orm.Model):
                                 [False])
         return res
 
+    def _get_last_paid_invoice(self, cr, uid, ids, name, args, context=None):
+        res = dict()
+        for group in self.browse(cr, uid, ids, context):
+            res[group.id] = max([c.last_paid_invoice_date
+                                 for c in group.contract_ids] or [False])
+        return res 
+
     def _get_groups_from_contract(self, cr, uid, ids, context=None):
         group_ids = set()
         contract_obj = self.pool.get('recurring.contract')
         for contract in contract_obj.browse(cr, uid, ids, context):
             group_ids.add(contract.group_id.id)
         return list(group_ids)
+    
+             
 
     _columns = {
         # TODO sequence for name/ref ?
@@ -77,6 +89,10 @@ class contract_group(orm.Model):
                     _get_groups_from_contract, ['next_invoice_date',
                                                 'state'], 20),
             }),
+        'last_paid_invoice_date': fields.function(
+            _get_last_paid_invoice, type='date',
+            string=_('Last paid invoice date')
+        )
     }
 
     _defaults = {
@@ -85,14 +101,25 @@ class contract_group(orm.Model):
         'recurring_value': 1,
         'advance_billing_months':1,
     }
+    
+    def _get_contract_ids(self, cr, uid, ids, context=None):
+        contract_ids = list()
+
+        for contract_group_id in self.browse(cr, uid, ids, context):
+            pdb.set_trace()
+            for contract in contract_group_id.contract_ids:
+                if contract.id not in contract_ids:
+                    contract_ids.append(contract.id)
+        return contract_ids
 
     def write(self, cr, uid, ids, vals, context=None):
         res = super(contract_group, self).write(cr, uid, ids, vals, context)
         recurring_contract_obj = self.pool.get('recurring.contract')
         if ('advance_billing_months' in vals):
+            contract_ids = self._get_contract_ids(cr, uid, ids, context)
             since_date = datetime.today() + relativedelta(months=+vals['advance_billing_months'])
             recurring_contract_obj.clean_invoices(
-                cr, uid, ids, context=context,
+                cr, uid, contract_ids, context=context,
                 since_date=since_date)
             self.button_generate_invoices(cr, uid, ids, context=context)
         if ('recurring_value' in vals or
@@ -101,9 +128,28 @@ class contract_group(orm.Model):
             
         return res
 
+    def _on_next_invoice_change(self, cr, uid, ids, new_invoice_date, context=None):
+        for group in self.browse(cr, uid, ids, context):
+            if (group.last_paid_invoice_date > new_invoice_date or
+               ):
+               break;
+        pass
+
+    def _on_contract_changed(self, cr, uid, ids, value, context=None):
+        for group in self.browse(cr, uid, ids, context):
+            last_paid_invoice_date = group.last_paid_invoice_date
+            vals['next_invoice_date'] = max([last_paid_invoice_date, datetime.today()]) + value
+            super(contract_group, self).write(cr, uid, group.id, vals, context)
+        
     def button_generate_invoices(self, cr, uid, ids, context=None):
         invoicer_id = self.generate_invoices(cr, uid, ids, context=context)
-        self.pool.get('recurring.invoicer').validate_invoices(cr, uid, [invoicer_id])
+        
+        recurring_invoicer_obj = self.pool.get('recurring.invoicer')
+        recurring_invoicer = recurring_invoicer_obj.browse(cr, uid, invoicer_id, context)
+
+        # Check if there is invoice waiting for validation
+        if recurring_invoicer.invoice_ids:
+            self.pool.get('recurring.invoicer').validate_invoices(cr, uid, [invoicer_id])
 
     def generate_invoices(self, cr, uid, ids, invoicer_id=None, context=None):
         ''' Checks all contracts and generate invoices if needed.
@@ -233,5 +279,3 @@ class contract_group(orm.Model):
             vals['next_invoice_date'] = next_date.strftime(DF)
             contract_obj.write(cr, uid, [contract.id], vals, context)
 
-    def _get_gen_states(self):
-        return ['active']
