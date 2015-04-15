@@ -18,6 +18,7 @@ from openerp import netsvc
 from sponsorship_compassion.model.product import GIFT_TYPES
 from datetime import datetime
 import time
+import re
 
 
 class AccountStatementCompletionRule(orm.Model):
@@ -43,6 +44,8 @@ class AccountStatementCompletionRule(orm.Model):
             ('get_from_move_line_ref',
              'Compassion: From line reference '
              '(based on previous move_line references)'),
+            ('get_sponsor_name',
+             'Compassion: Match sponsor name '),
         ])
         return res
 
@@ -120,7 +123,9 @@ class AccountStatementCompletionRule(orm.Model):
             # Search open Customer Invoices (with field 'bvr_reference' set)
             invoice_obj = self.pool.get('account.invoice')
             invoice_ids = invoice_obj.search(
-                cr, uid, [('bvr_reference', '=', ref), ('state', 'in', ('open','cancel','paid'))],
+                cr, uid,
+                [('bvr_reference', '=', ref),
+                    ('state', 'in', ('open', 'cancel', 'paid'))],
                 context=context)
             if not invoice_ids:
                 # Search open Supplier Invoices (with field 'reference_type'
@@ -358,3 +363,46 @@ class AccountStatementCompletionRule(orm.Model):
             cr, uid, inv_line_data, context=context)
 
         return res
+
+    def get_sponsor_name(self, cr, uid, st_line, context=None):
+        res = dict()
+        label = st_line['label']
+        partner_obj = self.pool.get('res.partner')
+        partner_ids = partner_obj.search(
+            cr, uid, [('name', '!=', 'Compassion')],
+            context=context)
+        matched_partner_ids = list()
+
+        for partner in partner_obj.browse(
+                cr, uid, partner_ids, context=context):
+            vals = re.escape(partner.name)
+
+            if partner.bank_statement_label:
+                vals = '|'.join(
+                    re.escape(x.strip())
+                    for x in partner.bank_statement_label.split(';'))
+
+            result = self._search_vals_in_label(
+                cr, uid, vals, label, context)
+            if result:
+                matched_partner_ids.append(partner.id)
+            else:
+                vals = re.escape(partner.name)
+                result = self._search_vals_in_label(
+                    cr, uid, vals, label, context)
+                if result:
+                    matched_partner_ids.append(partner.id)
+
+        if len(matched_partner_ids) == 1:
+            res['partner_id'] = matched_partner_ids[0]
+        elif matched_partner_ids:
+            raise ErrorTooManyPartner(
+                ('Line named "%s" was matched by '
+                 'more than one sponsor') % st_line['name'])
+        return res
+
+    def _search_vals_in_label(self, cr, uid, vals, label, context=None):
+        pattern = ".*%s.*" % vals
+        prog = re.compile(pattern, re.I | re.M)
+        result = prog.search(label)
+        return result

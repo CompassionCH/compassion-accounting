@@ -18,6 +18,7 @@ from openerp.tools.translate import _
 
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -88,6 +89,15 @@ class contract_group(orm.Model):
         'recurring_unit': 'month',
         'recurring_value': 1,
     }
+
+    def write(self, cr, uid, ids, vals, context=None):
+        res = super(contract_group, self).write(cr, uid, ids, vals, context)
+        if 'advance_billing' in vals:
+            self.generate_invoices(cr, uid, ids, context=context)
+        return res
+
+    def button_generate_invoices(self, cr, uid, ids, context=None):
+        self.generate_invoices(cr, uid, ids, context=context)
 
     def generate_invoices(self, cr, uid, ids, invoicer_id=None, context=None):
         ''' Checks all contracts and generate invoices if needed.
