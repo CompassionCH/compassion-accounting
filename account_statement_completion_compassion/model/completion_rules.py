@@ -333,9 +333,11 @@ class AccountStatementCompletionRule(orm.Model):
             contract_number = int(st_line['ref'][16:21])
             contract_ids = contract_obj.search(
                 cr, uid, [
+                    '|',
                     ('partner_id', '=', partner_id),
+                    ('correspondant_id', '=', partner_id),
                     ('num_pol_ga', '=', contract_number),
-                    ('state', 'not in', ('terminated', 'cancelled'))],
+                    ('state', '!=', 'draft')],
                 context=context)
             if contract_ids and len(contract_ids) == 1:
                 contract = contract_obj.browse(
