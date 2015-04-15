@@ -369,7 +369,7 @@ class AccountStatementCompletionRule(orm.Model):
         label = st_line['label']
         partner_obj = self.pool.get('res.partner')
         partner_ids = partner_obj.search(
-            cr, uid, [('name', '!=', 'Compassion')],
+            cr, uid, [('name', 'not like', 'Compassion')],
             context=context)
         matched_partner_ids = list()
 
