@@ -25,7 +25,7 @@ msgid "Reccurency"
 msgstr "Fréquence"
 
 #. module: recurring_contract
-#: selection:recurring.contract.group,advance_billing:0
+#: selection:recurring.contract.group,advance_billing_months:0
 msgid "Monthly"
 msgstr "Mensuelle"
 
@@ -74,7 +74,7 @@ msgstr "recurring.invoicer.wizard"
 
 #. module: recurring_contract
 #: code:addons/recurring_contract/model/contract_group.py:66
-#: selection:recurring.contract.group,advance_billing:0
+#: selection:recurring.contract.group,advance_billing_months:0
 #, python-format
 msgid "Annual"
 msgstr "Annuelle"
@@ -121,7 +121,7 @@ msgstr "Lignes de contrat"
 
 #. module: recurring_contract
 #: code:addons/recurring_contract/model/contract_group.py:62
-#: selection:recurring.contract.group,advance_billing:0
+#: selection:recurring.contract.group,advance_billing_months:0
 #, python-format
 msgid "Bimonthly"
 msgstr "Bimensuelle"
@@ -234,7 +234,7 @@ msgstr "Prochaine date de facturation"
 
 #. module: recurring_contract
 #: code:addons/recurring_contract/model/contract_group.py:65
-#: selection:recurring.contract.group,advance_billing:0
+#: selection:recurring.contract.group,advance_billing_months:0
 #, python-format
 msgid "Bi-annual"
 msgstr "Semestrielle"
@@ -349,7 +349,7 @@ msgstr "Brouillon"
 
 #. module: recurring_contract
 #: code:addons/recurring_contract/model/contract_group.py:63
-#: selection:recurring.contract.group,advance_billing:0
+#: selection:recurring.contract.group,advance_billing_months:0
 #, python-format
 msgid "Quarterly"
 msgstr "Trimestrielle"
@@ -468,7 +468,7 @@ msgstr "Date de fin"
 
 #. module: recurring_contract
 #: code:addons/recurring_contract/model/contract_group.py:64
-#: selection:recurring.contract.group,advance_billing:0
+#: selection:recurring.contract.group,advance_billing_months:0
 #, python-format
 msgid "Four-monthly"
 msgstr "Quadrimensuel"
@@ -479,7 +479,7 @@ msgid "Invoice generation from contracts"
 msgstr "Génération de factures à partir de contrats"
 
 #. module: recurring_contract
-#: field:recurring.contract.group,advance_billing:0
+#: field:recurring.contract.group,advance_billing_months:0
 msgid "Frequency"
 msgstr "Fréquence"
 
