@@ -17,7 +17,7 @@ from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 from openerp.tools.translate import _
 
 import logging
-
+import pdb
 
 logger = logging.getLogger(__name__)
 
@@ -61,16 +61,11 @@ class contract_group(orm.Model):
         'contract_ids': fields.one2many(
             'recurring.contract', 'group_id', _('Contracts'),
             readonly=True),
-        'advance_billing': fields.selection([
-            ('bimonthly', _('Bimonthly')),
-            ('quarterly', _('Quarterly')),
-            ('fourmonthly', _('Four-monthly')),
-            ('biannual', _('Bi-annual')),
-            ('annual', _('Annual'))], _('Advance billing'),
+        'advance_billing_months' :fields.integer(_('Advance billing months'),
             help=_('Advance billing allows you to generate invoices in '
                    'advance. For example, you can generate the invoices '
                    'for each month of the year and send them to the '
-                   'customer in january.'), track_visibility="onchange"),
+                   'customer in january.'), track_visibility="onchange", ondelete='no action'),
         'payment_term_id': fields.many2one('account.payment.term',
                                            _('Payment Term'),
                                            track_visibility="onchange"),
@@ -88,16 +83,27 @@ class contract_group(orm.Model):
         'ref': '/',
         'recurring_unit': 'month',
         'recurring_value': 1,
+        'advance_billing_months':1,
     }
 
     def write(self, cr, uid, ids, vals, context=None):
         res = super(contract_group, self).write(cr, uid, ids, vals, context)
-        if 'advance_billing' in vals:
-            self.generate_invoices(cr, uid, ids, context=context)
+        recurring_contract_obj = self.pool.get('recurring.contract')
+        if ('advance_billing_months' in vals):
+            since_date = datetime.today() + relativedelta(months=+vals['advance_billing_months'])
+            recurring_contract_obj.clean_invoices(
+                cr, uid, ids, context=context,
+                since_date=since_date)
+            self.button_generate_invoices(cr, uid, ids, context=context)
+        if ('recurring_value' in vals or
+           'recurring_unit' in vals):
+            self.button_generate_invoices(cr, uid, ids, context=context)
+            
         return res
 
     def button_generate_invoices(self, cr, uid, ids, context=None):
-        self.generate_invoices(cr, uid, ids, context=context)
+        invoicer_id = self.generate_invoices(cr, uid, ids, context=context)
+        self.pool.get('recurring.invoicer').validate_invoices(cr, uid, [invoicer_id])
 
     def generate_invoices(self, cr, uid, ids, invoicer_id=None, context=None):
         ''' Checks all contracts and generate invoices if needed.
@@ -118,8 +124,7 @@ class contract_group(orm.Model):
         journal_ids = journal_obj.search(
             cr, uid, [('type', '=', 'sale'), ('company_id', '=', 1 or False)],
             limit=1)
-        delay_dict = {'annual': 12, 'biannual': 6, 'fourmonthly': 4,
-                      'quarterly': 3, 'bimonthly': 2}
+
         # Invoice lines are generated for an active contract
         # If group.next_inv_date <= today
         #   and contr.next_inv_date <= group.next_inv_date
@@ -135,8 +140,7 @@ class contract_group(orm.Model):
             logger.info("Generating invoices for group {0}/{1}".format(
                 count, nb_groups))
             contract_group = self.browse(cr, uid, group_id, context)
-            month_delta = contract_group.advance_billing and \
-                delay_dict.get(contract_group.advance_billing) or 1
+            month_delta = contract_group.advance_billing_months or 1
             limit_date = datetime.today() + relativedelta(months=+month_delta)
             while True:  # Emulate a do-while loop
                 # contract_group update 'cause next_inv_date has been modified

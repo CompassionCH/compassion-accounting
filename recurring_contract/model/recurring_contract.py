@@ -18,6 +18,7 @@ from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 from openerp.tools.translate import _
 import openerp.addons.decimal_precision as dp
 
+import pdb
 
 class res_partner(orm.Model):
     ''' Override partners to add contract m2o relation. Raise an error if
@@ -281,7 +282,7 @@ class recurring_contract(orm.Model):
 
         if inv_line_ids:  # To prevent remove all inv_lines...
             inv_line_obj.unlink(cr, uid, to_remove_ids, context)
-
+        pdb.set_trace()
         inv_obj.action_cancel(cr, uid, list(inv_ids), context=context)
 
         # Invoices to set back in open state
