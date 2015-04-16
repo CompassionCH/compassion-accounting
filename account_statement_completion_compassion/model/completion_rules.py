@@ -378,14 +378,12 @@ class AccountStatementCompletionRule(orm.Model):
             "OR '{0}' ILIKE "
             "CASE WHEN bank_statement_label <> '' THEN "
             "   concat('%',"
-            "          trim(regexp_replace("
-            "               bank_statement_label,"
-            "               '[\(\)\*\?\+\{{\}}\[\]\.]', '', 'g')),"
+            "          trim(bank_statement_label),"
             "          '%')"
             "ELSE name "
             "END) "
-            "AND name NOT LIKE '%Compassion%'"
-            .format(label.replace('\'', '\'\'')))
+            "AND name NOT ILIKE '%Compassion%'"
+            .format(label.replace("'", "''")))
         cr.execute(query_find_partner)
         partner_ids = cr.fetchall()
         if len(partner_ids) == 1:
@@ -394,4 +392,5 @@ class AccountStatementCompletionRule(orm.Model):
             raise ErrorTooManyPartner(
                 ('Line named "%s" was matched by '
                  'more than one sponsor') % st_line['name'])
+
         return res
