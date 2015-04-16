@@ -210,6 +210,15 @@ class recurring_contract(orm.Model):
         return super(recurring_contract, self).create(cr, uid, vals,
                                                       context=context)
 
+    def write(self, cr, uid, ids, vals, context=None):
+        res = super(recurring_contract, self).write(cr, uid, ids, vals, context=context)
+        pdb.set_trace()
+        """ Perform various checks when a contract is modified. """
+        if 'next_invoice_date' in vals:
+            self._on_change_next_invoice_date(
+                cr, uid, ids, vals['next_invoice_date'], context)
+        return res
+
     def copy(self, cr, uid, id, default=None, context=None):
         default = default or {}
         start_date = self._compute_copy_start_date(cr, uid, id, context)
@@ -293,7 +302,7 @@ class recurring_contract(orm.Model):
 
         if inv_line_ids:  # To prevent remove all inv_lines...
             inv_line_obj.unlink(cr, uid, to_remove_ids, context)
-        pdb.set_trace()
+
         inv_obj.action_cancel(cr, uid, list(inv_ids), context=context)
 
         # Invoices to set back in open state
@@ -322,6 +331,22 @@ class recurring_contract(orm.Model):
             next_date = next_date + relativedelta(years=+rec_value)
 
         return next_date
+    
+    def _on_change_next_invoice_date(self, cr, uid, ids, new_invoice_date, context=None):
+        for contract in self.browse(cr, uid, ids, context):
+            if contract.last_paid_invoice_date:
+
+                last_paid_invoice_date = datetime.strftime(contract.last_paid_invoice_date, DF)
+                new_invoice_date = datetime.strftime(new_invoice_date, DF)
+
+                if (last_paid_invoice_date > new_invoice_date or
+                   datetime.today() > new_invoice_date):
+                    raise orm.except_orm(
+                        'Error',
+                        _('You cannot set the next invoice date'
+                          'at {}.'.format(new_invoice_date)))
+        else:
+            return True
 
     ##########################
     #        CALLBACKS       #
