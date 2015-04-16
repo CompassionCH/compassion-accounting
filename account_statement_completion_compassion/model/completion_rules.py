@@ -18,7 +18,7 @@ from openerp import netsvc
 from sponsorship_compassion.model.product import GIFT_TYPES
 from datetime import datetime
 import time
-import re
+import sys
 
 
 class AccountStatementCompletionRule(orm.Model):
@@ -367,42 +367,29 @@ class AccountStatementCompletionRule(orm.Model):
     def get_sponsor_name(self, cr, uid, st_line, context=None):
         res = dict()
         label = st_line['label']
-        partner_obj = self.pool.get('res.partner')
-        partner_ids = partner_obj.search(
-            cr, uid, [('name', 'not like', 'Compassion')],
-            context=context)
-        matched_partner_ids = list()
 
-        for partner in partner_obj.browse(
-                cr, uid, partner_ids, context=context):
-            vals = re.escape(partner.name)
+        # Fix encoding problem
+        reload(sys)
+        sys.setdefaultencoding('UTF8')
 
-            if partner.bank_statement_label:
-                vals = '|'.join(
-                    re.escape(x.strip())
-                    for x in partner.bank_statement_label.split(';'))
-
-            result = self._search_vals_in_label(
-                cr, uid, vals, label, context)
-            if result:
-                matched_partner_ids.append(partner.id)
-            else:
-                vals = re.escape(partner.name)
-                result = self._search_vals_in_label(
-                    cr, uid, vals, label, context)
-                if result:
-                    matched_partner_ids.append(partner.id)
-
-        if len(matched_partner_ids) == 1:
-            res['partner_id'] = matched_partner_ids[0]
-        elif matched_partner_ids:
+        query_find_partner = (
+            "SELECT id from res_partner "
+            "WHERE '{0}' ILIKE concat('%', trim(name), '%') "
+            "OR '{0}' ILIKE "
+            "CASE WHEN bank_statement_label <> '' THEN "
+            "   concat('%',"
+            "          trim(regexp_replace("
+            "               bank_statement_label,"
+            "               '[\(\)\*\?\+\{{\}}\[\]\.]', '', 'g')),"
+            "          '%')"
+            "ELSE name "
+            "END".format(label.replace('\'', '\'\'')))
+        cr.execute(query_find_partner)
+        partner_ids = cr.fetchall()
+        if len(partner_ids) == 1:
+            res['partner_id'] = partner_ids[0][0]
+        elif partner_ids:
             raise ErrorTooManyPartner(
                 ('Line named "%s" was matched by '
                  'more than one sponsor') % st_line['name'])
         return res
-
-    def _search_vals_in_label(self, cr, uid, vals, label, context=None):
-        pattern = ".*%s.*" % vals
-        prog = re.compile(pattern, re.I | re.M)
-        result = prog.search(label)
-        return result
