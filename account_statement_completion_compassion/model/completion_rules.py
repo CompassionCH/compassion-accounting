@@ -392,13 +392,14 @@ class AccountStatementCompletionRule(orm.Model):
                     cr, uid, vals, label, context)
                 if result:
                     matched_partner_ids.append(partner.id)
-
-        if len(matched_partner_ids) == 1:
+            if len(matched_partner_ids) > 1:
+                raise ErrorTooManyPartner(
+                    ('Line named "%s" was matched by '
+                     'more than one sponsor') % st_line['name'])
+                break
+        else:
             res['partner_id'] = matched_partner_ids[0]
-        elif matched_partner_ids:
-            raise ErrorTooManyPartner(
-                ('Line named "%s" was matched by '
-                 'more than one sponsor') % st_line['name'])
+
         return res
 
     def _search_vals_in_label(self, cr, uid, vals, label, context=None):
