@@ -106,7 +106,6 @@ class contract_group(orm.Model):
         contract_ids = list()
 
         for contract_group_id in self.browse(cr, uid, ids, context):
-            pdb.set_trace()
             for contract in contract_group_id.contract_ids:
                 if contract.id not in contract_ids:
                     contract_ids.append(contract.id)
@@ -115,13 +114,17 @@ class contract_group(orm.Model):
     def write(self, cr, uid, ids, vals, context=None):
         res = super(contract_group, self).write(cr, uid, ids, vals, context)
         recurring_contract_obj = self.pool.get('recurring.contract')
+        contract_ids = self._get_contract_ids(cr, uid, ids, context)
+
         if ('advance_billing_months' in vals):
-            contract_ids = self._get_contract_ids(cr, uid, ids, context)
+            self._on_advance_billing_changed(cr, uid, contract_ids, vals['advance_billing_months'], context)
+            
             since_date = datetime.today() + relativedelta(months=+vals['advance_billing_months'])
             recurring_contract_obj.clean_invoices(
                 cr, uid, contract_ids, context=context,
                 since_date=since_date)
             self.button_generate_invoices(cr, uid, ids, context=context)
+
         if ('recurring_value' in vals or
            'recurring_unit' in vals):
             self.button_generate_invoices(cr, uid, ids, context=context)
@@ -131,16 +134,33 @@ class contract_group(orm.Model):
     def _on_next_invoice_change(self, cr, uid, ids, new_invoice_date, context=None):
         for group in self.browse(cr, uid, ids, context):
             if (group.last_paid_invoice_date > new_invoice_date or
-               ):
-               break;
-        pass
+               datetime.today() > new_invoice_date):
+                raise orm.except_orm(
+                            'Error',
+                            _('You cannot set the next invoice date'
+                              'at {}.'.format(new_invoice_date)))
+                break
+        else:
+            vals['next_invoice_date'] = new_invoice_date
+            super(contract_group, self).write(cr, uid, ids, vals, context)
 
-    def _on_contract_changed(self, cr, uid, ids, value, context=None):
-        for group in self.browse(cr, uid, ids, context):
-            last_paid_invoice_date = group.last_paid_invoice_date
-            vals['next_invoice_date'] = max([last_paid_invoice_date, datetime.today()]) + value
-            super(contract_group, self).write(cr, uid, group.id, vals, context)
-        
+
+    def _on_advance_billing_changed(self, cr, uid, contract_ids, adv_billing, context=None):
+        contract_obj = self.pool.get('recurring.contract')
+        delta = relativedelta(months=+adv_billing)
+
+        for contract in contract_obj.browse(cr, uid, contract_ids, context):
+            next_invoice_date = datetime.today() + delta
+            last_paid_invoice_date = contract.last_paid_invoice_date
+            
+            if last_paid_invoice_date:
+                next_invoice_date = max([last_paid_invoice_date, datetime.today()]) + delta
+
+            contract_obj.write(
+                cr, uid, [contract.id],
+                {'next_invoice_date':datetime.strftime(next_invoice_date, DF)},
+                context)
+
     def button_generate_invoices(self, cr, uid, ids, context=None):
         invoicer_id = self.generate_invoices(cr, uid, ids, context=context)
         
@@ -149,6 +169,7 @@ class contract_group(orm.Model):
 
         # Check if there is invoice waiting for validation
         if recurring_invoicer.invoice_ids:
+            pdb.set_trace()
             self.pool.get('recurring.invoicer').validate_invoices(cr, uid, [invoicer_id])
 
     def generate_invoices(self, cr, uid, ids, invoicer_id=None, context=None):
@@ -199,7 +220,6 @@ class contract_group(orm.Model):
                                  for c in contract_group.contract_ids
                                  if c.next_invoice_date <= group_inv_date and
                                  c.state in self._get_gen_states()]
-
                 if not contr_ids:
                     break
 
@@ -278,4 +298,3 @@ class contract_group(orm.Model):
             next_date = contract_obj._compute_next_invoice_date(contract)
             vals['next_invoice_date'] = next_date.strftime(DF)
             contract_obj.write(cr, uid, [contract.id], vals, context)
-
