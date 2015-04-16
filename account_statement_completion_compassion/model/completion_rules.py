@@ -374,7 +374,7 @@ class AccountStatementCompletionRule(orm.Model):
 
         query_find_partner = (
             "SELECT id from res_partner "
-            "WHERE '{0}' ILIKE concat('%', trim(name), '%') "
+            "WHERE ('{0}' ILIKE concat('%', trim(name), '%') "
             "OR '{0}' ILIKE "
             "CASE WHEN bank_statement_label <> '' THEN "
             "   concat('%',"
@@ -383,7 +383,9 @@ class AccountStatementCompletionRule(orm.Model):
             "               '[\(\)\*\?\+\{{\}}\[\]\.]', '', 'g')),"
             "          '%')"
             "ELSE name "
-            "END".format(label.replace('\'', '\'\'')))
+            "END) "
+            "AND name NOT LIKE '%Compassion%'"
+            .format(label.replace('\'', '\'\'')))
         cr.execute(query_find_partner)
         partner_ids = cr.fetchall()
         if len(partner_ids) == 1:
