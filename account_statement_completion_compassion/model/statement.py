@@ -90,6 +90,16 @@ class AccountStatementLine(orm.Model):
         'invoice_id': fields.many2one('account.invoice', 'Invoice'),
     }
 
+    def create(self, cr, uid, vals, context=None):
+        """Generate invoice if a product is selected."""
+        res_id = super(AccountStatementLine, self).create(cr, uid, vals,
+                                                          context)
+        if 'product_id' in vals or 'contract_id' in vals:
+            # Generate new invoices
+            self._create_invoice_from_line(cr, uid, self.browse(
+                cr, uid, res_id, {'lang': 'en_US'}), context)
+        return res_id
+
     def write(self, cr, uid, ids, vals, context=None):
         """Generate invoice if a product is selected."""
         if 'product_id' in vals or 'contract_id' in vals:
@@ -135,6 +145,7 @@ class AccountStatementLine(orm.Model):
             'payment_term': payment_term_ids and payment_term_ids[0] or 1,
             'bvr_reference': ref,
             'recurring_invoicer_id': invoicer.id,
+            'currency_id': b_line.statement_id.currency.id,
         }
         if b_line.product_id.name == 'Birthday Gift' and b_line.contract_id \
                 and b_line.contract_id.child_id and \
