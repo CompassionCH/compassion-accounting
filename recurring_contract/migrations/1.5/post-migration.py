@@ -9,7 +9,6 @@
 #
 ##############################################################################
 import sys
-import pdb
 
 def migrate(cr, version):
     reload(sys)
@@ -21,7 +20,7 @@ def migrate(cr, version):
                       'quarterly': 3, 'bimonthly': 2, 'monthly':1}
     cr.execute(
         '''
-        SELECT id, advance_billing_moved0 FROM recurring_contract_group
+        SELECT id, advance_billing FROM recurring_contract_group
         '''
     )
 
@@ -32,7 +31,7 @@ def migrate(cr, version):
         cr.execute(
             '''
             UPDATE recurring_contract_group
-            SET recurring_value = {0}, advance_billing = {0}
+            SET recurring_value = {0}, advance_billing_months = {0}
             WHERE id = {1}
             '''.format(delay, contract_group[0])
            
