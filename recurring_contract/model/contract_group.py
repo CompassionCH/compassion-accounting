@@ -27,7 +27,7 @@ class contract_group(orm.Model):
     _description = 'A group of contracts'
     _inherit = 'mail.thread'
     _rec_name = 'ref'
-    
+
     def _get_gen_states(self):
         return ['active']
 
@@ -45,7 +45,7 @@ class contract_group(orm.Model):
         for group in self.browse(cr, uid, ids, context):
             res[group.id] = max([c.last_paid_invoice_date
                                  for c in group.contract_ids] or [False])
-        return res 
+        return res
 
     def _get_groups_from_contract(self, cr, uid, ids, context=None):
         group_ids = set()
@@ -53,8 +53,6 @@ class contract_group(orm.Model):
         for contract in contract_obj.browse(cr, uid, ids, context):
             group_ids.add(contract.group_id.id)
         return list(group_ids)
-    
-             
 
     _columns = {
         # TODO sequence for name/ref ?
@@ -73,11 +71,15 @@ class contract_group(orm.Model):
         'contract_ids': fields.one2many(
             'recurring.contract', 'group_id', _('Contracts'),
             readonly=True),
-        'advance_billing_months' :fields.integer(_('Advance billing months'),
-            help=_('Advance billing allows you to generate invoices in '
-                   'advance. For example, you can generate the invoices '
-                   'for each month of the year and send them to the '
-                   'customer in january.'), track_visibility="onchange", ondelete='no action'),
+        'advance_billing_months': fields.integer(
+            _('Advance billing months'),
+            help=_(
+                'Advance billing allows you to generate invoices in '
+                'advance. For example, you can generate the invoices '
+                'for each month of the year and send them to the '
+                'customer in january.'
+                ),
+            track_visibility="onchange", ondelete='no action'),
         'payment_term_id': fields.many2one('account.payment.term',
                                            _('Payment Term'),
                                            track_visibility="onchange"),
@@ -99,9 +101,9 @@ class contract_group(orm.Model):
         'ref': '/',
         'recurring_unit': 'month',
         'recurring_value': 1,
-        'advance_billing_months':1,
+        'advance_billing_months': 1,
     }
-    
+
     def _get_contract_ids(self, cr, uid, ids, context=None):
         contract_ids = list()
 
@@ -112,65 +114,79 @@ class contract_group(orm.Model):
         return contract_ids
 
     def write(self, cr, uid, ids, vals, context=None):
-        res = super(contract_group, self).write(cr, uid, ids, vals, context)
+
         recurring_contract_obj = self.pool.get('recurring.contract')
         contract_ids = self._get_contract_ids(cr, uid, ids, context)
 
         if ('advance_billing_months' in vals):
-            self._on_advance_billing_changed(cr, uid, contract_ids, vals['advance_billing_months'], context)
-            
-            since_date = datetime.today() + relativedelta(months=+vals['advance_billing_months'])
-            recurring_contract_obj.clean_invoices(
-                cr, uid, contract_ids, context=context,
-                since_date=since_date)
+            old_advance_billing_months = self.browse(
+                cr, uid, ids, context)[0].advance_billing_months
+            if old_advance_billing_months > vals['advance_billing_months']:
+                pdb.set_trace()
+                self._on_advance_billing_changed(
+                    cr, uid, contract_ids,
+                    vals['advance_billing_months'],
+                    context)
+                since_date = datetime.today() + \
+                    relativedelta(months=+vals['advance_billing_months'])
+                recurring_contract_obj.clean_invoices(
+                    cr, uid, contract_ids, context=context,
+                    since_date=since_date)
+
             self.button_generate_invoices(cr, uid, ids, context=context)
 
         if ('recurring_value' in vals or
-           'recurring_unit' in vals):
+                'recurring_unit' in vals):
             self.button_generate_invoices(cr, uid, ids, context=context)
-            
+
+        res = super(contract_group, self).write(cr, uid, ids, vals, context)
         return res
 
-    def _on_next_invoice_change(self, cr, uid, ids, new_invoice_date, context=None):
+    def _on_next_invoice_change(
+            self, cr, uid, ids, new_invoice_date, context=None):
         for group in self.browse(cr, uid, ids, context):
             if (group.last_paid_invoice_date > new_invoice_date or
-               datetime.today() > new_invoice_date):
+                    datetime.today() > new_invoice_date):
                 raise orm.except_orm(
-                            'Error',
-                            _('You cannot set the next invoice date'
-                              'at {}.'.format(new_invoice_date)))
+                    'Error',
+                    _('You cannot set the next invoice date'
+                      'at {}.'.format(new_invoice_date)))
                 break
         else:
+            vals = dict()
             vals['next_invoice_date'] = new_invoice_date
             super(contract_group, self).write(cr, uid, ids, vals, context)
 
-
-    def _on_advance_billing_changed(self, cr, uid, contract_ids, adv_billing, context=None):
+    def _on_advance_billing_changed(
+            self, cr, uid, contract_ids, adv_billing, context=None):
         contract_obj = self.pool.get('recurring.contract')
         delta = relativedelta(months=+adv_billing)
 
         for contract in contract_obj.browse(cr, uid, contract_ids, context):
             next_invoice_date = datetime.today() + delta
             last_paid_invoice_date = contract.last_paid_invoice_date
-            
+
             if last_paid_invoice_date:
-                next_invoice_date = max([last_paid_invoice_date, datetime.today()]) + delta
+                next_invoice_date = max(
+                    [last_paid_invoice_date, datetime.today()]) + delta
 
             contract_obj.write(
                 cr, uid, [contract.id],
-                {'next_invoice_date':datetime.strftime(next_invoice_date, DF)},
+                {'next_invoice_date': datetime.strftime(
+                    next_invoice_date, DF)},
                 context)
 
     def button_generate_invoices(self, cr, uid, ids, context=None):
         invoicer_id = self.generate_invoices(cr, uid, ids, context=context)
-        
+
         recurring_invoicer_obj = self.pool.get('recurring.invoicer')
-        recurring_invoicer = recurring_invoicer_obj.browse(cr, uid, invoicer_id, context)
+        recurring_invoicer = recurring_invoicer_obj.browse(
+            cr, uid, invoicer_id, context)
 
         # Check if there is invoice waiting for validation
         if recurring_invoicer.invoice_ids:
-            pdb.set_trace()
-            self.pool.get('recurring.invoicer').validate_invoices(cr, uid, [invoicer_id])
+            self.pool.get('recurring.invoicer').validate_invoices(
+                cr, uid, [invoicer_id])
 
     def generate_invoices(self, cr, uid, ids, invoicer_id=None, context=None):
         ''' Checks all contracts and generate invoices if needed.
@@ -227,7 +243,7 @@ class contract_group(orm.Model):
                                                 journal_ids, invoicer_id,
                                                 context=context)
                 invoice_id = inv_obj.create(cr, uid, inv_data, context=context)
-
+                pdb.set_trace()
                 for contract in contract_obj.browse(cr, uid, contr_ids,
                                                     context):
                     self._generate_invoice_lines(cr, uid, contract, invoice_id,
