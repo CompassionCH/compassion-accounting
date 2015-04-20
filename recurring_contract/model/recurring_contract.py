@@ -18,9 +18,9 @@ from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 from openerp.tools.translate import _
 import openerp.addons.decimal_precision as dp
 
-import pdb
 
 class res_partner(orm.Model):
+
     ''' Override partners to add contract m2o relation. Raise an error if
     we try to delete a partner with active contracts.
     '''
@@ -54,6 +54,7 @@ class res_partner(orm.Model):
 
 
 class recurring_contract_line(orm.Model):
+
     ''' Each product sold through a contract '''
     _name = "recurring.contract.line"
     _description = "A contract line"
@@ -103,6 +104,7 @@ class recurring_contract_line(orm.Model):
 
 
 class recurring_contract(orm.Model):
+
     ''' A contract to perform recurring invoicing to a partner '''
     _name = "recurring.contract"
     _description = "Contract for recurring invoicing"
@@ -120,10 +122,10 @@ class recurring_contract(orm.Model):
         res = dict()
         for contract in self.browse(cr, uid, ids, context):
             res[contract.id] = max([invl.due_date
-                                 for invl in contract.invoice_line_ids
-                                 if invl.state == 'paid'] or [False])
-        return res 
-        
+                                    for invl in contract.invoice_line_ids
+                                    if invl.state == 'paid'] or [False])
+        return res
+
     _columns = {
         'reference': fields.char(
             _('Reference'), required=True, readonly=True,
@@ -211,8 +213,9 @@ class recurring_contract(orm.Model):
                                                       context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
-        res = super(recurring_contract, self).write(cr, uid, ids, vals, context=context)
-        pdb.set_trace()
+        res = super(recurring_contract, self).write(
+            cr, uid, ids, vals, context=context)
+
         """ Perform various checks when a contract is modified. """
         if 'next_invoice_date' in vals:
             self._on_change_next_invoice_date(
@@ -269,7 +272,7 @@ class recurring_contract(orm.Model):
         invl_search = [('contract_id', 'in', ids),
                        ('state', 'not in', ('paid', 'cancel'))]
         if since_date:
-            invl_search.append(('due_date', '>', since_date))
+            invl_search.append(('due_date', '>=', since_date))
         if to_date:
             invl_search.append(('due_date', '<=', to_date))
         inv_line_obj = self.pool.get('account.invoice.line')
@@ -331,16 +334,18 @@ class recurring_contract(orm.Model):
             next_date = next_date + relativedelta(years=+rec_value)
 
         return next_date
-    
-    def _on_change_next_invoice_date(self, cr, uid, ids, new_invoice_date, context=None):
+
+    def _on_change_next_invoice_date(
+            self, cr, uid, ids, new_invoice_date, context=None):
         for contract in self.browse(cr, uid, ids, context):
             if contract.last_paid_invoice_date:
 
-                last_paid_invoice_date = datetime.strftime(contract.last_paid_invoice_date, DF)
+                last_paid_invoice_date = datetime.strftime(
+                    contract.last_paid_invoice_date, DF)
                 new_invoice_date = datetime.strftime(new_invoice_date, DF)
 
                 if (last_paid_invoice_date > new_invoice_date or
-                   datetime.today() > new_invoice_date):
+                        datetime.today() > new_invoice_date):
                     raise orm.except_orm(
                         'Error',
                         _('You cannot set the next invoice date'

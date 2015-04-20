@@ -10,6 +10,7 @@
 ##############################################################################
 import sys
 
+
 def migrate(cr, version):
     reload(sys)
     sys.setdefaultencoding('UTF8')
@@ -17,7 +18,7 @@ def migrate(cr, version):
     if not version:
         return
     delay_dict = {'annual': 12, 'biannual': 6, 'fourmonthly': 4,
-                      'quarterly': 3, 'bimonthly': 2, 'monthly':1}
+                  'quarterly': 3, 'bimonthly': 2, 'monthly': 1}
     cr.execute(
         '''
         SELECT id, advance_billing FROM recurring_contract_group
@@ -34,6 +35,5 @@ def migrate(cr, version):
             SET recurring_value = {0}, advance_billing_months = {0}
             WHERE id = {1}
             '''.format(delay, contract_group[0])
-           
+
         )
-         
