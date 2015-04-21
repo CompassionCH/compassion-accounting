@@ -18,7 +18,6 @@ from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 from openerp.tools.translate import _
 import openerp.addons.decimal_precision as dp
 
-import pdb
 
 class res_partner(orm.Model):
 
@@ -316,6 +315,20 @@ class recurring_contract(orm.Model):
             wf_service.trg_validate(uid, 'account.invoice',
                                     inv.id, 'invoice_open', cr)
 
+        for contract in self.browse(cr, uid, ids, context):
+            next_invoice_date = since_date
+
+            if contract.last_paid_invoice_date:
+                next_invoice_date = max(
+                    datetime.strptime(
+                        contract.last_paid_invoice_date, DF), since_date)
+
+            self.write(
+                cr, uid, [contract.id],
+                {'next_invoice_date': datetime.strftime(
+                    next_invoice_date, DF)},
+                context)
+
         return inv_ids
 
     #################################
@@ -325,6 +338,7 @@ class recurring_contract(orm.Model):
         next_date = datetime.strptime(contract.next_invoice_date, DF)
         rec_unit = contract.group_id.recurring_unit
         rec_value = contract.group_id.recurring_value
+
         if rec_unit == 'day':
             next_date = next_date + relativedelta(days=+rec_value)
         elif rec_unit == 'week':
@@ -340,13 +354,12 @@ class recurring_contract(orm.Model):
             self, cr, uid, ids, new_invoice_date, context=None):
         for contract in self.browse(cr, uid, ids, context):
             if contract.last_paid_invoice_date:
-                pdb.set_trace()
                 last_paid_invoice_date = datetime.strptime(
                     contract.last_paid_invoice_date, DF)
                 new_invoice_date = datetime.strptime(new_invoice_date, DF)
 
-                if (last_paid_invoice_date > new_invoice_date or
-                        datetime.today() > new_invoice_date):
+                if (last_paid_invoice_date.date() > new_invoice_date.date() or
+                        datetime.today().date() > new_invoice_date.date()):
                     raise orm.except_orm(
                         'Error',
                         _('You cannot set the next invoice date'
