@@ -18,6 +18,7 @@ from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 from openerp.tools.translate import _
 import openerp.addons.decimal_precision as dp
 
+import pdb
 
 class res_partner(orm.Model):
 
@@ -339,10 +340,10 @@ class recurring_contract(orm.Model):
             self, cr, uid, ids, new_invoice_date, context=None):
         for contract in self.browse(cr, uid, ids, context):
             if contract.last_paid_invoice_date:
-
-                last_paid_invoice_date = datetime.strftime(
+                pdb.set_trace()
+                last_paid_invoice_date = datetime.strptime(
                     contract.last_paid_invoice_date, DF)
-                new_invoice_date = datetime.strftime(new_invoice_date, DF)
+                new_invoice_date = datetime.strptime(new_invoice_date, DF)
 
                 if (last_paid_invoice_date > new_invoice_date or
                         datetime.today() > new_invoice_date):

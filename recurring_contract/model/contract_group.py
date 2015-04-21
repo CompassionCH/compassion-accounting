@@ -11,6 +11,7 @@
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from calendar import monthrange
 
 from openerp.osv import orm, fields
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
@@ -104,43 +105,44 @@ class contract_group(orm.Model):
         'advance_billing_months': 1,
     }
 
-    def _get_contract_ids(self, cr, uid, ids, context=None):
-        contract_ids = list()
-
-        for contract_group_id in self.browse(cr, uid, ids, context):
-            for contract in contract_group_id.contract_ids:
-                if contract.id not in contract_ids:
-                    contract_ids.append(contract.id)
-        return contract_ids
-
     def write(self, cr, uid, ids, vals, context=None):
-
         recurring_contract_obj = self.pool.get('recurring.contract')
-        contract_ids = self._get_contract_ids(cr, uid, ids, context)
+        
+        for group in self.browse(
+                    cr, uid, ids, context):
+            if ('advance_billing_months' in vals):
+                contract_ids = [contract.id for contract in group.contract_ids]
+                old_advance_billing_months = group.advance_billing_months
+                
+                # Check if advance_billing_months decreases
+                if old_advance_billing_months > vals['advance_billing_months']:
+                    self._on_advance_billing_changed(
+                        cr, uid, contract_ids,
+                        vals['advance_billing_months'],
+                        context)
+                    
+                    # Calculate the since_date to clean
+                    since_date = datetime.today()
+                    next_invoice_date = datetime.strptime(group.next_invoice_date, DF)
+                    since_date = self._set_next_invoice_month(cr, uid, since_date, next_invoice_date.day)
+                    since_date += relativedelta(months=+vals['advance_billing_months'])
+                    
+                    pdb.set_trace()
+                    # Clean the invoices
+                    recurring_contract_obj.clean_invoices(
+                        cr, uid, contract_ids, context=context,
+                        since_date=since_date)
+                    
+                super(contract_group, self).write(cr, uid, group.id, vals, context)
+                self.button_generate_invoices(cr, uid, [group.id], context=context)
 
-        if ('advance_billing_months' in vals):
-            old_advance_billing_months = self.browse(
-                cr, uid, ids, context)[0].advance_billing_months
-            if old_advance_billing_months > vals['advance_billing_months']:
-                pdb.set_trace()
-                self._on_advance_billing_changed(
-                    cr, uid, contract_ids,
-                    vals['advance_billing_months'],
-                    context)
-                since_date = datetime.today() + \
-                    relativedelta(months=+vals['advance_billing_months'])
-                recurring_contract_obj.clean_invoices(
-                    cr, uid, contract_ids, context=context,
-                    since_date=since_date)
+    def _set_next_invoice_month(self, cr, uid, date, day, context=None):
+        max_range = monthrange(date.year, date.month)[1]
 
-            self.button_generate_invoices(cr, uid, ids, context=context)
-
-        if ('recurring_value' in vals or
-                'recurring_unit' in vals):
-            self.button_generate_invoices(cr, uid, ids, context=context)
-
-        res = super(contract_group, self).write(cr, uid, ids, vals, context)
-        return res
+        if day < max_range:
+            return date.replace(day=day)
+        else:
+            return date.replace(day=max_range)
 
     def _on_next_invoice_change(
             self, cr, uid, ids, new_invoice_date, context=None):
@@ -164,7 +166,7 @@ class contract_group(orm.Model):
 
         for contract in contract_obj.browse(cr, uid, contract_ids, context):
             next_invoice_date = datetime.today() + delta
-            last_paid_invoice_date = contract.last_paid_invoice_date
+            last_paid_invoice_date = datetime.strptime(contract.last_paid_invoice_date, DF)
 
             if last_paid_invoice_date:
                 next_invoice_date = max(
