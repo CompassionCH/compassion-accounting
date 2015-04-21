@@ -135,7 +135,6 @@ class contract_group(orm.Model):
                         since_date=since_date)
 
             if ('recurring_value' in vals or 'recurring_unit' in vals):
-                # since_date = max(since_date, datetime.today())
                 # Clean the invoices
                 recurring_contract_obj.clean_invoices(
                     cr, uid, contract_ids, context=context,
@@ -182,9 +181,9 @@ class contract_group(orm.Model):
                 cr, uid, [invoicer_id])
 
     def generate_invoices(self, cr, uid, ids, invoicer_id=None, context=None):
-        ''' Checks all contracts and generate invoices if needed.
+        """ Checks all contracts and generate invoices if needed.
         Create an invoice per contract group per date.
-        '''
+        """
         logger.info("Invoice generation started.")
         inv_obj = self.pool.get('account.invoice')
         journal_obj = self.pool.get('account.journal')
@@ -250,10 +249,10 @@ class contract_group(orm.Model):
 
     def _setup_inv_data(self, cr, uid, con_gr, journal_ids,
                         invoicer_id, context=None):
-        ''' Setup a dict with data passed to invoice.create.
+        """ Setup a dict with data passed to invoice.create.
             If any custom data is wanted in invoice from contract group, just
             inherit this method.
-        '''
+        """
         partner = con_gr.partner_id
 
         inv_data = {
@@ -273,10 +272,10 @@ class contract_group(orm.Model):
 
     def _setup_inv_line_data(self, cr, uid, contract_line, invoice_id,
                              context=None):
-        ''' Setup a dict with data passed to invoice_line.create.
+        """ Setup a dict with data passed to invoice_line.create.
         If any custom data is wanted in invoice line from contract,
         just inherit this method.
-        '''
+        """
         product = contract_line.product_id
 
         inv_line_data = {
