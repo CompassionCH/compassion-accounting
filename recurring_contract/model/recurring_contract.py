@@ -20,10 +20,9 @@ import openerp.addons.decimal_precision as dp
 
 
 class res_partner(orm.Model):
-
-    ''' Override partners to add contract m2o relation. Raise an error if
+    """ Override partners to add contract m2o relation. Raise an error if
     we try to delete a partner with active contracts.
-    '''
+    """
     _inherit = 'res.partner'
 
     _columns = {
@@ -33,7 +32,7 @@ class res_partner(orm.Model):
     }
 
     def unlink(self, cr, uid, ids, context=None):
-        ''' Raise an error if there is active contracts for partner '''
+        """ Raise an error if there is active contracts for partner """
         if context is None:
             context = {}
         partners = self.browse(cr, uid, ids, context=context)
@@ -54,8 +53,7 @@ class res_partner(orm.Model):
 
 
 class recurring_contract_line(orm.Model):
-
-    ''' Each product sold through a contract '''
+    """ Each product sold through a contract """
     _name = "recurring.contract.line"
     _description = "A contract line"
 
@@ -104,7 +102,6 @@ class recurring_contract_line(orm.Model):
 
 
 class recurring_contract(orm.Model):
-
     ''' A contract to perform recurring invoicing to a partner '''
     _name = "recurring.contract"
     _description = "Contract for recurring invoicing"
@@ -205,7 +202,7 @@ class recurring_contract(orm.Model):
     #        PUBLIC METHODS         #
     #################################
     def create(self, cr, uid, vals, context=None):
-        ''' Add a sequence generated ref if none is given '''
+        """ Add a sequence generated ref if none is given """
         if vals.get('reference', '/') == '/':
             vals['reference'] = self.pool.get('ir.sequence').next_by_code(
                 cr, uid, 'recurring.contract.ref', context=context)
@@ -264,11 +261,11 @@ class recurring_contract(orm.Model):
 
     def clean_invoices(self, cr, uid, ids, context=None, since_date=None,
                        to_date=None):
-        ''' This method deletes invoices lines generated for a given contract
+        """ This method deletes invoices lines generated for a given contract
             having a due date >= current month. If the invoice_line was the
             only line in the invoice, we cancel the invoice. In the other
             case, we have to revalidate the invoice to update the move lines.
-        '''
+        """
         invl_search = [('contract_id', 'in', ids),
                        ('state', 'not in', ('paid', 'cancel'))]
         if since_date:
@@ -371,7 +368,7 @@ class recurring_contract(orm.Model):
     #        CALLBACKS       #
     ##########################
     def on_change_start_date(self, cr, uid, ids, start_date, context=None):
-        ''' We automatically update next_invoice_date on start_date change '''
+        """ We automatically update next_invoice_date on start_date change """
         result = {}
         if start_date:
             result.update({'next_invoice_date': start_date})
@@ -379,9 +376,9 @@ class recurring_contract(orm.Model):
         return {'value': result}
 
     def on_change_partner_id(self, cr, uid, ids, partner_id, context=None):
-        ''' On partner change, we update the group_id. If partner has
+        """ On partner change, we update the group_id. If partner has
         only 1 group, we take it. Else, we take nothing.
-        '''
+        """
         group_obj = self.pool.get('recurring.contract.group')
         group_ids = group_obj.search(cr, uid,
                                      [('partner_id', '=', partner_id)],
