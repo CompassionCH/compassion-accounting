@@ -20,6 +20,7 @@ import openerp.addons.decimal_precision as dp
 
 
 class res_partner(orm.Model):
+
     """ Override partners to add contract m2o relation. Raise an error if
     we try to delete a partner with active contracts.
     """
@@ -53,6 +54,7 @@ class res_partner(orm.Model):
 
 
 class recurring_contract_line(orm.Model):
+
     """ Each product sold through a contract """
     _name = "recurring.contract.line"
     _description = "A contract line"
@@ -102,6 +104,7 @@ class recurring_contract_line(orm.Model):
 
 
 class recurring_contract(orm.Model):
+
     ''' A contract to perform recurring invoicing to a partner '''
     _name = "recurring.contract"
     _description = "Contract for recurring invoicing"
@@ -122,6 +125,10 @@ class recurring_contract(orm.Model):
                                     for invl in contract.invoice_line_ids
                                     if invl.state == 'paid'] or [False])
         return res
+
+    def _get_change_methods(self, cr, uid, context=None):
+        contract_group_obj = self.pool.get('recurring.contract.group')
+        return contract_group_obj._get_change_methods(cr, uid, context)
 
     _columns = {
         'reference': fields.char(
@@ -177,6 +184,10 @@ class recurring_contract(orm.Model):
             'group_id', 'payment_term_id', relation='account.payment.term',
             type="many2one", readonly=True, string=_('Payment Term'),
             store=True),
+        'change_method': fields.related(
+            'group_id', 'change_method',
+            selection=_get_change_methods,
+            type='selection', string=_('Change method')),
     }
 
     _defaults = {
@@ -258,6 +269,13 @@ class recurring_contract(orm.Model):
         super(recurring_contract, self).unlink(cr, uid, unlink_ids,
                                                context=context)
         return
+
+    def button_generate_invoices(self, cr, uid, ids, context=None):
+        group_ids = [contract.group_id for contract in self.browse(
+            cr, uid, ids, context)]
+        contract_group_obj = self.pool.get('recurring.contract.group')
+        contract_group_obj.button_generate_invoices(
+            cr, uid, group_ids, context)
 
     def clean_invoices(self, cr, uid, ids, context=None, since_date=None,
                        to_date=None):
