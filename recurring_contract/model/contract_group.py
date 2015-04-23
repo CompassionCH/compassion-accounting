@@ -28,6 +28,19 @@ class contract_group(orm.Model):
     _inherit = 'mail.thread'
     _rec_name = 'ref'
 
+    def _get_functions(self, cr, uid, context=None):
+        ''' Method for invoice generation '''
+        return [
+            ('do_nothing',
+             'Generate without changing next_invoice_date'),
+            ('clean_invoices',
+             'Generate changing next_invoice_date')
+        ]
+
+    def __get_functions(self, cr, uid, context=None):
+        """ Call method which can be inherited """
+        return self._get_functions(cr, uid, context=context)
+
     def _get_gen_states(self):
         return ['active']
 
@@ -94,7 +107,8 @@ class contract_group(orm.Model):
         'last_paid_invoice_date': fields.function(
             _get_last_paid_invoice, type='date',
             string=_('Last paid invoice date')
-        )
+        ),
+        'change_method': fields.selection(__get_functions, 'Change method')
     }
 
     _defaults = {
@@ -102,71 +116,65 @@ class contract_group(orm.Model):
         'recurring_unit': 'month',
         'recurring_value': 1,
         'advance_billing_months': 1,
+        'change_method': 'do_nothing',
     }
 
     def write(self, cr, uid, ids, vals, context=None):
-        recurring_contract_obj = self.pool.get('recurring.contract')
         res = True
 
         for group in self.browse(
                 cr, uid, ids, context):
-            # Get contract ids for a group
-            contract_ids = [contract.id for contract in group.contract_ids]
 
-            # Calculate the since_date to clean
-            since_date = datetime.today()
-            next_invoice_date = datetime.strptime(
-                group.next_invoice_date, DF)
-            since_date = self._set_next_invoice_month(
-                cr, uid, since_date, next_invoice_date.day)
+            if not group.next_invoice_date:
+                res = super(contract_group, self).write(
+                    cr, uid, group.id, vals, context) & res
+                break
+
+            change_method = (group.change_method if 'change_method' not in vals
+                             else vals['change_method'])
+            change_method = getattr(self, change_method)
+            old_advance_billing_months = group.advance_billing_months
 
             if ('advance_billing_months' in vals):
-                # Get the old value for advance billing
-                old_advance_billing_months = group.advance_billing_months
-
-                # Check if advance_billing_months decreases
                 if old_advance_billing_months > vals['advance_billing_months']:
-                    since_date += relativedelta(months=+
-                                                vals['advance_billing_months'])
+                    advance_billing_months = vals['advance_billing_months']
+                    change_method(
+                        cr, uid, group, advance_billing_months, context)
 
-                    # Clean the invoices
-                    recurring_contract_obj.clean_invoices(
-                        cr, uid, contract_ids, context=context,
-                        since_date=since_date)
+            if ('recurring_value' in vals or
+                    'recurring_unit' in vals):
+                change_method(cr, uid, group, context=context)
 
-            if ('recurring_value' in vals or 'recurring_unit' in vals):
-                # Clean the invoices
-                recurring_contract_obj.clean_invoices(
-                    cr, uid, contract_ids, context=context,
-                    since_date=since_date)
+            if ('change_method' in vals):
+                change_method(
+                    cr, uid, group,
+                    old_advance_billing_months, context=context)
 
             res = super(contract_group, self).write(
                 cr, uid, group.id, vals, context) & res
-            self.button_generate_invoices(cr, uid, [group.id], context=context)
+
+        if ('advance_billing_months' in vals or
+                'recurring_value' in vals or
+                'recurring_unit' in vals or
+                'change_method' in vals):
+            invoicer_id = self.generate_invoices(cr, uid, ids, context=context)
+            self.validate_invoices(cr, uid, invoicer_id, context)
+
         return res
 
-    def _set_next_invoice_month(self, cr, uid, date, day, context=None):
-        max_range = monthrange(date.year, date.month)[1]
+    """ Calculate the since_date to clean """
 
-        if day < max_range:
-            return date.replace(day=day)
-        else:
-            return date.replace(day=max_range)
+    def _get_since_date(self, cr, uid, next_invoice_date, context=None):
+        since_date = datetime.today()
+        next_invoice_date = datetime.strptime(
+            next_invoice_date, DF)
 
-    def _on_next_invoice_change(
-            self, cr, uid, ids, new_invoice_date, context=None):
-        for group in self.browse(cr, uid, ids, context):
-            if (group.last_paid_invoice_date > new_invoice_date or
-                    datetime.today() > new_invoice_date):
-                raise orm.except_orm(
-                    'Error',
-                    _('You cannot set the next invoice date'
-                      'at {}.'.format(new_invoice_date)))
-                break
-        else:
-            vals = dict()
-            vals['next_invoice_date'] = new_invoice_date
-            super(contract_group, self).write(cr, uid, ids, vals, context)
+        max_range = monthrange(since_date.year, since_date.month)[1]
+        day = next_invoice_date.day
+        if day > max_range:
+            day = max_range
+
+        return since_date.replace(day=day)
 
     def button_generate_invoices(self, cr, uid, ids, context=None):
         invoicer_id = self.generate_invoices(cr, uid, ids, context=context)
@@ -179,6 +187,33 @@ class contract_group(orm.Model):
         if recurring_invoicer.invoice_ids:
             self.pool.get('recurring.invoicer').validate_invoices(
                 cr, uid, [invoicer_id])
+
+    def validate_invoices(self, cr, uid, invoicer_id, context=None):
+        recurring_invoicer_obj = self.pool.get('recurring.invoicer')
+        recurring_invoicer = recurring_invoicer_obj.browse(
+            cr, uid, invoicer_id, context)
+
+        # Check if there is invoice waiting for validation
+        if recurring_invoicer.invoice_ids:
+            self.pool.get('recurring.invoicer').validate_invoices(
+                cr, uid, [invoicer_id])
+
+    def clean_invoices(self, cr, uid, group, advance_billing=0, context=None):
+        recurring_contract_obj = self.pool.get('recurring.contract')
+        contract_ids = [contract.id for contract in group.contract_ids]
+        since_date = self._get_since_date(
+            cr, uid, group.next_invoice_date, context)
+        since_date += relativedelta(months=+advance_billing)
+        last_paid_invoice_date = datetime.strptime(
+            group.last_paid_invoice_date, DF)
+        since_date = max(since_date, last_paid_invoice_date)
+        recurring_contract_obj.clean_invoices(
+            cr, uid, contract_ids, context=context,
+            since_date=since_date)
+
+    def do_nothing(self, cr, uid, group, advance_billing=0, context=None):
+        """ No changes before generation """
+        pass
 
     def generate_invoices(self, cr, uid, ids, invoicer_id=None, context=None):
         """ Checks all contracts and generate invoices if needed.
