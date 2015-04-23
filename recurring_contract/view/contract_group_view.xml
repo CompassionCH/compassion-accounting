@@ -13,9 +13,6 @@
 		<field name="arch" type="xml">
 			<form string="Contract groups" version="7.0">      
 			<sheet>
-                <div class="oe_right oe_button_box">
-                    <button name="button_generate_invoices" type='object' string="Generate invoices"/>
-                </div>
 				<h1><field name="ref" /></h1>
 				<group name="info">
 					<group>

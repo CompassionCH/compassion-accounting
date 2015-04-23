@@ -28,7 +28,7 @@ class contract_group(orm.Model):
     _inherit = 'mail.thread'
     _rec_name = 'ref'
 
-    def _get_functions(self, cr, uid, context=None):
+    def _get_change_methods(self, cr, uid, context=None):
         ''' Method for invoice generation '''
         return [
             ('do_nothing',
@@ -37,9 +37,9 @@ class contract_group(orm.Model):
              'Generate changing next_invoice_date')
         ]
 
-    def __get_functions(self, cr, uid, context=None):
+    def __get_change_methods(self, cr, uid, context=None):
         """ Call method which can be inherited """
-        return self._get_functions(cr, uid, context=context)
+        return self._get_change_methods(cr, uid, context=context)
 
     def _get_gen_states(self):
         return ['active']
@@ -108,7 +108,8 @@ class contract_group(orm.Model):
             _get_last_paid_invoice, type='date',
             string=_('Last paid invoice date')
         ),
-        'change_method': fields.selection(__get_functions, 'Change method')
+        'change_method': fields.selection(
+            __get_change_methods, 'Change method'),
     }
 
     _defaults = {

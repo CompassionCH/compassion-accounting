@@ -36,6 +36,10 @@
 				<button name="contract_terminated" class="oe_highlight" string="Terminate" states="active" />
 			</header>
 			<sheet>
+                <div class="oe_right oe_button_box">
+                    <button name="button_generate_invoices" type='object' string="Generate invoices"/>
+                </div>
+
 			    <div class="oe_title">
 					<h1>
 						<field name="reference" default_focus="1" />
@@ -50,6 +54,7 @@
 						<field name="start_date" on_change="on_change_start_date(start_date)" />
 						<field name="end_date" />
 						<field name="next_invoice_date" />
+                        <field name="change_method" />
 					</group>
 				</group>
 				<notebook>
