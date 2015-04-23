@@ -350,13 +350,11 @@ class recurring_contract(orm.Model):
     def _on_change_next_invoice_date(
             self, cr, uid, ids, new_invoice_date, context=None):
         for contract in self.browse(cr, uid, ids, context):
-            if contract.last_paid_invoice_date:
-                last_paid_invoice_date = datetime.strptime(
-                    contract.last_paid_invoice_date, DF)
+            if contract.next_invoice_date:
+                next_invoice_date = datetime.strptime(
+                    contract.next_invoice_date, DF)
                 new_invoice_date = datetime.strptime(new_invoice_date, DF)
-
-                if (last_paid_invoice_date.date() > new_invoice_date.date() or
-                        datetime.today().date() > new_invoice_date.date()):
+                if (next_invoice_date > new_invoice_date):
                     raise orm.except_orm(
                         'Error',
                         _('You cannot set the next invoice date'
