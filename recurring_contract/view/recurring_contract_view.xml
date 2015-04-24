@@ -54,7 +54,6 @@
 						<field name="start_date" on_change="on_change_start_date(start_date)" />
 						<field name="end_date" />
 						<field name="next_invoice_date" />
-                        <field name="change_method" />
 					</group>
 				</group>
 				<notebook>
