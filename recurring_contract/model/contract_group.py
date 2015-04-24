@@ -236,15 +236,6 @@ class contract_group(orm.Model):
             cr, uid, [('type', '=', 'sale'), ('company_id', '=', 1 or False)],
             limit=1)
 
-        # Invoice lines are generated for an active contract
-        # If group.next_inv_date <= today
-        #   and contr.next_inv_date <= group.next_inv_date
-        #   or (group.next_inv_date > today
-        #      and contr.next_inv_date <= group.next_inv_date + adv_billing
-        #      and contract had an invoice generated in the process)
-        #
-        # The last condition ensures that we won't start to do advance billing
-        # for contract who had initial next_invoice_date > today.
         nb_groups = len(ids)
         count = 1
         for group_id in ids:
