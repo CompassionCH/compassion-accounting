@@ -84,6 +84,7 @@ class contract_group(orm.Model):
         'contract_ids': fields.one2many(
             'recurring.contract', 'group_id', _('Contracts'),
             readonly=True),
+        # TODO Add unit for advance_billing
         'advance_billing_months': fields.integer(
             _('Advance billing months'),
             help=_(
@@ -205,10 +206,11 @@ class contract_group(orm.Model):
         since_date = self._get_since_date(
             cr, uid, group.next_invoice_date, context)
         since_date += relativedelta(months=+advance_billing)
-        last_paid_invoice_date = datetime.strptime(
-            group.last_paid_invoice_date, DF)
-        since_date = max(since_date, last_paid_invoice_date)
-        recurring_contract_obj.clean_invoices(
+        if group.last_paid_invoice_date:
+            last_paid_invoice_date = datetime.strptime(
+                group.last_paid_invoice_date, DF)
+            since_date = max(since_date, last_paid_invoice_date)
+        return recurring_contract_obj.clean_invoices(
             cr, uid, contract_ids, context=context,
             since_date=since_date)
 
