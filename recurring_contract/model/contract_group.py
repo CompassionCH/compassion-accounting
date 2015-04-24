@@ -32,9 +32,9 @@ class contract_group(orm.Model):
         ''' Method for invoice generation '''
         return [
             ('do_nothing',
-             'Generate without changing next_invoice_date'),
+             'Nothing'),
             ('clean_invoices',
-             'Generate changing next_invoice_date')
+             'Clean invoices')
         ]
 
     def __get_change_methods(self, cr, uid, context=None):
@@ -74,10 +74,9 @@ class contract_group(orm.Model):
             ('day', _('Day(s)')),
             ('week', _('Week(s)')),
             ('month', _('Month(s)')),
-            ('year', _('Year(s)'))], _('Reccurency'), required=True,
-            track_visibility="onchange"),
+            ('year', _('Year(s)'))], _('Reccurency'), required=True),
         'recurring_value': fields.integer(
-            _('Generate every'), required=True, track_visibility="onchange"),
+            _('Generate every'), required=True),
         'partner_id': fields.many2one(
             'res.partner', _('Partner'), required=True,
             ondelete='cascade', track_visibility="onchange"),
@@ -92,8 +91,7 @@ class contract_group(orm.Model):
                 'advance. For example, you can generate the invoices '
                 'for each month of the year and send them to the '
                 'customer in january.'
-            ),
-            track_visibility="onchange", ondelete='no action'),
+            ), ondelete='no action'),
         'payment_term_id': fields.many2one('account.payment.term',
                                            _('Payment Term'),
                                            track_visibility="onchange"),
