@@ -220,7 +220,7 @@ class recurring_contract(orm.Model):
         if 'next_invoice_date' in vals:
             self._on_change_next_invoice_date(
                 cr, uid, ids, vals['next_invoice_date'], context)
-        
+
         if 'contract_line_ids' in vals:
             self._on_contract_lines_changed(cr, uid, ids, context)
 
@@ -414,7 +414,8 @@ class recurring_contract(orm.Model):
                 context=context)
             con_ids = set()
             inv_ids = set()
-            for inv_line in inv_line_obj.browse(cr, uid, inv_line_ids, context):
+            for inv_line in inv_line_obj.browse(
+                    cr, uid, inv_line_ids, context):
                 invoice = inv_line.invoice_id
                 if invoice.id not in inv_ids or \
                         inv_line.contract_id.id not in con_ids:
