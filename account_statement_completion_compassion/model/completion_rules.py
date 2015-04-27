@@ -267,7 +267,7 @@ class AccountStatementCompletionRule(orm.Model):
         res.update(self._generate_invoice_line(
             cr, uid, invoice_id, product, st_line, partner.id, context=ctx))
 
-        if product.type != 'G':
+        if product.product_tmpl_id.categ_id.name != 'Sponsor gifts':
             # Validate the invoice
             wf_service = netsvc.LocalService('workflow')
             wf_service.trg_validate(
@@ -339,7 +339,7 @@ class AccountStatementCompletionRule(orm.Model):
 
         res['name'] = product.name
         # Get the contract of the sponsor in the case of a gift
-        if product.type == 'G':
+        if product.product_tmpl_id.categ_id.name == 'Sponsor gifts':
             contract_obj = self.pool.get('recurring.contract')
             contract_number = int(st_line['ref'][16:21])
             contract_ids = contract_obj.search(
