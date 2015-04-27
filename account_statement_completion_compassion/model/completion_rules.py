@@ -121,7 +121,7 @@ class AccountStatementCompletionRule(orm.Model):
             invoice_obj = self.pool.get('account.invoice')
             invoice_ids = invoice_obj.search(cr, uid, [
                 ('bvr_reference', '=', ref),
-                ('state', 'in', ('open', 'cancel', 'paid'))], context=context)
+                ('state', '=', 'open')], context=context)
             if not invoice_ids:
                 # Search open Supplier Invoices (with field 'reference_type'
                 # set to BVR)
