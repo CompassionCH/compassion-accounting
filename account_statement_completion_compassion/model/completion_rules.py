@@ -15,7 +15,6 @@ from openerp.addons.account_statement_base_completion.statement \
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 from openerp import netsvc
 
-from sponsorship_compassion.model.product import GIFT_TYPES
 from datetime import datetime
 import time
 import sys
@@ -266,14 +265,14 @@ class AccountStatementCompletionRule(orm.Model):
         res.update(self._generate_invoice_line(
             cr, uid, invoice_id, product, st_line, partner.id, context=ctx))
 
-        if product.name not in GIFT_TYPES:
+        if product.type != 'G':
             # Validate the invoice
             wf_service = netsvc.LocalService('workflow')
             wf_service.trg_validate(
                 uid, 'account.invoice', invoice_id, 'invoice_open', cr)
 
         # Birthday Gift
-        elif product.name == GIFT_TYPES[0]:
+        elif product.name == 'Birthday Gift':
             # Compute the date of the invoice
             child_birthdate = res.get('child_birthdate')
             if child_birthdate:
@@ -288,6 +287,13 @@ class AccountStatementCompletionRule(orm.Model):
     def _find_product_id(self, cr, uid, ref, context=None):
         """ Finds what kind of payment it is,
             based on the reference of the statement line. """
+        gift_bvr_ref = {
+            1: 'Birthday Gift',
+            2: 'General Gift',
+            3: 'Family Gift',
+            4: 'Project Gift',
+            5: 'Graduation Gift'
+        }
         product_obj = self.pool.get('product.product')
         payment_type = int(ref[21])
         product_id = 0
@@ -295,7 +301,7 @@ class AccountStatementCompletionRule(orm.Model):
             # Sponsor Gift
             product_ids = product_obj.search(
                 cr, uid,
-                [('name_template', '=', GIFT_TYPES[payment_type - 1])],
+                [('name_template', '=', gift_bvr_ref[payment_type])],
                 context=context)
             product_id = product_ids[0] if product_ids else 0
         elif payment_type in range(6, 8):
@@ -331,7 +337,7 @@ class AccountStatementCompletionRule(orm.Model):
 
         res['name'] = product.name
         # Get the contract of the sponsor in the case of a gift
-        if product.name in GIFT_TYPES:
+        if product.type == 'G':
             contract_obj = self.pool.get('recurring.contract')
             contract_number = int(st_line['ref'][16:21])
             contract_ids = contract_obj.search(
@@ -348,7 +354,7 @@ class AccountStatementCompletionRule(orm.Model):
                 inv_line_data['contract_id'] = contract.id
                 # Retrieve the birthday of child
                 birthdate = ""
-                if product.name == GIFT_TYPES[0]:
+                if product.name == 'Birthday gift':
                     birthdate = contract.child_id.birthdate
                     res['child_birthdate'] = birthdate
                     birthdate = datetime.strptime(birthdate, DF).strftime(

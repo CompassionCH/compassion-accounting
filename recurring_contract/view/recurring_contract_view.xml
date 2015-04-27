@@ -33,7 +33,7 @@
 			<header>
 				<field name="state" widget="statusbar" statusbar_visible="draft,active,terminated" />
 				<button name="contract_validated" class="oe_highlight" string="Validate" states="draft" />
-				<button name="contract_terminated" class="oe_highlight" string="Terminate" states="active" />
+				<button name="contract_terminated" class="oe_highlight" string="Terminate" states="active" confirm="Are you sure ?"/>
 			</header>
 			<sheet>
                 <div class="oe_right oe_button_box">
