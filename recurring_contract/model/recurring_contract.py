@@ -267,7 +267,7 @@ class recurring_contract(orm.Model):
         return
 
     def button_generate_invoices(self, cr, uid, ids, context=None):
-        group_ids = [contract.group_id for contract in self.browse(
+        group_ids = [contract.group_id.id for contract in self.browse(
             cr, uid, ids, context)]
         contract_group_obj = self.pool.get('recurring.contract.group')
         contract_group_obj.button_generate_invoices(
