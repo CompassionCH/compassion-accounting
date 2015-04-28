@@ -178,15 +178,8 @@ class contract_group(orm.Model):
 
     def button_generate_invoices(self, cr, uid, ids, context=None):
         invoicer_id = self.generate_invoices(cr, uid, ids, context=context)
-
-        recurring_invoicer_obj = self.pool.get('recurring.invoicer')
-        recurring_invoicer = recurring_invoicer_obj.browse(
-            cr, uid, invoicer_id, context)
-
-        # Check if there is invoice waiting for validation
-        if recurring_invoicer.invoice_ids:
-            self.pool.get('recurring.invoicer').validate_invoices(
-                cr, uid, [invoicer_id])
+        self.validate_invoices(cr, uid, invoicer_id, context)
+        return True
 
     def validate_invoices(self, cr, uid, invoicer_id, context=None):
         recurring_invoicer_obj = self.pool.get('recurring.invoicer')
