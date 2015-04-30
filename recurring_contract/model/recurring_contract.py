@@ -216,7 +216,7 @@ class recurring_contract(orm.Model):
         """ Perform various checks when a contract is modified. """
         res = super(recurring_contract, self).write(
             cr, uid, ids, vals, context=context)
-        
+
         if 'next_invoice_date' in vals:
             self._on_change_next_invoice_date(
                 cr, uid, ids, vals['next_invoice_date'], context)
@@ -337,7 +337,7 @@ class recurring_contract(orm.Model):
                 next_invoice_date = max(
                     datetime.strptime(
                         contract.last_paid_invoice_date, DF),
-                        new_invoice_date)
+                    new_invoice_date)
 
             super(recurring_contract, self).write(
                 cr, uid, [contract.id],
@@ -403,34 +403,34 @@ class recurring_contract(orm.Model):
             return True
 
     def _on_contract_lines_changed(self, cr, uid, ids, context=None):
-            """Update related invoices to reflect the changes to the contract.
-            """
-            invoice_obj = self.pool.get('account.invoice')
-            inv_line_obj = self.pool.get('account.invoice.line')
-            # Find all unpaid invoice lines after the given date
-            since_date = datetime.today().replace(day=1).strftime(DF)
-            inv_line_ids = inv_line_obj.search(
-                cr, uid, [('contract_id', 'in', ids),
-                          ('due_date', '>=', since_date),
-                          ('state', 'not in', ('paid', 'cancel'))],
-                context=context)
-            con_ids = set()
-            inv_ids = set()
-            for inv_line in inv_line_obj.browse(
-                    cr, uid, inv_line_ids, context):
-                invoice = inv_line.invoice_id
-                if invoice.id not in inv_ids or \
-                        inv_line.contract_id.id not in con_ids:
-                    con_ids.add(inv_line.contract_id.id)
-                    inv_ids.add(invoice.id)
-                    invoice_obj.action_cancel(cr, uid, [invoice.id], context)
-                    invoice_obj.action_cancel_draft(cr, uid, [invoice.id])
-                    self._update_invoice_lines(cr, uid, inv_line.contract_id,
-                                               [invoice.id], context)
-            wf_service = netsvc.LocalService('workflow')
-            for invoice in invoice_obj.browse(cr, uid, list(inv_ids), context):
-                wf_service.trg_validate(
-                    uid, 'account.invoice', invoice.id, 'invoice_open', cr)
+        """Update related invoices to reflect the changes to the contract.
+        """
+        invoice_obj = self.pool.get('account.invoice')
+        inv_line_obj = self.pool.get('account.invoice.line')
+        # Find all unpaid invoice lines after the given date
+        since_date = datetime.today().replace(day=1).strftime(DF)
+        inv_line_ids = inv_line_obj.search(
+            cr, uid, [('contract_id', 'in', ids),
+                      ('due_date', '>=', since_date),
+                      ('state', 'not in', ('paid', 'cancel'))],
+            context=context)
+        con_ids = set()
+        inv_ids = set()
+        for inv_line in inv_line_obj.browse(
+                cr, uid, inv_line_ids, context):
+            invoice = inv_line.invoice_id
+            if invoice.id not in inv_ids or \
+                    inv_line.contract_id.id not in con_ids:
+                con_ids.add(inv_line.contract_id.id)
+                inv_ids.add(invoice.id)
+                invoice_obj.action_cancel(cr, uid, [invoice.id], context)
+                invoice_obj.action_cancel_draft(cr, uid, [invoice.id])
+                self._update_invoice_lines(cr, uid, inv_line.contract_id,
+                                           [invoice.id], context)
+        wf_service = netsvc.LocalService('workflow')
+        for invoice in invoice_obj.browse(cr, uid, list(inv_ids), context):
+            wf_service.trg_validate(
+                uid, 'account.invoice', invoice.id, 'invoice_open', cr)
 
     ##########################
     #        CALLBACKS       #
