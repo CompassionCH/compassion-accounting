@@ -130,18 +130,18 @@ class contract_group(orm.Model):
 
         for group in self.browse(
                 cr, uid, ids, context):
-            
+
             # Check if group has an next_invoice_date
             if not group.next_invoice_date:
                 res = super(contract_group, self).write(
                     cr, uid, group.id, vals, context) and res
                 break
-            
+
             # Get the method to apply changes
             change_method = vals.get('change_method') or group.change_method
             change_method = getattr(self, change_method)
             old_advance_billing_months = group.advance_billing_months
-            
+
             # Advance billing changed
             if ('advance_billing_months' in vals):
                 # Advance billing decrease
@@ -149,12 +149,12 @@ class contract_group(orm.Model):
                     advance_billing_months = vals['advance_billing_months']
                     change_method(
                         cr, uid, group, advance_billing_months, context)
-           
+
             # Recurring value changed
             if ('recurring_value' in vals or
                     'recurring_unit' in vals):
                 change_method(cr, uid, group, context=context)
-            
+
             # Change method was modified
             if ('change_method' in vals):
                 change_method(
@@ -173,7 +173,7 @@ class contract_group(orm.Model):
 
         return res
 
-    def _get_since_date(self, cr, uid, next_invoice_date, context=None): 
+    def _get_since_date(self, cr, uid, next_invoice_date, context=None):
         """ Calculate the since_date to clean """
         since_date = datetime.today()
         next_invoice_date = datetime.strptime(
