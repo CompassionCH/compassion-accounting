@@ -35,7 +35,7 @@ class res_partner(orm.Model):
     def unlink(self, cr, uid, ids, context=None):
         """ Raise an error if there is active contracts for partner """
         if context is None:
-            context = {}
+            context = dict()
         partners = self.browse(cr, uid, ids, context=context)
         unlink_ids = []
 
@@ -67,7 +67,7 @@ class recurring_contract_line(orm.Model):
         return res
 
     def _compute_subtotal(self, cr, uid, ids, field_name, arg, context):
-        res = {}
+        res = dict()
         for line in self.browse(cr, uid, ids, context=context):
             price = line.amount * line.quantity
             res[line.id] = price
@@ -92,7 +92,7 @@ class recurring_contract_line(orm.Model):
 
     def on_change_product_id(self, cr, uid, ids, product_id, context=None):
         if not context:
-            context = {}
+            context = dict()
 
         if not product_id:
             return {'value': {'amount': 0.0}}
@@ -112,7 +112,7 @@ class recurring_contract(orm.Model):
     _rec_name = 'reference'
 
     def _get_total_amount(self, cr, uid, ids, name, args, context=None):
-        total = {}
+        total = dict()
         for contract in self.browse(cr, uid, ids, context):
             total[contract.id] = sum([line.subtotal
                                       for line in contract.contract_line_ids])
@@ -173,7 +173,7 @@ class recurring_contract(orm.Model):
             _get_total_amount, string='Total',
             digits_compute=dp.get_precision('Account'),
             store={
-                'recurring.contract': (lambda self, cr, uid, ids, c={}:
+                'recurring.contract': (lambda self, cr, uid, ids, c=dict():
                                        ids, ['contract_line_ids'], 20),
             }, track_visibility="onchange"),
         'payment_term_id': fields.related(
@@ -213,10 +213,10 @@ class recurring_contract(orm.Model):
                                                       context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        """ Perform various checks when a contract is modified. """
         res = super(recurring_contract, self).write(
             cr, uid, ids, vals, context=context)
-
-        """ Perform various checks when a contract is modified. """
+        
         if 'next_invoice_date' in vals:
             self._on_change_next_invoice_date(
                 cr, uid, ids, vals['next_invoice_date'], context)
@@ -227,7 +227,7 @@ class recurring_contract(orm.Model):
         return res
 
     def copy(self, cr, uid, id, default=None, context=None):
-        default = default or {}
+        default = default or dict()
         start_date = self._compute_copy_start_date(cr, uid, id, context)
         default.update({
             'state': 'draft',
@@ -249,7 +249,7 @@ class recurring_contract(orm.Model):
 
     def unlink(self, cr, uid, ids, context=None):
         if context is None:
-            context = {}
+            context = dict()
         contracts = self.read(cr, uid, ids, ['state'], context=context)
         unlink_ids = []
 
@@ -326,21 +326,24 @@ class recurring_contract(orm.Model):
             wf_service.trg_validate(uid, 'account.invoice',
                                     inv.id, 'invoice_open', cr)
 
+        return inv_ids
+
+    def rewind_next_invoice_date(
+            self, cr, uid, ids, new_invoice_date, context):
         for contract in self.browse(cr, uid, ids, context):
-            next_invoice_date = since_date
+            next_invoice_date = new_invoice_date
 
             if contract.last_paid_invoice_date:
                 next_invoice_date = max(
                     datetime.strptime(
-                        contract.last_paid_invoice_date, DF), since_date)
+                        contract.last_paid_invoice_date, DF),
+                        new_invoice_date)
 
-            self.write(
+            super(recurring_contract, self).write(
                 cr, uid, [contract.id],
                 {'next_invoice_date': datetime.strftime(
                     next_invoice_date, DF)},
                 context)
-
-        return inv_ids
 
     #################################
     #        PRIVATE METHODS        #
@@ -395,8 +398,7 @@ class recurring_contract(orm.Model):
                 if (next_invoice_date > new_invoice_date):
                     raise orm.except_orm(
                         'Error',
-                        _('You cannot set the next invoice date'
-                          'at {}.'.format(new_invoice_date)))
+                        _('You cannot rewind the next invoice date.'))
         else:
             return True
 
@@ -435,7 +437,7 @@ class recurring_contract(orm.Model):
     ##########################
     def on_change_start_date(self, cr, uid, ids, start_date, context=None):
         """ We automatically update next_invoice_date on start_date change """
-        result = {}
+        result = dict()
         if start_date:
             result.update({'next_invoice_date': start_date})
 

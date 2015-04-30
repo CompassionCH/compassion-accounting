@@ -29,7 +29,7 @@ class contract_group(orm.Model):
     _rec_name = 'ref'
 
     def _get_change_methods(self, cr, uid, context=None):
-        ''' Method for invoice generation '''
+        """ Method for applying changes """
         return [
             ('do_nothing',
              'Nothing'),
@@ -120,31 +120,42 @@ class contract_group(orm.Model):
     }
 
     def write(self, cr, uid, ids, vals, context=None):
+        """
+            Perform various check at contract modifications
+            - Advance billing increased or decrease
+            - Recurring value or unit changes
+            - Another change method was selected
+        """
         res = True
 
         for group in self.browse(
                 cr, uid, ids, context):
-
+            
+            # Check if group has an next_invoice_date
             if not group.next_invoice_date:
                 res = super(contract_group, self).write(
-                    cr, uid, group.id, vals, context) & res
+                    cr, uid, group.id, vals, context) and res
                 break
-
-            change_method = (group.change_method if 'change_method' not in vals
-                             else vals['change_method'])
+            
+            # Get the method to apply changes
+            change_method = vals.get('change_method') or group.change_method
             change_method = getattr(self, change_method)
             old_advance_billing_months = group.advance_billing_months
-
+            
+            # Advance billing changed
             if ('advance_billing_months' in vals):
+                # Advance billing decrease
                 if old_advance_billing_months > vals['advance_billing_months']:
                     advance_billing_months = vals['advance_billing_months']
                     change_method(
                         cr, uid, group, advance_billing_months, context)
-
+           
+            # Recurring value changed
             if ('recurring_value' in vals or
                     'recurring_unit' in vals):
                 change_method(cr, uid, group, context=context)
-
+            
+            # Change method was modified
             if ('change_method' in vals):
                 change_method(
                     cr, uid, group,
@@ -152,7 +163,7 @@ class contract_group(orm.Model):
 
             res = super(contract_group, self).write(
                 cr, uid, group.id, vals, context) & res
-
+        # Any of these modifications implies generate and validate invoices
         if ('advance_billing_months' in vals or
                 'recurring_value' in vals or
                 'recurring_unit' in vals or
@@ -162,9 +173,8 @@ class contract_group(orm.Model):
 
         return res
 
-    """ Calculate the since_date to clean """
-
-    def _get_since_date(self, cr, uid, next_invoice_date, context=None):
+    def _get_since_date(self, cr, uid, next_invoice_date, context=None): 
+        """ Calculate the since_date to clean """
         since_date = datetime.today()
         next_invoice_date = datetime.strptime(
             next_invoice_date, DF)
@@ -201,9 +211,12 @@ class contract_group(orm.Model):
             last_paid_invoice_date = datetime.strptime(
                 group.last_paid_invoice_date, DF)
             since_date = max(since_date, last_paid_invoice_date)
-        return recurring_contract_obj.clean_invoices(
+        res = recurring_contract_obj.clean_invoices(
             cr, uid, contract_ids, context=context,
             since_date=since_date)
+        recurring_contract_obj.rewind_next_invoice_date(
+            cr, uid, contract_ids, since_date, context)
+        return res
 
     def do_nothing(self, cr, uid, group, advance_billing=0, context=None):
         """ No changes before generation """
