@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_change_attribution_form" model="ir.ui.view">
+            <field name="name">change.attribution.wizard.form</field>
+            <field name="model">unreconcile.change.attribution.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Change attribution of payment" version="7.0">
+                    <header>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+
+                    <sheet>
+                        <div states="unrec">
+                            <p>This will cancel the following invoice lines, for letting you changing them.</p>
+                            <p>Following invoice lines will be cancelled, please verify the validity of your selection:</p>
+                        </div>
+                        <div states="rec">
+                            <p>You can here edit invoice lines to change the attribution of the payment.</p>
+                            <p>Please take care to have the same total amount at the end of the process.</p>
+                        </div>
+                        <group>
+                            <field name="invoice_line_ids" attrs="{'readonly': [('state', '=', 'unrec')]}"/>
+                            <field name="amount_computed" states="rec" class="oe_red oe_right"/>
+                            <field name="amount_total" class="oe_red oe_right"/>
+                            <field name="comment" states="rec"/>
+                        </group>
+                    </sheet>
+
+                    <footer>
+                        <button name="unreconcile" type="object" string="Unreconcile payment" class="oe_highlight" states="unrec"/>
+                        <button name="reconcile" type="object" string="Validate and reconcile" class="oe_highlight" states="rec"/>
+                        <button string="Cancel" special="cancel" class="oe_link"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <act_window id="action_change_attribution"
+                    multi="True"
+                    key2="client_action_multi" name="Change attribution"
+                    res_model="unreconcile.change.attribution.wizard" src_model="account.move.line"
+                    view_mode="form" target="new" view_type="form"/>
+    </data>
+</openerp> 
