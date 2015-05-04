@@ -19,6 +19,7 @@ import pdb
 
 
 class change_attribution_wizard(orm.TransientModel):
+
     """
     Wizard that helps the user doing changing the attribution of a payment,
     by automatically un-reconciling related move lines, cancelling
@@ -31,14 +32,14 @@ class change_attribution_wizard(orm.TransientModel):
         # The ids of the move_lines are given in the context, so
         # we don't use the 'ids' fields and put [0] in it.
         return self._get_invoice_lines(cr, uid, [0], 'contract_id', '',
-                                      context)[0]['invoice_line_ids']
-                               
+                                       context)[0]['invoice_line_ids']
+
     def _get_default_payments(self, cr, uid, context=None):
         # The ids of the move_lines are given in the context, so
         # we don't use the 'ids' fields and put [0] in it.
         return self._get_invoice_lines(cr, uid, [0], 'contract_id', '',
                                        context)[0]['payment_ids']
-                                       
+
     def _get_default_total(self, cr, uid, context=None):
         # The ids of the move_lines are given in the context, so
         # we don't use the 'ids' fields and put [0] in it.
@@ -54,19 +55,21 @@ class change_attribution_wizard(orm.TransientModel):
         active_ids = context.get('active_ids')
         if not invl_ids and active_ids:
             for mvl in move_line_obj.browse(cr, uid, active_ids,
-                                                  context):
+                                            context):
                 # Look for credit lines
                 if mvl.credit > 0 and mvl.reconcile_id:
                     payment_ids.append(mvl.id)
                     # Find related reconciled invoices
                     invoice_ids = invoice_obj.search(cr, uid, [
-                        ('move_id.line_id.reconcile_id', '=', mvl.reconcile_id.id),
+                        ('move_id.line_id.reconcile_id',
+                         '=', mvl.reconcile_id.id),
                         ('state', '=', 'paid'),
                         ('residual', '=', 0.0)], context=context)
                     for invoice in invoice_obj.browse(cr, uid, invoice_ids,
                                                       context):
                         amount_total += invoice.amount_total
-                        invl_ids.extend([invl.id for invl in invoice.invoice_line])
+                        invl_ids.extend(
+                            [invl.id for invl in invoice.invoice_line])
 
         return {id: {
             'invoice_line_ids': invl_ids,
