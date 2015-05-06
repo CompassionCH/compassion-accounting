@@ -11,7 +11,6 @@
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from calendar import monthrange
 
 from openerp.osv import orm, fields
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
@@ -173,19 +172,6 @@ class contract_group(orm.Model):
 
         return res
 
-    def _get_since_date(self, cr, uid, next_invoice_date, context=None):
-        """ Calculate the since_date to clean """
-        since_date = datetime.today()
-        next_invoice_date = datetime.strptime(
-            next_invoice_date, DF)
-
-        max_range = monthrange(since_date.year, since_date.month)[1]
-        day = next_invoice_date.day
-        if day > max_range:
-            day = max_range
-
-        return since_date.replace(day=day)
-
     def button_generate_invoices(self, cr, uid, ids, context=None):
         invoicer_id = self.generate_invoices(cr, uid, ids, context=context)
         self.validate_invoices(cr, uid, invoicer_id, context)
@@ -202,11 +188,14 @@ class contract_group(orm.Model):
                 cr, uid, [invoicer_id])
 
     def clean_invoices(self, cr, uid, group, advance_billing=0, context=None):
+        """ Change method which cancels generated invoices and rewinds
+        the next_invoice_date of contracts, so that new invoices can be
+        generated taking into consideration the modifications of the
+        contract group.
+        """
         recurring_contract_obj = self.pool.get('recurring.contract')
         contract_ids = [contract.id for contract in group.contract_ids]
-        since_date = self._get_since_date(
-            cr, uid, group.next_invoice_date, context)
-        since_date += relativedelta(months=+advance_billing)
+        since_date = datetime.date.today()
         if group.last_paid_invoice_date:
             last_paid_invoice_date = datetime.strptime(
                 group.last_paid_invoice_date, DF)
@@ -215,7 +204,7 @@ class contract_group(orm.Model):
             cr, uid, contract_ids, context=context,
             since_date=since_date)
         recurring_contract_obj.rewind_next_invoice_date(
-            cr, uid, contract_ids, since_date, context)
+            cr, uid, contract_ids, context)
         return res
 
     def do_nothing(self, cr, uid, group, advance_billing=0, context=None):
@@ -336,5 +325,5 @@ class contract_group(orm.Model):
             vals = {}
             contract_obj = self.pool.get('recurring.contract')
             next_date = contract_obj._compute_next_invoice_date(contract)
-            vals['next_invoice_date'] = next_date.strftime(DF)
+            vals['next_invoice_date'] = next_date
             contract_obj.write(cr, uid, [contract.id], vals, context)

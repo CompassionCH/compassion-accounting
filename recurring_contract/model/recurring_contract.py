@@ -54,8 +54,8 @@ class res_partner(orm.Model):
 
 
 class recurring_contract_line(orm.Model):
-
     """ Each product sold through a contract """
+
     _name = "recurring.contract.line"
     _description = "A contract line"
 
@@ -104,8 +104,8 @@ class recurring_contract_line(orm.Model):
 
 
 class recurring_contract(orm.Model):
+    """ A contract to perform recurring invoicing to a partner """
 
-    ''' A contract to perform recurring invoicing to a partner '''
     _name = "recurring.contract"
     _description = "Contract for recurring invoicing"
     _inherit = ['mail.thread']
@@ -121,7 +121,7 @@ class recurring_contract(orm.Model):
     def _get_last_paid_invoice(self, cr, uid, ids, name, args, context=None):
         res = dict()
         for contract in self.browse(cr, uid, ids, context):
-            res[contract.id] = max([invl.due_date
+            res[contract.id] = max([invl.invoice_id.date_invoice
                                     for invl in contract.invoice_line_ids
                                     if invl.state == 'paid'] or [False])
         return res
@@ -328,22 +328,27 @@ class recurring_contract(orm.Model):
 
         return inv_ids
 
-    def rewind_next_invoice_date(
-            self, cr, uid, ids, new_invoice_date, context):
+    def rewind_next_invoice_date(self, cr, uid, ids, context):
+        """ Rewinds the next invoice date of contract after the last
+        generated invoice. No open invoices exist after that date. """
+        gen_states = self.pool.get(
+            'recurring.contract.group')._get_gen_states()
         for contract in self.browse(cr, uid, ids, context):
-            next_invoice_date = new_invoice_date
+            if contract.state in gen_states:
+                last_invoice_date = max([
+                    datetime.strptime(line.invoice_id.date_invoice, DF) for
+                    line in contract.invoice_line_ids
+                    if line.state in ('open', 'paid')] or [False])
+                if last_invoice_date:
+                    super(recurring_contract, self).write(
+                        cr, uid, [contract.id], {
+                            'next_invoice_date': last_invoice_date},
+                        context)
+                    contract.write({
+                        'next_invoice_date':
+                        self._compute_next_invoice_date(contract)})
 
-            if contract.last_paid_invoice_date:
-                next_invoice_date = max(
-                    datetime.strptime(
-                        contract.last_paid_invoice_date, DF),
-                    new_invoice_date)
-
-            super(recurring_contract, self).write(
-                cr, uid, [contract.id],
-                {'next_invoice_date': datetime.strftime(
-                    next_invoice_date, DF)},
-                context)
+        return True
 
     #################################
     #        PRIVATE METHODS        #
@@ -361,7 +366,7 @@ class recurring_contract(orm.Model):
         else:
             next_date = next_date + relativedelta(years=+rec_value)
 
-        return next_date
+        return next_date.strftime(DF)
 
     def _update_invoice_lines(self, cr, uid, contract, invoice_ids,
                               context=None):
