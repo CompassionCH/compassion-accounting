@@ -37,7 +37,7 @@
 			</header>
 			<sheet>
                 <div class="oe_right oe_button_box">
-                    <button name="button_generate_invoices" type='object' string="Generate invoices"/>
+                    <button name="button_generate_invoices" type='object' string="Generate invoices" states="active"/>
                 </div>
 
 			    <div class="oe_title">
