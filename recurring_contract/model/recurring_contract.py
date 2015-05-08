@@ -340,20 +340,28 @@ class recurring_contract(orm.Model):
                     line in contract.invoice_line_ids
                     if line.state in ('open', 'paid')] or [False])
                 if last_invoice_date:
+                    # Call super for allowing rewind.
                     super(recurring_contract, self).write(
                         cr, uid, [contract.id], {
                             'next_invoice_date': last_invoice_date},
                         context)
-                    contract.write({
-                        'next_invoice_date':
-                        self._compute_next_invoice_date(contract)})
+                    contract.update_next_invoice_date()
 
         return True
 
     #################################
     #        PRIVATE METHODS        #
     #################################
+    def update_next_invoice_date(self, cr, uid, ids, context=None):
+        """ Recompute and set next_invoice date. """
+        for contract in self.browse(cr, uid, ids, context):
+            next_date = self._compute_next_invoice_date(contract)
+            contract.write({'next_invoice_date': next_date})
+
+        return True
+
     def _compute_next_invoice_date(self, contract):
+        """ Compute next_invoice_date for a single contract. """
         next_date = datetime.strptime(contract.next_invoice_date, DF)
         rec_unit = contract.group_id.recurring_unit
         rec_value = contract.group_id.recurring_value
@@ -395,11 +403,11 @@ class recurring_contract(orm.Model):
 
     def _on_change_next_invoice_date(
             self, cr, uid, ids, new_invoice_date, context=None):
+        new_invoice_date = datetime.strptime(new_invoice_date, DF)
         for contract in self.browse(cr, uid, ids, context):
             if contract.next_invoice_date:
                 next_invoice_date = datetime.strptime(
                     contract.next_invoice_date, DF)
-                new_invoice_date = datetime.strptime(new_invoice_date, DF)
                 if (next_invoice_date > new_invoice_date):
                     raise orm.except_orm(
                         'Error',

@@ -219,6 +219,7 @@ class contract_group(orm.Model):
         inv_obj = self.pool.get('account.invoice')
         journal_obj = self.pool.get('account.journal')
         contract_obj = self.pool.get('recurring.contract')
+        gen_states = self._get_gen_states()
 
         if not ids:
             ids = self.search(cr, uid, [], context=context)
@@ -249,7 +250,7 @@ class contract_group(orm.Model):
                     contr_ids = [c.id
                                  for c in contract_group.contract_ids
                                  if c.next_invoice_date <= group_inv_date and
-                                 c.state in self._get_gen_states()]
+                                 c.state in gen_states]
                 if not contr_ids:
                     break
 
@@ -322,8 +323,4 @@ class contract_group(orm.Model):
             inv_line_obj.create(cr, uid, inv_line_data, context=context)
 
         if not context.get('no_next_date_update'):
-            vals = {}
-            contract_obj = self.pool.get('recurring.contract')
-            next_date = contract_obj._compute_next_invoice_date(contract)
-            vals['next_invoice_date'] = next_date
-            contract_obj.write(cr, uid, [contract.id], vals, context)
+            contract.update_next_invoice_date()

@@ -32,7 +32,6 @@
                                     <field name="name" />
                                     <field name="contract_id" domain="[('partner_id', '=', parent.partner_id)]" options="{'search_more': true, 'field_color': 'state',
                                      'colors': {'cancelled': 'gray', 'terminated': 'gray', 'draft': 'blue', 'mandate': 'red', 'waiting': 'green'}}"/>
-                                    <field name="child_name" />
                                     <field name="account_id" />
                                     <field name="account_analytic_id" />
                                     <field name="due_date" />
