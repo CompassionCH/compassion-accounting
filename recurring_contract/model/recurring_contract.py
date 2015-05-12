@@ -140,7 +140,8 @@ class recurring_contract(orm.Model):
             track_visibility="onchange"),
         'next_invoice_date': fields.date(
             _('Next invoice date'), readonly=False,
-            states={'draft': [('readonly', False)]}),
+            states={'draft': [('readonly', False)]},
+            track_visibility="onchange"),
         'last_paid_invoice_date': fields.function(
             _get_last_paid_invoice, type='date',
             string=_('Last paid invoice date')),

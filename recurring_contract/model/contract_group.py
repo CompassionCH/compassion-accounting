@@ -262,7 +262,12 @@ class contract_group(orm.Model):
                                                     context):
                     self._generate_invoice_lines(cr, uid, contract, invoice_id,
                                                  context)
-                inv_obj.button_compute(cr, uid, [invoice_id], context=context)
+                invoice = inv_obj.browse(cr, uid, invoice_id, context)
+                if invoice.invoice_line:
+                    invoice.button_compute()
+                else:
+                    invoice.unlink()
+
             # After a contract_group is done, we commit all writes in order to
             # avoid doing it again in case of an error or a timeout
             cr.commit()
@@ -320,7 +325,8 @@ class contract_group(orm.Model):
         for contract_line in contract.contract_line_ids:
             inv_line_data = self._setup_inv_line_data(cr, uid, contract_line,
                                                       invoice_id, context)
-            inv_line_obj.create(cr, uid, inv_line_data, context=context)
+            if inv_line_data:
+                inv_line_obj.create(cr, uid, inv_line_data, context=context)
 
         if not context.get('no_next_date_update'):
             contract.update_next_invoice_date()
