@@ -288,8 +288,6 @@ class recurring_contract(orm.Model):
         if to_date:
             invl_search.append(('due_date', '<=', to_date))
         inv_line_obj = self.pool.get('account.invoice.line')
-        inv_obj = self.pool.get('account.invoice')
-        wf_service = netsvc.LocalService('workflow')
 
         # Find all unpaid invoice lines after the given date
         inv_line_ids = inv_line_obj.search(cr, uid, invl_search,
@@ -315,19 +313,26 @@ class recurring_contract(orm.Model):
                     # The invoice would be empty if we remove the line
                     empty_inv_ids.add(invoice.id)
 
-        if inv_line_ids:  # To prevent remove all inv_lines...
-            inv_line_obj.unlink(cr, uid, to_remove_ids, context)
-
-        inv_obj.action_cancel(cr, uid, list(inv_ids), context=context)
+        inv_line_obj.unlink(cr, uid, to_remove_ids, context)
 
         # Invoices to set back in open state
         renew_inv_ids = list(inv_ids - empty_inv_ids)
-        inv_obj.action_cancel_draft(cr, uid, renew_inv_ids)
-        for inv in inv_obj.browse(cr, uid, renew_inv_ids, context):
-            wf_service.trg_validate(uid, 'account.invoice',
-                                    inv.id, 'invoice_open', cr)
+        self._cancel_confirm_invoices(cr, uid, list(inv_ids), renew_inv_ids,
+                                      context)
 
         return inv_ids
+
+    def _cancel_confirm_invoices(self, cr, uid, cancel_ids, confirm_ids,
+                                 context=None):
+        """ Cancels given invoices and validate again given invoices.
+            confirm_ids must be a subset of cancel_ids ! """
+        inv_obj = self.pool.get('account.invoice')
+        wf_service = netsvc.LocalService('workflow')
+        inv_obj.action_cancel(cr, uid, cancel_ids, context=context)
+        inv_obj.action_cancel_draft(cr, uid, confirm_ids)
+        for invoice_id in confirm_ids:
+            wf_service.trg_validate(uid, 'account.invoice',
+                                    invoice_id, 'invoice_open', cr)
 
     def rewind_next_invoice_date(self, cr, uid, ids, context):
         """ Rewinds the next invoice date of contract after the last
