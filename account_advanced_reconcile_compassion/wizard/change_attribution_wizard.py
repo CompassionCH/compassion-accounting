@@ -203,6 +203,7 @@ class change_attribution_wizard(orm.TransientModel):
         invoice_line_obj = self.pool.get('account.invoice.line')
         new_invoice_id = False
         invoice_ids = list()
+        wf_service = netsvc.LocalService('workflow')
         for invoice_line in invoice_lines:
             invoice = invoice_line.invoice_id
             if invoice.id not in invoice_ids:
@@ -221,7 +222,8 @@ class change_attribution_wizard(orm.TransientModel):
                         ('state', '=', 'draft'),
                         ('date_invoice', '=', today)], context=context)[0]
 
-                invoice_obj.action_cancel(cr, uid, [invoice.id], context)
+                wf_service.trg_validate(uid, 'account.invoice', invoice.id,
+                                        'invoice_cancel', cr)
                 invoice.write({'comment': wizard.comment or
                                'Payment attribution changed.'})
                 invl_ids = [invl.id for invl in invoice.invoice_line]

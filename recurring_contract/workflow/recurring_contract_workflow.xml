@@ -33,8 +33,7 @@
 		<field name="wkf_id" ref="wkf_recurring_contract" />
 		<field name="name">terminated</field>
 		<field name="kind">function</field>
-		<field name="action">contract_terminated()
-							clean_invoices()</field>
+		<field name="action">contract_terminated()</field>
 		<field name="flow_stop" eval='True' />
 	</record>
 
