@@ -275,7 +275,7 @@ class recurring_contract(orm.Model):
             cr, uid, group_ids, context)
 
     def clean_invoices(self, cr, uid, ids, context=None, since_date=None,
-                       to_date=None):
+                       to_date=None, keep_lines=None):
         """ This method deletes invoices lines generated for a given contract
             having a due date >= current month. If the invoice_line was the
             only line in the invoice, we cancel the invoice. In the other
@@ -295,7 +295,7 @@ class recurring_contract(orm.Model):
 
         inv_ids = set()
         empty_inv_ids = set()
-        to_remove_ids = []   # Invoice lines that will be removed
+        to_remove_ids = []   # Invoice lines that will be moved or removed
 
         for inv_line in inv_line_obj.browse(cr, uid, inv_line_ids, context):
             invoice = inv_line.invoice_id
@@ -303,32 +303,40 @@ class recurring_contract(orm.Model):
             # Check if invoice is empty after removing the invoice_lines
             # of the given contract
             if invoice.id not in empty_inv_ids:
-                other_lines_ids = [invl.id for invl in invoice.invoice_line]
-                remaining_lines_ids = [invl_id for invl_id in other_lines_ids
-                                       if invl_id not in inv_line_ids]
+                remaining_lines_ids = [
+                    invl.id for invl in invoice.invoice_line if
+                    not invl.contract_id or
+                    invl.contract_id and invl.contract_id.id not in ids]
                 if remaining_lines_ids:
-                    # We can remove the line
+                    # We can move or remove the line
                     to_remove_ids.append(inv_line.id)
                 else:
                     # The invoice would be empty if we remove the line
                     empty_inv_ids.add(invoice.id)
 
-        inv_line_obj.unlink(cr, uid, to_remove_ids, context)
+        if keep_lines:
+            self._move_cancel_lines(cr, uid, to_remove_ids, context,
+                                    keep_lines)
+        else:
+            inv_line_obj.unlink(cr, uid, to_remove_ids, context)
 
         # Invoices to set back in open state
         renew_inv_ids = list(inv_ids - empty_inv_ids)
+
         self._cancel_confirm_invoices(cr, uid, list(inv_ids), renew_inv_ids,
-                                      context)
+                                      context, keep_lines)
 
         return inv_ids
 
     def _cancel_confirm_invoices(self, cr, uid, cancel_ids, confirm_ids,
-                                 context=None):
+                                 context=None, keep_lines=None):
         """ Cancels given invoices and validate again given invoices.
             confirm_ids must be a subset of cancel_ids ! """
         inv_obj = self.pool.get('account.invoice')
         wf_service = netsvc.LocalService('workflow')
-        inv_obj.action_cancel(cr, uid, cancel_ids, context=context)
+        for invoice_id in cancel_ids:
+            wf_service.trg_validate(uid, 'account.invoice',
+                                    invoice_id, 'invoice_cancel', cr)
         inv_obj.action_cancel_draft(cr, uid, confirm_ids)
         for invoice_id in confirm_ids:
             wf_service.trg_validate(uid, 'account.invoice',
@@ -451,6 +459,57 @@ class recurring_contract(orm.Model):
             wf_service.trg_validate(
                 uid, 'account.invoice', invoice.id, 'invoice_open', cr)
 
+    def _move_cancel_lines(self, cr, uid, invoice_line_ids, context=None,
+                           message=None):
+        """ Method that takes out given invoice_lines from their invoice
+        and put them in a cancelled copy of that invoice.
+        Warning : this method does not recompute totals of original invoices,
+                  and does not update related move lines.
+        """
+        invoice_obj = self.pool.get('account.invoice')
+        invoice_line_obj = self.pool.get('account.invoice.line')
+        invoices_copy = dict()
+        for invoice_line in invoice_line_obj.browse(cr, uid, invoice_line_ids,
+                                                    context):
+            invoice = invoice_line.invoice_id
+            copy_invoice_id = invoices_copy.get(invoice.id)
+            if not copy_invoice_id:
+                invoice_obj.copy(cr, uid, invoice.id, {
+                    'date_invoice': invoice.date_invoice}, context)
+                copy_invoice_id = invoice_obj.search(
+                    cr, uid, [
+                        ('partner_id', '=', invoice.partner_id.id),
+                        ('state', '=', 'draft'),
+                        ('id', '!=', invoice.id),
+                        ('date_invoice', '=', invoice.date_invoice)],
+                    context=context)[0]
+                # Empty the new invoice
+                cancel_lines = invoice_line_obj.search(cr, uid, [
+                    ('invoice_id', '=', copy_invoice_id)],
+                    context=context)
+                invoice_line_obj.unlink(cr, uid, cancel_lines, context)
+                invoices_copy[invoice.id] = copy_invoice_id
+
+            # Move the line in the invoice copy
+            invoice_line.write({'invoice_id': copy_invoice_id})
+
+        # Compute and cancel invoice copies
+        cancel_ids = invoices_copy.values()
+        if cancel_ids:
+            invoice_obj.button_compute(cr, uid, cancel_ids,
+                                       context=context, set_total=True)
+            wf_service = netsvc.LocalService('workflow')
+            for cancel_id in cancel_ids:
+                wf_service.trg_validate(
+                    uid, 'account.invoice', cancel_id, 'invoice_cancel', cr)
+
+            self.pool.get('mail.thread').message_post(
+                cr, uid, cancel_ids, message,
+                _("Invoice Cancelled"), 'comment',
+                context={'thread_model': 'account.invoice'})
+
+        return True
+
     ##########################
     #        CALLBACKS       #
     ##########################
@@ -486,6 +545,7 @@ class recurring_contract(orm.Model):
     def contract_terminated(self, cr, uid, ids, context=None):
         today = datetime.today().strftime(DF)
         self.write(cr, uid, ids, {'state': 'terminated', 'end_date': today})
+        self.clean_invoices(cr, uid, ids, context)
         return True
 
     def end_date_reached(self, cr, uid, context=None):
