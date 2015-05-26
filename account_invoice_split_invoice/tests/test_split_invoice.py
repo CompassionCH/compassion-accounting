@@ -43,6 +43,7 @@ class test_split_invoice(common.TransactionCase):
             'account_id': account_id,
             'currency_id': 1,
             'journal_id': 1,
+            'update_posted' : True,
             'partner_id': partner_id,
             'date_invoice': datetime.today()
         })
