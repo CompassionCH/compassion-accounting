@@ -503,10 +503,10 @@ class recurring_contract(orm.Model):
                 wf_service.trg_validate(
                     uid, 'account.invoice', cancel_id, 'invoice_cancel', cr)
 
-            self.pool.get('mail.thread').message_post(
-                cr, uid, cancel_ids, message,
-                _("Invoice Cancelled"), 'comment',
-                context={'thread_model': 'account.invoice'})
+                self.pool.get('mail.thread').message_post(
+                    cr, uid, cancel_id, message,
+                    _("Invoice Cancelled"), 'comment',
+                    context={'thread_model': 'account.invoice'})
 
         return True
 
