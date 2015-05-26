@@ -226,7 +226,7 @@ class contract_group(orm.Model):
 
         if not invoicer_id:
             invoicer_id = self.pool.get('recurring.invoicer').create(
-                cr, uid, {}, context)
+                cr, uid, {'source': self._name}, context)
 
         journal_ids = journal_obj.search(
             cr, uid, [('type', '=', 'sale'), ('company_id', '=', 1 or False)],
@@ -257,6 +257,7 @@ class contract_group(orm.Model):
                 inv_data = self._setup_inv_data(cr, uid, contract_group,
                                                 journal_ids, invoicer_id,
                                                 context=context)
+
                 invoice_id = inv_obj.create(cr, uid, inv_data, context=context)
                 for contract in contract_obj.browse(cr, uid, contr_ids,
                                                     context):

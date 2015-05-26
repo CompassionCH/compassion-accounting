@@ -141,7 +141,8 @@ class AccountStatementLine(orm.Model):
         invoice_obj = self.pool.get('account.invoice')
         if not invoicer:
             invoicer_obj = self.pool.get('recurring.invoicer')
-            invoicer_id = invoicer_obj.create(cr, uid, {}, context)
+            invoicer_id = invoicer_obj.create(cr, uid, {'source': self._name},
+                                              context)
             b_line.statement_id.write(
                 {'recurring_invoicer_id': invoicer_id})
             invoicer = invoicer_obj.browse(cr, uid, invoicer_id, context)

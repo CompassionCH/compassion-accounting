@@ -31,6 +31,7 @@ class recurring_invoicer(orm.Model):
 
     _columns = {
         'identifier': fields.char(_('Identifier'), required=True),
+        'source': fields.char(_('Source model'), required=True),
         'generation_date': fields.date(_('Generation date')),
         'invoice_ids': fields.one2many(
             'account.invoice', 'recurring_invoicer_id',
@@ -43,6 +44,7 @@ class recurring_invoicer(orm.Model):
             cr, uid, 'rec.invoicer.ident', context=context),
         'generation_date': lambda self, cr, uid, context:
         datetime.today().strftime(DF),
+        'source': 'default value',
     }
 
     def validate_invoices(self, cr, uid, ids, context=None):

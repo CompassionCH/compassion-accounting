@@ -30,7 +30,9 @@ class recurring_invoicer_wizard(orm.TransientModel):
     def generate(self, cr, uid, ids, context=None):
         contract_group_obj = self.pool.get('recurring.contract.group')
         recurring_invoicer_obj = self.pool.get('recurring.invoicer')
-        invoicer_id = recurring_invoicer_obj.create(cr, uid, {}, context)
+        invoicer_id = recurring_invoicer_obj.create(cr, uid,
+                                                    {'source': self._name},
+                                                    context)
 
         contract_group_obj.generate_invoices(cr, uid, [], invoicer_id, context)
 
