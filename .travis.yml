@@ -19,7 +19,7 @@ virtualenv:
 install:
   #- pip install flake8
   - pip install pysftp
-  - pip install MySQL-python
+  #- pip install MySQL-python
   - pip install unidecode 
   - pip install pysmb # allow to use "from smb.SMBConnection import SMBConnection"
   - git clone https://github.com/albertsh/maintainer-quality-tools.git ${HOME}/maintainer-quality-tools -b r2
