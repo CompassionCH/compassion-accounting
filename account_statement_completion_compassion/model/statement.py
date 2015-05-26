@@ -136,7 +136,6 @@ class AccountStatementLine(orm.Model):
     def _create_invoice_from_line(self, cr, uid, b_line, context=None):
         if not b_line.product_id:
             return True
-
         # Get the attached recurring invoicer
         invoicer = b_line.statement_id.recurring_invoicer_id
         invoice_obj = self.pool.get('account.invoice')
@@ -205,6 +204,13 @@ class AccountStatementLine(orm.Model):
             'partner_id': b_line.partner_id.id,
             'invoice_id': invoice_id,
         }
+
+        if b_line.product_id.categ_name in ('Sponsor gifts',
+                                            'Sponsorship') and not \
+                b_line.contract_id:
+            raise orm.except_orm(_('A field is required'),
+                                 _('Add a Sponsorship'))
+
         analytic = self.pool.get('account.analytic.default').account_get(
             cr, uid, b_line.product_id.id, b_line.partner_id.id, uid,
             time.strftime('%Y-%m-%d'), context=context)

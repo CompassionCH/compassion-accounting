@@ -34,7 +34,7 @@
     "category": "Finance",
     "website": "http://www.compassion.ch",
     "depends": ['account_statement_base_completion',
-                'crm_compassion',
+                'crm_compassion', 'hr_expense'
                 ],
     "data": ['view/statement_view.xml',
              'view/invoice_view.xml',
