@@ -36,6 +36,9 @@ class AccountStatementCompletionRule(orm.Model):
             ('get_from_bvr_ref',
              'Compassion: From line reference '
              '(based on the BVR reference of the sponsor)'),
+            ('lsv_dd_get_from_bvr_ref',
+             'Compassion [LSV/DD]: From line reference '
+             '(based on the BVR reference of the sponsor)'),
             ('get_from_amount',
              'Compassion: From line amount '
              '(based on the amount of the supplier invoice)'),
@@ -99,41 +102,28 @@ class AccountStatementCompletionRule(orm.Model):
         """
         If line ref match an invoice BVR Reference, update partner and account
         Then, call the generic st_line method to complete other values.
-        :param dict st_line: read of the concerned account.bank.statement.line
-        :return:
-            A dict of value that can be passed directly to the write method of
-            the statement line or {}
-           {'partner_id': value,
-            'account_id' : value,
-            ...}
         """
         ref = st_line['ref'].strip()
-        res = {}
-        partner = None
+        res = dict()
+        partner = self._search_partner_by_bvr_ref(cr, uid, ref, context)
 
-        # Search Contract
-        contract_group_obj = self.pool.get('recurring.contract.group')
-        contract_group_ids = contract_group_obj.search(
-            cr, uid, [('bvr_reference', '=', ref)], context=context)
-        if contract_group_ids:
-            partner = contract_group_obj.browse(
-                cr, uid, contract_group_ids, context=context)[0].partner_id
-        else:
-            # Search open Customer Invoices (with field 'bvr_reference' set)
-            invoice_obj = self.pool.get('account.invoice')
-            invoice_ids = invoice_obj.search(cr, uid, [
-                ('bvr_reference', '=', ref),
-                ('state', '=', 'open')], context=context)
-            if not invoice_ids:
-                # Search open Supplier Invoices (with field 'reference_type'
-                # set to BVR)
-                invoice_ids = invoice_obj.search(
-                    cr, uid,
-                    [('reference_type', '=', 'bvr'), ('reference', '=', ref),
-                     ('state', '=', 'open')], context=context)
-            if invoice_ids:
-                partner = invoice_obj.browse(
-                    cr, uid, invoice_ids, context=context)[0].partner_id
+        if partner:
+            partner_obj = self.pool.get('res.partner')
+            partner = partner_obj._find_accounting_partner(partner)
+            res['partner_id'] = partner.id
+            res['account_id'] = partner.property_account_receivable.id
+
+        return res
+
+    def lsv_dd_get_from_bvr_ref(self, cr, uid, id, st_line, context=None):
+        """
+        If line ref match an invoice BVR Reference, update partner and account
+        Then, call the generic st_line method to complete other values.
+        For LSV/DD statements, search in all invoices.
+        """
+        ref = st_line['ref'].strip()
+        res = dict()
+        partner = self._search_partner_by_bvr_ref(cr, uid, ref, context, True)
 
         if partner:
             partner_obj = self.pool.get('res.partner')
@@ -369,6 +359,39 @@ class AccountStatementCompletionRule(orm.Model):
             cr, uid, inv_line_data, context=context)
 
         return res
+
+    def _search_partner_by_bvr_ref(self, cr, uid, bvr_ref, context=None,
+                                   search_old_invoices=False):
+        """ Finds a partner given its bvr reference. """
+        partner = None
+        contract_group_obj = self.pool.get('recurring.contract.group')
+        contract_group_ids = contract_group_obj.search(
+            cr, uid, [('bvr_reference', '=', bvr_ref)], context=context)
+        if contract_group_ids:
+            partner = contract_group_obj.browse(
+                cr, uid, contract_group_ids, context=context)[0].partner_id
+        else:
+            # Search open Customer Invoices (with field 'bvr_reference' set)
+            invoice_obj = self.pool.get('account.invoice')
+            invoice_search = [
+                ('bvr_reference', '=', bvr_ref),
+                ('state', '=', 'open')]
+            if search_old_invoices:
+                invoice_search[1] = ('state', 'in', ('open', 'cancel',
+                                                     'paid'))
+            invoice_ids = invoice_obj.search(cr, uid, invoice_search,
+                                             context=context)
+            if not invoice_ids:
+                # Search open Supplier Invoices (with field 'reference_type'
+                # set to BVR)
+                invoice_ids = invoice_obj.search(cr, uid, [
+                    ('reference_type', '=', 'bvr'),
+                    ('reference', '=', bvr_ref),
+                    ('state', '=', 'open')], context=context)
+            if invoice_ids:
+                partner = invoice_obj.browse(
+                    cr, uid, invoice_ids, context=context)[0].partner_id
+        return partner
 
     def get_sponsor_name(self, cr, uid, st_line, context=None):
         res = dict()
