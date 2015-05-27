@@ -37,7 +37,8 @@ install:
 script:
   #- test_flake8
   #- travis/travis_header.sh
-  - travis_run_tests --log-level : TEST
+  - travis_run_tests 
+  - --log-level : TEST
 
 after_success:
   coveralls
