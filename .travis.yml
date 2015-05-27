@@ -12,7 +12,9 @@ python:
 env:
   - VERSION="7.0" ODOO_REPO="odoo/odoo" LINT_CHECK="0"
   - VERSION="7.0" ODOO_REPO="OCA/OCB"
-
+  
+virtualenv:
+  system_site_packages: true
 
 install:
   - pip install flake8
