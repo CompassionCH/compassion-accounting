@@ -30,13 +30,13 @@ class test_split_invoice(common.TransactionCase):
         self.invoice_line_id2 = self._create_invoice_line('service 2', '80.0')
 
     def _create_invoice(self, invoice_name):
-        
+
         # Set the update_posted to True to make them cancelable
         journal_obj = self.registry('account.journal')
         journal_obj.write(self.cr, self.uid, 1, {
             'update_posted': True,
         })
-        
+
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
             'name': 'Kevin',
@@ -54,7 +54,7 @@ class test_split_invoice(common.TransactionCase):
             'partner_id': partner_id,
             'date_invoice': datetime.today()
         })
-        
+
         return invoice_id
 
     def _create_invoice_line(self, description, amount):
