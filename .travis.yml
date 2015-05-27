@@ -11,7 +11,7 @@ python:
 
 env:
   - VERSION="7.0" ODOO_REPO="odoo/odoo" EXCLUDE="log_level='info'"
-  - VERSION="7.0" ODOO_REPO="OCA/OCB"
+  #- VERSION="7.0" ODOO_REPO="OCA/OCB"
   
 virtualenv:
   system_site_packages: true
