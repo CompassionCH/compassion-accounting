@@ -38,7 +38,8 @@ script:
   - test_flake8
   - travis/travis_header.sh
   - travis_run_tests 
-  
+  - coverage run --source=coveralls setup.py test
+  - coverage report -m
 
 after_success:
-  coveralls
+  coveralls --verbose
