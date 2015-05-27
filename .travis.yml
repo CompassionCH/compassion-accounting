@@ -15,13 +15,6 @@ env:
 
 virtualenv:
   system_site_packages: true
-  
-es.logger.level: INFO
-rootLogger: ${es.logger.level}, console, file
-logger:
-  # reduce the logging for aws, too much is logged under the default INFO
-  com.amazonaws: WARN
-  org.apache.http: INFO
 
 install:
   - pip install flake8
