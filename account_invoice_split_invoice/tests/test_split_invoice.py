@@ -10,7 +10,6 @@
 ##############################################################################
 
 from openerp.tests import common
-from openerp.osv import orm, fields
 from datetime import datetime
 from openerp import netsvc
 import logging
