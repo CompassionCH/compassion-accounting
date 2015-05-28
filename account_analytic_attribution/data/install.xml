@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (C) 2015 Compassion (http://www.compassion.ch)
+    @author Emanuel Cino <ecino@compassion.ch>
+    The licence is in the file __openerp__.py
+-->
+<openerp>
+	<data noupdate="1">
+        <function model="account.analytic.default" name="install"/>
+    </data>
+    <data>
+        <!-- Root analytic account used for analytic lines which will be
+            dispatched -->
+        <record id="account_analytic_root_to_attribute" model="account.analytic.account">
+            <field name="name">Attribution Center</field>
+            <field name="type">view</field>
+            <field name="code">ATT000</field>
+        </record>
+        
+        <!-- Analytic Journal used for attributed analytic lines -->
+        <record id="journal_attribution" model="account.analytic.journal">
+            <field name="name">Analytic Attribution</field>
+            <field name="code">ATTR</field>
+            <field name="type">situation</field>
+            <field name="active">1</field>
+        </record>
+    </data>
+</openerp>
