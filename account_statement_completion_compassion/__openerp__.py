@@ -38,7 +38,6 @@
                 ],
     "data": ['view/statement_view.xml',
              'view/invoice_view.xml',
-             'view/move_line_view.xml',
              'data/data.xml'],
     "css": ["static/src/css/sheet.css"],
     "description": """
