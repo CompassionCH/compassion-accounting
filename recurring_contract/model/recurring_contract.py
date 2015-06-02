@@ -126,6 +126,11 @@ class recurring_contract(orm.Model):
                                     if invl.state == 'paid'] or [False])
         return res
 
+    def _get_contract_from_group(group_obj, cr, uid, group_ids, context=None):
+        self = group_obj.pool.get(self._name)
+        return self.search(cr, uid, [('group_id', 'in', group_ids)],
+                           context=context)
+
     _columns = {
         'reference': fields.char(
             _('Reference'), required=True, readonly=True,
@@ -180,7 +185,10 @@ class recurring_contract(orm.Model):
         'payment_term_id': fields.related(
             'group_id', 'payment_term_id', relation='account.payment.term',
             type="many2one", readonly=True, string=_('Payment Term'),
-            store=True),
+            store={
+                'recurring.contract.group': (
+                    _get_contract_from_group,
+                    ['payment_term_id'], 10)}),
     }
 
     _defaults = {
@@ -229,13 +237,18 @@ class recurring_contract(orm.Model):
 
     def copy(self, cr, uid, id, default=None, context=None):
         default = default or dict()
+        today = datetime.today()
+        old_contract = self.browse(cr, uid, id, context)
+        next_invoice_date = datetime.strptime(old_contract.next_invoice_date,
+                                              DF)
+        next_invoice_date = next_invoice_date.replace(month=today.month)
         start_date = self._compute_copy_start_date(cr, uid, id, context)
         default.update({
             'state': 'draft',
             'reference': '/',
-            'start_date': start_date,
+            'start_date': today.strftime(DF),
             'end_date': False,
-            'next_invoice_date': start_date,
+            'next_invoice_date': next_invoice_date.strftime(DF),
             'invoice_line_ids': False,
         })
         return super(recurring_contract, self).copy(cr, uid, id, default,
