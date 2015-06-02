@@ -127,7 +127,7 @@ class recurring_contract(orm.Model):
         return res
 
     def _get_contract_from_group(group_obj, cr, uid, group_ids, context=None):
-        self = group_obj.pool.get(self._name)
+        self = group_obj.pool.get('recurring.contract')
         return self.search(cr, uid, [('group_id', 'in', group_ids)],
                            context=context)
 
@@ -242,7 +242,6 @@ class recurring_contract(orm.Model):
         next_invoice_date = datetime.strptime(old_contract.next_invoice_date,
                                               DF)
         next_invoice_date = next_invoice_date.replace(month=today.month)
-        start_date = self._compute_copy_start_date(cr, uid, id, context)
         default.update({
             'state': 'draft',
             'reference': '/',
@@ -253,13 +252,6 @@ class recurring_contract(orm.Model):
         })
         return super(recurring_contract, self).copy(cr, uid, id, default,
                                                     context)
-
-    def _compute_copy_start_date(self, cr, uid, id, context=None):
-        today = datetime.today()
-        if today.day > 15:
-            today = today + relativedelta(months=+1)
-        today = today.replace(day=1)
-        return today.strftime(DF)
 
     def unlink(self, cr, uid, ids, context=None):
         if context is None:
