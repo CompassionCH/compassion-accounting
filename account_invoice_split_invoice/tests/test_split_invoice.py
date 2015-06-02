@@ -16,12 +16,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 class test_split_invoice(common.TransactionCase):
-
     """ Test Project split invoice. 2 cases are tested :
            - open invoices
            - draft invoices
         This test check if the original invoice is well splitted in 2 invoices
-        with the same informations and if the amount are matched"""
+        with the same informations and if the amount are matched """
     def setUp(self):
         super(test_split_invoice, self).setUp()
         self.invoice_id = self._create_invoice('SAJ/2015/0002')
@@ -29,7 +28,7 @@ class test_split_invoice(common.TransactionCase):
         self.invoice_line_id2 = self._create_invoice_line('service 2', '80.0')
         
     def _create_invoice(self, invoice_name):
-        # Set the update_posted to True to make invoice cancelable
+        """ Set the update_posted to True to make invoice cancelable """
         journal_obj = self.registry('account.journal')
         journal_obj.write(self.cr, self.uid, 1, {
             'update_posted': True,
@@ -37,7 +36,6 @@ class test_split_invoice(common.TransactionCase):
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
             'name': 'Kevin',
-
         })
         account_id = self.registry('account.account').search(
             self.cr, self.uid, [('type', '=', 'receivable')])[0]
@@ -100,12 +98,11 @@ class test_split_invoice(common.TransactionCase):
         )
 
     def test_open_invoice(self):
-        # test for invoice in 'open' state
+        """ Run test for invoice in 'open' state """
         self.assertTrue(self.invoice_id)
         invoice_obj = self.registry('account.invoice')
         invoice = invoice_obj.browse(self.cr, self.uid, self.invoice_id)
         self.assertTrue(invoice)
-
         wf_service = netsvc.LocalService('workflow')
         wf_service.trg_validate(
             self.uid, 'account.invoice', self.invoice_id,
@@ -113,10 +110,9 @@ class test_split_invoice(common.TransactionCase):
         self._test_write_lines(invoice)
 
     def test_draft_invoice(self):
-        # test for invoice in 'draft' state
+        """ Run test for invoice in 'draft' state """
         self.assertTrue(self.invoice_id)
         invoice_obj = self.registry('account.invoice')
         invoice = invoice_obj.browse(self.cr, self.uid, self.invoice_id)
-
         self.assertTrue(invoice)
         self._test_write_lines(invoice)
