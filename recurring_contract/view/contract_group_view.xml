@@ -11,7 +11,7 @@
 		<field name="name">group.contract.form</field>
 		<field name="model">recurring.contract.group</field>
 		<field name="arch" type="xml">
-			<form string="Contract groups" version="7.0">      
+			<form string="Contract groups">      
 			<sheet>
 				<h1><field name="ref" /></h1>
 				<group name="info">
