@@ -10,7 +10,7 @@
 			<field name="name">Recurring invoicer wizard view</field>
 			<field name="model">recurring.invoicer.wizard</field>
 			<field name="arch" type="xml">
-				<form string="Invoice generation" version="7.0">
+				<form string="Invoice generation">
 					<separator string="Invoice generation from contracts"/>
 					<footer>
 						<button name="generate" string="Generate" type="object" class="oe_highlight"/>

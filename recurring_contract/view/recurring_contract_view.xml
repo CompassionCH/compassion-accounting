@@ -29,7 +29,7 @@
 		<field name="name">recurring.contract.form</field>
 		<field name="model">recurring.contract</field>
 		<field name="arch" type="xml">
-			<form string="Contract" version="7.0">
+			<form string="Contract" version="8.0">
 			<header>
 				<field name="state" widget="statusbar" statusbar_visible="draft,active,terminated" />
 				<button name="contract_validated" class="oe_highlight" string="Validate" states="draft" />
@@ -47,11 +47,11 @@
 				</div>
 				<group>
 					<group>
-						<field name="partner_id" on_change="on_change_partner_id(partner_id)" />
+						<field name="partner_id"/>
 						<field name="group_id" domain="[('partner_id', '=', partner_id)]" context="{'default_partner_id': partner_id}" />
 					</group>
 					<group>
-						<field name="start_date" on_change="on_change_start_date(start_date)" />
+						<field name="start_date"/>
 						<field name="end_date" />
 						<field name="next_invoice_date" />
 					</group>
@@ -94,7 +94,7 @@
 		<field name="priority" eval="8" />
 		<field name="arch" type="xml">
 			<tree string="Contract Lines" editable="bottom">
-				<field name="product_id" on_change="on_change_product_id(product_id)" />
+				<field name="product_id"/>
 				<field name="amount" />
 				<field name="quantity" />
 				<field name="subtotal" />
