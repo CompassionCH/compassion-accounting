@@ -108,10 +108,10 @@ class account_analytic_default(orm.Model):
             domain += ['|', ('user_id', '=', user_id)]
         domain += [('user_id', '=', False)]
         if analytic_id:
-            domain += ['|', ('analytic_id', '=', analytic_id)]
+            domain += ['|', ('analytic_id', 'child_of', analytic_id)]
         domain += [('analytic_id', '=', False)]
         if account_id:
-            domain += ['|', ('account_id', '=', account_id)]
+            domain += ['|', ('account_id', 'child_of', account_id)]
         domain += [('account_id', '=', False)]
         if date:
             domain += ['|', ('date_start', '<=', date),
