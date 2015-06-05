@@ -14,7 +14,7 @@
 		<field name="arch" type="xml">
 			<tree string="Recurring invoicers" create="false">
 				<field name="identifier" />
-                <field name="source" />
+                    <field name="source" />
 				<field name="generation_date" />
 				<field name="invoice_ids" />
 			</tree>
