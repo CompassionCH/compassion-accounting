@@ -112,41 +112,25 @@ class account_analytic_default(orm.Model):
                        ('date_start', '=', False)]
             domain += ['|', ('date_stop', '>=', date),
                        ('date_stop', '=', False)]
-        best_index = -1
-        res = False
+
         for rec in self.browse(cr, uid, self.search(cr, uid, domain,
                                                     context=context),
                                context=context):
-            index = 0
-            if rec.product_id:
-                index += 1
-            if rec.partner_id:
-                index += 1
-            if rec.user_id:
-                index += 1
-            if rec.date_start:
-                index += 1
-            if rec.date_stop:
-                index += 1
             if analytic_id and rec.analytic_id:
                 children_analytic_ids = self.pool.get(
                     'account.analytic.account').search(
                         cr, uid, [('id', 'child_of', rec.analytic_id.id)],
                         context=context)
-                if analytic_id in children_analytic_ids:
-                    index += 1
-                else:
+                if analytic_id not in children_analytic_ids:
                     continue
+
             if account_id and rec.account_id:
                 children_account_ids = self.pool.get(
                     'account.account').search(
                         cr, uid, [('id', 'child_of', rec.account_id.id)],
                         context=context)
-                if account_id in children_account_ids:
-                    index += 1
-                else:
+                if account_id not in children_account_ids:
                     continue
-            if index > best_index:
-                res = rec
-                best_index = index
-        return res
+            return rec
+
+        return False

@@ -362,9 +362,20 @@ class recurring_contract(orm.Model):
                     # Call super for allowing rewind.
                     super(recurring_contract, self).write(
                         cr, uid, [contract.id], {
-                            'next_invoice_date': last_invoice_date},
-                        context)
+                            'next_invoice_date':
+                            last_invoice_date.strftime(DF)}, context)
                     contract.update_next_invoice_date()
+                else:
+                    # No open/paid invoices, look for cancelled ones
+                    next_invoice_date = min([
+                        datetime.strptime(line.invoice_id.date_invoice, DF)
+                        for line in contract.invoice_line_ids
+                        if line.state == 'cancel'])
+                    if next_invoice_date:
+                        super(recurring_contract, self).write(
+                            cr, uid, [contract.id], {
+                                'next_invoice_date':
+                                next_invoice_date.strftime(DF)}, context)
 
         return True
 
