@@ -65,17 +65,17 @@ class account_analytic_default(orm.Model):
         # Attribute the amounts
         for analytic_id, attribution in attribution_amounts.iteritems():
             for account_id, amount_total in attribution.iteritems():
-                attribution = self.get_attribution(
+                attribution_rule = self.get_attribution(
                     cr, uid, analytic_id, account_id, date_stop, context)
-                if attribution:
+                if attribution_rule:
                     analytic_account = self.pool.get(
                         'account.analytic.account').browse(
                         cr, uid, analytic_id, context)
-                    distribution = attribution.analytics_id
+                    distribution = attribution_rule.analytics_id
                     for rule in distribution.account_ids:
                         line_id = analytic_line_obj.create(cr, uid, {
-                            'name': 'Analytic attribution for {0}'.format(
-                                analytic_account.name),
+                            'name': 'Analytic attribution for ' +
+                            analytic_account.name,
                             'account_id': rule.analytic_account_id.id,
                             'date': date_stop,
                             'journal_id': journal_id,
@@ -107,12 +107,6 @@ class account_analytic_default(orm.Model):
         if user_id:
             domain += ['|', ('user_id', '=', user_id)]
         domain += [('user_id', '=', False)]
-        if analytic_id:
-            domain += ['|', ('analytic_id', 'child_of', analytic_id)]
-        domain += [('analytic_id', '=', False)]
-        if account_id:
-            domain += ['|', ('account_id', 'child_of', account_id)]
-        domain += [('account_id', '=', False)]
         if date:
             domain += ['|', ('date_start', '<=', date),
                        ('date_start', '=', False)]
@@ -134,6 +128,24 @@ class account_analytic_default(orm.Model):
                 index += 1
             if rec.date_stop:
                 index += 1
+            if analytic_id and rec.analytic_id:
+                children_analytic_ids = self.pool.get(
+                    'account.analytic.account').search(
+                        cr, uid, [('id', 'child_of', rec.analytic_id.id)],
+                        context=context)
+                if analytic_id in children_analytic_ids:
+                    index += 1
+                else:
+                    continue
+            if account_id and rec.account_id:
+                children_account_ids = self.pool.get(
+                    'account.account').search(
+                        cr, uid, [('id', 'child_of', rec.account_id.id)],
+                        context=context)
+                if account_id in children_account_ids:
+                    index += 1
+                else:
+                    continue
             if index > best_index:
                 res = rec
                 best_index = index
