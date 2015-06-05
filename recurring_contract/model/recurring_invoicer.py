@@ -44,7 +44,6 @@ class recurring_invoicer(orm.Model):
             cr, uid, 'rec.invoicer.ident', context=context),
         'generation_date': lambda self, cr, uid, context:
         datetime.today().strftime(DF),
-        'source': 'default value',
     }
 
     def validate_invoices(self, cr, uid, ids, context=None):
