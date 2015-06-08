@@ -51,6 +51,8 @@ class test_split_invoice(common.TransactionCase):
         return invoice_id
 
     def _create_invoice_line(self, description, amount):
+    
+        """ Create invoice's lines """
         invoice_line_obj = self.registry('account.invoice.line')
         invoice_line_id = invoice_line_obj.create(self.cr, self.uid, {
             'name': description,

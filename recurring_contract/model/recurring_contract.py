@@ -19,6 +19,8 @@ from openerp.tools.translate import _
 import openerp.addons.decimal_precision as dp
 
 
+
+
 class res_partner(orm.Model):
 
     """ Override partners to add contract m2o relation. Raise an error if
@@ -229,7 +231,6 @@ class recurring_contract(orm.Model):
         if 'next_invoice_date' in vals:
             self._on_change_next_invoice_date(
                 cr, uid, ids, vals['next_invoice_date'], context)
-
         if 'contract_line_ids' in vals:
             self._on_contract_lines_changed(cr, uid, ids, context)
 
@@ -276,9 +277,10 @@ class recurring_contract(orm.Model):
         group_ids = [contract.group_id.id for contract in self.browse(
             cr, uid, ids, context)]
         contract_group_obj = self.pool.get('recurring.contract.group')
-        contract_group_obj.button_generate_invoices(
+        return contract_group_obj.button_generate_invoices(
             cr, uid, group_ids, context)
-
+        
+        
     def clean_invoices(self, cr, uid, ids, context=None, since_date=None,
                        to_date=None, keep_lines=None):
         """ This method deletes invoices lines generated for a given contract
@@ -332,6 +334,7 @@ class recurring_contract(orm.Model):
                                       context, keep_lines)
 
         return inv_ids
+        
 
     def _cancel_confirm_invoices(self, cr, uid, cancel_ids, confirm_ids,
                                  context=None, keep_lines=None):
@@ -351,7 +354,7 @@ class recurring_contract(orm.Model):
         """ Rewinds the next invoice date of contract after the last
         generated invoice. No open invoices exist after that date. """
         gen_states = self.pool.get(
-            'recurring.contract.group')._get_gen_states()
+        'recurring.contract.group')._get_gen_states()
         for contract in self.browse(cr, uid, ids, context):
             if contract.state in gen_states:
                 last_invoice_date = max([
@@ -379,6 +382,7 @@ class recurring_contract(orm.Model):
 
         return True
 
+
     #################################
     #        PRIVATE METHODS        #
     #################################
@@ -387,7 +391,6 @@ class recurring_contract(orm.Model):
         for contract in self.browse(cr, uid, ids, context):
             next_date = self._compute_next_invoice_date(contract)
             contract.write({'next_invoice_date': next_date})
-
         return True
 
     def _compute_next_invoice_date(self, contract):
@@ -442,8 +445,7 @@ class recurring_contract(orm.Model):
                     raise orm.except_orm(
                         'Error',
                         _('You cannot rewind the next invoice date.'))
-        else:
-            return True
+        return True
 
     def _on_contract_lines_changed(self, cr, uid, ids, context=None):
         """Update related invoices to reflect the changes to the contract.
@@ -561,7 +563,7 @@ class recurring_contract(orm.Model):
     def contract_terminated(self, cr, uid, ids, context=None):
         today = datetime.today().strftime(DF)
         self.write(cr, uid, ids, {'state': 'terminated', 'end_date': today})
-        self.clean_invoices(cr, uid, ids, context)
+        #self.clean_invoices(cr, uid, ids, context)
         return True
 
     def end_date_reached(self, cr, uid, context=None):

@@ -10,7 +10,9 @@
 ##############################################################################
 
 from . import test_recurring_contract
+from . import test_recurring_contract_second
 
 checks = [
-    test_recurring_contract
+    test_recurring_contract,
+    test_recurring_contract_second
 ]
