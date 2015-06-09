@@ -48,6 +48,7 @@ class test_recurring_contract_second(common.TransactionCase):
         product = self.registry('product.product')
         product_id = product.create(self.cr, self.uid, {
             'name': 'Fournitures scolaires',
+            'product_tmpl_id': 189, 
         })
         #Creation of payement term
         payment_term = self.registry('account.payment.term')
@@ -63,7 +64,8 @@ class test_recurring_contract_second(common.TransactionCase):
             'month', partner_id, 2, payment_term_id, '137 option payement')
             
         self.contract_id1 = self._create_contract(
-            '06/10/2015', self.contract_group1, '06/10/2015')
+            datetime.today()+ timedelta(days=2), self.contract_group1, 
+            datetime.today()+ timedelta(days=2))
         self.contract_line_id1 = self._create_contract_line(product_id, 
             self.contract_id1, '75.0')
        

@@ -39,10 +39,12 @@ class test_recurring_contract(common.TransactionCase):
         partner_id = partner.create(self.cr, self.uid, {
             'name': 'Monsieur Client 137',
         })
-        #Creation of a product
+        #Search of a product
         product = self.registry('product.product')
+        product_id = []
         product_id = product.create(self.cr, self.uid, {
             'name': 'Chocolat',
+            'product_tmpl_id': 188,
         })
         #Creation of payement term
         payment_term = self.registry('account.payment.term')
