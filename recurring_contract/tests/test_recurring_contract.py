@@ -62,8 +62,8 @@ class test_recurring_contract(common.TransactionCase):
         self.contract_id = self._create_contract(
             datetime.today().strftime(DF), self.contract_group0, 
             datetime.today().strftime(DF))
-        self.contract_line_id = self._create_contract_line(1, 
-            self.contract_id, '40.0')
+        self.contract_line_id = self._create_contract_line(self.contract_id,
+            '40.0')
         
         
     def _create_contract(self, start_date, group_id, next_invoice_date):
@@ -86,11 +86,11 @@ class test_recurring_contract(common.TransactionCase):
         })
         return contract_id
 
-    def _create_contract_line(self, product_id, contract_id, price):
+    def _create_contract_line(self, contract_id, price):
         """ Create contract's lines """
         contract_line_obj = self.registry('recurring.contract.line')
         contract_line_id = contract_line_obj.create(self.cr, self.uid, {
-            'product_id': product_id,
+            'product_id': 1,
             'amount': price,
             'contract_id': contract_id,
         })

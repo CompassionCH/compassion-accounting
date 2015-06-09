@@ -66,8 +66,8 @@ class test_recurring_contract_second(common.TransactionCase):
         self.contract_id1 = self._create_contract(
             datetime.today()+ timedelta(days=2), self.contract_group1, 
             datetime.today()+ timedelta(days=2))
-        self.contract_line_id1 = self._create_contract_line(189, 
-            self.contract_id1, '75.0')
+        self.contract_line_id1 = self._create_contract_line(self.contract_id1,
+            '75.0')
        
         
         
@@ -92,11 +92,11 @@ class test_recurring_contract_second(common.TransactionCase):
         })
         return contract_id
 
-    def _create_contract_line(self, product_id, contract_id, price):
+    def _create_contract_line(self, contract_id, price):
         """ Create contract's lines """
         contract_line_obj = self.registry('recurring.contract.line')
         contract_line_id = contract_line_obj.create(self.cr, self.uid, {
-            'product_id': product_id,
+            'product_id': 1,
             'amount': price,
             'contract_id': contract_id,
         })
@@ -143,8 +143,8 @@ class test_recurring_contract_second(common.TransactionCase):
         self.contract_id2 = self._create_contract(
             datetime.today()+ timedelta(days=2), 
             self.contract_group1, datetime.today()+ timedelta(days=2))
-        self.contract_line_id2 = self._create_contract_line(product_id, 
-            self.contract_id2, '85.0')
+        self.contract_line_id2 = self._create_contract_line(self.contract_id2, 
+            '85.0')
         self.assertTrue(self.contract_id2)
         
         contract = self.registry('recurring.contract')
