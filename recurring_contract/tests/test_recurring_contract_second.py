@@ -45,11 +45,11 @@ class test_recurring_contract_second(common.TransactionCase):
             'name': 'Client 137',
         })
         #Creation of a product
-        product = self.registry('product.product')
-        product_id = product.create(self.cr, self.uid, {
-            'name': 'Fournitures scolaires',
-            'product_tmpl_id': 189, 
-        })
+        #product = self.registry('product.product')
+        #product_id = product.create(self.cr, self.uid, {
+        #   'name': 'Fournitures scolaires',
+        #    'product_tmpl_id': 189, 
+        #})
         #Creation of payement term
         payment_term = self.registry('account.payment.term')
         payment_term_id = payment_term.create(self.cr, self.uid, {
@@ -66,7 +66,7 @@ class test_recurring_contract_second(common.TransactionCase):
         self.contract_id1 = self._create_contract(
             datetime.today()+ timedelta(days=2), self.contract_group1, 
             datetime.today()+ timedelta(days=2))
-        self.contract_line_id1 = self._create_contract_line(product_id, 
+        self.contract_line_id1 = self._create_contract_line(189, 
             self.contract_id1, '75.0')
        
         

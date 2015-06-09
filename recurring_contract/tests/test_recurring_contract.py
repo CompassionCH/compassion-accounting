@@ -40,12 +40,12 @@ class test_recurring_contract(common.TransactionCase):
             'name': 'Monsieur Client 137',
         })
         #Search of a product
-        product = self.registry('product.product')
-        product_id = []
-        product_id = product.create(self.cr, self.uid, {
-            'name': 'Chocolat',
-            'product_tmpl_id': 188,
-        })
+        #product = self.registry('product.product')
+        #product_id = []
+        #product_id = product.create(self.cr, self.uid, {
+         #   'name': 'Chocolat',
+          #  'product_tmpl_id': 188,
+        #})
         #Creation of payement term
         payment_term = self.registry('account.payment.term')
         payment_term_id = payment_term.create(self.cr, self.uid, {
@@ -62,7 +62,7 @@ class test_recurring_contract(common.TransactionCase):
         self.contract_id = self._create_contract(
             datetime.today().strftime(DF), self.contract_group0, 
             datetime.today().strftime(DF))
-        self.contract_line_id = self._create_contract_line(product_id, 
+        self.contract_line_id = self._create_contract_line(1, 
             self.contract_id, '40.0')
         
         
