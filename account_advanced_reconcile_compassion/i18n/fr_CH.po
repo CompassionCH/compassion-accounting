@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenERP Server 7.0-20140602-231022\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-12-04 12:33+0000\n"
-"PO-Revision-Date: 2014-12-04 13:35+0100\n"
+"POT-Creation-Date: 2015-06-09 12:46+0000\n"
+"PO-Revision-Date: 2015-06-09 15:12+0100\n"
 "Last-Translator: Emanuel Cino <ecino@compassion.ch>\n"
 "Language-Team: \n"
 "Language: fr_CH\n"
@@ -18,9 +18,43 @@ msgstr ""
 "X-Generator: Poedit 1.6.4\n"
 
 #. module: account_advanced_reconcile_compassion
-#: model:ir.model,name:account_advanced_reconcile_compassion.model_reconcile_split_payment_wizard
-msgid "reconcile.split.payment.wizard"
-msgstr "reconcile.split.payment.wizard"
+#: view:unreconcile.change.attribution.wizard:0
+msgid ""
+"Please take care to have the same total amount at the end of the process."
+msgstr ""
+"Faites attention à ce que le montant total soit le même à la fin du "
+"processus."
+
+#. module: account_advanced_reconcile_compassion
+#. openerp-web
+#: code:addons/account_advanced_reconcile_compassion/static/src/js/account_move_reconciliation.js:69
+#, python-format
+msgid "Warning"
+msgstr "Avertissement"
+
+#. module: account_advanced_reconcile_compassion
+#: model:ir.model,name:account_advanced_reconcile_compassion.model_easy_reconcile_advanced_bvr_ref
+msgid "easy.reconcile.advanced.bvr_ref"
+msgstr "easy.reconcile.advanced.bvr_ref"
+
+#. module: account_advanced_reconcile_compassion
+#: field:unreconcile.change.attribution.wizard,operation_valid:0
+msgid "Is operation valid"
+msgstr "Operation valide"
+
+#. module: account_advanced_reconcile_compassion
+#: field:unreconcile.change.attribution.wizard,invoice_type:0
+msgid "invoice type"
+msgstr "Type de facture"
+
+#. module: account_advanced_reconcile_compassion
+#: help:unreconcile.change.attribution.wizard,invoice_line_ids:0
+msgid ""
+"You can directly edit the invoice lines from here if you want to change the "
+"attribution of the payment."
+msgstr ""
+"Vous pouvez éditer les lignes de factures afin de changer l'attribution du "
+"versement."
 
 #. module: account_advanced_reconcile_compassion
 #. openerp-web
@@ -28,6 +62,38 @@ msgstr "reconcile.split.payment.wizard"
 #, python-format
 msgid "You must choose at least two records."
 msgstr "Vous devez choisir au moins deux transactions."
+
+#. module: account_advanced_reconcile_compassion
+#: field:reconcile.fund.wizard,contract_ids:0
+#: field:reconcile.split.payment.wizard,contract_ids:0
+msgid "Related contracts"
+msgstr "Contrats concernés"
+
+#. module: account_advanced_reconcile_compassion
+#: model:ir.actions.act_window,name:account_advanced_reconcile_compassion.action_change_attribution
+#: model:ir.actions.act_window,name:account_advanced_reconcile_compassion.action_change_attribution_invoice
+msgid "Change attribution"
+msgstr "Changer l'attribution"
+
+#. module: account_advanced_reconcile_compassion
+#: field:unreconcile.change.attribution.wizard,currency_id:0
+msgid "currency id"
+msgstr "Devise"
+
+#. module: account_advanced_reconcile_compassion
+#: field:unreconcile.change.attribution.wizard,invoice_id:0
+msgid "New invoice"
+msgstr "Nouvelle facture"
+
+#. module: account_advanced_reconcile_compassion
+#: view:unreconcile.change.attribution.wizard:0
+msgid "Unreconcile payment"
+msgstr "Délettrer le versement"
+
+#. module: account_advanced_reconcile_compassion
+#: field:unreconcile.change.attribution.wizard,company_id:0
+msgid "company id"
+msgstr "Société"
 
 #. module: account_advanced_reconcile_compassion
 #: help:reconcile.split.payment.wizard,contract_ids:0
@@ -38,56 +104,6 @@ msgstr ""
 "Vous pouvez directement modifier les contrats depuis ici si vous désirez "
 "changer la date de facturation d'un parrainage afin d'éviter de le grouper "
 "avec d'autres contrats dans une facture à l'avenir."
-
-#. module: account_advanced_reconcile_compassion
-#: field:easy.reconcile.advanced.bvr_ref,partner_ids:0
-msgid "Restrict on partners"
-msgstr "Restreindre aux partenaires"
-
-#. module: account_advanced_reconcile_compassion
-#: field:easy.reconcile.advanced.bvr_ref,journal_id:0
-msgid "Journal"
-msgstr "Journal"
-
-#. module: account_advanced_reconcile_compassion
-#: field:easy.reconcile.advanced.bvr_ref,account_profit_id:0
-msgid "Account Profit"
-msgstr "Compte Profit"
-
-#. module: account_advanced_reconcile_compassion
-#: model:ir.model,name:account_advanced_reconcile_compassion.model_reconcile_fund_wizard
-msgid "reconcile.fund.wizard"
-msgstr "reconcile.fund.wizard"
-
-#. module: account_advanced_reconcile_compassion
-#. openerp-web
-#: code:addons/account_advanced_reconcile_compassion/static/src/xml/account_move_reconciliation.xml:9
-#: model:ir.actions.act_window,name:account_advanced_reconcile_compassion.action_reconcile_split_payment_wizard
-#, python-format
-msgid "Split Payment + Reconcile"
-msgstr "Lettrer + Attribuer à la Balance Client"
-
-#. module: account_advanced_reconcile_compassion
-#: field:reconcile.fund.wizard,fund_id:0
-msgid "Fund"
-msgstr "Fond"
-
-#. module: account_advanced_reconcile_compassion
-#. openerp-web
-#: code:addons/account_advanced_reconcile_compassion/static/src/js/account_move_reconciliation.js:69
-#, python-format
-msgid "Warning"
-msgstr "Avertissement"
-
-#. module: account_advanced_reconcile_compassion
-#: help:easy.reconcile.advanced.bvr_ref,analytic_account_id:0
-msgid "Analytic account for the write-off"
-msgstr "Compte analytique pour le write-off"
-
-#. module: account_advanced_reconcile_compassion
-#: field:easy.reconcile.advanced.bvr_ref,account_id:0
-msgid "Account"
-msgstr "Compte"
 
 #. module: account_advanced_reconcile_compassion
 #: view:account.easy.reconcile:0
@@ -108,25 +124,100 @@ msgstr ""
 "aux plus récentes."
 
 #. module: account_advanced_reconcile_compassion
-#: view:reconcile.split.payment.wizard:0
-msgid "Split Payment and Reconcile"
-msgstr "Séparer le paiement et lettrer"
+#: view:unreconcile.change.attribution.wizard:0
+msgid "Change attribution of payment"
+msgstr "Changer l'attribution du versement"
 
 #. module: account_advanced_reconcile_compassion
-#: view:reconcile.fund.wizard:0
-msgid "Choose your fund"
-msgstr "Choisissez un fond"
+#: view:unreconcile.change.attribution.wizard:0
+msgid ""
+"The total is no more matching the payment. You cannot reconcile from here."
+msgstr ""
+"Le total ne correspond pas au versement. La réconciliation automatique n'est "
+"pas possible"
 
 #. module: account_advanced_reconcile_compassion
-#: field:reconcile.fund.wizard,contract_ids:0
-#: field:reconcile.split.payment.wizard,contract_ids:0
-msgid "Related contracts"
-msgstr "Contrats concernés"
+#: field:unreconcile.change.attribution.wizard,invoice_line_ids:0
+msgid "Related invoice lines"
+msgstr "Lignes de factures concernées"
 
 #. module: account_advanced_reconcile_compassion
-#: field:easy.reconcile.advanced.bvr_ref,filter:0
-msgid "Filter"
-msgstr "Filtre"
+#: field:unreconcile.change.attribution.wizard,payment_ids:0
+msgid "unknown"
+msgstr "Inconnu"
+
+#. module: account_advanced_reconcile_compassion
+#: field:easy.reconcile.advanced.bvr_ref,journal_id:0
+msgid "Journal"
+msgstr "Journal"
+
+#. module: account_advanced_reconcile_compassion
+#: field:easy.reconcile.advanced.bvr_ref,account_profit_id:0
+msgid "Account Profit"
+msgstr "Compte Profit"
+
+#. module: account_advanced_reconcile_compassion
+#. openerp-web
+#: code:addons/account_advanced_reconcile_compassion/static/src/xml/account_move_reconciliation.xml:9
+#: model:ir.actions.act_window,name:account_advanced_reconcile_compassion.action_reconcile_split_payment_wizard
+#, python-format
+msgid "Split Payment + Reconcile"
+msgstr "Lettrer + Attribuer à la Balance Client"
+
+#. module: account_advanced_reconcile_compassion
+#: model:ir.model,name:account_advanced_reconcile_compassion.model_reconcile_fund_wizard
+msgid "reconcile.fund.wizard"
+msgstr "reconcile.fund.wizard"
+
+#. module: account_advanced_reconcile_compassion
+#: field:easy.reconcile.advanced.bvr_ref,partner_ids:0
+msgid "Restrict on partners"
+msgstr "Restreindre aux partenaires"
+
+#. module: account_advanced_reconcile_compassion
+#: field:reconcile.fund.wizard,fund_id:0
+msgid "Fund"
+msgstr "Fond"
+
+#. module: account_advanced_reconcile_compassion
+#: field:unreconcile.change.attribution.wizard,state:0
+msgid "state"
+msgstr "Etat"
+
+#. module: account_advanced_reconcile_compassion
+#: field:reconcile.split.payment.wizard,comment:0
+msgid "Indications on left amount"
+msgstr "Indications sur le montant restant à attribuer"
+
+#. module: account_advanced_reconcile_compassion
+#: field:unreconcile.change.attribution.wizard,fiscal_position:0
+msgid "fiscal position"
+msgstr "Position fiscale"
+
+#. module: account_advanced_reconcile_compassion
+#: help:easy.reconcile.advanced.bvr_ref,analytic_account_id:0
+msgid "Analytic account for the write-off"
+msgstr "Compte analytique pour le write-off"
+
+#. module: account_advanced_reconcile_compassion
+#: view:unreconcile.change.attribution.wizard:0
+msgid "Validate"
+msgstr "Valider"
+
+#. module: account_advanced_reconcile_compassion
+#: field:unreconcile.change.attribution.wizard,partner_id:0
+msgid "partner id"
+msgstr "Partenaire"
+
+#. module: account_advanced_reconcile_compassion
+#: selection:unreconcile.change.attribution.wizard,state:0
+msgid "Unreconcile"
+msgstr "Délettrer"
+
+#. module: account_advanced_reconcile_compassion
+#: view:unreconcile.change.attribution.wizard:0
+msgid "Invoice lines"
+msgstr "Lignes de Facture"
 
 #. module: account_advanced_reconcile_compassion
 #. openerp-web
@@ -135,6 +226,63 @@ msgstr "Filtre"
 #, python-format
 msgid "Reconcile + Put in Fund"
 msgstr "Lettrer + Attribuer au Fond"
+
+#. module: account_advanced_reconcile_compassion
+#: field:easy.reconcile.advanced.bvr_ref,account_id:0
+msgid "Account"
+msgstr "Compte"
+
+#. module: account_advanced_reconcile_compassion
+#: model:ir.model,name:account_advanced_reconcile_compassion.model_reconcile_split_payment_wizard
+msgid "reconcile.split.payment.wizard"
+msgstr "reconcile.split.payment.wizard"
+
+#. module: account_advanced_reconcile_compassion
+#: view:unreconcile.change.attribution.wizard:0
+msgid "Everything seems fine ! You can now reconcile the payment."
+msgstr "Tout semble bon ! Vous pouvez réconcilier le versement."
+
+#. module: account_advanced_reconcile_compassion
+#: view:unreconcile.change.attribution.wizard:0
+msgid ""
+"You can here edit invoice lines to change the attribution of the payment."
+msgstr ""
+"Vous pouvez éditer les lignes de factures afin de changer l'attribution du "
+"versement."
+
+#. module: account_advanced_reconcile_compassion
+#: view:reconcile.split.payment.wizard:0
+msgid "Split Payment and Reconcile"
+msgstr "Séparer le paiement et lettrer"
+
+#. module: account_advanced_reconcile_compassion
+#: view:unreconcile.change.attribution.wizard:0
+msgid ""
+"This will cancel the following invoice lines, for letting you changing them. "
+"Please verify the validity of your selection"
+msgstr ""
+"Cela annulera les factures, afin de vous laisser faire les modifications. "
+"Veuillez vérifier la validité de cette sélection."
+
+#. module: account_advanced_reconcile_compassion
+#: field:easy.reconcile.advanced.bvr_ref,income_exchange_account_id:0
+msgid "Gain Exchange Rate Account"
+msgstr "Gain Exchange Rate Account"
+
+#. module: account_advanced_reconcile_compassion
+#: view:reconcile.fund.wizard:0
+msgid "Choose your fund"
+msgstr "Choisissez un fond"
+
+#. module: account_advanced_reconcile_compassion
+#: field:easy.reconcile.advanced.bvr_ref,filter:0
+msgid "Filter"
+msgstr "Filtre"
+
+#. module: account_advanced_reconcile_compassion
+#: view:unreconcile.change.attribution.wizard:0
+msgid "(update)"
+msgstr "(mise à jour)"
 
 #. module: account_advanced_reconcile_compassion
 #: model:ir.model,name:account_advanced_reconcile_compassion.model_account_easy_reconcile_method
@@ -157,9 +305,15 @@ msgid "Advanced. Compassion Rules"
 msgstr "Avancé. Règles Compassion"
 
 #. module: account_advanced_reconcile_compassion
-#: model:ir.model,name:account_advanced_reconcile_compassion.model_easy_reconcile_advanced_bvr_ref
-msgid "easy.reconcile.advanced.bvr_ref"
-msgstr "easy.reconcile.advanced.bvr_ref"
+#: help:unreconcile.change.attribution.wizard,comment:0
+msgid "Explain why you changed the attribution."
+msgstr "Expliquez pourquoi vous avez changé cette attribution."
+
+#. module: account_advanced_reconcile_compassion
+#: code:addons/account_advanced_reconcile_compassion/model/advanced_reconciliation.py:124
+#, python-format
+msgid "Project %s is fund-suspended."
+msgstr "Le centre d'accueil %s est en suspension avec retenue des fonds."
 
 #. module: account_advanced_reconcile_compassion
 #: field:easy.reconcile.advanced.bvr_ref,account_lost_id:0
@@ -181,9 +335,36 @@ msgid "Write off allowed"
 msgstr "Ajustement autorisé"
 
 #. module: account_advanced_reconcile_compassion
+#: field:unreconcile.change.attribution.wizard,comment:0
+msgid "Comment"
+msgstr "Commentaire"
+
+#. module: account_advanced_reconcile_compassion
+#: field:unreconcile.change.attribution.wizard,amount_total:0
+msgid "Payment Total"
+msgstr "Total du versement"
+
+#. module: account_advanced_reconcile_compassion
 #: view:reconcile.fund.wizard:0 view:reconcile.split.payment.wizard:0
+#: view:unreconcile.change.attribution.wizard:0
+#: selection:unreconcile.change.attribution.wizard,state:0
 msgid "Reconcile"
 msgstr "Lettrer"
+
+#. module: account_advanced_reconcile_compassion
+#: field:easy.reconcile.advanced.bvr_ref,expense_exchange_account_id:0
+msgid "Loss Exchange Rate Account"
+msgstr "Loss Exchange Rate Account"
+
+#. module: account_advanced_reconcile_compassion
+#: model:ir.model,name:account_advanced_reconcile_compassion.model_unreconcile_change_attribution_wizard
+msgid "unreconcile.change.attribution.wizard"
+msgstr "unreconcile.change.attribution.wizard"
+
+#. module: account_advanced_reconcile_compassion
+#: selection:unreconcile.change.attribution.wizard,state:0
+msgid "Change Lines"
+msgstr "Lignes à modifier"
 
 #. module: account_advanced_reconcile_compassion
 #: field:easy.reconcile.advanced.bvr_ref,analytic_account_id:0
@@ -199,6 +380,21 @@ msgstr "Parrainages"
 #: field:easy.reconcile.advanced.bvr_ref,date_base_on:0
 msgid "Date of reconciliation"
 msgstr "Date de lettrage"
+
+#. module: account_advanced_reconcile_compassion
+#: view:unreconcile.change.attribution.wizard:0
+msgid "Cancel"
+msgstr "Annuler"
+
+#. module: account_advanced_reconcile_compassion
+#: view:unreconcile.change.attribution.wizard:0
+msgid "Close"
+msgstr "Fermer"
+
+#. module: account_advanced_reconcile_compassion
+#: field:unreconcile.change.attribution.wizard,amount_computed:0
+msgid "Total"
+msgstr "Total"
 
 #. module: account_advanced_reconcile_compassion
 #. openerp-web
