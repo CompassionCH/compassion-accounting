@@ -90,6 +90,25 @@ class test_recurring_contract(common.TransactionCase):
             Create a contract. For that purpose we have created a partner 
             to get his id
         """
+        journal_obj = self.registry('account.journal')
+        journal_id = journal_obj.write(self.cr, self.uid, 1, {
+            'type': 'sale',
+            'update_posted': True,
+        })
+        # Creation a partner 
+        account_type = self.registry('account.account.type').write(self.cr, 
+            self.uid, 1, {
+                'close_method': 'unreconciled',
+            })
+        property_account_receivable = self.registry('account.account').write(
+            self.cr, self.uid, 1, {
+            'type': 'receivable',
+            'user_type': 1,
+        })
+        property_account_payable = self.registry('account.account').write(
+            self.cr, self.uid, 1, {
+            'type': 'payable'
+        })
         # Creation a partner 
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
@@ -145,8 +164,8 @@ class test_recurring_contract(common.TransactionCase):
     def test_generated_invoice(self):
         """ 
             Test the button_generate_invoices method which call a lot of 
-            other methods like generate_invoice(). We are testing the coherence of
-            data when a contract generate invoice(s) 
+            other methods like generate_invoice(). We are testing the coherence 
+            of data when a contract generate invoice(s) 
         """
         contract = self.registry('recurring.contract')
         contract_obj = contract.browse(self.cr, self.uid, self.contract_id)

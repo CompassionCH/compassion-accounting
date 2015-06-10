@@ -95,6 +95,24 @@ class test_recurring_contract_second(common.TransactionCase):
             Create a contract. For that purpose we have created a partner 
             to get his id
         """
+        journal_obj = self.registry('account.journal')
+        journal_id = journal_obj.write(self.cr, self.uid, 1, {
+            'type': 'sale',
+            'update_posted': True,
+        })
+        account_type = self.registry('account.account.type').write(self.cr, 
+            self.uid, 1, {
+                'close_method': 'unreconciled',
+            })
+        property_account_receivable = self.registry('account.account').write(
+            self.cr, self.uid, 1, {
+            'type': 'receivable',
+            'user_type': 1,
+        })
+        property_account_payable = self.registry('account.account').write(
+            self.cr, self.uid, 1, {
+            'type': 'payable'
+        })
         # Creation a partner
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
