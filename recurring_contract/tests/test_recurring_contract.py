@@ -39,9 +39,14 @@ class test_recurring_contract(common.TransactionCase):
             'update_posted': True,
         })
         # Creation a partner 
+        account_type = self.registry('account.account.type').write(self.cr, 
+            self.uid, 1, {
+                'close_method': 'unreconciled',
+            })
         property_account_receivable = self.registry('account.account').write(
             self.cr, self.uid, 1, {
             'type': 'receivable',
+            'user_type': 1,
         })
         property_account_payable = self.registry('account.account').write(
             self.cr, self.uid, 1, {
@@ -50,8 +55,8 @@ class test_recurring_contract(common.TransactionCase):
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
             'name': 'Monsieur Client 137',
-            'property_account_receivable': property_account_receivable,
-            'property_account_payable': property_account_payable,
+            'property_account_receivable': 1,
+            'property_account_payable': 1,
         })
         #Search of a product
         #product = self.registry('product.product')
@@ -86,15 +91,11 @@ class test_recurring_contract(common.TransactionCase):
             to get his id
         """
         # Creation a partner 
-        property_account_receivable = self.registry('account.account').search(
-            self.cr, self.uid, [('type', '=', 'receivable')])[0]
-        property_account_payable = self.registry('account.account').search(
-            self.cr, self.uid, [('type', '=', 'payable')])[0]    
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
             'name': 'Monsieur Client 137',
-            'property_account_receivable': property_account_receivable,
-            'property_account_payable': property_account_payable,
+            'property_account_receivable': 1,
+            'property_account_payable': 1,
         })
         # Creation of a contract
         contract_obj = self.registry('recurring.contract')

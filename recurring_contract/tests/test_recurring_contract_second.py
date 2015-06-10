@@ -40,9 +40,19 @@ class test_recurring_contract_second(common.TransactionCase):
     def setUp(self):
         super(test_recurring_contract_second, self).setUp()
         # Creation a partner 
+        journal_obj = self.registry('account.journal')
+        journal_id = journal_obj.write(self.cr, self.uid, 1, {
+            'type': 'sale',
+            'update_posted': True,
+        })
+        account_type = self.registry('account.account.type').write(self.cr, 
+            self.uid, 1, {
+                'close_method': 'unreconciled',
+            })
         property_account_receivable = self.registry('account.account').write(
             self.cr, self.uid, 1, {
             'type': 'receivable',
+            'user_type': 1,
         })
         property_account_payable = self.registry('account.account').write(
             self.cr, self.uid, 1, {
@@ -50,9 +60,9 @@ class test_recurring_contract_second(common.TransactionCase):
         })    
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
-            'name': 'Client 137',
-            'property_account_receivable': property_account_receivable,
-            'property_account_payable': property_account_payable,
+            'name': 'Monsieur Client 137',
+            'property_account_receivable': 1,
+            'property_account_payable': 1,
         })
         #Creation of a product
         #product = self.registry('product.product')
@@ -85,16 +95,12 @@ class test_recurring_contract_second(common.TransactionCase):
             Create a contract. For that purpose we have created a partner 
             to get his id
         """
-        # Creation a partner 
-        property_account_receivable = self.registry('account.account').search(
-            self.cr, self.uid, [('type', '=', 'receivable')])[0]
-        property_account_payable = self.registry('account.account').search(
-            self.cr, self.uid, [('type', '=', 'payable')])[0]
+        # Creation a partner
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
             'name': 'Client 137',
-            'property_account_receivable': property_account_receivable,
-            'property_account_payable': property_account_payable,
+            'property_account_receivable': 1,
+            'property_account_payable': 1,
         })
         # Creation of a contract
         contract_obj = self.registry('recurring.contract')
