@@ -39,47 +39,42 @@ class test_recurring_contract_second(common.TransactionCase):
 
     def setUp(self):
         super(test_recurring_contract_second, self).setUp()
-        # Creation a partner 
+        #Creation of payment term
         journal_obj = self.registry('account.journal')
-        journal_id = journal_obj.write(self.cr, self.uid, 1, {
-            'type': 'sale',
-            'update_posted': True,
-        })
-        account_type = self.registry('account.account.type').write(self.cr, 
-            self.uid, 1, {
-                'close_method': 'unreconciled',
-            })
-        property_account_receivable = self.registry('account.account').write(
-            self.cr, self.uid, 1, {
-            'type': 'receivable',
-            'user_type': 1,
-        })
-        property_account_payable = self.registry('account.account').write(
-            self.cr, self.uid, 1, {
-            'type': 'payable'
-        })    
+        journal_id = journal_obj.search(self.cr, self.uid, [
+            ('type', '=', 'sale'),
+            ('update_posted', '=', True)
+        ])
+        # Creation a partner 
+        account_type = self.registry('account.account.type').search(self.cr, 
+            self.uid, [
+                ('close_method', '=', 'unreconciled')
+        ])[0]
+        property_account_receivable = self.registry('account.account').search(
+            self.cr, self.uid, [
+            ('type', '=', 'receivable'),
+            ('user_type', '=', account_type)
+        ])
+        property_account_payable = self.registry('account.account').search(
+            self.cr, self.uid, [
+            ('type', '=', 'payable')
+        ])
+        # Creation a partner 
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
-            'name': 'Monsieur Client 137',
-            'property_account_receivable': 1,
-            'property_account_payable': 1,
-        })
-        #Creation of a product
-        #product = self.registry('product.product')
-        #product_id = product.create(self.cr, self.uid, {
-        #   'name': 'Fournitures scolaires',
-        #    'product_tmpl_id': 189, 
-        #})
-        #Creation of payement term
+            'name': 'Client 137',
+            'property_account_receivable': property_account_receivable,
+            'property_account_payable': property_account_payable,
+        }) 
         payment_term = self.registry('account.payment.term')
-        payment_term_id = payment_term.create(self.cr, self.uid, {
-            'name': '15 Days',
-        })
+        payment_term_id = payment_term.search(self.cr, self.uid, [
+            ('name', '=', '15 Days')
+        ])[0]
         payment_term_line = self.registry('account.payment.term.line')
-        payment_term_line_id = payment_term_line.create(self.cr, self.uid, {
-            'days': 15,
-            'payment_id': payment_term_id,
-        })
+        payment_term_line_id = payment_term_line.search(self.cr, self.uid, [
+            ('days', '=', 15),
+            ('payment_id', '=', payment_term_id)
+        ])
         self.contract_group1 = self._create_group('do_nothing', 1, 
             'month', partner_id, 2, payment_term_id, '137 option payement')
             
@@ -96,29 +91,30 @@ class test_recurring_contract_second(common.TransactionCase):
             to get his id
         """
         journal_obj = self.registry('account.journal')
-        journal_id = journal_obj.write(self.cr, self.uid, 1, {
-            'type': 'sale',
-            'update_posted': True,
-        })
-        account_type = self.registry('account.account.type').write(self.cr, 
-            self.uid, 1, {
-                'close_method': 'unreconciled',
-            })
-        property_account_receivable = self.registry('account.account').write(
-            self.cr, self.uid, 1, {
-            'type': 'receivable',
-            'user_type': 1,
-        })
-        property_account_payable = self.registry('account.account').write(
-            self.cr, self.uid, 1, {
-            'type': 'payable'
-        })
-        # Creation a partner
+        journal_id = journal_obj.search(self.cr, self.uid, [
+            ('type', '=', 'sale'),
+            ('update_posted', '=', True)
+        ])
+        # Creation a partner 
+        account_type = self.registry('account.account.type').search(self.cr, 
+            self.uid, [
+                ('close_method', '=', 'unreconciled')
+        ])[0]
+        property_account_receivable = self.registry('account.account').search(
+            self.cr, self.uid, [
+            ('type', '=', 'receivable'),
+            ('user_type', '=', account_type)
+        ])
+        property_account_payable = self.registry('account.account').search(
+            self.cr, self.uid, [
+            ('type', '=', 'payable')
+        ])
+        # Creation a partner 
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
             'name': 'Client 137',
-            'property_account_receivable': 1,
-            'property_account_payable': 1,
+            'property_account_receivable': property_account_receivable,
+            'property_account_payable': property_account_payable,
         })
         # Creation of a contract
         contract_obj = self.registry('recurring.contract')
@@ -167,11 +163,11 @@ class test_recurring_contract_second(common.TransactionCase):
 
     def test_generated_invoice(self):
         """ 
-            Creation of the second contract to test the fusion of invoices if the 
-            partner and the dates are the same: Then there is the test of the 
-            changement of the payment option and its consequences : check if all 
-            data of invoices generated are correct, and if the number of invoices 
-            generated is correct
+            Creation of the second contract to test the fusion of invoices if
+            the partner and the dates are the same: Then there is the test of 
+            the changement of the payment option and its consequences : check 
+            if all data of invoices generated are correct, and if the number 
+            of invoices generated is correct
         """
         #Creation of a product
         product = self.registry('product.product')
