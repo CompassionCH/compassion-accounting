@@ -40,9 +40,19 @@ class test_recurring_contract_second(common.TransactionCase):
     def setUp(self):
         super(test_recurring_contract_second, self).setUp()
         # Creation a partner 
+        property_account_receivable = self.registry('account.account').write(
+            self.cr, self.uid, 1, {
+            'type': 'receivable',
+        })
+        property_account_payable = self.registry('account.account').write(
+            self.cr, self.uid, 1, {
+            'type': 'payable'
+        })    
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
             'name': 'Client 137',
+            'property_account_receivable': property_account_receivable,
+            'property_account_payable': property_account_payable,
         })
         #Creation of a product
         #product = self.registry('product.product')
@@ -68,19 +78,23 @@ class test_recurring_contract_second(common.TransactionCase):
             datetime.today()+ timedelta(days=2))
         self.contract_line_id1 = self._create_contract_line(self.contract_id1,
             '75.0')
-       
-        
-        
-        
+
+
     def _create_contract(self, start_date, group_id, next_invoice_date):
         """ 
             Create a contract. For that purpose we have created a partner 
             to get his id
         """
         # Creation a partner 
+        property_account_receivable = self.registry('account.account').search(
+            self.cr, self.uid, [('type', '=', 'receivable')])[0]
+        property_account_payable = self.registry('account.account').search(
+            self.cr, self.uid, [('type', '=', 'payable')])[0]
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
             'name': 'Client 137',
+            'property_account_receivable': property_account_receivable,
+            'property_account_payable': property_account_payable,
         })
         # Creation of a contract
         contract_obj = self.registry('recurring.contract')
@@ -126,7 +140,7 @@ class test_recurring_contract_second(common.TransactionCase):
             group_vals['ref'] = ref
         group_obj.write(group_vals)
         return group_id
-    
+
     def test_generated_invoice(self):
         """ 
             Creation of the second contract to test the fusion of invoices if the 
@@ -146,7 +160,7 @@ class test_recurring_contract_second(common.TransactionCase):
         self.contract_line_id2 = self._create_contract_line(self.contract_id2, 
             '85.0')
         self.assertTrue(self.contract_id2)
-        
+
         contract = self.registry('recurring.contract')
         contract_line = self.registry('recurring.contract.line')
         contract_line_obj1 = contract_line.browse(self.cr, self.uid, 
@@ -175,7 +189,7 @@ class test_recurring_contract_second(common.TransactionCase):
         invoice2_fus = invoices[1]
         self.assertEqual(original_price1 + original_price2, 
             invoice_fus.amount_untaxed)
-            
+
         #Changement of the payment option    
         group_obj = self.registry('recurring.contract.group')
         group_obj.write(self.cr, self.uid, 

@@ -16,7 +16,6 @@ from openerp.osv import orm, fields
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 from openerp.tools.translate import _
 import logging
-
 logger = logging.getLogger(__name__)
 
 
@@ -159,7 +158,7 @@ class contract_group(orm.Model):
             self.validate_invoices(cr, uid, invoicer_id, context)
 
         return res
-    
+
     def button_generate_invoices(self, cr, uid, ids, context=None):
         invoicer_id = self.generate_invoices(cr, uid, ids, context=context)
         self.validate_invoices(cr, uid, invoicer_id, context)
@@ -214,7 +213,6 @@ class contract_group(orm.Model):
 
         if not ids:
             ids = self.search(cr, uid, [], context=context)
-            
         if not invoicer_id:
             invoicer_id = self.pool.get('recurring.invoicer').create(
                 cr, uid, {'source': self._name}, context)
@@ -258,8 +256,6 @@ class contract_group(orm.Model):
                     invoice.button_compute()
                 else:
                     invoice.unlink()
-
-            # After a contract_group is done, we commit all writes in order to
             # After a contract_group is done, we commit all writes in order to
             # avoid doing it again in case of an error or a timeout
             cr.commit()
@@ -274,7 +270,6 @@ class contract_group(orm.Model):
             inherit this method.
         """
         partner = con_gr.partner_id
-
         inv_data = {
             'account_id': partner.property_account_receivable.id,
             'type': 'out_invoice',
@@ -297,7 +292,6 @@ class contract_group(orm.Model):
         just inherit this method.
         """
         product = contract_line.product_id
-
         inv_line_data = {
             'name': product.name,
             'account_id': product.property_account_income.id,

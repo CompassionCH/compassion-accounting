@@ -15,8 +15,6 @@ from openerp import netsvc
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 from openerp import netsvc
 import logging
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -34,10 +32,26 @@ class test_recurring_contract(common.TransactionCase):
 
     def setUp(self):
         super(test_recurring_contract, self).setUp()
+        # Creation of a journal
+        journal_obj = self.registry('account.journal')
+        journal_id = journal_obj.write(self.cr, self.uid, 1, {
+            'type': 'sale',
+            'update_posted': True,
+        })
         # Creation a partner 
+        property_account_receivable = self.registry('account.account').write(
+            self.cr, self.uid, 1, {
+            'type': 'receivable',
+        })
+        property_account_payable = self.registry('account.account').write(
+            self.cr, self.uid, 1, {
+            'type': 'payable'
+        })    
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
             'name': 'Monsieur Client 137',
+            'property_account_receivable': property_account_receivable,
+            'property_account_payable': property_account_payable,
         })
         #Search of a product
         #product = self.registry('product.product')
@@ -64,17 +78,23 @@ class test_recurring_contract(common.TransactionCase):
             datetime.today().strftime(DF))
         self.contract_line_id = self._create_contract_line(self.contract_id,
             '40.0')
-        
-        
+
+
     def _create_contract(self, start_date, group_id, next_invoice_date):
         """ 
             Create a contract. For that purpose we have created a partner 
             to get his id
         """
         # Creation a partner 
+        property_account_receivable = self.registry('account.account').search(
+            self.cr, self.uid, [('type', '=', 'receivable')])[0]
+        property_account_payable = self.registry('account.account').search(
+            self.cr, self.uid, [('type', '=', 'payable')])[0]    
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
             'name': 'Monsieur Client 137',
+            'property_account_receivable': property_account_receivable,
+            'property_account_payable': property_account_payable,
         })
         # Creation of a contract
         contract_obj = self.registry('recurring.contract')
@@ -120,7 +140,7 @@ class test_recurring_contract(common.TransactionCase):
             group_vals['ref'] = ref
         group_obj.write(group_vals)
         return group_id
-    
+
     def test_generated_invoice(self):
         """ 
             Test the button_generate_invoices method which call a lot of 
@@ -132,12 +152,12 @@ class test_recurring_contract(common.TransactionCase):
         contract_line = self.registry('recurring.contract.line')
         contract_line_obj = contract_line.browse(self.cr, self.uid, 
             self.contract_line_id)
-    
+
         original_product = contract_line_obj.product_id['name']
         original_partner = contract_obj.partner_id['name']
         original_price = contract_line_obj.subtotal
         original_start_date = contract_obj.start_date
-        
+
         # To generate invoices, the contract must be "active"
         wf_service = netsvc.LocalService('workflow')
         wf_service.trg_validate(self.uid, 'recurring.contract',
@@ -157,7 +177,7 @@ class test_recurring_contract(common.TransactionCase):
         self.assertEqual(original_partner, invoice.partner_id['name'])
         self.assertEqual(original_price, invoice.amount_untaxed)
         self.assertEqual(original_start_date, invoice2.date_invoice)
-        
+
         wf_service = netsvc.LocalService('workflow')
         wf_service.trg_validate(self.uid, 'recurring.contract',
             self.contract_id, 'contract_terminated', self.cr)
@@ -166,4 +186,4 @@ class test_recurring_contract(common.TransactionCase):
 
         """original_total = contract_term.total_amount
         self.assertEqual(original_total, invoice.amount_total)"""
-        
+

@@ -225,12 +225,13 @@ class recurring_contract(orm.Model):
 
     def write(self, cr, uid, ids, vals, context=None):
         """ Perform various checks when a contract is modified. """
-        res = super(recurring_contract, self).write(
-            cr, uid, ids, vals, context=context)
-
         if 'next_invoice_date' in vals:
             self._on_change_next_invoice_date(
                 cr, uid, ids, vals['next_invoice_date'], context)
+
+        res = super(recurring_contract, self).write(
+            cr, uid, ids, vals, context=context)
+
         if 'contract_line_ids' in vals:
             self._on_contract_lines_changed(cr, uid, ids, context)
 
