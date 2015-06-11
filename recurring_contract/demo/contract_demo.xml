@@ -7,8 +7,11 @@
         -->
         
         <record id="journal1" model="account.journal">
+            <field name="name">Journal Test</field>
             <field name="type">sale</field>
             <field name="update_posted">True</field>
+            <field name="code">12345</field>
+            <field name="company_id" ref="base.main_company"/>
         </record>
         
         <!--
@@ -16,7 +19,9 @@
         -->
         
         <record id="account_type" model="account.account.type">
+            <field name="name">Account Test</field>
             <field name="close_method">unreconciled</field>
+            <field name="code">87963</field>
         </record>    
         
         <!--
@@ -24,6 +29,7 @@
         -->
         
         <record id="property_account_receivable" model="account.account">
+            <field name="name">Property Account Receivable Test</field>
             <field name="type">receivable</field>
             <field name="user_type" ref="account_type"/>
         </record>
@@ -33,6 +39,7 @@
         -->
         
         <record id="property_account_payable" model="account.account">
+            <field name="name">Property Account Payable Test</field>
             <field name="type">payable</field>
             <field name="user_type" ref="account_type"/>
         </record>

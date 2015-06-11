@@ -36,7 +36,7 @@ class test_recurring_contract(common.TransactionCase):
         journal_id = journal_obj.search(self.cr, self.uid, [
             ('type', '=', 'sale'),
             ('update_posted', '=', True)
-        ])
+        ])[0]
         # Creation a partner 
         account_type = self.registry('account.account.type').search(self.cr, 
             self.uid, [
@@ -46,11 +46,11 @@ class test_recurring_contract(common.TransactionCase):
             self.cr, self.uid, [
             ('type', '=', 'receivable'),
             ('user_type', '=', account_type)
-        ])
+        ])[0]
         property_account_payable = self.registry('account.account').search(
             self.cr, self.uid, [
             ('type', '=', 'payable')
-        ])
+        ])[0]
         # Creation a partner 
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
@@ -67,7 +67,7 @@ class test_recurring_contract(common.TransactionCase):
         payment_term_line_id = payment_term_line.search(self.cr, self.uid, [
             ('days', '=', 15),
             ('payment_id', '=', payment_term_id)
-        ])
+        ])[0]
         self.contract_group0 = self._create_group('do_nothing', 1, 
             'month', partner_id, 1, payment_term_id)
             
@@ -87,7 +87,7 @@ class test_recurring_contract(common.TransactionCase):
         journal_id = journal_obj.search(self.cr, self.uid, [
             ('type', '=', 'sale'),
             ('update_posted', '=', True)
-        ])
+        ])[0]
         # Creation a partner 
         account_type = self.registry('account.account.type').search(self.cr, 
             self.uid, [
@@ -97,11 +97,11 @@ class test_recurring_contract(common.TransactionCase):
             self.cr, self.uid, [
             ('type', '=', 'receivable'),
             ('user_type', '=', account_type)
-        ])
+        ])[0]
         property_account_payable = self.registry('account.account').search(
             self.cr, self.uid, [
             ('type', '=', 'payable')
-        ])
+        ])[0]
         # Creation a partner 
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
