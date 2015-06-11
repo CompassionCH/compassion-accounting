@@ -51,6 +51,11 @@ class test_recurring_contract(common.TransactionCase):
             self.cr, self.uid, [
             ('type', '=', 'payable')
         ])[0]
+        
+        property_account_income = self.registry('account.account').search(
+            self.cr, self.uid, [
+            ('type', '=', 'receivable')
+        ])[0]
         # Creation a partner 
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
@@ -101,6 +106,10 @@ class test_recurring_contract(common.TransactionCase):
         property_account_payable = self.registry('account.account').search(
             self.cr, self.uid, [
             ('type', '=', 'payable')
+        ])[0]
+        property_account_income = self.registry('account.account').search(
+            self.cr, self.uid, [
+            ('type', '=', 'receivable')
         ])[0]
         # Creation a partner 
         partner = self.registry('res.partner')

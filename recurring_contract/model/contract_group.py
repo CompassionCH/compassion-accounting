@@ -292,9 +292,9 @@ class contract_group(orm.Model):
         just inherit this method.
         """
         product = contract_line.product_id
+        account_id = product.property_account_income
         inv_line_data = {
             'name': product.name,
-            'account_id': product.property_account_income.id,
             'price_unit': contract_line.amount or 0.0,
             'quantity': contract_line.quantity,
             'uos_id': False,
@@ -302,7 +302,9 @@ class contract_group(orm.Model):
             'invoice_id': invoice_id,
             'contract_id': contract_line.contract_id.id,
         }
-
+        
+        if account_id:
+            inv_line_date['account_id'] = account_id.id
         return inv_line_data
 
     def _generate_invoice_lines(self, cr, uid, contract, invoice_id,
