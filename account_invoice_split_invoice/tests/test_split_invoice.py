@@ -15,6 +15,7 @@ from openerp import netsvc
 import logging
 logger = logging.getLogger(__name__)
 
+
 class test_split_invoice(common.TransactionCase):
     """ Test Project split invoice. 2 cases are tested :
            - open invoices
@@ -26,7 +27,7 @@ class test_split_invoice(common.TransactionCase):
         self.invoice_id = self._create_invoice('SAJ/2015/0002')
         self.invoice_line_id1 = self._create_invoice_line('service 1', '70.0')
         self.invoice_line_id2 = self._create_invoice_line('service 2', '80.0')
-        
+
     def _create_invoice(self, invoice_name):
         """ Set the update_posted to True to make invoice cancelable """
         journal_obj = self.registry('account.journal')
@@ -51,7 +52,6 @@ class test_split_invoice(common.TransactionCase):
         return invoice_id
 
     def _create_invoice_line(self, description, amount):
-    
         """ Create invoice's lines """
         invoice_line_obj = self.registry('account.invoice.line')
         invoice_line_id = invoice_line_obj.create(self.cr, self.uid, {
