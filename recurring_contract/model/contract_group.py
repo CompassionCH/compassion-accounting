@@ -130,9 +130,9 @@ class contract_group(orm.Model):
 
         # Any of these modifications implies generate and validate invoices
         generate_again = ('advance_billing_months' in vals or
-                'recurring_value' in vals or
-                'recurring_unit' in vals or
-                'change_method' in vals)
+                          'recurring_value' in vals or
+                          'recurring_unit' in vals or
+                          'change_method' in vals)
 
         for group in self.browse(cr, uid, ids, context):
 

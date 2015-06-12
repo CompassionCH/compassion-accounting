@@ -364,7 +364,7 @@ class recurring_contract(orm.Model):
         """ Rewinds the next invoice date of contract after the last
         generated invoice. No open invoices exist after that date. """
         gen_states = self.pool.get(
-        'recurring.contract.group')._get_gen_states()
+            'recurring.contract.group')._get_gen_states()
         for contract in self.browse(cr, uid, ids, context):
             if contract.state in gen_states:
                 last_invoice_date = max([

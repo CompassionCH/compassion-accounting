@@ -32,14 +32,11 @@ class test_recurring_contract(common.TransactionCase):
 
     def setUp(self):
         super(test_recurring_contract, self).setUp()
-        journal_obj = self.registry('account.journal')
-        journal_id = journal_obj.search(self.cr, self.uid, [
-            ('type', '=', 'sale'),
-            ('update_posted', '=', True)
-        ])[0]
         # Creation of an account
-        account_type = self.registry('account.account.type').search(self.cr,
-            self.uid, [('close_method', '=', 'unreconciled')])[0]
+        account_type = self.registry('account.account.type').search(
+            self.cr, self.uid, [
+                ('close_method', '=', 'unreconciled'),
+            ])[0]
         property_account_receivable = self.registry('account.account').search(
             self.cr, self.uid, [
                 ('type', '=', 'receivable'),
@@ -48,10 +45,6 @@ class test_recurring_contract(common.TransactionCase):
         property_account_payable = self.registry('account.account').search(
             self.cr, self.uid, [('type', '=', 'payable')])[0]
 
-        property_account_income = self.registry('account.account').search(
-            self.cr, self.uid, [
-                ('type', '=', 'receivable')
-            ])[0]
         # Creation of a partner
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
@@ -59,15 +52,10 @@ class test_recurring_contract(common.TransactionCase):
             'property_account_receivable': property_account_receivable,
             'property_account_payable': property_account_payable,
         })
-        # Creation of payement term
+        # Creation of payement terms
         payment_term = self.registry('account.payment.term')
         payment_term_id = payment_term.search(self.cr, self.uid, [
             ('name', '=', '15 Days')
-        ])[0]
-        payment_term_line = self.registry('account.payment.term.line')
-        payment_term_line_id = payment_term_line.search(self.cr, self.uid, [
-            ('days', '=', 15),
-            ('payment_id', '=', payment_term_id)
         ])[0]
         # Creation of payment option then contract and its line
         self.contract_group0 = self._create_group('do_nothing', 1,
@@ -85,14 +73,9 @@ class test_recurring_contract(common.TransactionCase):
             Create a contract. For that purpose we have created a partner
             to get his id
         """
-        journal_obj = self.registry('account.journal')
-        journal_id = journal_obj.search(self.cr, self.uid, [
-            ('type', '=', 'sale'),
-            ('update_posted', '=', True)
-        ])[0]
         # Creation of an account
-        account_type = self.registry('account.account.type').search(self.cr,
-            self.uid, [
+        account_type = self.registry('account.account.type').search(
+            self.cr, self.uid, [
                 ('close_method', '=', 'unreconciled')
             ])[0]
         property_account_receivable = self.registry('account.account').search(
@@ -103,10 +86,6 @@ class test_recurring_contract(common.TransactionCase):
         property_account_payable = self.registry('account.account').search(
             self.cr, self.uid, [
                 ('type', '=', 'payable')
-            ])[0]
-        property_account_income = self.registry('account.account').search(
-            self.cr, self.uid, [
-                ('type', '=', 'receivable')
             ])[0]
         # Creation of a partner
         partner = self.registry('res.partner')
