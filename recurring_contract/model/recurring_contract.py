@@ -135,11 +135,11 @@ class recurring_contract(orm.Model):
         return self.search(cr, uid, [('group_id', 'in', group_ids)],
                            context=context)
 
-   def _get_contract_from_line(self, cr, uid, ids, context=None):
+    def _get_contract_from_line(self, cr, uid, ids, context=None):
         contract_ids = []
         contract_line_obj = self.pool.get('recurring.contract.line')
         for contract_line in contract_line_obj.browse(cr, uid, ids, context):
-                contract_ids.append(contract_line.contract_id.id)
+            contract_ids.append(contract_line.contract_id.id)
         return contract_ids
 
     _columns = {
