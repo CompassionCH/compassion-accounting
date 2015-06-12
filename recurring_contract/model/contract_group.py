@@ -302,9 +302,8 @@ class contract_group(orm.Model):
             'invoice_id': invoice_id,
             'contract_id': contract_line.contract_id.id,
         }
-        
         if account_id:
-            inv_line_date['account_id'] = account_id.id
+            inv_line_data['account_id'] = account_id.id
         return inv_line_data
 
     def _generate_invoice_lines(self, cr, uid, contract, invoice_id,

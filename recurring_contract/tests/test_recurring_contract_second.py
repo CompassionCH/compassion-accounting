@@ -12,64 +12,59 @@
 from openerp.tests import common
 from datetime import datetime, timedelta
 from openerp import netsvc
-from openerp.osv import orm, fields
-from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
-from openerp import netsvc
 import logging
 logger = logging.getLogger(__name__)
 
 
 class test_recurring_contract_second(common.TransactionCase):
-    """ 
-        Test Project recurring contract. It's the second test file. 
-        We are testing the second scenario : 
-            - we are creating 2 contracts (to test the fusion of invoices in 
+
+    """
+        Test Project recurring contract. It's the second test file.
+        We are testing the second scenario :
+            - we are creating 2 contracts (to test the fusion of invoices in
               the case that it must be done)
             - a payment option in which:
                 - 1 invoice is generated every month
                 - with 1 month of invoices generation in advance
-        Then we will test if all is correct after changing the payment option 
+        Then we will test if all is correct after changing the payment option
         to :
             - 1 invoice generated every 2 weeks
-            - with 2 months of invoices generation in advance 
-        We are testing if invoices data are coherent with data in the 
-        associate contract 
+            - with 2 months of invoices generation in advance
+        We are testing if invoices data are coherent with data in the
+        associate contract
     """
-
 
     def setUp(self):
         super(test_recurring_contract_second, self).setUp()
-        #Creation of payment term
+        # Creation of payment term
         journal_obj = self.registry('account.journal')
         journal_id = journal_obj.search(self.cr, self.uid, [
             ('type', '=', 'sale'),
             ('update_posted', '=', True)
         ])[0]
-        # Creation a partner 
-        account_type = self.registry('account.account.type').search(self.cr, 
-            self.uid, [
-                ('close_method', '=', 'unreconciled')
-        ])[0]
+        # Creation of an account
+        account_type = self.registry('account.account.type').search(self.cr,
+            self.uid, [('close_method', '=', 'unreconciled')])[0]
         property_account_receivable = self.registry('account.account').search(
             self.cr, self.uid, [
-            ('type', '=', 'receivable'),
-            ('user_type', '=', account_type)
-        ])[0]
+                ('type', '=', 'receivable'),
+                ('user_type', '=', account_type)
+            ])[0]
         property_account_payable = self.registry('account.account').search(
             self.cr, self.uid, [
-            ('type', '=', 'payable')
-        ])[0]
+                ('type', '=', 'payable')
+            ])[0]
         property_account_income = self.registry('account.account').search(
             self.cr, self.uid, [
-            ('type', '=', 'receivable')
-        ])[0]
-        # Creation a partner 
+                ('type', '=', 'receivable')
+            ])[0]
+        # Creation of a partner
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
             'name': 'Client 137',
             'property_account_receivable': property_account_receivable,
             'property_account_payable': property_account_payable,
-        }) 
+        })
         payment_term = self.registry('account.payment.term')
         payment_term_id = payment_term.search(self.cr, self.uid, [
             ('name', '=', '15 Days')
@@ -79,19 +74,18 @@ class test_recurring_contract_second(common.TransactionCase):
             ('days', '=', 15),
             ('payment_id', '=', payment_term_id)
         ])[0]
-        self.contract_group1 = self._create_group('do_nothing', 1, 
+        self.contract_group1 = self._create_group('do_nothing', 1,
             'month', partner_id, 2, payment_term_id, '137 option payement')
-            
-        self.contract_id1 = self._create_contract(
-            datetime.today()+ timedelta(days=2), self.contract_group1, 
-            datetime.today()+ timedelta(days=2))
-        self.contract_line_id1 = self._create_contract_line(self.contract_id1,
-            '75.0')
 
+        self.contract_id1 = self._create_contract(
+            datetime.today() + timedelta(days=2), self.contract_group1,
+            datetime.today() + timedelta(days=2))
+        self.contract_line_id1 = self._create_contract_line(self.contract_id1,
+                                                            '75.0')
 
     def _create_contract(self, start_date, group_id, next_invoice_date):
-        """ 
-            Create a contract. For that purpose we have created a partner 
+        """
+            Create a contract. For that purpose we have created a partner
             to get his id
         """
         journal_obj = self.registry('account.journal')
@@ -99,25 +93,23 @@ class test_recurring_contract_second(common.TransactionCase):
             ('type', '=', 'sale'),
             ('update_posted', '=', True)
         ])[0]
-        # Creation a partner 
-        account_type = self.registry('account.account.type').search(self.cr, 
-            self.uid, [
-                ('close_method', '=', 'unreconciled')
-        ])[0]
+        # Creation a partner
+        account_type = self.registry('account.account.type').search(self.cr,
+            self.uid, [('close_method', '=', 'unreconciled')])[0]
         property_account_receivable = self.registry('account.account').search(
             self.cr, self.uid, [
-            ('type', '=', 'receivable'),
-            ('user_type', '=', account_type)
-        ])[0]
+                ('type', '=', 'receivable'),
+                ('user_type', '=', account_type)
+            ])[0]
         property_account_payable = self.registry('account.account').search(
             self.cr, self.uid, [
-            ('type', '=', 'payable')
-        ])[0]
+                ('type', '=', 'payable')
+            ])[0]
         property_account_income = self.registry('account.account').search(
             self.cr, self.uid, [
-            ('type', '=', 'receivable')
-        ])[0]
-        # Creation a partner 
+                ('type', '=', 'receivable')
+            ])[0]
+        # Creation a partner
         partner = self.registry('res.partner')
         partner_id = partner.create(self.cr, self.uid, {
             'name': 'Client 137',
@@ -145,17 +137,17 @@ class test_recurring_contract_second(common.TransactionCase):
         return contract_line_id
 
     def _create_group(self, change_method, rec_value, rec_unit, partner_id,
-           adv_biling_months, payment_term_id, ref=None):
-        """ 
+                      adv_biling_months, payment_term_id, ref=None):
+        """
             Create a group with 2 possibilities :
                 - ref is not given so it takes "/" default values
-                - ref is given 
+                - ref is given
         """
         group = self.registry('recurring.contract.group')
         group_id = group.create(self.cr, self.uid, {
             'partner_id': partner_id,
-            })
-        group_obj = group.browse(self.cr, self.uid, group_id)    
+        })
+        group_obj = group.browse(self.cr, self.uid, group_id)
         group_vals = {
             'change_method': change_method,
             'recurring_value': rec_value,
@@ -163,38 +155,38 @@ class test_recurring_contract_second(common.TransactionCase):
             'partner_id': partner_id,
             'advance_billing_months': adv_biling_months,
             'payment_term_id': payment_term_id,
-            }
+        }
         if ref:
             group_vals['ref'] = ref
         group_obj.write(group_vals)
         return group_id
 
     def test_generated_invoice(self):
-        """ 
+        """
             Creation of the second contract to test the fusion of invoices if
-            the partner and the dates are the same: Then there is the test of 
-            the changement of the payment option and its consequences : check 
-            if all data of invoices generated are correct, and if the number 
+            the partner and the dates are the same: Then there is the test of
+            the changement of the payment option and its consequences : check
+            if all data of invoices generated are correct, and if the number
             of invoices generated is correct
         """
-        #Creation of a product
+        # Creation of a product
         product = self.registry('product.product')
         product_id = product.create(self.cr, self.uid, {
             'name': 'Fournitures scolaires',
         })
         self.contract_id2 = self._create_contract(
-            datetime.today()+ timedelta(days=2), 
-            self.contract_group1, datetime.today()+ timedelta(days=2))
-        self.contract_line_id2 = self._create_contract_line(self.contract_id2, 
-            '85.0')
+            datetime.today() + timedelta(days=2),
+            self.contract_group1, datetime.today() + timedelta(days=2))
+        self.contract_line_id2 = self._create_contract_line(self.contract_id2,
+                                                            '85.0')
         self.assertTrue(self.contract_id2)
 
         contract = self.registry('recurring.contract')
         contract_line = self.registry('recurring.contract.line')
-        contract_line_obj1 = contract_line.browse(self.cr, self.uid, 
-            self.contract_line_id1)
-        contract_line_obj2 = contract_line.browse(self.cr, self.uid, 
-            self.contract_line_id2)
+        contract_line_obj1 = contract_line.browse(self.cr, self.uid,
+                                                  self.contract_line_id1)
+        contract_line_obj2 = contract_line.browse(self.cr, self.uid,
+                                                  self.contract_line_id2)
 
         original_price1 = contract_line_obj1.subtotal
         original_price2 = contract_line_obj2.subtotal
@@ -215,20 +207,20 @@ class test_recurring_contract_second(common.TransactionCase):
         self.assertEqual(nb_invoice, 2)
         invoice_fus = invoices[0]
         invoice2_fus = invoices[1]
-        self.assertEqual(original_price1 + original_price2, 
-            invoice_fus.amount_untaxed)
+        self.assertEqual(original_price1 + original_price2,
+                         invoice_fus.amount_untaxed)
 
-        #Changement of the payment option    
+        # Changement of the payment option
         group_obj = self.registry('recurring.contract.group')
-        group_obj.write(self.cr, self.uid, 
-            self.contract_group1, {
-                'change_method': 'clean_invoices',
-                'recurring_value': 2,
-                'recurring_unit': 'week',
-                'advance_billing_months': 2,
-            })
+        group_obj.write(self.cr, self.uid,
+                        self.contract_group1, {
+                            'change_method': 'clean_invoices',
+                            'recurring_value': 2,
+                            'recurring_unit': 'week',
+                            'advance_billing_months': 2,
+                        })
         new_invoicer_id = invoicer_obj.search(self.cr, self.uid, [],
-            order='id DESC')[0]
+                                              order='id DESC')[0]
         new_invoicer = invoicer_obj.browse(self.cr, self.uid, new_invoicer_id)
         new_invoices = new_invoicer.invoice_ids
         nb_new_invoices = len(new_invoices)

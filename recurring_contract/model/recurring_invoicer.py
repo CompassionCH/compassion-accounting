@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class recurring_invoicer(orm.Model):
+
     ''' An invoicer holds a bunch of invoices that have been generated
     in the same context. It also makes the validating or cancelling process
     of these contracts easy.

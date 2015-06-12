@@ -19,8 +19,6 @@ from openerp.tools.translate import _
 import openerp.addons.decimal_precision as dp
 
 
-
-
 class res_partner(orm.Model):
 
     """ Override partners to add contract m2o relation. Raise an error if
@@ -85,7 +83,11 @@ class recurring_contract_line(orm.Model):
         'quantity': fields.integer(_('Quantity'), required=True),
         'subtotal': fields.function(
             _compute_subtotal, string='Subtotal', type="float",
-            digits_compute=dp.get_precision('Account'), store=True),
+            digits_compute=dp.get_precision('Account'), store={
+                'recurring.contract.line': (
+                    lambda self, cr, uid, ids, c=None: ids,
+                    ['amount', 'quantity'], 10)
+            }),
     }
 
     _defaults = {
@@ -132,6 +134,13 @@ class recurring_contract(orm.Model):
         self = group_obj.pool.get('recurring.contract')
         return self.search(cr, uid, [('group_id', 'in', group_ids)],
                            context=context)
+
+   def _get_contract_from_line(self, cr, uid, ids, context=None):
+        contract_ids = []
+        contract_line_obj = self.pool.get('recurring.contract.line')
+        for contract_line in contract_line_obj.browse(cr, uid, ids, context):
+                contract_ids.append(contract_line.contract_id.id)
+        return contract_ids
 
     _columns = {
         'reference': fields.char(
@@ -182,7 +191,9 @@ class recurring_contract(orm.Model):
             digits_compute=dp.get_precision('Account'),
             store={
                 'recurring.contract': (lambda self, cr, uid, ids, c=dict():
-                                       ids, ['contract_line_ids'], 20),
+                                       ids, ['contract_line_ids'], 40),
+                'recurring.contract.line': (_get_contract_from_line,
+                                            ['amount'], 30),
             }, track_visibility="onchange"),
         'payment_term_id': fields.related(
             'group_id', 'payment_term_id', relation='account.payment.term',
@@ -280,8 +291,7 @@ class recurring_contract(orm.Model):
         contract_group_obj = self.pool.get('recurring.contract.group')
         return contract_group_obj.button_generate_invoices(
             cr, uid, group_ids, context)
-        
-        
+
     def clean_invoices(self, cr, uid, ids, context=None, since_date=None,
                        to_date=None, keep_lines=None):
         """ This method deletes invoices lines generated for a given contract
@@ -335,7 +345,6 @@ class recurring_contract(orm.Model):
                                       context, keep_lines)
 
         return inv_ids
-        
 
     def _cancel_confirm_invoices(self, cr, uid, cancel_ids, confirm_ids,
                                  context=None, keep_lines=None):
@@ -382,7 +391,6 @@ class recurring_contract(orm.Model):
                                 next_invoice_date.strftime(DF)}, context)
 
         return True
-
 
     #################################
     #        PRIVATE METHODS        #
@@ -564,7 +572,7 @@ class recurring_contract(orm.Model):
     def contract_terminated(self, cr, uid, ids, context=None):
         today = datetime.today().strftime(DF)
         self.write(cr, uid, ids, {'state': 'terminated', 'end_date': today})
-        #self.clean_invoices(cr, uid, ids, context)
+        self.clean_invoices(cr, uid, ids, context)
         return True
 
     def end_date_reached(self, cr, uid, context=None):
