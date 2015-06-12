@@ -32,7 +32,7 @@
             <field name="name">Property Account Receivable Test</field>
             <field name="type">receivable</field>
             <field name="user_type" ref="account_type"/>
-            <!--field name="code">45917</field-->
+            <field name="code">45917</field>
         </record>
         
         <!--
@@ -43,12 +43,12 @@
             <field name="name">Property Account Payable Test</field>
             <field name="type">payable</field>
             <field name="user_type" ref="account_type"/>
-            <!--field name="code">45877</field-->
+            <field name="code">45877</field>
         </record>
         
         <record id="property_account_income" model="account.account">
             <field name="name">Property Account Income Test</field>
-            <!--field name="code">45646</field-->
+            <field name="code">45646</field>
             <field name="user_type" ref="account_type"/>
             <field name="type">receivable</field>
         </record>
