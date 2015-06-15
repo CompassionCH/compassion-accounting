@@ -13,7 +13,6 @@ from openerp.tests import common
 from datetime import datetime, timedelta
 from openerp import netsvc
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
-from openerp import netsvc
 import logging
 logger = logging.getLogger(__name__)
 
@@ -182,62 +181,60 @@ class test_recurring_contract(common.TransactionCase):
         self.assertEqual(original_total, invoice.amount_total)
 
     def test_generated_invoice_second_scenario(self):
-            """
-                Creation of the second contract to test the fusion of invoices if
-                the partner and the dates are the same: Then there is the test of
-                the changement of the payment option and its consequences : check
-                if all data of invoices generated are correct, and if the number
-                of invoices generated is correct
-            """
-            self.contract_id2 = self._create_contract(
-                datetime.today() + timedelta(days=2),
-                self.contract_group1, datetime.today() + timedelta(days=2))
-            self.contract_line_id2 = self._create_contract_line(self.contract_id2,
-                                                                '85.0')
-            self.assertTrue(self.contract_id2)
+        """
+            Creation of the second contract to test the fusion of invoices if
+            the partner and the dates are the same: Then there is the test of
+            the changement of the payment option and its consequences : check
+            if all data of invoices generated are correct, and if the number
+            of invoices generated is correct
+        """
+        self.contract_id2 = self._create_contract(
+            datetime.today() + timedelta(days=2),
+            self.contract_group1, datetime.today() + timedelta(days=2))
+        self.contract_line_id2 = self._create_contract_line(
+            self.contract_id2, '85.0')
+        self.assertTrue(self.contract_id2)
 
-            contract = self.registry('recurring.contract')
-            contract_line = self.registry('recurring.contract.line')
-            contract_line_obj1 = contract_line.browse(self.cr, self.uid,
-                                                      self.contract_line_id1)
-            contract_line_obj2 = contract_line.browse(self.cr, self.uid,
-                                                      self.contract_line_id2)
+        contract = self.registry('recurring.contract')
+        contract_line = self.registry('recurring.contract.line')
+        contract_line_obj1 = contract_line.browse(
+            self.cr, self.uid, self.contract_line_id1)
+        contract_line_obj2 = contract_line.browse(
+            self.cr, self.uid, self.contract_line_id2)
 
-            original_price1 = contract_line_obj1.subtotal
-            original_price2 = contract_line_obj2.subtotal
+        original_price1 = contract_line_obj1.subtotal
+        original_price2 = contract_line_obj2.subtotal
+        wf_service = netsvc.LocalService('workflow')
+        wf_service.trg_validate(
+            self.uid, 'recurring.contract',
+            self.contract_id1, 'contract_validated', self.cr)
+        wf_service.trg_validate(
+            self.uid, 'recurring.contract',
+            self.contract_id2, 'contract_validated', self.cr)
+        contract_act2 = contract.browse(self.cr, self.uid, self.contract_id2)
+        self.assertEqual(contract_act2.state, 'active')
+        invoicer_obj = self.registry('recurring.invoicer')
+        invoicer_id = contract_act2.button_generate_invoices()
+        invoicer = invoicer_obj.browse(self.cr, self.uid, invoicer_id)
+        invoices = invoicer.invoice_ids
+        nb_invoice = len(invoices)
+        self.assertEqual(nb_invoice, 2)
+        invoice_fus = invoices[0]
+        self.assertEqual(
+            original_price1 + original_price2, invoice_fus.amount_untaxed)
 
-            wf_service = netsvc.LocalService('workflow')
-            wf_service.trg_validate(
-                self.uid, 'recurring.contract',
-                self.contract_id1, 'contract_validated', self.cr)
-            wf_service.trg_validate(
-                self.uid, 'recurring.contract',
-                self.contract_id2, 'contract_validated', self.cr)
-            contract_act2 = contract.browse(self.cr, self.uid, self.contract_id2)
-            self.assertEqual(contract_act2.state, 'active')
-
-            invoicer_obj = self.registry('recurring.invoicer')
-            invoicer_id = contract_act2.button_generate_invoices()
-            invoicer = invoicer_obj.browse(self.cr, self.uid, invoicer_id)
-            invoices = invoicer.invoice_ids
-            nb_invoice = len(invoices)
-            self.assertEqual(nb_invoice, 2)
-            invoice_fus = invoices[0]
-            self.assertEqual(original_price1 + original_price2,
-                             invoice_fus.amount_untaxed)
-
-            # Changement of the payment option
-            group_obj = self.registry('recurring.contract.group')
-            group_obj.write(self.cr, self.uid,
-                            self.contract_group1, {
-                                'change_method': 'clean_invoices',
-                                'recurring_value': 2,
-                                'recurring_unit': 'week',
-                                'advance_billing_months': 2,
-                            })
-            new_invoicer_id = invoicer_obj.search(self.cr, self.uid, [],
-                                                  order='id DESC')[0]
-            new_invoicer = invoicer_obj.browse(self.cr, self.uid, new_invoicer_id)
-            new_invoices = new_invoicer.invoice_ids
-            nb_new_invoices = len(new_invoices)
-            self.assertEqual(nb_new_invoices, 5)
+        # Changement of the payment option
+        group_obj = self.registry('recurring.contract.group')
+        group_obj.write(
+            self.cr, self.uid, self.contract_group1, {
+                'change_method': 'clean_invoices',
+                'recurring_value': 2,
+                'recurring_unit': 'week',
+                'advance_billing_months': 2,
+            })
+        new_invoicer_id = invoicer_obj.search(self.cr, self.uid, [],
+                                              order='id DESC')[0]
+        new_invoicer = invoicer_obj.browse(self.cr, self.uid, new_invoicer_id)
+        new_invoices = new_invoicer.invoice_ids
+        nb_new_invoices = len(new_invoices)
+        self.assertEqual(nb_new_invoices, 5)
