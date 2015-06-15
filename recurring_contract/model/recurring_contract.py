@@ -193,7 +193,7 @@ class recurring_contract(orm.Model):
                 'recurring.contract': (lambda self, cr, uid, ids, c=dict():
                                        ids, ['contract_line_ids'], 40),
                 'recurring.contract.line': (_get_contract_from_line,
-                                            ['amount'], 30),
+                                            ['amount', 'quantity'], 30),
             }, track_visibility="onchange"),
         'payment_term_id': fields.related(
             'group_id', 'payment_term_id', relation='account.payment.term',

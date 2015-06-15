@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 ##############################################################################
 #
-#    Copyright (C) 2014 Compassion CH (http://www.compassion.ch)
+#    Copyright (C) 2015 Compassion CH (http://www.compassion.ch)
 #    Releasing children from poverty in Jesus' name
 #    @author: Albert SHENOUDA <albert.shenouda@efrei.net>
 #
@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 class test_recurring_contract_second(common.TransactionCase):
-
     """
         Test Project recurring contract. It's the second test file.
         We are testing the second scenario :
@@ -49,18 +48,18 @@ class test_recurring_contract_second(common.TransactionCase):
                 ('type', '=', 'payable')
             ])[0]
         # Creation of a partner
-        partner = self.registry('res.partner')
-        partner_id = partner.create(self.cr, self.uid, {
+        partner_obj = self.registry('res.partner')
+        self.partner_id = partner_obj.create(self.cr, self.uid, {
             'name': 'Client 137',
             'property_account_receivable': property_account_receivable,
             'property_account_payable': property_account_payable,
         })
-        payment_term = self.registry('account.payment.term')
-        payment_term_id = payment_term.search(self.cr, self.uid, [
+        payment_term_obj = self.registry('account.payment.term')
+        payment_term_id = payment_term_obj.search(self.cr, self.uid, [
             ('name', '=', '15 Days')
         ])[0]
         self.contract_group1 = self._create_group(
-            'do_nothing', 1, 'month', partner_id, 2, payment_term_id,
+            'do_nothing', 1, 'month', self.partner_id, 2, payment_term_id,
             '137 option payement')
 
         self.contract_id1 = self._create_contract(
@@ -74,30 +73,11 @@ class test_recurring_contract_second(common.TransactionCase):
             Create a contract. For that purpose we have created a partner
             to get his id
         """
-        # Creation a partner
-        account_type = self.registry('account.account.type').search(
-            self.cr, self.uid, [('close_method', '=', 'unreconciled')])[0]
-        property_account_receivable = self.registry('account.account').search(
-            self.cr, self.uid, [
-                ('type', '=', 'receivable'),
-                ('user_type', '=', account_type)
-            ])[0]
-        property_account_payable = self.registry('account.account').search(
-            self.cr, self.uid, [
-                ('type', '=', 'payable')
-            ])[0]
-        # Creation a partner
-        partner = self.registry('res.partner')
-        partner_id = partner.create(self.cr, self.uid, {
-            'name': 'Client 137',
-            'property_account_receivable': property_account_receivable,
-            'property_account_payable': property_account_payable,
-        })
         # Creation of a contract
         contract_obj = self.registry('recurring.contract')
         contract_id = contract_obj.create(self.cr, self.uid, {
             'start_date': start_date,
-            'partner_id': partner_id,
+            'partner_id': self.partner_id,
             'group_id': group_id,
             'next_invoice_date': next_invoice_date,
         })
