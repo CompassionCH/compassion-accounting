@@ -34,7 +34,7 @@ class test_split_invoice(common.TransactionCase):
             'service 11', '40.0', self.invoice_id1)
         self.invoice_line_id22 = self._create_invoice_line(
             'service 22', '50.0', self.invoice_id1)
-            
+
     def test_open_invoice(self):
         """ Run test for invoice in 'open' state """
         self.assertTrue(self.invoice_id)
@@ -49,7 +49,7 @@ class test_split_invoice(common.TransactionCase):
         wizard_id = wizard_obj.create(
             self.cr, self.uid, dict(), context={
                 'active_id': self.invoice_id})
-        
+
         original_amount = invoice.amount_total
         original_name = invoice.name
         orginal_partner_id = invoice.partner_id.id
@@ -60,7 +60,7 @@ class test_split_invoice(common.TransactionCase):
             self.cr, self.uid, wizard_id, 'invoice_line_ids', [
                 (1, self.invoice_line_id1, {'split': True})], "")
         new_invoice = invoice_obj.browse(self.cr, self.uid, new_invoice_id)
-        wizard = wizard_obj.browse(self.cr, self.uid, wizard_id)    
+        wizard = wizard_obj.browse(self.cr, self.uid, wizard_id)
         # Test if the lines have been exactly copied
         self.assertEqual(wizard.invoice_id.id, self.invoice_id)
         self.assertNotEqual(wizard.invoice_id.id, new_invoice_id)
@@ -86,19 +86,19 @@ class test_split_invoice(common.TransactionCase):
             original_amount,
             wizard.invoice_id.amount_total + new_invoice.amount_total
         )
-        
+
     def test_draft_invoice(self):
         """ Run test for invoice in 'draft' state """
         self.assertTrue(self.invoice_id1)
         invoice_obj = self.registry('account.invoice')
         invoice = invoice_obj.browse(self.cr, self.uid, self.invoice_id1)
         self.assertTrue(invoice)
-        
+
         wizard_obj = self.registry('account.invoice.split.wizard')
         wizard_id = wizard_obj.create(
             self.cr, self.uid, dict(), context={
                 'active_id': self.invoice_id1})
-        
+
         original_amount = invoice.amount_total
         original_name = invoice.name
         orginal_partner_id = invoice.partner_id.id
@@ -109,7 +109,7 @@ class test_split_invoice(common.TransactionCase):
             self.cr, self.uid, wizard_id, 'invoice_line_ids', [
                 (1, self.invoice_line_id1, {'split': True})], "")
         new_invoice = invoice_obj.browse(self.cr, self.uid, new_invoice_id)
-        wizard = wizard_obj.browse(self.cr, self.uid, wizard_id)    
+        wizard = wizard_obj.browse(self.cr, self.uid, wizard_id)
         # Test if the lines have been exactly copied
         self.assertEqual(wizard.invoice_id.id, self.invoice_id1)
         self.assertNotEqual(wizard.invoice_id.id, new_invoice_id)
@@ -135,7 +135,7 @@ class test_split_invoice(common.TransactionCase):
             original_amount,
             wizard.invoice_id.amount_total + new_invoice.amount_total
         )
-        
+
     def _create_invoice(self, invoice_name):
         """ Set the update_posted to True to make invoice cancelable """
         journal_obj = self.registry('account.journal')
@@ -168,5 +168,3 @@ class test_split_invoice(common.TransactionCase):
             'invoice_id': invoice_id,
         })
         return invoice_line_id
-
- 
