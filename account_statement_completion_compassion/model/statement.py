@@ -212,11 +212,16 @@ class AccountStatementLine(orm.Model):
             raise orm.except_orm(_('A field is required'),
                                  _('Add a Sponsorship'))
 
-        analytic = self.pool.get('account.analytic.default').account_get(
-            cr, uid, b_line.product_id.id, b_line.partner_id.id, uid,
-            time.strftime('%Y-%m-%d'), context=context)
-        if analytic and analytic.analytics_id:
-            inv_line_data['analytics_id'] = analytic.analytics_id.id
+        if b_line.account_analytic_id:
+            inv_line_data['account_analytic_id'] = \
+                b_line.account_analytic_id.id
+        else:
+            analytic = self.pool.get('account.analytic.default').account_get(
+                cr, uid, b_line.product_id.id, b_line.partner_id.id, uid,
+                time.strftime('%Y-%m-%d'), context=context)
+            if analytic and analytic.analytics_id:
+                inv_line_data['analytics_id'] = analytic.analytics_id.id
+
         self.pool.get('account.invoice.line').create(
             cr, uid, inv_line_data, context)
 
