@@ -20,7 +20,6 @@ import openerp.addons.decimal_precision as dp
 
 
 class res_partner(orm.Model):
-
     """ Override partners to add contract m2o relation. Raise an error if
     we try to delete a partner with active contracts.
     """
