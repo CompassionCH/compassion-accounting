@@ -20,7 +20,6 @@ import openerp.addons.decimal_precision as dp
 
 
 class res_partner(orm.Model):
-
     """ Override partners to add contract m2o relation. Raise an error if
     we try to delete a partner with active contracts.
     """
@@ -83,7 +82,11 @@ class recurring_contract_line(orm.Model):
         'quantity': fields.integer(_('Quantity'), required=True),
         'subtotal': fields.function(
             _compute_subtotal, string='Subtotal', type="float",
-            digits_compute=dp.get_precision('Account'), store=True),
+            digits_compute=dp.get_precision('Account'), store={
+                'recurring.contract.line': (
+                    lambda self, cr, uid, ids, c=None: ids,
+                    ['amount', 'quantity'], 10)
+            }),
     }
 
     _defaults = {
@@ -130,6 +133,13 @@ class recurring_contract(orm.Model):
         self = group_obj.pool.get('recurring.contract')
         return self.search(cr, uid, [('group_id', 'in', group_ids)],
                            context=context)
+
+    def _get_contract_from_line(self, cr, uid, ids, context=None):
+        contract_ids = []
+        contract_line_obj = self.pool.get('recurring.contract.line')
+        for contract_line in contract_line_obj.browse(cr, uid, ids, context):
+            contract_ids.append(contract_line.contract_id.id)
+        return contract_ids
 
     _columns = {
         'reference': fields.char(
@@ -180,7 +190,9 @@ class recurring_contract(orm.Model):
             digits_compute=dp.get_precision('Account'),
             store={
                 'recurring.contract': (lambda self, cr, uid, ids, c=dict():
-                                       ids, ['contract_line_ids'], 20),
+                                       ids, ['contract_line_ids'], 40),
+                'recurring.contract.line': (_get_contract_from_line,
+                                            ['amount', 'quantity'], 30),
             }, track_visibility="onchange"),
         'payment_term_id': fields.related(
             'group_id', 'payment_term_id', relation='account.payment.term',
@@ -223,12 +235,12 @@ class recurring_contract(orm.Model):
 
     def write(self, cr, uid, ids, vals, context=None):
         """ Perform various checks when a contract is modified. """
-        res = super(recurring_contract, self).write(
-            cr, uid, ids, vals, context=context)
-
         if 'next_invoice_date' in vals:
             self._on_change_next_invoice_date(
                 cr, uid, ids, vals['next_invoice_date'], context)
+
+        res = super(recurring_contract, self).write(
+            cr, uid, ids, vals, context=context)
 
         if 'contract_line_ids' in vals:
             self._on_contract_lines_changed(cr, uid, ids, context)
@@ -276,7 +288,7 @@ class recurring_contract(orm.Model):
         group_ids = [contract.group_id.id for contract in self.browse(
             cr, uid, ids, context)]
         contract_group_obj = self.pool.get('recurring.contract.group')
-        contract_group_obj.button_generate_invoices(
+        return contract_group_obj.button_generate_invoices(
             cr, uid, group_ids, context)
 
     def clean_invoices(self, cr, uid, ids, context=None, since_date=None,
@@ -387,7 +399,6 @@ class recurring_contract(orm.Model):
         for contract in self.browse(cr, uid, ids, context):
             next_date = self._compute_next_invoice_date(contract)
             contract.write({'next_invoice_date': next_date})
-
         return True
 
     def _compute_next_invoice_date(self, contract):
@@ -442,8 +453,7 @@ class recurring_contract(orm.Model):
                     raise orm.except_orm(
                         'Error',
                         _('You cannot rewind the next invoice date.'))
-        else:
-            return True
+        return True
 
     def _on_contract_lines_changed(self, cr, uid, ids, context=None):
         """Update related invoices to reflect the changes to the contract.

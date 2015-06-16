@@ -15,9 +15,7 @@ from dateutil.relativedelta import relativedelta
 from openerp.osv import orm, fields
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 from openerp.tools.translate import _
-
 import logging
-
 logger = logging.getLogger(__name__)
 
 
@@ -126,9 +124,17 @@ class contract_group(orm.Model):
             - Another change method was selected
         """
         res = True
+        # to solve "NotImplementedError: Iteration is not allowed" error
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
-        for group in self.browse(
-                cr, uid, ids, context):
+        # Any of these modifications implies generate and validate invoices
+        generate_again = ('advance_billing_months' in vals or
+                          'recurring_value' in vals or
+                          'recurring_unit' in vals or
+                          'change_method' in vals)
+
+        for group in self.browse(cr, uid, ids, context):
 
             # Check if group has an next_invoice_date
             if not group.next_invoice_date:
@@ -139,34 +145,15 @@ class contract_group(orm.Model):
             # Get the method to apply changes
             change_method = vals.get('change_method') or group.change_method
             change_method = getattr(self, change_method)
-            old_advance_billing_months = group.advance_billing_months
-
-            # Advance billing changed
-            if ('advance_billing_months' in vals):
-                # Advance billing decrease
-                if old_advance_billing_months > vals['advance_billing_months']:
-                    advance_billing_months = vals['advance_billing_months']
-                    change_method(
-                        cr, uid, group, advance_billing_months, context)
-
-            # Recurring value changed
-            if ('recurring_value' in vals or
-                    'recurring_unit' in vals):
-                change_method(cr, uid, group, context=context)
-
-            # Change method was modified
-            if ('change_method' in vals):
-                change_method(
-                    cr, uid, group,
-                    old_advance_billing_months, context=context)
 
             res = super(contract_group, self).write(
                 cr, uid, group.id, vals, context) & res
-        # Any of these modifications implies generate and validate invoices
-        if ('advance_billing_months' in vals or
-                'recurring_value' in vals or
-                'recurring_unit' in vals or
-                'change_method' in vals):
+
+            if generate_again:
+                change_method(
+                    cr, uid, group, context)
+
+        if generate_again:
             invoicer_id = self.generate_invoices(cr, uid, ids, context=context)
             self.validate_invoices(cr, uid, invoicer_id, context)
 
@@ -175,7 +162,7 @@ class contract_group(orm.Model):
     def button_generate_invoices(self, cr, uid, ids, context=None):
         invoicer_id = self.generate_invoices(cr, uid, ids, context=context)
         self.validate_invoices(cr, uid, invoicer_id, context)
-        return True
+        return invoicer_id
 
     def validate_invoices(self, cr, uid, invoicer_id, context=None):
         recurring_invoicer_obj = self.pool.get('recurring.invoicer')
@@ -187,15 +174,16 @@ class contract_group(orm.Model):
             self.pool.get('recurring.invoicer').validate_invoices(
                 cr, uid, [invoicer_id])
 
-    def clean_invoices(self, cr, uid, group, advance_billing=0, context=None):
+    def clean_invoices(self, cr, uid, group, context=None):
         """ Change method which cancels generated invoices and rewinds
         the next_invoice_date of contracts, so that new invoices can be
         generated taking into consideration the modifications of the
         contract group.
         """
+
         recurring_contract_obj = self.pool.get('recurring.contract')
         contract_ids = [contract.id for contract in group.contract_ids]
-        since_date = datetime.date.today()
+        since_date = datetime.today()
         if group.last_paid_invoice_date:
             last_paid_invoice_date = datetime.strptime(
                 group.last_paid_invoice_date, DF)
@@ -207,7 +195,7 @@ class contract_group(orm.Model):
             cr, uid, contract_ids, context)
         return res
 
-    def do_nothing(self, cr, uid, group, advance_billing=0, context=None):
+    def do_nothing(self, cr, uid, group, context=None):
         """ No changes before generation """
         pass
 
@@ -215,6 +203,8 @@ class contract_group(orm.Model):
         """ Checks all contracts and generate invoices if needed.
         Create an invoice per contract group per date.
         """
+        if context is None:
+            context = dict()
         logger.info("Invoice generation started.")
         inv_obj = self.pool.get('account.invoice')
         journal_obj = self.pool.get('account.journal')
@@ -223,7 +213,6 @@ class contract_group(orm.Model):
 
         if not ids:
             ids = self.search(cr, uid, [], context=context)
-
         if not invoicer_id:
             invoicer_id = self.pool.get('recurring.invoicer').create(
                 cr, uid, {'source': self._name}, context)
@@ -231,7 +220,6 @@ class contract_group(orm.Model):
         journal_ids = journal_obj.search(
             cr, uid, [('type', '=', 'sale'), ('company_id', '=', 1 or False)],
             limit=1)
-
         nb_groups = len(ids)
         count = 1
         for group_id in ids:
@@ -268,7 +256,6 @@ class contract_group(orm.Model):
                     invoice.button_compute()
                 else:
                     invoice.unlink()
-
             # After a contract_group is done, we commit all writes in order to
             # avoid doing it again in case of an error or a timeout
             cr.commit()
@@ -283,7 +270,6 @@ class contract_group(orm.Model):
             inherit this method.
         """
         partner = con_gr.partner_id
-
         inv_data = {
             'account_id': partner.property_account_receivable.id,
             'type': 'out_invoice',
@@ -306,10 +292,9 @@ class contract_group(orm.Model):
         just inherit this method.
         """
         product = contract_line.product_id
-
+        account_id = product.property_account_income
         inv_line_data = {
             'name': product.name,
-            'account_id': product.property_account_income.id,
             'price_unit': contract_line.amount or 0.0,
             'quantity': contract_line.quantity,
             'uos_id': False,
@@ -317,7 +302,8 @@ class contract_group(orm.Model):
             'invoice_id': invoice_id,
             'contract_id': contract_line.contract_id.id,
         }
-
+        if account_id:
+            inv_line_data['account_id'] = account_id.id
         return inv_line_data
 
     def _generate_invoice_lines(self, cr, uid, contract, invoice_id,
