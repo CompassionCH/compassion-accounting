@@ -73,7 +73,7 @@ class recurring_invoicer(orm.Model):
             # avoid doing it again in case of an error or a timeout
             cr.commit()
             count += 1
-        return True
+        return invoice_ids
 
     # When an invoice is cancelled, should we adjust next_invoice_date
     # in contract ?

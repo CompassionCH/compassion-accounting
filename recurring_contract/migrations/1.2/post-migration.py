@@ -32,7 +32,7 @@ def migrate(cr, version):
         cr.execute(
             '''
             UPDATE recurring_contract_group
-            SET recurring_value = {0}, advance_billing_months = {0}
+            SET advance_billing_months = {0}
             WHERE id = {1}
             '''.format(delay, contract_group[0])
 

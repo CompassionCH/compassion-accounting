@@ -50,7 +50,9 @@
         'data/daily_invoicer_cron.xml',
         'security/ir.model.access.csv',
     ],
-    'demo': [],
+    'demo': [
+        'demo/contract_demo.xml'
+    ],
     'description': '''
         Recurring contracts are made to handle recurring invoice generation.
         Each contract is part of a contract group. This way, only one invoice

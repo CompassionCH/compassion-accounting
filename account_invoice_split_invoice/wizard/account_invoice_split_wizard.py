@@ -34,7 +34,7 @@ class split_invoice_wizard(orm.TransientModel):
         return {id: line_ids for id in ids}
 
     def _write_lines(self, cr, uid, ids, field_name, field_value, arg,
-                     context):
+                     context=None):
         """Update invoice_lines. Those that have the invoice_id removed
         are attached to a new draft invoice."""
         if not isinstance(ids, list):
@@ -42,8 +42,9 @@ class split_invoice_wizard(orm.TransientModel):
         inv_line_obj = self.pool.get('account.invoice.line')
         inv_lines_to_update = list()
         inv_lines_vals = dict()
+        invoice_id = False
         for line in field_value:
-            if line[0] == 1:  # one2many update
+            if isinstance(line, tuple) and line[0] == 1:  # one2many update
                 inv_line_id = line[1]
                 line_values = line[2]
                 if line_values.get('split'):
@@ -55,19 +56,23 @@ class split_invoice_wizard(orm.TransientModel):
                         inv_lines_vals['invoice_id'] = invoice_id
         if inv_lines_to_update:
             old_invoice = self.browse(cr, uid, ids[0], context).invoice_id
-            inv_line_obj.write(cr, uid, inv_lines_to_update, inv_lines_vals)
-            if old_invoice.state == 'open':
-                # Cancel and validate again invoices
-                self.pool.get('account.invoice').action_cancel(
-                    cr, uid, [old_invoice.id], context=context)
-                self.pool.get('account.invoice').action_cancel_draft(
-                    cr, uid, [old_invoice.id])
-                wf_service = netsvc.LocalService('workflow')
-                wf_service.trg_validate(
-                    uid, 'account.invoice', old_invoice.id, 'invoice_open', cr)
-                wf_service.trg_validate(
-                    uid, 'account.invoice', invoice_id, 'invoice_open', cr)
-        return True
+            if old_invoice.state in ('draft', 'open'):
+                inv_line_obj.write(cr, uid, inv_lines_to_update,
+                                   inv_lines_vals)
+                if old_invoice.state == 'open':
+                    # Cancel and validate again invoices
+                    self.pool.get('account.invoice').action_cancel(
+                        cr, uid, [old_invoice.id], context=context)
+                    self.pool.get('account.invoice').action_cancel_draft(
+                        cr, uid, [old_invoice.id])
+                    wf_service = netsvc.LocalService('workflow')
+                    wf_service.trg_validate(
+                        uid, 'account.invoice', old_invoice.id,
+                        'invoice_open', cr)
+                    wf_service.trg_validate(
+                        uid, 'account.invoice', invoice_id, 'invoice_open',
+                        cr)
+        return invoice_id
 
     def _copy_invoice(self, cr, uid, ids, context=None):
         # Create new invoice
@@ -78,7 +83,8 @@ class split_invoice_wizard(orm.TransientModel):
         found_ids = invoice_obj.search(cr, uid, [
             ('partner_id', '=', old_invoice.partner_id.id),
             ('date_invoice', '=', old_invoice.date_invoice),
-            ('state', '=', 'draft')], context=context)
+            ('state', '=', 'draft'),
+            ('id', '!=', old_invoice.id)], context=context)
         if found_ids and len(found_ids) == 1:
             # Empty the new invoice
             inv_line_obj = self.pool.get('account.invoice.line')
