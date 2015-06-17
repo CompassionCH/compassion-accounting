@@ -69,6 +69,7 @@
             <field name="type">normal</field>
             <field name="code">ATT_IT_project</field>
             <field name="parent_id" ref="account_attribution_IT"/>
+        </record>
         <record id="account_attribution_IT_zivi-intern" model="account.analytic.account">
             <field name="name">IT zivi-intern</field>
             <field name="type">normal</field>
