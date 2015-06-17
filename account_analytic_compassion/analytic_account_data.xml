@@ -70,10 +70,10 @@
             <field name="parent_id" ref="account_analytic_account_ss"/>
         </record>
         <record id="account_analytic_account_fund" model="account.analytic.account">
-            <field name="name">FUND</field>
+            <field name="name">Fund Raising</field>
             <field name="type">normal</field>
             <field name="code">AA103</field>
-            <field name="parent_id" ref="account_analytic_attribution.account_analytic_root_to_attribute"/>
+            <field name="parent_id" ref="account_analytic_account_root"/>
         </record>
         <record id="account_analytic_account_events" model="account.analytic.account">
             <field name="name">Events</field>
