@@ -242,7 +242,7 @@ class recurring_contract(orm.Model):
                 _('You cannot delete a contract that is still active. '
                   'Terminate it first.'))
 
-        super(recurring_contract, self).unlink(cr, uid, unlink_ids,
+        super(recurring_contract, self).unlink(cr, uid, ids,
                                                context=context)
         return
 
