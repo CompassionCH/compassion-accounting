@@ -14,6 +14,9 @@ from openerp.tools import mod10r
 from openerp.tools.translate import _
 from openerp import netsvc
 
+from sponsorship_compassion.model.product import GIFT_CATEGORY, GIFT_NAMES, \
+    SPONSORSHIP_CATEGORY
+
 import time
 
 
@@ -183,7 +186,7 @@ class AccountStatementLine(orm.Model):
             'recurring_invoicer_id': invoicer.id,
             'currency_id': b_line.statement_id.currency.id,
         }
-        if b_line.product_id.name == 'Birthday Gift' and b_line.contract_id \
+        if b_line.product_id.name == GIFT_NAMES[0] and b_line.contract_id \
                 and b_line.contract_id.child_id and \
                 b_line.contract_id.child_id.birthdate:
             inv_data['date_invoice'] = self.pool.get(
@@ -206,8 +209,8 @@ class AccountStatementLine(orm.Model):
             'invoice_id': invoice_id,
         }
 
-        if b_line.product_id.categ_name in ('Sponsor gifts',
-                                            'Sponsorship') and not \
+        if b_line.product_id.categ_name in (GIFT_CATEGORY,
+                                            SPONSORSHIP_CATEGORY) and not \
                 b_line.contract_id:
             raise orm.except_orm(_('A field is required'),
                                  _('Add a Sponsorship'))
