@@ -131,8 +131,7 @@ class contract_group(orm.Model):
         # Any of these modifications implies generate and validate invoices
         generate_again = ('advance_billing_months' in vals or
                           'recurring_value' in vals or
-                          'recurring_unit' in vals or
-                          'change_method' in vals)
+                          'recurring_unit' in vals)
 
         for group in self.browse(cr, uid, ids, context):
 
@@ -143,18 +142,18 @@ class contract_group(orm.Model):
                 break
 
             # Get the method to apply changes
-            change_method = vals.get('change_method') or group.change_method
+            change_method = vals.get('change_method', group.change_method)
             change_method = getattr(self, change_method)
 
             res = super(contract_group, self).write(
                 cr, uid, group.id, vals, context) & res
 
             if generate_again:
-                change_method(
-                    cr, uid, group, context)
+                change_method(cr, uid, group, context)
 
         if generate_again:
-            invoicer_id = self.generate_invoices(cr, uid, ids, context=context)
+            invoicer_id = self.generate_invoices(cr, uid, ids,
+                                                 context=context)
             self.validate_invoices(cr, uid, invoicer_id, context)
 
         return res

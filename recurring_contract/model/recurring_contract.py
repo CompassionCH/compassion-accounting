@@ -19,39 +19,6 @@ from openerp.tools.translate import _
 import openerp.addons.decimal_precision as dp
 
 
-class res_partner(orm.Model):
-    """ Override partners to add contract m2o relation. Raise an error if
-    we try to delete a partner with active contracts.
-    """
-    _inherit = 'res.partner'
-
-    _columns = {
-        'contract_group_ids': fields.one2many(
-            'recurring.contract.group', 'partner_id',
-            _('Contract groups')),
-    }
-
-    def unlink(self, cr, uid, ids, context=None):
-        """ Raise an error if there is active contracts for partner """
-        if context is None:
-            context = dict()
-        partners = self.browse(cr, uid, ids, context=context)
-        unlink_ids = []
-
-        for partner in partners:
-            for contract_group in partner.contract_group_ids:
-                for contract in contract_group.contract_ids:
-                    if contract.state not in ('draft', 'terminated'):
-                        raise orm.except_orm(
-                            'UserError',
-                            _('You cannot delete a partner having an active '
-                              'contract.'))
-            unlink_ids.append(partner.id)
-
-        super(res_partner, self).unlink(cr, uid, unlink_ids, context=context)
-        return True
-
-
 class recurring_contract_line(orm.Model):
     """ Each product sold through a contract """
 
@@ -266,19 +233,14 @@ class recurring_contract(orm.Model):
                                                     context)
 
     def unlink(self, cr, uid, ids, context=None):
-        if context is None:
-            context = dict()
-        contracts = self.read(cr, uid, ids, ['state'], context=context)
-        unlink_ids = []
-
-        for contract in contracts:
-            if contract['state'] not in ('draft', 'terminated'):
-                raise orm.except_orm(
-                    'UserError',
-                    _('You cannot delete a contract that is still active. '
-                      'Terminate it first.'))
-            else:
-                unlink_ids.append(contract['id'])
+        active_ids = self.search(cr, uid, [
+            ('id', 'in', ids),
+            ('state', 'not in', ['draft', 'terminated'])], context=context)
+        if active_ids:
+            raise orm.except_orm(
+                'UserError',
+                _('You cannot delete a contract that is still active. '
+                  'Terminate it first.'))
 
         super(recurring_contract, self).unlink(cr, uid, unlink_ids,
                                                context=context)
