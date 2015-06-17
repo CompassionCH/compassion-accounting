@@ -5,7 +5,7 @@
     The licence is in the file __openerp__.py
 -->
 <openerp>
-	<data noupdate="1">
+    <data noupdate="1">
         <function model="account.analytic.default" name="install"/>
     </data>
     <data>
@@ -64,6 +64,12 @@
             <field name="code">ATT_IT</field>
             <field name="parent_id" ref="account_analytic_root_to_attribute"/>
         </record>            
+        <record id="account_attribution_IT_maintenance" model="account.analytic.account">
+            <field name="name">IT Maintenance</field>
+            <field name="type">normal</field>
+            <field name="code">ATT_IT_maintenance</field>
+            <field name="parent_id" ref="account_attribution_IT"/>
+        </record>
         <record id="account_attribution_IT_project" model="account.analytic.account">
             <field name="name">IT Project</field>
             <field name="type">normal</field>
@@ -81,8 +87,8 @@
             <field name="type">normal</field>
             <field name="code">ATT_TRAVEL</field>
             <field name="parent_id" ref="account_analytic_root_to_attribute"/>
-        </record>            
-        
+        </record>
+
         <!-- Analytic Journal used for attributed analytic lines -->
         <record id="journal_attribution" model="account.analytic.journal">
             <field name="name">Analytic Attribution</field>
