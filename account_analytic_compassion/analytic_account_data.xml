@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-    <data noupdate="True">
+    <data noupdate="1">
     	<!--
             Resource: account.analytic.account
         -->
@@ -73,7 +73,7 @@
             <field name="name">FUND</field>
             <field name="type">normal</field>
             <field name="code">AA103</field>
-            <field name="parent_id" ref="account_analytic_account_ss"/>
+            <field name="parent_id" ref="account_analytic_attribution.account_analytic_root_to_attribute"/>
         </record>
         <record id="account_analytic_account_events" model="account.analytic.account">
             <field name="name">Events</field>

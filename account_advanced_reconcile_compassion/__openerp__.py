@@ -38,7 +38,7 @@
     current invoice (last invoice that is not in future).
     Then it reconciles the other invoices from last invoice to first.
     """,
-    'version': '1.1',
+    'version': '1.2',
     'author': 'Compassion CH',
     'category': 'Finance',
     'website': 'http://www.compassion.ch',
@@ -49,7 +49,8 @@
                 'account_cancel'],
     'data': ['view/easy_reconcile_view.xml',
              'view/reconcile_fund_wizard_view.xml',
-             'view/reconcile_split_payment_wizard_view.xml'],
+             'view/reconcile_split_payment_wizard_view.xml',
+             'view/change_attribution_wizard_view.xml'],
     'js': ['static/src/js/account_move_reconciliation.js'],
     'qweb': ['static/src/xml/account_move_reconciliation.xml'],
     'demo': [],

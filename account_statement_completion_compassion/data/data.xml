@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-<data noupdate="1">
+<data>
 
     <record id="bank_statement_completion_rule_partner_ref" model="account.statement.completion.rule">
         <field name="name">Compassion: Match from line reference (based on partner reference)</field>
@@ -12,6 +12,12 @@
         <field name="name">Compassion: Match from line reference (based on invoice BVR reference)</field>
         <field name="sequence">20</field>
         <field name="function_to_call">get_from_bvr_ref</field>
+    </record>
+    
+    <record id="bank_statement_completion_rule_bvr_ref_lsv" model="account.statement.completion.rule">
+        <field name="name">Compassion [LSV/DD]: Match from line reference (based on invoice BVR reference)</field>
+        <field name="sequence">20</field>
+        <field name="function_to_call">lsv_dd_get_from_bvr_ref</field>
     </record>
 
     <record id="bank_statement_completion_rule_supplier_amount" model="account.statement.completion.rule">
@@ -30,6 +36,12 @@
         <field name="name">Compassion: From line reference (based on previous move_line references)</field>
         <field name="sequence">70</field>
         <field name="function_to_call">get_from_move_line_ref</field>
+    </record>
+    
+    <record id="bank_statement_completion_rule_sponsor_name" model="account.statement.completion.rule">
+        <field name="name">Compassion: Match sponsor name (based on label)</field>
+        <field name="sequence">90</field>
+        <field name="function_to_call">get_sponsor_name</field>
     </record>
 </data>
 </openerp>

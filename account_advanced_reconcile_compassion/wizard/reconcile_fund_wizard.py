@@ -80,6 +80,12 @@ class reconcile_fund_wizard(orm.TransientModel):
             ids = ids[0]
 
         wizard = self.browse(cr, uid, ids, context)
+        contract_ids = [c.id for c in wizard.contract_ids]
+        if not contract_ids:
+            raise orm.except_orm(
+                _('No contract'),
+                _('This operation is only allowed for invoices related to '
+                  'sponsorships.'))
         active_ids = context.get('active_ids')
         res = {}
         invoice_obj = self.pool.get('account.invoice')
@@ -105,15 +111,16 @@ class reconcile_fund_wizard(orm.TransientModel):
         if invoice_id:
             invoice_obj.action_cancel(cr, uid, [invoice_id], context)
             invoice_obj.action_cancel_draft(cr, uid, [invoice_id], context)
+            invoice = invoice_obj.browse(cr, uid, invoice_id, context)
+
             res.update(self._generate_invoice_line(
                 cr, uid, invoice_id, wizard.fund_id,
-                residual, partner_id, context=context))
+                residual, partner_id, contract_ids, context=context))
 
             # Validate the invoice
             wf_service = netsvc.LocalService('workflow')
             wf_service.trg_validate(
                 uid, 'account.invoice', invoice_id, 'invoice_open', cr)
-            invoice = invoice_obj.browse(cr, uid, invoice_id, context)
             move_line_ids = move_line_obj.search(
                 cr, uid, [('move_id', '=', invoice.move_id.id),
                           ('account_id', '=', account_id)],
@@ -125,12 +132,12 @@ class reconcile_fund_wizard(orm.TransientModel):
         return {'type': 'ir.actions.act_window_close'}
 
     def _generate_invoice_line(self, cr, uid, invoice_id, product, price,
-                               partner_id, context=None):
+                               partner_id, contract_ids, context=None):
 
         inv_line_data = {
             'name': product.name,
             'account_id': product.property_account_income.id,
-            'price_unit': price,
+            'price_unit': price / len(contract_ids),
             'quantity': 1,
             'uos_id': False,
             'product_id': product.id or False,
@@ -148,6 +155,8 @@ class reconcile_fund_wizard(orm.TransientModel):
 
         res['name'] = product.name
 
-        self.pool.get('account.invoice.line').create(
-            cr, uid, inv_line_data, context=context)
+        for contract_id in contract_ids:
+            inv_line_data['contract_id'] = contract_id
+            self.pool.get('account.invoice.line').create(
+                cr, uid, inv_line_data, context=context)
         return res

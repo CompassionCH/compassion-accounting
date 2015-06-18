@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_account_analytic_default_distribution_tree" model="ir.ui.view">
+            <field name="name">account.analytic.default.tree.attribution</field>
+            <field name="model">account.analytic.default</field>
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <tree string="Analytic Attributions">
+                    <field name="sequence"/>
+                    <field name="analytic_id" required="0" groups="analytic.group_analytic_accounting"/>
+                    <field name="analytics_id" required="0" groups="analytic.group_analytic_accounting"/>
+                    <field name="date_start"/>
+                    <field name="date_stop"/>
+                    <field name="account_id"/>
+                    <field name="company_id" groups="base.group_multi_company"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_account_analytic_default_distribution_form" model="ir.ui.view">
+            <field name="name">account.analytic.default.form.attribution</field>
+            <field name="model">account.analytic.default</field>
+            <field name="inherit_id" ref="account_analytic_plans.view_default_inherit_form"/>
+            <field name="arch" type="xml">
+                <field name="analytics_id" position="after">
+                    <field name="type" invisible="1"/>
+                    <field name="analytic_id" attrs="{'invisible':[('type', '=', 'default')]}"/>
+                </field>
+                <field name="product_id" position="attributes">
+                    <attribute name="attrs">{'invisible':[('type', '=', 'attribution')]}</attribute>
+                </field>
+                <field name="product_id" position="after">
+                    <field name="account_id" attrs="{'invisible':[('type', '!=', 'attribution')]}"/>
+                </field>
+                <field name="user_id" position="attributes">
+                    <attribute name="attrs">{'invisible':[('type', '=', 'attribution')]}</attribute>
+                </field>
+                <field name="partner_id" position="attributes">
+                    <attribute name="attrs">{'invisible':[('type', '=', 'attribution')]}</attribute>
+                </field>
+            </field>
+        </record>
+
+        <!-- Limit domain of Analytic Defaults action -->
+        <record id="account_analytic_default.action_analytic_default_list" model="ir.actions.act_window">
+            <field name="domain">[('type', '=', 'default')]</field>
+        </record>
+        
+        <!-- Add new menu entry for analytic attributions -->
+        <record id="action_analytic_attribution_list" model="ir.actions.act_window">
+            <field name="name">Analytic Attributions</field>
+            <field name="res_model">account.analytic.default</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_account_analytic_default_distribution_tree"/>
+            <field name="search_view_id" ref="account_analytic_default.view_account_analytic_default_form_search"/>
+            <field name="context">{"search_default_current":1, "default_type":"attribution", "tree_view_ref":"view_account_analytic_default_distribution_tree"}</field>
+            <field name="domain">[('type', '=', 'attribution')]</field>
+        </record>
+        
+        <menuitem
+            action="action_analytic_attribution_list"
+            id="menu_analytic_attribution_list"
+            parent="account.menu_analytic_accounting"/>
+
+    </data>
+</openerp>

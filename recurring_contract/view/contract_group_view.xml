@@ -11,20 +11,21 @@
 		<field name="name">group.contract.form</field>
 		<field name="model">recurring.contract.group</field>
 		<field name="arch" type="xml">
-			<form string="Contract groups" version="7.0">
+			<form string="Contract groups" version="7.0">      
 			<sheet>
 				<h1><field name="ref" /></h1>
 				<group name="info">
 					<group>
+                        <field name="change_method"/>
 						<field name="next_invoice_date" />
 						<label for="recurring_value" />
 						<div>
 							<field name="recurring_value" class="oe_inline" />
 							<field name="recurring_unit" class="oe_inline" />
 						</div>
-						<field name="advance_billing" />
+						<field name="advance_billing_months"/>
 					</group>
-					<group>
+					<group name="partner_info">
 						<field name="partner_id" domain="[('customer', '=', True)]"/>
 						<field name="payment_term_id" />
 					</group>

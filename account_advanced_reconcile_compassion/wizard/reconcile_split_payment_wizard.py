@@ -50,6 +50,7 @@ class reconcile_split_payment_wizard(orm.TransientModel):
         return True
 
     _columns = {
+        'comment': fields.char(_('Indications on left amount'), size=64),
         'contract_ids': fields.function(
             _get_contract_ids, fnct_inv=_write_contracts, type='one2many',
             obj='recurring.contract', method=True,
@@ -69,6 +70,7 @@ class reconcile_split_payment_wizard(orm.TransientModel):
         '''
         move_line_obj = self.pool.get('account.move.line')
         active_ids = context.get('active_ids')
-
+        context['residual_comment'] = self.browse(cr, uid, ids[0],
+                                                  context).comment
         return move_line_obj.split_payment_and_reconcile(cr, uid, active_ids,
                                                          context)

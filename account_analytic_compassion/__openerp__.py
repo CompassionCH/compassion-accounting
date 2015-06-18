@@ -38,7 +38,7 @@ Install this module before 'compassion_sponsorship' in test databases.
     """,
     'author': 'Compassion CH',
     'website': 'http://www.compassion.ch',
-    'depends': ['account_analytic_plans'],
+    'depends': ['account_analytic_attribution'],
     'data': ['analytic_account_data.xml'],
     'demo': [],
     'installable': True,
