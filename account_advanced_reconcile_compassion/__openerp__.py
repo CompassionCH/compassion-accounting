@@ -44,7 +44,7 @@
     'website': 'http://www.compassion.ch',
     'depends': ['account_advanced_reconcile',
                 'l10n_ch_payment_slip_base_transaction_id',
-                'account_analytic_default',
+                'account_analytic_attribution',
                 'sponsorship_compassion',
                 'account_cancel'],
     'data': ['view/easy_reconcile_view.xml',

@@ -114,11 +114,8 @@ class change_attribution_wizard(orm.TransientModel):
                     invl_obj.create(cr, uid, invl_vals, context)
                 if action == 1:  # one2many update
                     invl_obj.write(cr, uid, [invl_id], invl_vals, context)
-                if action in (2, 3):    # one2many delete
+                if action == 2:    # one2many delete
                     invl_obj.unlink(cr, uid, [invl_id], context)
-                if action == 4:     # Link record
-                    invl_obj.write(cr, uid, [invl_id], {
-                        'invoice_id': invoice_id}, context)
 
         return True
 
