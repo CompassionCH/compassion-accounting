@@ -215,7 +215,7 @@ class AccountStatementLine(orm.Model):
             raise orm.except_orm(_('A field is required'),
                                  _('Add a Sponsorship'))
 
-        if b_line.account_analytic_id:
+        if b_line.analytic_account_id:
             inv_line_data['account_analytic_id'] = \
                 b_line.account_analytic_id.id
         else:
