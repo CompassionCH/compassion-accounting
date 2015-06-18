@@ -217,7 +217,7 @@ class AccountStatementLine(orm.Model):
 
         if b_line.analytic_account_id:
             inv_line_data['account_analytic_id'] = \
-                b_line.account_analytic_id.id
+                b_line.analytic_account_id.id
         else:
             analytic = self.pool.get('account.analytic.default').account_get(
                 cr, uid, b_line.product_id.id, b_line.partner_id.id, uid,
