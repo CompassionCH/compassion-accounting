@@ -21,7 +21,19 @@
             <field name="type">normal</field>
             <field name="code">ATT_HR</field>
             <field name="parent_id" ref="account_analytic_root_to_attribute"/>
+        </record>  
+        <record id="account_attribution_CD" model="account.analytic.account">
+            <field name="name">CD pgm</field>
+            <field name="type">normal</field>
+            <field name="code">ATT_CD</field>
+            <field name="parent_id" ref="account_analytic_root_to_attribute"/>
         </record>   
+        <record id="account_attribution_INC" model="account.analytic.account">
+            <field name="name">Income</field>
+            <field name="type">normal</field>
+            <field name="code">ATT_INC</field>
+            <field name="parent_id" ref="account_analytic_root_to_attribute"/>
+        </record>           
         <record id="account_attribution_FUND" model="account.analytic.account">
             <field name="name">FUND</field>
             <field name="type">normal</field>
