@@ -165,6 +165,9 @@ class recurring_contract(orm.Model):
             'group_id', 'payment_term_id', relation='account.payment.term',
             type="many2one", readonly=True, string=_('Payment Term'),
             store={
+                'recurring.contract': (
+                    lambda self, cr, uid, ids, c=None: ids,
+                    ['group_id'], 20),
                 'recurring.contract.group': (
                     _get_contract_from_group,
                     ['payment_term_id'], 10)}),
