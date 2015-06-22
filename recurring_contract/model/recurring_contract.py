@@ -353,7 +353,6 @@ class recurring_contract(orm.Model):
                             cr, uid, [contract.id], {
                                 'next_invoice_date':
                                 next_invoice_date.strftime(DF)}, context)
-                        contract.update_next_invoice_date()
 
         return True
 
