@@ -324,7 +324,7 @@ class recurring_contract(orm.Model):
             wf_service.trg_validate(uid, 'account.invoice',
                                     invoice_id, 'invoice_open', cr)
 
-    def rewind_next_invoice_date(self, cr, uid, ids, context):
+    def rewind_next_invoice_date(self, cr, uid, ids, context=None):
         """ Rewinds the next invoice date of contract after the last
         generated invoice. No open invoices exist after that date. """
         gen_states = self.pool.get(
@@ -353,6 +353,7 @@ class recurring_contract(orm.Model):
                             cr, uid, [contract.id], {
                                 'next_invoice_date':
                                 next_invoice_date.strftime(DF)}, context)
+                        contract.update_next_invoice_date()
 
         return True
 

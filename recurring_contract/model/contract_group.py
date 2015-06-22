@@ -179,9 +179,9 @@ class contract_group(orm.Model):
         generated taking into consideration the modifications of the
         contract group.
         """
-
         recurring_contract_obj = self.pool.get('recurring.contract')
-        contract_ids = [contract.id for contract in group.contract_ids]
+        contract_ids = [contract.id for contract in group.contract_ids
+                        if contract.state in self._get_gen_states()]
         since_date = datetime.today()
         if group.last_paid_invoice_date:
             last_paid_invoice_date = datetime.strptime(
