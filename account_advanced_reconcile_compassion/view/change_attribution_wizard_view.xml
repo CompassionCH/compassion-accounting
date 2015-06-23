@@ -79,7 +79,6 @@
                     view_mode="form" target="new" view_type="form"/>
                     
         <act_window id="action_change_attribution_invoice"
-                    multi="True"
                     key2="client_action_multi" name="Change attribution"
                     res_model="unreconcile.change.attribution.wizard" src_model="account.invoice"
                     view_mode="form" target="new" view_type="form"/>

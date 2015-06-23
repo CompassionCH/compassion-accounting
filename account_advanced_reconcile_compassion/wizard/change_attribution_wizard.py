@@ -10,11 +10,8 @@
 ##############################################################################
 
 from openerp.osv import orm, fields
-from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 from openerp.tools.translate import _
 from openerp import netsvc
-
-from datetime import date
 
 
 class change_attribution_wizard(orm.TransientModel):
@@ -208,16 +205,15 @@ class change_attribution_wizard(orm.TransientModel):
                 if not new_invoice_id:
                     # We copy the first invoice to create a new one holding
                     # all modifications. The other invoices will be cancelled.
-                    today = date.today().strftime(DF)
                     invoice_obj.copy(cr, uid, invoice.id, {
-                        'date_invoice': today,
+                        'date_invoice': invoice.date_invoice,
                         'comment': wizard.comment or 'New invoice after '
                         'payment attribution changed.',
                         'invoice_line': False}, context)
                     new_invoice_id = invoice_obj.search(cr, uid, [
                         ('partner_id', '=', invoice.partner_id.id),
-                        ('state', '=', 'draft'),
-                        ('date_invoice', '=', today)], context=context)[0]
+                        ('date_invoice', '=', invoice.date_invoice),
+                        ('state', '=', 'draft')], context=context)[0]
 
                 wf_service.trg_validate(uid, 'account.invoice', invoice.id,
                                         'invoice_cancel', cr)
