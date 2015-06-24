@@ -337,6 +337,8 @@ class AccountStatementCompletionRule(orm.Model):
                 contract = contract_obj.browse(
                     cr, uid, contract_ids[0], context=context)
                 inv_line_data['contract_id'] = contract.id
+                inv_line_data['user_id'] = contract.user_id and \
+                    contract.user_id.id
                 # Retrieve the birthday of child
                 birthdate = ""
                 if product.name == GIFT_NAMES[0]:

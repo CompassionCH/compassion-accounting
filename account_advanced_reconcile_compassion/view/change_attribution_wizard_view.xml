@@ -35,6 +35,7 @@
                                     <field name="account_id" />
                                     <field name="account_analytic_id" domain="[('type','!=','view'), ('company_id', '=', parent.company_id), ('state','not in',('close','cancelled'))]"/>
                                     <field name="analytics_id" />
+                                    <field name="user_id" />
                                     <field name="due_date" />
                                     <field name="quantity" />
                                     <field name="price_unit" />

@@ -45,7 +45,7 @@
     'depends': ['account_advanced_reconcile',
                 'l10n_ch_payment_slip_base_transaction_id',
                 'account_analytic_attribution',
-                'sponsorship_compassion',
+                'crm_compassion',
                 'account_cancel'],
     'data': ['view/easy_reconcile_view.xml',
              'view/reconcile_fund_wizard_view.xml',

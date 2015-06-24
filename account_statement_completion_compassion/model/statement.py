@@ -136,6 +136,19 @@ class AccountStatementLine(orm.Model):
              for line in self.browse(cr, uid, ids, {'lang': 'en_US'})]
         return res
 
+    def on_change_contract_id(self, cr, uid, ids, contract_id, context=None):
+        """ Pushes Ambassador. """
+        res = dict()
+        user = False
+        if contract_id:
+            contract = self.pool.get('recurring.contract').browse(
+                cr, uid, contract_id, context)
+            if contract.user_id:
+                user = contract.user_id.id
+
+        res['value'] = {'user_id': user}
+        return res
+
     def _create_invoice_from_line(self, cr, uid, b_line, context=None):
         if not b_line.product_id:
             return True
