@@ -235,6 +235,8 @@ class recurring_contract(orm.Model):
 
     def write(self, cr, uid, ids, vals, context=None):
         """ Perform various checks when a contract is modified. """
+        if not isinstance(ids, list):
+            ids = [ids]
         if 'next_invoice_date' in vals:
             self._on_change_next_invoice_date(
                 cr, uid, ids, vals['next_invoice_date'], context)
@@ -426,6 +428,8 @@ class recurring_contract(orm.Model):
             - invoice_ids (list): ids of draft invoices to be
                                   updated and validated
         """
+        if context is None:
+            context = dict()
         invoice_obj = self.pool.get('account.invoice')
         inv_line_obj = self.pool.get('account.invoice.line')
         group_obj = self.pool.get('recurring.contract.group')
