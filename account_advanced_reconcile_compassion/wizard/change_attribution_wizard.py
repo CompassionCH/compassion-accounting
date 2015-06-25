@@ -270,16 +270,10 @@ class change_attribution_wizard(orm.TransientModel):
         move_line_obj.reconcile(cr, uid, move_line_ids, 'manual',
                                 context=context)
 
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'reload',
-        }
+        return True
 
     def close(self, cr, uid, ids, context=None):
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'reload',
-        }
+        return True
 
     ##########################################################################
     #                             PRIVATE METHODS                            #
