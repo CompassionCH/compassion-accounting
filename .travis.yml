@@ -34,6 +34,9 @@ install:
   - git clone https://github.com/OCA/partner-contact.git ${HOME}/build/CompassionCH/partner-contact -b 7.0
   - travis_install_nightly
 
+before_script:
+  - touch ${HOME}/odoo-7.0/odoo.conf
+  
 script:
   - travis/travis_header.sh
   - travis_run_tests 
