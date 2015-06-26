@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        <!--
+        Creation of a journal
+        -->
+        <record id="analytic_journal1" model="account.analytic.journal">
+            <field name="name">Analytic Journal Test</field>
+
+        </record>
+        
+        <record id="journal1" model="account.journal">
+            <field name="name">Journal Test</field>
+            <field name="type">sale</field>
+            <field name="update_posted">True</field>
+            <field name="code">12345</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="analytic_journal_id" ref="analytic_journal1"/>
+        </record>
+        
+        <!--
+        account type creation
+        -->
+        
+        <record id="account_type" model="account.account.type">
+            <field name="name">Account Test</field>
+            <field name="close_method">unreconciled</field>
+            <field name="code">87963</field>
+        </record>    
+        
+        <!--
+        account receivable creation
+        -->
+        
+        <record id="property_account_receivable" model="account.account">
+            <field name="name">Property Account Receivable Test</field>
+            <field name="type">receivable</field>
+            <field name="user_type" ref="account_type"/>
+            <field name="code">45917</field>
+        </record>
+        
+        <!--
+        account payable creation
+        -->
+        
+        <record id="property_account_payable" model="account.account">
+            <field name="name">Property Account Payable Test</field>
+            <field name="type">payable</field>
+            <field name="user_type" ref="account_type"/>
+            <field name="code">45877</field>
+        </record>
+        
+        <record id="property_account_income" model="account.account">
+            <field name="name">Property Account Income Test</field>
+            <field name="code">45646</field>
+            <field name="user_type" ref="account_type"/>
+            <field name="type">receivable</field>
+        </record>
+
+        <!--
+        Payment term creation
+        -->
+        
+        <record id="payment_term" model="account.payment.term">
+            <field name="name">15 Days</field>
+        </record>
+        
+        <!--
+        Payment term line creation
+        -->
+        
+        <record id="payment_term_line" model="account.payment.term.line">
+            <field name="days">15</field>
+            <field name="payment_id" ref="payment_term"/>
+        </record>
+        
+        <record id="category_id" model="product.uom.categ">
+            <field name="name">Category_id</field>
+        </record>
+    </data>        
+</openerp>
