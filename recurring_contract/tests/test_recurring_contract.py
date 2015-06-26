@@ -19,14 +19,20 @@ logger = logging.getLogger(__name__)
 
 class test_recurring_contract(common.TransactionCase):
     """
-        Test Project recurring contract. It's the first test file.
-        We are testing the first easier scenario :
+        Test Project recurring contract.
+        We are testing the three scenarios :
+        The first one :
             - we are creating one contract
             - a payment option in which:
                 - 1 invoice is generated every month
                 - with 1 month of invoice generation in advance
         We are testing if invoices data are coherent with data in the
         associate contract.
+        The second scenario is created to test the fusion of invoices when two
+        contract.
+        The third scenario consists in the creation of several contracts with
+        several line, then we are testing that the invoices are good updated
+        when we cancel one contract.
     """
 
     def setUp(self):
@@ -175,7 +181,7 @@ class test_recurring_contract(common.TransactionCase):
     def test_generated_invoice_second_scenario(self):
         """
             Creation of the second contract to test the fusion of invoices if
-            the partner and the dates are the same: Then there is the test of
+            the partner and the dates are the same. Then there is the test of
             the changement of the payment option and its consequences : check
             if all data of invoices generated are correct, and if the number
             of invoices generated is correct
