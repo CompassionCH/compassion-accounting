@@ -25,20 +25,6 @@ class account_invoice_line(models.Model):
     _name = 'account.invoice.line'
     _inherit = 'account.invoice.line'
 
-    def _get_dates(self):
-        res = {}
-        for line in self:
-            res[line.id] = line.invoice_id.date_due or False
-
-        return res
-
-    def _get_states(self):
-        res = {}
-        for line in self:
-            res[line.id] = line.invoice_id.state
-
-        return res
-
     @api.depends('invoice_id.state')
     def _get_invoice_lines_state(self):
         for invoice_line in self:
