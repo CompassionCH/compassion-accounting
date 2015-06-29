@@ -67,17 +67,6 @@ class recurring_contract(models.Model):
         self.total_amount = sum([line.subtotal for line in
                                  self.contract_line_ids])
 
-    # def _get_contract_from_group(group_obj, cr, uid, group_ids, context=None):
-        # self = group_obj.pool.get('recurring.contract')
-        # return self.search(cr, uid, [('group_id', 'in', group_ids)],
-                           # context=context)
-
-    # def _get_contract_from_line(self, cr, uid, ids, context=None):
-        # contract_ids = []
-        # contract_line_obj = self.pool.get('recurring.contract.line')
-        # for contract_line in contract_line_obj.browse(cr, uid, ids, context):
-            # contract_ids.append(contract_line.contract_id.id)
-        # return contract_ids
     @api.one
     def _get_last_paid_invoice(self):
         self.last_paid_invoice_date = max(
