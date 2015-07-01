@@ -317,8 +317,8 @@ class AccountStatementCompletionRule(orm.Model):
         analytic = self.pool.get('account.analytic.default').account_get(
             cr, uid, product.id, partner_id, uid,
             time.strftime('%Y-%m-%d'), context=context)
-        if analytic and analytic.analytics_id:
-            inv_line_data['analytics_id'] = analytic.analytics_id.id
+        if analytic and analytic.analytic_id:
+            inv_line_data['account_analytic_id'] = analytic.analytic_id.id
 
         res['name'] = product.name
         # Get the contract of the sponsor in the case of a gift
