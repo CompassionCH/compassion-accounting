@@ -120,7 +120,8 @@ class recurring_contract(models.Model):
         compute='_get_total_amount', string='Total',
         digits_compute=dp.get_precision('Account'),
         track_visibility="onchange", store=True)
-    payment_term_id = fields.Many2one(relation='account.payment.term',
+    payment_term_id = fields.Many2one(
+        relation='account.payment.term',
         related='group_id.payment_term_id', readonly=True,
         string=_('Payment Term'), store=True)
 

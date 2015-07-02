@@ -12,7 +12,6 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-import openerp
 from openerp import api, fields, models
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 from openerp.tools.translate import _
@@ -55,13 +54,6 @@ class contract_group(models.Model):
             res[group.id] = max([c.last_paid_invoice_date
                                  for c in group.contract_ids] or [False])
         return res
-
-    def _get_groups_from_contract(self):
-        group_ids = set()
-        contract_obj = self.env['recurring.contract']
-        for contract in contract_obj.browse(self.id):
-            group_ids.add(contract.group_id.id)
-        return list(group_ids)
 
     partner_id = fields.Many2one(
         'res.partner', _('Partner'), required=True,
@@ -140,15 +132,15 @@ class contract_group(models.Model):
         return res
 
     def button_generate_invoices(self):
-        invoicer_id = self.generate_invoices()
-        self.validate_invoices(invoicer_id)
-        return invoicer_id
+        invoicer = self.generate_invoices()
+        self.validate_invoices(invoicer)
+        return invoicer
 
     @api.one
-    def validate_invoices(self, invoicer_id):
+    def validate_invoices(self, invoicer):
         # Check if there is invoice waiting for validation
-        if invoicer_id.invoice_ids:
-            invoicer_id.validate_invoices()
+        if invoicer.invoice_ids:
+            invoicer.validate_invoices()
 
     def clean_invoices(self):
         """ Change method which cancels generated invoices and rewinds
