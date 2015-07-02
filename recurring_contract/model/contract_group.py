@@ -42,18 +42,18 @@ class contract_group(models.Model):
         return ['active']
 
     @api.depends('contract_ids.next_invoice_date', 'contract_ids.state')
-    def _get_next_invoice_date(self):
+    @api.one
+    def _set_next_invoice_date(self):
         next_inv_date = min(
             [c.next_invoice_date for c in self.contract_ids
              if c.state in self._get_gen_states()] or [False])
         self.next_invoice_date = next_inv_date
 
-    def _get_last_paid_invoice(self):
-        res = dict()
+    def _set_last_paid_invoice(self):
         for group in self:
-            res[group.id] = max([c.last_paid_invoice_date
-                                 for c in group.contract_ids] or [False])
-        return res
+            group.last_paid_invoice_date = max(
+                [c.last_paid_invoice_date for c in group.contract_ids] or
+                [False])
 
     partner_id = fields.Many2one(
         'res.partner', _('Partner'), required=True,
@@ -84,11 +84,11 @@ class contract_group(models.Model):
                                       track_visibility="onchange")
 
     next_invoice_date = fields.Date(
-        compute='_get_next_invoice_date',
+        compute='_set_next_invoice_date',
         string=_('Next invoice date'), store=True)
 
     last_paid_invoice_date = fields.Date(
-        compute='_get_last_paid_invoice',
+        compute='_set_last_paid_invoice',
         string=_('Last paid invoice date'))
 
     change_method = fields.Selection(
