@@ -30,7 +30,7 @@ class account_invoice_line(models.Model):
         for invoice_line in self:
             invoice_line.state = invoice_line.invoice_id.state
 
-    @api.depends('due_date')
+    @api.depends('invoice_id.date_due')
     def _get_invoice_lines_date_due(self):
         for invoice_line in self:
             invoice_line.due_date = invoice_line.invoice_id.date_due
