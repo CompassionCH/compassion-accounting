@@ -104,7 +104,7 @@ class recurring_contract(models.Model):
         _('Related invoice lines'), readonly=True)
     contract_line_ids = fields.One2many(
         'recurring.contract.line', 'contract_id',
-        _('Contract lines'), track_visibility="onchange")
+        _('Contract lines'), track_visibility="onchange", copy=True)
     state = fields.Selection([
         ('draft', _('Draft')),
         ('active', _('Active')),
@@ -234,7 +234,8 @@ class recurring_contract(models.Model):
         if keep_lines:
             self._move_cancel_lines(to_remove_ids, keep_lines)
         else:
-            to_remove_recset = self.browse(to_remove_ids)
+            to_remove_recset = self.env['account.invoice.line'].browse(
+                to_remove_ids)
             to_remove_recset.unlink()
 
         # Invoices to set back in open state
@@ -274,22 +275,20 @@ class recurring_contract(models.Model):
                     if line.state in ('open', 'paid')] or [False])
                 if last_invoice_date:
                     # Call super for allowing rewind.
-                    super(recurring_contract, self).write(
-                        [contract.id], {
-                            'next_invoice_date':
-                            last_invoice_date.strftime(DF)})
+                    super(recurring_contract, self).write({
+                        'next_invoice_date':
+                        last_invoice_date.strftime(DF)})
                     contract.update_next_invoice_date()
                 else:
                     # No open/paid invoices, look for cancelled ones
                     next_invoice_date = min([
                         datetime.strptime(line.invoice_id.date_invoice, DF)
                         for line in contract.invoice_line_ids
-                        if line.state == 'cancel'])
+                        if line.state == 'cancel'] or [False])
                     if next_invoice_date:
-                        super(recurring_contract, self).write(
-                            [contract.id], {
-                                'next_invoice_date':
-                                next_invoice_date.strftime(DF)})
+                        super(recurring_contract, self).write({
+                            'next_invoice_date':
+                            next_invoice_date.strftime(DF)})
 
         return True
 
@@ -468,6 +467,7 @@ class recurring_contract(models.Model):
         self.clean_invoices()
         return True
 
+    @api.model
     def end_date_reached(self):
         today = datetime.today().strftime(DF)
         contract_ids = self.search([('state', '=', 'active'),
