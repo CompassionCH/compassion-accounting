@@ -468,6 +468,7 @@ class recurring_contract(models.Model):
         self.clean_invoices()
         return True
 
+    @api.model
     def end_date_reached(self):
         today = datetime.today().strftime(DF)
         contract_ids = self.search([('state', '=', 'active'),
