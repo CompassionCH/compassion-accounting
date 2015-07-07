@@ -52,8 +52,16 @@
     </record>
 
 
+ 
+    <!-- 
+    
+    ###########################################################################
+    This has to be done in javascript view of reconcile bank statement 
+    ###########################################################################
+    
+    -->
     <!-- Replace distributions with normal analytic accounts in bank statement lines -->
-    <record id="view_bank_statement_inherit_form" model="ir.ui.view">
+    <!-- <record id="view_bank_statement_inherit_form" model="ir.ui.view">
         <field name="name">account.bank.statement.form.inherit</field>
         <field name="model">account.bank.statement</field>
         <field name="inherit_id" ref="account_analytic_plans.view_bank_statement_inherit_form"/>
@@ -65,7 +73,7 @@
                <field name="analytic_account_id" context="{'journal_id':parent.journal_id}" groups="analytic.group_analytic_accounting" domain="[('type','not in',('view','template'))]"/>
             </xpath>
         </field>
-    </record>
+    </record> -->
     
     <!-- View distributions in invoice lines to be able to remove them if necessary -->
     <record id="view_invoice_form_attribution" model="ir.ui.view">
