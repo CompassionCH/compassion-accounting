@@ -14,7 +14,6 @@ from datetime import datetime, timedelta
 from openerp import netsvc
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 import logging
-import pdb
 logger = logging.getLogger(__name__)
 
 
@@ -331,7 +330,6 @@ class test_recurring_contract(common.TransactionCase):
 
         # Creation of a wizard to generate invoices
         invoicer_wizard_obj = self.env['recurring.invoicer.wizard']
-        pdb.set_trace()
         invoicer_wiz_id = invoicer_wizard_obj.generate()
         invoicer_wiz = invoicer_wizard_obj.browse(invoicer_wiz_id['res_id'])
         invoices = invoicer_wiz.invoice_ids
