@@ -44,7 +44,8 @@ class split_invoice_wizard(orm.TransientModel):
         inv_lines_vals = dict()
         invoice_id = False
         for line in field_value:
-            if isinstance(line, tuple) and line[0] == 1:  # one2many update
+            if isinstance(line, (list, tuple)) and line[0] == 1:
+                # one2many update
                 inv_line_id = line[1]
                 line_values = line[2]
                 if line_values.get('split'):
