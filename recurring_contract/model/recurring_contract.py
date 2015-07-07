@@ -399,10 +399,11 @@ class recurring_contract(orm.Model):
         inv_line_obj = self.pool.get('account.invoice.line')
         group_obj = self.pool.get('recurring.contract.group')
         for invoice in invoice_obj.browse(cr, uid, invoice_ids, context):
-            # Update payment term and generate new invoice_lines
+            # Update payment term and generate new invoice_lines and partner
             invoice.write({
                 'payment_term': contract.group_id.payment_term_id and
-                contract.group_id.payment_term_id.id or False})
+                contract.group_id.payment_term_id.id or False,
+                'partner_id': contract.partner_id.id})
             old_lines_ids = [invl.id for invl in invoice.invoice_line
                              if invl.contract_id.id == contract.id]
             inv_line_obj.unlink(cr, uid, old_lines_ids)
