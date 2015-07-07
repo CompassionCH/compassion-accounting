@@ -58,10 +58,10 @@
         <field name="model">account.bank.statement</field>
         <field name="inherit_id" ref="account_analytic_plans.view_bank_statement_inherit_form"/>
         <field name="arch" type="xml">
-            <xpath expr="/form/sheet/notebook/page/field[@name='line_ids']/tree/field[@name='analytics_id']" position="replace">
+            <xpath expr="/form/notebook/page/field[@name='line_ids']/tree/field[@name='analytics_id']" position="replace">
                <field name="analytic_account_id" context="{'journal_id':parent.journal_id}" groups="analytic.group_analytic_accounting" domain="[('type','not in',('view','template'))]"/>
             </xpath>
-            <xpath expr="/form/sheet/notebook/page/field[@name='line_ids']/form/group/field[@name='analytics_id']" position="replace">
+            <xpath expr="/form/notebook/page/field[@name='line_ids']/form/group/field[@name='analytics_id']" position="replace">
                <field name="analytic_account_id" context="{'journal_id':parent.journal_id}" groups="analytic.group_analytic_accounting" domain="[('type','not in',('view','template'))]"/>
             </xpath>
         </field>
