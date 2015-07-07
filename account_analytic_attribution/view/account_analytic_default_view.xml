@@ -23,11 +23,10 @@
         <record model="ir.ui.view" id="view_default_inherit_tree">
             <field name="name">account.analytic.default.tree.inherit</field>
             <field name="model">account.analytic.default</field>
-            <field name="inherit_id" ref="account_analytic_plans.view_default_inherit_tree" position="after"/>
-            <field name="analytic_id"/>
+            <field name="inherit_id" ref="account_analytic_plans.view_default_inherit_tree"/>
             <field name="arch" type="xml">
-                <xpath  expr="//field[@name='analytic_id']" position="attributes">
-                    <attribute name="invisible" position="replace"/>
+                <xpath  expr="//field[@name='sequence']" position="after">
+                    <field name="analytic_id"/>
                 </xpath>
                 <field name="analytics_id" position="replace"/>
             </field>
