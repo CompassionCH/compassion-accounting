@@ -22,7 +22,8 @@
         <!-- Replace distribution with analytic account in analytic defaults -->
         <record model="ir.ui.view" id="view_default_inherit_tree">
             <field name="name">account.analytic.default.tree.inherit</field>
-            <field name="model">account.analytic.default</field>
+            <field name="model" position="after">account.analytic.default</field>
+            <field name="analytic_id"/>
             <field name="inherit_id" ref="account_analytic_plans.view_default_inherit_tree"/>
             <field name="arch" type="xml">
                 <xpath  expr="//field[@name='analytic_id']" position="attributes">
