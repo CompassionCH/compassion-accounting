@@ -148,7 +148,7 @@ class contract_group(models.Model):
         generated taking into consideration the modifications of the
         contract group.
         """
-        since_date = datetime.date.today()
+        since_date = datetime.today().date()
         if self.last_paid_invoice_date:
             last_paid_invoice_date = datetime.strptime(
                 self.last_paid_invoice_date, DF)
