@@ -10,7 +10,6 @@
 ##############################################################################
 
 from openerp import api, fields, models
-from openerp.tools.translate import _
 from openerp import netsvc
 
 
@@ -20,31 +19,36 @@ class split_invoice_wizard(models.TransientModel):
     _name = 'account.invoice.split.wizard'
 
     @api.model
-    def _get_invoice_id(self):
+    def _get_invoice(self):
         return self.env.context.get('active_id')
 
-    @api.model
-    def _get_invoice_line_ids(self):
-        active_id = self.env.context.get('active_id')
-        invoice = self.env['account.invoice'].browse(active_id)
+    invoice_line_ids = fields.Many2many(
+        'account.invoice.line', 'account_invoice_line_2_splitwizard',
+        string='Invoice lines')
 
-        line_ids = [line.id for line in invoice.invoice_line]
-        return line_ids
+    invoice_id = fields.Many2one(
+        'account.invoice', default=_get_invoice)
 
-    @api.model
-    def _write_lines(self):
-        """Update invoice_lines. Those that have the invoice_id removed
-        are attached to a new draft invoice."""
-        invoice_id = False
+    def _copy_invoice(self, old_invoice):
+        # Create new invoice
+        new_invoice = old_invoice.copy(
+            default={'date_invoice': old_invoice.date_invoice})
+        new_invoice.invoice_line.unlink()
+        return new_invoice
+
+    @api.multi
+    def split_invoice(self):
+        self.ensure_one()
+        invoice = False
 
         if self.invoice_line_ids:
-            inv_line_update = self.invoice_line_ids
             old_invoice = self.invoice_line_ids[0].invoice_id
-            invoice_id = self._copy_invoice(old_invoice)
+            # to_move_lines = self.invoice_line_ids.filtered('split')
+            invoice = self._copy_invoice(old_invoice)
             if old_invoice.state in ('draft', 'open'):
                 uid = self.env.user.id
                 cr = self.env.cr
-                inv_line_update.write({'invoice_id': invoice_id.id})
+                self.invoice_line_ids.write({'invoice_id': invoice.id})
                 if old_invoice.state == 'open':
                     # Cancel and validate again invoices
                     old_invoice.action_cancel()
@@ -54,26 +58,6 @@ class split_invoice_wizard(models.TransientModel):
                         uid, 'account.invoice', old_invoice.id,
                         'invoice_open', cr)
                     wf_service.trg_validate(
-                        uid, 'account.invoice', invoice_id.id, 'invoice_open',
+                        uid, 'account.invoice', invoice.id, 'invoice_open',
                         cr)
-        return invoice_id
-
-    def _copy_invoice(self, old_invoice):
-        # Create new invoice
-        new_invoice = old_invoice.copy(
-            default={'date_invoice': old_invoice.date_invoice})
-        new_invoice.invoice_line.unlink()
-        return new_invoice
-
-    invoice_id = fields.Many2one('account.invoice', 'Invoice',
-                                 compute='_get_invoice_id')
-
-    invoice_line_ids = fields.Many2many(
-        'account.invoice.line', 'id', inverse="_write_lines",
-        default=_get_invoice_line_ids, compute='_get_invoice_line_ids',
-        string=_('Invoice lines'))
-
-    @api.model
-    def split_invoice(self):
-        # Nothing to do here
-        return True
+        return invoice
