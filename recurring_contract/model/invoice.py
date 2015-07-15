@@ -40,11 +40,11 @@ class account_invoice_line(models.Model):
 
     due_date = fields.Date(
         compute='_get_invoice_lines_date_due', string=_('Due date'),
-        readonly=True, strore=True)
+        readonly=True, store=True)
 
     state = fields.Selection(
         compute='_get_invoice_lines_state', string=_('State'),
-        readonly=True, strore=True,
+        readonly=True, store=True,
         selection=[('draft', 'Draft'),
                    ('proforma', 'Pro-forma'),
                    ('proforma2', 'Pro-forma'),

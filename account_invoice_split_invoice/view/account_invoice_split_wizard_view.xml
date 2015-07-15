@@ -7,8 +7,9 @@
             <field name="arch" type="xml">
                 <form string="Invoice splitting">
                     <sheet>
-                        <p>Keep lines you wish to split.</p>
-                        <field name="invoice_line_ids">
+                        <p>Add invoice lines you wish to move in another invoice (click on Add an item...).</p>
+                        <field name="invoice_id" invisible="1"/>
+                        <field name="invoice_line_ids" domain="[('invoice_id', '=', invoice_id)]">
                             <tree editable="bottom" delete="false">
                                 <field name="product_id" readonly="1"/>
                                 <field name="name" readonly="1"/>
