@@ -61,17 +61,9 @@ class recurring_contract(models.Model):
     _inherit = ['mail.thread']
     _rec_name = 'reference'
 
-    @api.depends('contract_line_ids', 'contract_line_ids.amount',
-                 'contract_line_ids.quantity')
-    def _get_total_amount(self):
-        self.total_amount = sum([line.subtotal for line in
-                                 self.contract_line_ids])
-
-    @api.one
-    def _get_last_paid_invoice(self):
-        self.last_paid_invoice_date = max(
-            [invl.invoice_id.date_invoice for invl in self.invoice_line_ids
-             if invl.state == 'paid'] or [False])
+    ##########################################################################
+    #                                 FIELDS                                 #
+    ##########################################################################
 
     reference = fields.Char(
         _('Reference'), default="/", required=True, readonly=True,
@@ -125,6 +117,22 @@ class recurring_contract(models.Model):
         related='group_id.payment_term_id', readonly=True,
         string=_('Payment Term'), store=True)
 
+    ##########################################################################
+    #                             FIELDS METHODS                             #
+    ##########################################################################
+
+    @api.depends('contract_line_ids', 'contract_line_ids.amount',
+                 'contract_line_ids.quantity')
+    def _get_total_amount(self):
+        self.total_amount = sum([line.subtotal for line in
+                                 self.contract_line_ids])
+
+    @api.one
+    def _get_last_paid_invoice(self):
+        self.last_paid_invoice_date = max(
+            [invl.invoice_id.date_invoice for invl in self.invoice_line_ids
+             if invl.state == 'paid'] or [False])
+
     @api.constrains('reference')
     @api.one
     def _check_unique_reference(self):
@@ -136,9 +144,10 @@ class recurring_contract(models.Model):
                 _('Error: Reference should be unique'))
         return True
 
-    #################################
-    #        PUBLIC METHODS         #
-    #################################
+    ##########################################################################
+    #                             PUBLIC METHODS                             #
+    ##########################################################################
+
     @api.model
     def create(self, vals):
         """ Add a sequence generated ref if none is given """
@@ -293,9 +302,60 @@ class recurring_contract(models.Model):
 
         return True
 
-    #################################
-    #        PRIVATE METHODS        #
-    #################################
+    ##########################################################################
+    #                             VIEW CALLBACKS                             #
+    ##########################################################################
+
+    @api.onchange('start_date')
+    def on_change_start_date(self):
+        """ We automatically update next_invoice_date on start_date change """
+        if self.start_date:
+            self.next_invoice_date = self.start_date
+        return
+
+    @api.onchange('partner_id')
+    def on_change_partner_id(self):
+        """ On partner change, we update the group_id. If partner has
+        only 1 group, we take it. Else, we take nothing.
+        """
+        group_ids = self.env['recurring.contract.group'].search(
+            [('partner_id', '=', self.partner_id.id)])
+
+        self.group_id = None
+        if len(group_ids) == 1:
+            self.group_id = group_ids[0]
+        return
+
+    @api.one
+    def contract_draft(self):
+        self.state = 'draft'
+        return True
+
+    @api.one
+    def contract_active(self):
+        self.state = 'active'
+        return True
+
+    @api.one
+    def contract_terminated(self):
+        today = datetime.today().strftime(DF)
+        self.write({'state': 'terminated', 'end_date': today})
+        self.clean_invoices()
+        return True
+
+    def end_date_reached(self):
+        today = datetime.today().strftime(DF)
+        contract_ids = self.search([('state', '=', 'active'),
+                                    ('end_date', '<=', today)])
+
+        if contract_ids:
+            contract_ids.contract_terminated()
+
+        return True
+
+    ##########################################################################
+    #                             PRIVATE METHODS                            #
+    ##########################################################################
 
     def update_next_invoice_date(self):
         """ Recompute and set next_invoice date. """
@@ -367,6 +427,7 @@ class recurring_contract(models.Model):
              ('state', 'not in', ('paid', 'cancel'))])
 
         con_ids = set()
+
         inv_ids = set()
         for inv_line in inv_line_ids:
             invoice = inv_line.invoice_id
@@ -425,55 +486,5 @@ class recurring_contract(models.Model):
             self.env.with_context(thread_model='account.invoice')
             self.pool.get('mail.thread').message_post(
                 message, _("Invoice Cancelled"), 'comment')
-
-        return True
-
-    ##########################
-    #        CALLBACKS       #
-    ##########################
-    @api.onchange('start_date')
-    def on_change_start_date(self):
-        """ We automatically update next_invoice_date on start_date change """
-        if self.start_date:
-            self.next_invoice_date = self.start_date
-        return
-
-    @api.onchange('partner_id')
-    def on_change_partner_id(self):
-        """ On partner change, we update the group_id. If partner has
-        only 1 group, we take it. Else, we take nothing.
-        """
-        group_ids = self.env['recurring.contract.group'].search(
-            [('partner_id', '=', self.partner_id.id)])
-
-        self.group_id = None
-        if len(group_ids) == 1:
-            self.group_id = group_ids[0]
-        return
-
-    @api.one
-    def contract_draft(self):
-        self.state = 'draft'
-        return True
-
-    @api.one
-    def contract_active(self):
-        self.state = 'active'
-        return True
-
-    @api.one
-    def contract_terminated(self):
-        today = datetime.today().strftime(DF)
-        self.write({'state': 'terminated', 'end_date': today})
-        self.clean_invoices()
-        return True
-
-    def end_date_reached(self):
-        today = datetime.today().strftime(DF)
-        contract_ids = self.search([('state', '=', 'active'),
-                                    ('end_date', '<=', today)])
-
-        if contract_ids:
-            contract_ids.contract_terminated()
 
         return True

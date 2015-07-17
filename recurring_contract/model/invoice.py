@@ -9,8 +9,7 @@
 #
 ##############################################################################
 
-from openerp import api, fields, models
-from openerp.tools.translate import _
+from openerp import api, fields, models, _
 
 
 class account_invoice(models.Model):
@@ -24,16 +23,6 @@ class account_invoice(models.Model):
 class account_invoice_line(models.Model):
     _name = 'account.invoice.line'
     _inherit = 'account.invoice.line'
-
-    @api.depends('invoice_id.state')
-    def _get_invoice_lines_state(self):
-        for invoice_line in self:
-            invoice_line.state = invoice_line.invoice_id.state
-
-    @api.depends('invoice_id.date_due')
-    def _get_invoice_lines_date_due(self):
-        for invoice_line in self:
-            invoice_line.due_date = invoice_line.invoice_id.date_due
 
     contract_id = fields.Many2one(
         'recurring.contract', _('Source contract'))
@@ -51,3 +40,13 @@ class account_invoice_line(models.Model):
                    ('open', 'Open'),
                    ('paid', 'Paid'),
                    ('cancel', 'Cancelled')])
+
+    @api.depends('invoice_id.state')
+    def _get_invoice_lines_state(self):
+        for invoice_line in self:
+            invoice_line.state = invoice_line.invoice_id.state
+
+    @api.depends('invoice_id.date_due')
+    def _get_invoice_lines_date_due(self):
+        for invoice_line in self:
+            invoice_line.due_date = invoice_line.invoice_id.date_due

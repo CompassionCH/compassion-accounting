@@ -28,17 +28,17 @@ class recurring_invoicer(models.Model):
     _name = 'recurring.invoicer'
     _rec_name = 'identifier'
 
-    def calculate_id(self):
-        return self.env['ir.sequence'].next_by_code('rec.invoicer.ident')
-
     identifier = fields.Char(_('Identifier'), required=True,
-                             default=calculate_id)
+                             default=lambda self: self.calculate_id())
     source = fields.Char(_('Source model'), required=True)
     generation_date = fields.Date(
         _('Generation date'), default=datetime.today().strftime(DF))
     invoice_ids = fields.One2many(
         'account.invoice', 'recurring_invoicer_id',
         _('Generated invoices'))
+
+    def calculate_id(self):
+        return self.env['ir.sequence'].next_by_code('rec.invoicer.ident')
 
     @api.one
     def validate_invoices(self):
