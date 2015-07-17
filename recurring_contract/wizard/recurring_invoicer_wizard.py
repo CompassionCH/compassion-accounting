@@ -25,8 +25,8 @@ class recurring_invoicer_wizard(models.TransientModel):
         _('Generated invoices'), readonly=True)
     generation_date = fields.Date(_('Generation date'), readonly=True)
 
-    @api.model
-    def generate(self, *args, **kwargs):
+    @api.multi
+    def generate(self):
         recurring_invoicer_obj = self.env['recurring.invoicer']
         contract_groups = self.env['recurring.contract.group'].search([])
         invoicer = recurring_invoicer_obj.create({'source': self._name})
@@ -46,5 +46,5 @@ class recurring_invoicer_wizard(models.TransientModel):
         }
 
     @api.model
-    def generate_from_cron(self, *args, **kwargs):
+    def generate_from_cron(self):
         self.generate()
