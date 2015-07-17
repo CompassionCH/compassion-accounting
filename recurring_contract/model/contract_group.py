@@ -49,8 +49,8 @@ class contract_group(models.Model):
         string=_('Last paid invoice date'))
 
     change_method = fields.Selection(
-        selection=__get_change_methods, default='do_nothing',
-        string=_('Change method'))
+        selection=lambda self: self.__get_change_methods(),
+        default='do_nothing', string=_('Change method'))
     partner_id = fields.Many2one(
         'res.partner', _('Partner'), required=True,
         ondelete='cascade', track_visibility="onchange")
@@ -69,7 +69,6 @@ class contract_group(models.Model):
     ##########################################################################
     #                             FIELDS METHODS                             #
     ##########################################################################
-
 
     def __get_change_methods(self):
         """ Call method which can be inherited """
@@ -91,9 +90,10 @@ class contract_group(models.Model):
                 [False])
 
     ##########################################################################
-    #                             PUBLIC METHODS                             #
+    #                              ORM METHODS                               #
     ##########################################################################
 
+    @api.multi
     def write(self, vals):
         """
             Perform various check at contract modifications
@@ -130,6 +130,11 @@ class contract_group(models.Model):
 
         return res
 
+    ##########################################################################
+    #                              ORM METHODS                               #
+    ##########################################################################
+
+    @api.multi
     def button_generate_invoices(self):
         invoicer = self.generate_invoices()
         self.validate_invoices(invoicer)
@@ -140,6 +145,10 @@ class contract_group(models.Model):
         # Check if there is invoice waiting for validation
         if invoicer.invoice_ids:
             invoicer.validate_invoices()
+
+    ##########################################################################
+    #                             PUBLIC METHODS                             #
+    ##########################################################################
 
     def clean_invoices(self):
         """ Change method which cancels generated invoices and rewinds
@@ -215,6 +224,7 @@ class contract_group(models.Model):
     #                             PRIVATE METHODS                            #
     ##########################################################################
 
+    
     def _get_change_methods(self):
         """ Method for applying changes """
         return [
@@ -223,6 +233,7 @@ class contract_group(models.Model):
             ('clean_invoices',
              'Clean invoices')
         ]
+
     def _get_gen_states(self):
         return ['active']
 
