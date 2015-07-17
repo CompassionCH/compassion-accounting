@@ -12,9 +12,8 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-from openerp import api, exceptions, fields, models, netsvc
+from openerp import api, exceptions, fields, models, netsvc, _
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
-from openerp.tools.translate import _
 import openerp.addons.decimal_precision as dp
 
 
@@ -31,12 +30,12 @@ class recurring_contract_line(models.Model):
         return res
 
     contract_id = fields.Many2one(
-        'recurring.contract', _('Contract'), required=True,
+        'recurring.contract', 'Contract', required=True,
         ondelete='cascade', readonly=True)
-    product_id = fields.Many2one('product.product', _('Product'),
+    product_id = fields.Many2one('product.product', 'Product',
                                  required=True)
-    amount = fields.Float(_('Price'), required=True)
-    quantity = fields.Integer(_('Quantity'), default=1, required=True)
+    amount = fields.Float('Price', required=True)
+    quantity = fields.Integer(default=1, required=True)
     subtotal = fields.Float(compute='_compute_subtotal', store=True,
                             digits_compute=dp.get_precision('Account'))
 
@@ -61,6 +60,59 @@ class recurring_contract(models.Model):
     _inherit = ['mail.thread']
     _rec_name = 'reference'
 
+    ##########################################################################
+    #                                 FIELDS                                 #
+    ##########################################################################
+
+    reference = fields.Char(
+        default="/", required=True, readonly=True,
+        states={'draft': [('readonly', False)]})
+    start_date = fields.Date(
+        default=datetime.today().strftime(DF), required=True, readonly=True,
+        states={'draft': [('readonly', False)]}, track_visibility="onchange")
+    end_date = fields.Date(
+        readonly=False, states={'terminated': [('readonly', True)]},
+        track_visibility="onchange")
+    next_invoice_date = fields.Date(
+        readonly=False, states={'draft': [('readonly', False)]},
+        track_visibility="onchange")
+    last_paid_invoice_date = fields.Date(
+        compute='_get_last_paid_invoice')
+    partner_id = fields.Many2one(
+        'res.partner', 'Partner', required=True, readonly=True,
+        states={'draft': [('readonly', False)]}, ondelete='restrict')
+    group_id = fields.Many2one(
+        'recurring.contract.group', 'Payment Options',
+        required=True, ondelete='cascade', track_visibility="onchange")
+    invoice_line_ids = fields.One2many(
+        'account.invoice.line', 'contract_id',
+        'Related invoice lines', readonly=True)
+    contract_line_ids = fields.One2many(
+        'recurring.contract.line', 'contract_id',
+        'Contract lines', track_visibility="onchange", copy=True)
+    state = fields.Selection([
+        ('draft', _('Draft')),
+        ('active', _('Active')),
+        ('terminated', _('Terminated'))], 'Status', default='draft',
+        select=True, readonly=True, track_visibility='onchange',
+        help=_(" * The 'Draft' status is used when a user is encoding a "
+               "new and unconfirmed Contract.\n"
+               "* The 'Active' status is used when the contract is "
+               "confirmed and until it's terminated.\n"
+               "* The 'Terminated' status is used when a contract is no "
+               "longer active."))
+    total_amount = fields.Float(
+        'Total', compute='_get_total_amount',
+        digits_compute=dp.get_precision('Account'),
+        track_visibility="onchange", store=True)
+    payment_term_id = fields.Many2one(
+        'account.payment.term', string='Payment Term',
+        related='group_id.payment_term_id', readonly=True, store=True)
+
+    ##########################################################################
+    #                             FIELDS METHODS                             #
+    ##########################################################################
+
     @api.depends('contract_line_ids', 'contract_line_ids.amount',
                  'contract_line_ids.quantity')
     def _get_total_amount(self):
@@ -73,58 +125,6 @@ class recurring_contract(models.Model):
             [invl.invoice_id.date_invoice for invl in self.invoice_line_ids
              if invl.state == 'paid'] or [False])
 
-    reference = fields.Char(
-        _('Reference'), default="/", required=True, readonly=True,
-        states={'draft': [('readonly', False)]})
-    start_date = fields.Date(
-        _('Start date'), default=datetime.today().strftime(DF),
-        required=True, readonly=True,
-        states={'draft': [('readonly', False)]},
-        track_visibility="onchange")
-    end_date = fields.Date(
-        _('End date'), readonly=False,
-        states={'terminated': [('readonly', True)]},
-        track_visibility="onchange")
-    next_invoice_date = fields.Date(
-        _('Next invoice date'), readonly=False,
-        states={'draft': [('readonly', False)]},
-        track_visibility="onchange")
-    last_paid_invoice_date = fields.Date(
-        compute='_get_last_paid_invoice', string=_('Last paid invoice date'))
-    partner_id = fields.Many2one(
-        'res.partner', string=_('Partner'), required=True,
-        readonly=True, states={'draft': [('readonly', False)]},
-        ondelete='restrict')
-    group_id = fields.Many2one(
-        'recurring.contract.group', _('Payment Options'),
-        required=True, ondelete='cascade',
-        track_visibility="onchange")
-    invoice_line_ids = fields.One2many(
-        'account.invoice.line', 'contract_id',
-        _('Related invoice lines'), readonly=True)
-    contract_line_ids = fields.One2many(
-        'recurring.contract.line', 'contract_id',
-        _('Contract lines'), track_visibility="onchange", copy=True)
-    state = fields.Selection([
-        ('draft', _('Draft')),
-        ('active', _('Active')),
-        ('terminated', _('Terminated'))], _('Status'), default='draft',
-        select=True, readonly=True, track_visibility='onchange',
-        help=_(" * The 'Draft' status is used when a user is encoding a "
-               "new and unconfirmed Contract.\n"
-               "* The 'Active' status is used when the contract is "
-               "confirmed and until it's terminated.\n"
-               "* The 'Terminated' status is used when a contract is no "
-               "longer active."))
-    total_amount = fields.Float(
-        compute='_get_total_amount', string='Total',
-        digits_compute=dp.get_precision('Account'),
-        track_visibility="onchange", store=True)
-    payment_term_id = fields.Many2one(
-        relation='account.payment.term',
-        related='group_id.payment_term_id', readonly=True,
-        string=_('Payment Term'), store=True)
-
     @api.constrains('reference')
     @api.one
     def _check_unique_reference(self):
@@ -136,9 +136,10 @@ class recurring_contract(models.Model):
                 _('Error: Reference should be unique'))
         return True
 
-    #################################
-    #        PUBLIC METHODS         #
-    #################################
+    ##########################################################################
+    #                              ORM METHODS                               #
+    ##########################################################################
+
     @api.model
     def create(self, vals):
         """ Add a sequence generated ref if none is given """
@@ -148,6 +149,7 @@ class recurring_contract(models.Model):
 
         return super(recurring_contract, self).create(vals)
 
+    @api.multi
     def write(self, vals):
         """ Perform various checks when a contract is modified. """
         if 'next_invoice_date' in vals:
@@ -190,9 +192,9 @@ class recurring_contract(models.Model):
 
         return True
 
-    @api.multi
-    def button_generate_invoices(self):
-        return self.group_id.button_generate_invoices()
+    ##########################################################################
+    #                             PUBLIC METHODS                             #
+    ##########################################################################
 
     def clean_invoices(self, since_date=None, to_date=None, keep_lines=None):
         """ This method deletes invoices lines generated for a given contract
@@ -245,23 +247,6 @@ class recurring_contract(models.Model):
 
         return inv_ids
 
-    @api.one
-    def _cancel_confirm_invoices(self, cancel_ids, confirm_ids,
-                                 keep_lines=None):
-        """ Cancels given invoices and validate again given invoices.
-            confirm_ids must be a subset of cancel_ids ! """
-        inv_obj = self.env['account.invoice']
-        wf_service = netsvc.LocalService('workflow')
-        invoice_confirm = inv_obj.browse(confirm_ids)
-
-        for invoice_id in cancel_ids:
-            wf_service.trg_validate(self.env.user.id, 'account.invoice',
-                                    invoice_id, 'invoice_cancel', self.env.cr)
-        invoice_confirm.action_cancel_draft()
-        for invoice_id in confirm_ids:
-            wf_service.trg_validate(self.env.user.id, 'account.invoice',
-                                    invoice_id, 'invoice_open', self.env.cr)
-
     def rewind_next_invoice_date(self):
         """ Rewinds the next invoice date of contract after the last
         generated invoice. No open invoices exist after that date. """
@@ -291,15 +276,156 @@ class recurring_contract(models.Model):
 
         return True
 
-    #################################
-    #        PRIVATE METHODS        #
-    #################################
-
     def update_next_invoice_date(self):
         """ Recompute and set next_invoice date. """
         next_date = self._compute_next_invoice_date()
         self.write({'next_invoice_date': next_date})
         return True
+
+    ##########################################################################
+    #                             VIEW CALLBACKS                             #
+    ##########################################################################
+
+    @api.onchange('start_date')
+    def on_change_start_date(self):
+        """ We automatically update next_invoice_date on start_date change """
+        if self.start_date:
+            self.next_invoice_date = self.start_date
+        return
+
+    @api.onchange('partner_id')
+    def on_change_partner_id(self):
+        """ On partner change, we update the group_id. If partner has
+        only 1 group, we take it. Else, we take nothing.
+        """
+        group_ids = self.env['recurring.contract.group'].search(
+            [('partner_id', '=', self.partner_id.id)])
+
+        self.group_id = None
+        if len(group_ids) == 1:
+            self.group_id = group_ids[0]
+        return
+
+    ##########################################################################
+    #                            WORKFLOW METHODS                            #
+    ##########################################################################
+
+    @api.multi
+    def button_generate_invoices(self):
+        return self.group_id.button_generate_invoices()
+
+    @api.multi
+    def contract_draft(self):
+        self.write({'state': 'draft'})
+        return True
+
+    @api.multi
+    def contract_active(self):
+        self.write({'state': 'active'})
+        return True
+
+    @api.multi
+    def contract_terminated(self):
+        today = datetime.today().strftime(DF)
+        self.write({'state': 'terminated', 'end_date': today})
+        self.clean_invoices()
+        return True
+
+    @api.model
+    def end_date_reached(self):
+        today = datetime.today().strftime(DF)
+        contracts = self.search([('state', '=', 'active'),
+                                 ('end_date', '<=', today)])
+
+        if contracts:
+            contracts.contract_terminated()
+
+        return True
+
+    ##########################################################################
+    #                             PRIVATE METHODS                            #
+    ##########################################################################
+
+    @api.one
+    def _on_contract_lines_changed(self):
+        """Update related invoices to reflect the changes to the contract.
+        """
+        # Find all unpaid invoice lines after the given date
+        since_date = datetime.today().replace(day=1).strftime(DF)
+        inv_lines = self.env['account.invoice.line'].search(
+            [('contract_id', '=', self.id),
+             ('due_date', '>=', since_date),
+             ('state', 'not in', ('paid', 'cancel'))])
+
+        invoices = inv_lines.mapped('invoice_id')
+        invoices.action_cancel()
+        invoices.action_cancel_draft()
+        self._update_invoice_lines(invoices)
+        wf_service = netsvc.LocalService('workflow')
+        for invoice_id in invoices.ids:
+            wf_service.trg_validate(self.env.user.id, 'account.invoice',
+                                    invoice_id, 'invoice_open', self.env.cr)
+
+    @api.one
+    def _move_cancel_lines(self, invoice_line_ids, message=None):
+        """ Method that takes out given invoice_lines from their invoice
+        and put them in a cancelled copy of that invoice.
+        Warning : this method does not recompute totals of original invoices,
+                  and does not update related move lines.
+        """
+        invoice_obj = self.env['account.invoice']
+        invoice_line_obj = self.env['account.invoice.line']
+        invoices_copy = dict()
+        for invoice_line in invoice_line_obj.browse(invoice_line_ids):
+            invoice = invoice_line.invoice_id
+            copy_invoice_id = invoices_copy.get(invoice.id)
+            if not copy_invoice_id:
+                invoice_obj.copy(invoice.id, {
+                    'date_invoice': invoice.date_invoice})
+                copy_invoice_id = invoice_obj.search(
+                    [('partner_id', '=', invoice.partner_id.id),
+                     ('state', '=', 'draft'), ('id', '!=', invoice.id),
+                     ('date_invoice', '=', invoice.date_invoice)])[0]
+                # Empty the new invoice
+                cancel_lines = invoice_line_obj.search([
+                    ('invoice_id', '=', copy_invoice_id)])
+                invoice_line_obj.unlink(cancel_lines)
+                invoices_copy[invoice.id] = copy_invoice_id
+
+            # Move the line in the invoice copy
+            invoice_line.write({'invoice_id': copy_invoice_id})
+
+        # Compute and cancel invoice copies
+        cancel_ids = invoice_obj.browse(invoices_copy.values())
+        if cancel_ids:
+            cancel_ids.button_compute(set_total=True)
+            wf_service = netsvc.LocalService('workflow')
+            for cancel_id in cancel_ids:
+                wf_service.trg_validate(
+                    self.env.user.id, 'account.invoice', cancel_id,
+                    'invoice_cancel', self.env.cr)
+
+            cancel_ids.message_post(
+                message, _("Invoice Cancelled"), 'comment')
+
+        return True
+
+    @api.one
+    def _cancel_confirm_invoices(self, cancel_ids, confirm_ids,
+                                 keep_lines=None):
+        """ Cancels given invoices and validate again given invoices.
+            confirm_ids must be a subset of cancel_ids ! """
+        inv_obj = self.env['account.invoice']
+        wf_service = netsvc.LocalService('workflow')
+        invoice_confirm = inv_obj.browse(confirm_ids)
+
+        for invoice_id in cancel_ids:
+            wf_service.trg_validate(self.env.user.id, 'account.invoice',
+                                    invoice_id, 'invoice_cancel', self.env.cr)
+        invoice_confirm.action_cancel_draft()
+        for invoice_id in confirm_ids:
+            wf_service.trg_validate(self.env.user.id, 'account.invoice',
+                                    invoice_id, 'invoice_open', self.env.cr)
 
     def _compute_next_invoice_date(self):
         """ Compute next_invoice_date for a single contract. """
@@ -348,121 +474,4 @@ class recurring_contract(models.Model):
             if next_invoice_date > new_invoice_date:
                 raise exceptions.Warning(
                     'Error', _('You cannot rewind the next invoice date.'))
-        return True
-
-    @api.one
-    def _on_contract_lines_changed(self):
-        """Update related invoices to reflect the changes to the contract.
-        """
-        # Find all unpaid invoice lines after the given date
-        since_date = datetime.today().replace(day=1).strftime(DF)
-        inv_lines = self.env['account.invoice.line'].search(
-            [('contract_id', '=', self.id),
-             ('due_date', '>=', since_date),
-             ('state', 'not in', ('paid', 'cancel'))])
-
-        invoices = inv_lines.mapped('invoice_id')
-        invoices.action_cancel()
-        invoices.action_cancel_draft()
-
-        self._update_invoice_lines(invoices)
-        wf_service = netsvc.LocalService('workflow')
-        for invoice_id in invoices.ids:
-            wf_service.trg_validate(self.env.user.id, 'account.invoice',
-                                    invoice_id, 'invoice_open', self.env.cr)
-
-    @api.one
-    def _move_cancel_lines(self, invoice_line_ids, message=None):
-        """ Method that takes out given invoice_lines from their invoice
-        and put them in a cancelled copy of that invoice.
-        Warning : this method does not recompute totals of original invoices,
-                  and does not update related move lines.
-        """
-        invoice_obj = self.env['account.invoice']
-        invoice_line_obj = self.env['account.invoice.line']
-        invoices_copy = dict()
-        for invoice_line in invoice_line_obj.browse(invoice_line_ids):
-            invoice = invoice_line.invoice_id
-            copy_invoice_id = invoices_copy.get(invoice.id)
-            if not copy_invoice_id:
-                invoice_obj.copy(invoice.id, {
-                    'date_invoice': invoice.date_invoice})
-                copy_invoice_id = invoice_obj.search(
-                    [('partner_id', '=', invoice.partner_id.id),
-                     ('state', '=', 'draft'), ('id', '!=', invoice.id),
-                     ('date_invoice', '=', invoice.date_invoice)])[0]
-                # Empty the new invoice
-                cancel_lines = invoice_line_obj.search([
-                    ('invoice_id', '=', copy_invoice_id)])
-                invoice_line_obj.unlink(cancel_lines)
-                invoices_copy[invoice.id] = copy_invoice_id
-
-            # Move the line in the invoice copy
-            invoice_line.write({'invoice_id': copy_invoice_id})
-
-        # Compute and cancel invoice copies
-        cancel_ids = invoices_copy.values()
-        if cancel_ids:
-            invoice_obj.button_compute(cancel_ids, set_total=True)
-            wf_service = netsvc.LocalService('workflow')
-            for cancel_id in cancel_ids:
-                wf_service.trg_validate(
-                    self.env.user.id, 'account.invoice', cancel_id,
-                    'invoice_cancel', self.env.cr)
-
-            self.env.with_context(thread_model='account.invoice')
-            self.pool.get('mail.thread').message_post(
-                message, _("Invoice Cancelled"), 'comment')
-
-        return True
-
-    ##########################
-    #        CALLBACKS       #
-    ##########################
-    @api.onchange('start_date')
-    def on_change_start_date(self):
-        """ We automatically update next_invoice_date on start_date change """
-        if self.start_date:
-            self.next_invoice_date = self.start_date
-        return
-
-    @api.onchange('partner_id')
-    def on_change_partner_id(self):
-        """ On partner change, we update the group_id. If partner has
-        only 1 group, we take it. Else, we take nothing.
-        """
-        group_ids = self.env['recurring.contract.group'].search(
-            [('partner_id', '=', self.partner_id.id)])
-
-        self.group_id = None
-        if len(group_ids) == 1:
-            self.group_id = group_ids[0]
-        return
-
-    @api.multi
-    def contract_draft(self):
-        self.write({'state': 'draft'})
-        return True
-
-    @api.multi
-    def contract_active(self):
-        self.write({'state': 'active'})
-        return True
-
-    @api.multi
-    def contract_terminated(self):
-        today = datetime.today().strftime(DF)
-        self.write({'state': 'terminated', 'end_date': today})
-        self.clean_invoices()
-        return True
-
-    @api.model
-    def end_date_reached(self):
-        today = datetime.today().strftime(DF)
-        contracts = self.search([('state', '=', 'active'),
-                                 ('end_date', '<=', today)])
-
-        if contracts:
-            contracts.contract_terminated()
-
         return True

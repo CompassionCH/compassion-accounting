@@ -9,9 +9,7 @@
 #
 ##############################################################################
 
-from openerp import api, fields, models
-from openerp import netsvc
-
+from openerp import api, fields, models, netsvc
 
 class split_invoice_wizard(models.TransientModel):
     """Wizard for selecting invoice lines to be moved
@@ -46,6 +44,7 @@ class split_invoice_wizard(models.TransientModel):
             # to_move_lines = self.invoice_line_ids.filtered('split')
             invoice = self._copy_invoice(old_invoice)
             if old_invoice.state in ('draft', 'open'):
+                invoice_id = self._copy_invoice(old_invoice)
                 uid = self.env.user.id
                 cr = self.env.cr
                 self.invoice_line_ids.write({'invoice_id': invoice.id})

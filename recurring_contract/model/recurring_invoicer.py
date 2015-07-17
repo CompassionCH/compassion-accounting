@@ -11,9 +11,8 @@
 
 from datetime import datetime
 
-from openerp import api, exceptions, fields, models, netsvc
+from openerp import api, exceptions, fields, models, netsvc, _
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
-from openerp.tools.translate import _
 
 import logging
 
@@ -28,17 +27,16 @@ class recurring_invoicer(models.Model):
     _name = 'recurring.invoicer'
     _rec_name = 'identifier'
 
-    def calculate_id(self):
-        return self.env['ir.sequence'].next_by_code('rec.invoicer.ident')
-
-    identifier = fields.Char(_('Identifier'), required=True,
-                             default=calculate_id)
-    source = fields.Char(_('Source model'), required=True)
-    generation_date = fields.Date(
-        _('Generation date'), default=datetime.today().strftime(DF))
+    identifier = fields.Char(
+        required=True, default=lambda self: self.calculate_id())
+    source = fields.Char('Source model', required=True)
+    generation_date = fields.Date(default=datetime.today().strftime(DF))
     invoice_ids = fields.One2many(
         'account.invoice', 'recurring_invoicer_id',
-        _('Generated invoices'))
+        'Generated invoices')
+
+    def calculate_id(self):
+        return self.env['ir.sequence'].next_by_code('rec.invoicer.ident')
 
     @api.one
     def validate_invoices(self):
