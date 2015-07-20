@@ -351,7 +351,7 @@ class recurring_contract(models.Model):
     #                             PRIVATE METHODS                            #
     ##########################################################################
 
- @api.one
+    @api.one
     def _on_contract_lines_changed(self):
         """Update related invoices to reflect the changes to the contract.
         """
@@ -412,17 +412,16 @@ class recurring_contract(models.Model):
             invoice_line.write({'invoice_id': copy_invoice_id})
 
         # Compute and cancel invoice copies
-        cancel_ids = invoices_copy.values()
+        cancel_ids = invoice_obj.browse(invoices_copy.values())
         if cancel_ids:
-            invoice_obj.button_compute(cancel_ids, set_total=True)
+            cancel_ids.button_compute(set_total=True)
             wf_service = netsvc.LocalService('workflow')
             for cancel_id in cancel_ids:
                 wf_service.trg_validate(
                     self.env.user.id, 'account.invoice', cancel_id,
                     'invoice_cancel', self.env.cr)
 
-            self.env.with_context(thread_model='account.invoice')
-            self.pool.get('mail.thread').message_post(
+            cancel_ids.message_post(
                 message, _("Invoice Cancelled"), 'comment')
 
         return True

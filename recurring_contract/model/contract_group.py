@@ -169,7 +169,7 @@ class contract_group(models.Model):
         """ No changes before generation """
         pass
 
-    def generate_invoices(self, invoicer_id=None):
+    def generate_invoices(self, invoicer=None):
         """ Checks all contracts and generate invoices if needed.
         Create an invoice per contract group per date.
         """
@@ -177,8 +177,8 @@ class contract_group(models.Model):
         inv_obj = self.env['account.invoice']
         journal_obj = self.env['account.journal']
         gen_states = self._get_gen_states()
-        if not invoicer_id:
-            invoicer_id = self.env['recurring.invoicer'].create(
+        if not invoicer:
+            invoicer = self.env['recurring.invoicer'].create(
                 {'source': self._name})
 
         journal_ids = journal_obj.search(
@@ -204,7 +204,7 @@ class contract_group(models.Model):
                 if not contracts:
                     break
                 inv_data = contract_group._setup_inv_data(journal_ids,
-                                                          invoicer_id)
+                                                          invoicer)
                 invoice = inv_obj.create(inv_data)
                 for contract in contracts:
                     contract_group._generate_invoice_lines(contract, invoice)
@@ -218,7 +218,7 @@ class contract_group(models.Model):
             self.env.cr.commit()
             count += 1
         logger.info("Invoice generation successfully finished.")
-        return invoicer_id
+        return invoicer
 
     ##########################################################################
     #                             PRIVATE METHODS                            #
@@ -258,6 +258,7 @@ class contract_group(models.Model):
 
         return inv_data
 
+    @api.multi
     def _setup_inv_line_data(self, contract_line, invoice):
         """ Setup a dict with data passed to invoice_line.create.
         If any custom data is wanted in invoice line from contract,
@@ -278,7 +279,7 @@ class contract_group(models.Model):
             inv_line_data['account_id'] = account.id
         return inv_line_data
 
-    @api.one
+    @api.multi
     def _generate_invoice_lines(self, contract, invoice):
         inv_line_obj = self.env['account.invoice.line']
         for contract_line in contract.contract_line_ids:
