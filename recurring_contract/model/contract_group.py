@@ -148,12 +148,13 @@ class contract_group(models.Model):
         generated taking into consideration the modifications of the
         contract group.
         """
-        since_date = datetime.today().date()
+        since_date = datetime.today()
         if self.last_paid_invoice_date:
             last_paid_invoice_date = datetime.strptime(
                 self.last_paid_invoice_date, DF)
             since_date = max(since_date, last_paid_invoice_date)
-        res = self.contract_ids.clean_invoices(since_date=since_date)
+        res = self.contract_ids.clean_invoices(
+            since_date=since_date.strftime(DF))
         self.contract_ids.rewind_next_invoice_date()
         return res
 
@@ -253,7 +254,6 @@ class contract_group(models.Model):
             inv_line_data['account_id'] = account.id
         return inv_line_data
 
-    @api.one
     def _generate_invoice_lines(self, contract, invoice):
         inv_line_obj = self.env['account.invoice.line']
         for contract_line in contract.contract_line_ids:

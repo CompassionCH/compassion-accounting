@@ -253,7 +253,7 @@ class test_recurring_contract(common.TransactionCase):
             {'amount': 160.0})
         new_price2 = contract_copied_line.subtotal
         invoicer_wizard_obj = self.env['recurring.invoicer.wizard']
-        invoicer_wiz_id = invoicer_wizard_obj.generate([])
+        invoicer_wiz_id = invoicer_wizard_obj.generate()
         invoicer_wiz = self.env['recurring.invoicer'].browse(
             invoicer_wiz_id['res_id'])
         new_invoices = invoicer_wiz.invoice_ids
