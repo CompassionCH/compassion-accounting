@@ -28,18 +28,30 @@ class recurring_invoicer(models.Model):
     _name = 'recurring.invoicer'
     _rec_name = 'identifier'
 
+<<<<<<< HEAD
     identifier = fields.Char(_('Identifier'), required=True,
                              default=lambda self: self.calculate_id())
     source = fields.Char(_('Source model'), required=True)
+=======
+    def calculate_id(self):
+        return self.env['ir.sequence'].next_by_code('rec.invoicer.ident')
+
+    identifier = fields.Char(_('Identifier'), required=True,
+                             default=calculate_id)
+    source = fields.Char(_('Source model'), required=True)
+>>>>>>> compassion/8.0
     generation_date = fields.Date(
         _('Generation date'), default=datetime.today().strftime(DF))
     invoice_ids = fields.One2many(
         'account.invoice', 'recurring_invoicer_id',
         _('Generated invoices'))
 
+<<<<<<< HEAD
     def calculate_id(self):
         return self.env['ir.sequence'].next_by_code('rec.invoicer.ident')
 
+=======
+>>>>>>> compassion/8.0
     @api.one
     def validate_invoices(self):
         ''' Validates created invoices (set state from draft to open)'''

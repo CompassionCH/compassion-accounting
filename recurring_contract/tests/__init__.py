@@ -10,7 +10,3 @@
 ##############################################################################
 
 from . import test_recurring_contract
-
-checks = [
-    test_recurring_contract
-]

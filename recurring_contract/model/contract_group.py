@@ -13,7 +13,11 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
+<<<<<<< HEAD
 from openerp import api, fields, models, _
+=======
+from openerp import api, fields, models
+>>>>>>> compassion/8.0
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 import logging
 logger = logging.getLogger(__name__)
@@ -24,6 +28,7 @@ class contract_group(models.Model):
     _description = 'A group of contracts'
     _inherit = 'mail.thread'
     _rec_name = 'ref'
+<<<<<<< HEAD
     
     ##########################################################################
     #                                 FIELDS                                 #
@@ -69,6 +74,17 @@ class contract_group(models.Model):
     ##########################################################################
     #                             FIELDS METHODS                             #
     ##########################################################################
+=======
+
+    def _get_change_methods(self):
+        """ Method for applying changes """
+        return [
+            ('do_nothing',
+             'Nothing'),
+            ('clean_invoices',
+             'Clean invoices')
+        ]
+>>>>>>> compassion/8.0
 
     def __get_change_methods(self):
         """ Call method which can be inherited """
@@ -89,11 +105,54 @@ class contract_group(models.Model):
                 [c.last_paid_invoice_date for c in group.contract_ids] or
                 [False])
 
+<<<<<<< HEAD
     ##########################################################################
     #                              ORM METHODS                               #
     ##########################################################################
 
     @api.multi
+=======
+    partner_id = fields.Many2one(
+        'res.partner', _('Partner'), required=True,
+        ondelete='cascade', track_visibility="onchange")
+
+    ref = fields.Char(_('Reference'), default="/")
+    recurring_unit = fields.Selection([
+        ('day', _('Day(s)')),
+        ('week', _('Week(s)')),
+        ('month', _('Month(s)')),
+        ('year', _('Year(s)'))], _('Reccurency'),
+        default='month', required=True)
+    recurring_value = fields.Integer(
+        _('Generate every'), default=1, required=True)
+    contract_ids = fields.One2many(
+        'recurring.contract', 'group_id', _('Contracts'), readonly=True)
+    # TODO Add unit for advance_billing
+    advance_billing_months = fields.Integer(
+        _('Advance billing months'),
+        help=_(
+            'Advance billing allows you to generate invoices in '
+            'advance. For example, you can generate the invoices '
+            'for each month of the year and send them to the '
+            'customer in january.'
+        ), default=1, ondelete='no action')
+    payment_term_id = fields.Many2one('account.payment.term',
+                                      _('Payment Term'),
+                                      track_visibility="onchange")
+
+    next_invoice_date = fields.Date(
+        compute='_set_next_invoice_date',
+        string=_('Next invoice date'), store=True)
+
+    last_paid_invoice_date = fields.Date(
+        compute='_set_last_paid_invoice',
+        string=_('Last paid invoice date'))
+
+    change_method = fields.Selection(
+        selection=__get_change_methods, default='do_nothing',
+        string=_('Change method'))
+
+>>>>>>> compassion/8.0
     def write(self, vals):
         """
             Perform various check at contract modifications
@@ -129,12 +188,16 @@ class contract_group(models.Model):
             self.validate_invoices(invoicer_id)
 
         return res
+<<<<<<< HEAD
 
     ##########################################################################
     #                              ORM METHODS                               #
     ##########################################################################
 
     @api.multi
+=======
+
+>>>>>>> compassion/8.0
     def button_generate_invoices(self):
         invoicer = self.generate_invoices()
         self.validate_invoices(invoicer)
@@ -145,10 +208,13 @@ class contract_group(models.Model):
         # Check if there is invoice waiting for validation
         if invoicer.invoice_ids:
             invoicer.validate_invoices()
+<<<<<<< HEAD
 
     ##########################################################################
     #                             PUBLIC METHODS                             #
     ##########################################################################
+=======
+>>>>>>> compassion/8.0
 
     def clean_invoices(self):
         """ Change method which cancels generated invoices and rewinds
@@ -156,12 +222,21 @@ class contract_group(models.Model):
         generated taking into consideration the modifications of the
         contract group.
         """
+<<<<<<< HEAD
         since_date = datetime.date.today()
+=======
+        since_date = datetime.today()
+>>>>>>> compassion/8.0
         if self.last_paid_invoice_date:
             last_paid_invoice_date = datetime.strptime(
                 self.last_paid_invoice_date, DF)
             since_date = max(since_date, last_paid_invoice_date)
+<<<<<<< HEAD
         res = self.contract_ids.clean_invoices(since_date=since_date)
+=======
+        res = self.contract_ids.clean_invoices(
+            since_date=since_date.strftime(DF))
+>>>>>>> compassion/8.0
         self.contract_ids.rewind_next_invoice_date()
         return res
 
@@ -169,7 +244,11 @@ class contract_group(models.Model):
         """ No changes before generation """
         pass
 
+<<<<<<< HEAD
     def generate_invoices(self, invoicer=None):
+=======
+    def generate_invoices(self, invoicer_id=None):
+>>>>>>> compassion/8.0
         """ Checks all contracts and generate invoices if needed.
         Create an invoice per contract group per date.
         """
@@ -177,8 +256,13 @@ class contract_group(models.Model):
         inv_obj = self.env['account.invoice']
         journal_obj = self.env['account.journal']
         gen_states = self._get_gen_states()
+<<<<<<< HEAD
         if not invoicer:
             invoicer = self.env['recurring.invoicer'].create(
+=======
+        if not invoicer_id:
+            invoicer_id = self.env['recurring.invoicer'].create(
+>>>>>>> compassion/8.0
                 {'source': self._name})
 
         journal_ids = journal_obj.search(
@@ -204,7 +288,11 @@ class contract_group(models.Model):
                 if not contracts:
                     break
                 inv_data = contract_group._setup_inv_data(journal_ids,
+<<<<<<< HEAD
                                                           invoicer)
+=======
+                                                          invoicer_id)
+>>>>>>> compassion/8.0
                 invoice = inv_obj.create(inv_data)
                 for contract in contracts:
                     contract_group._generate_invoice_lines(contract, invoice)
@@ -224,6 +312,7 @@ class contract_group(models.Model):
     #                             PRIVATE METHODS                            #
     ##########################################################################
 
+<<<<<<< HEAD
     
     def _get_change_methods(self):
         """ Method for applying changes """
@@ -237,6 +326,8 @@ class contract_group(models.Model):
     def _get_gen_states(self):
         return ['active']
 
+=======
+>>>>>>> compassion/8.0
     def _setup_inv_data(self, journal_ids, invoicer):
         """ Setup a dict with data passed to invoice.create.
             If any custom data is wanted in invoice from contract group, just
@@ -258,7 +349,10 @@ class contract_group(models.Model):
 
         return inv_data
 
+<<<<<<< HEAD
     @api.multi
+=======
+>>>>>>> compassion/8.0
     def _setup_inv_line_data(self, contract_line, invoice):
         """ Setup a dict with data passed to invoice_line.create.
         If any custom data is wanted in invoice line from contract,
@@ -279,7 +373,10 @@ class contract_group(models.Model):
             inv_line_data['account_id'] = account.id
         return inv_line_data
 
+<<<<<<< HEAD
     @api.multi
+=======
+>>>>>>> compassion/8.0
     def _generate_invoice_lines(self, contract, invoice):
         inv_line_obj = self.env['account.invoice.line']
         for contract_line in contract.contract_line_ids:
