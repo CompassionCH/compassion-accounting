@@ -49,7 +49,7 @@ class contract_group(models.Model):
         string='Last paid invoice date')
 
     change_method = fields.Selection(
-        '_set_change_methods', default='do_nothing')
+        '_get_change_methods', default='do_nothing')
     partner_id = fields.Many2one(
         'res.partner', 'Partner', required=True,
         ondelete='cascade', track_visibility="onchange")
@@ -68,11 +68,6 @@ class contract_group(models.Model):
     ##########################################################################
     #                             FIELDS METHODS                             #
     ##########################################################################
-    @api.multi
-    def _set_change_methods(self):
-        """ Call method which can be inherited """
-        return self._get_change_methods()
-
     @api.depends('contract_ids.next_invoice_date', 'contract_ids.state')
     @api.one
     def _set_next_invoice_date(self):
