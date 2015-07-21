@@ -3,8 +3,7 @@
 #
 #    Copyright (C) 2014 Compassion CH (http://www.compassion.ch)
 #    Releasing children from poverty in Jesus' name
-#    @author: Cyril Sester <csester@compassion.ch>,
-#             Steve Ferry <steve.ferry1992@gmail.com>
+#    @author: Cyril Sester <csester@compassion.ch>, Steve Ferry
 #
 #    The licence is in the file __openerp__.py
 #
@@ -49,7 +48,7 @@ class contract_group(models.Model):
         string='Last paid invoice date')
 
     change_method = fields.Selection(
-        '_set_change_methods', default='do_nothing')
+        '_get_change_methods', default='do_nothing')
     partner_id = fields.Many2one(
         'res.partner', 'Partner', required=True,
         ondelete='cascade', track_visibility="onchange")
