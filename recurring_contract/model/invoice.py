@@ -9,7 +9,7 @@
 #
 ##############################################################################
 
-from openerp import api, fields, models, _
+from openerp import api, fields, models
 
 
 class account_invoice(models.Model):
@@ -17,7 +17,7 @@ class account_invoice(models.Model):
     _inherit = 'account.invoice'
 
     recurring_invoicer_id = fields.Many2one(
-        'recurring.invoicer', _('Invoicer'))
+        'recurring.invoicer', 'Invoicer')
 
 
 class account_invoice_line(models.Model):
@@ -25,15 +25,15 @@ class account_invoice_line(models.Model):
     _inherit = 'account.invoice.line'
 
     contract_id = fields.Many2one(
-        'recurring.contract', _('Source contract'))
+        'recurring.contract', 'Source contract')
 
     due_date = fields.Date(
-        compute='_get_invoice_lines_date_due', string=_('Due date'),
-        readonly=True, strore=True)
+        compute='_get_invoice_lines_date_due', string='Due date',
+        readonly=True, store=True)
 
     state = fields.Selection(
-        compute='_get_invoice_lines_state', string=_('State'),
-        readonly=True, strore=True,
+        compute='_get_invoice_lines_state', string='State',
+        readonly=True, store=True,
         selection=[('draft', 'Draft'),
                    ('proforma', 'Pro-forma'),
                    ('proforma2', 'Pro-forma'),

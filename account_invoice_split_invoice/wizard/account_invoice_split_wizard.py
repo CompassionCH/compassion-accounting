@@ -9,8 +9,7 @@
 #
 ##############################################################################
 
-from openerp import api, fields, models, netsvc, _
-from openerp import netsvc
+from openerp import api, fields, models, netsvc
 
 
 class split_invoice_wizard(models.TransientModel):
@@ -25,16 +24,9 @@ class split_invoice_wizard(models.TransientModel):
         'account.invoice.line', 'account_invoice_line_2_splitwizard',
         string='Invoice lines')
 
-    @api.multi
-    def _get_invoice_id(self):
-        return self.env.context.get('active_id')
-
     @api.model
     def _get_invoice(self):
         return self.env.context.get('active_id')
-
-        line_ids = [line.id for line in invoice.invoice_line]
-        return line_ids
 
     @api.multi
     def split_invoice(self):

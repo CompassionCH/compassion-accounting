@@ -24,14 +24,14 @@ class contract_group(models.Model):
     _description = 'A group of contracts'
     _inherit = 'mail.thread'
     _rec_name = 'ref'
-    
+
     ##########################################################################
     #                                 FIELDS                                 #
     ##########################################################################
 
     # TODO Add unit for advance_billing
     advance_billing_months = fields.Integer(
-        _('Advance billing months'),
+        'Advance billing months',
         help=_(
             'Advance billing allows you to generate invoices in '
             'advance. For example, you can generate the invoices '
@@ -39,32 +39,31 @@ class contract_group(models.Model):
             'customer in january.'
         ), default=1, ondelete='no action')
     payment_term_id = fields.Many2one('account.payment.term',
-                                      _('Payment Term'),
+                                      'Payment Term',
                                       track_visibility="onchange")
     next_invoice_date = fields.Date(
         compute='_set_next_invoice_date',
-        string=_('Next invoice date'), store=True)
+        string='Next invoice date', store=True)
     last_paid_invoice_date = fields.Date(
         compute='_set_last_paid_invoice',
-        string=_('Last paid invoice date'))
+        string='Last paid invoice date')
 
     change_method = fields.Selection(
-        selection=lambda self: self.__get_change_methods(),
-        default='do_nothing', string=_('Change method'))
+        '__get_change_methods', default='do_nothing')
     partner_id = fields.Many2one(
-        'res.partner', _('Partner'), required=True,
+        'res.partner', 'Partner', required=True,
         ondelete='cascade', track_visibility="onchange")
-    ref = fields.Char(_('Reference'), default="/")
+    ref = fields.Char('Reference', default="/")
     recurring_unit = fields.Selection([
         ('day', _('Day(s)')),
         ('week', _('Week(s)')),
         ('month', _('Month(s)')),
-        ('year', _('Year(s)'))], _('Reccurency'),
+        ('year', _('Year(s)'))], 'Reccurency',
         default='month', required=True)
     recurring_value = fields.Integer(
-        _('Generate every'), default=1, required=True)
+        'Generate every', default=1, required=True)
     contract_ids = fields.One2many(
-        'recurring.contract', 'group_id', _('Contracts'), readonly=True)
+        'recurring.contract', 'group_id', 'Contracts', readonly=True)
 
     ##########################################################################
     #                             FIELDS METHODS                             #
@@ -73,7 +72,6 @@ class contract_group(models.Model):
     def __get_change_methods(self):
         """ Call method which can be inherited """
         return self._get_change_methods()
-
 
     @api.depends('contract_ids.next_invoice_date', 'contract_ids.state')
     @api.one

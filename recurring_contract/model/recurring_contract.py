@@ -12,10 +12,10 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-from openerp import api, exceptions, fields, models, netsvc
+from openerp import api, exceptions, fields, models, netsvc, _
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
-from openerp.tools.translate import _
 import openerp.addons.decimal_precision as dp
+
 
 class recurring_contract_line(models.Model):
     """ Each product sold through a contract """
@@ -30,12 +30,12 @@ class recurring_contract_line(models.Model):
         return res
 
     contract_id = fields.Many2one(
-        'recurring.contract', _('Contract'), required=True,
+        'recurring.contract', 'Contract', required=True,
         ondelete='cascade', readonly=True)
-    product_id = fields.Many2one('product.product', _('Product'),
+    product_id = fields.Many2one('product.product', 'Product',
                                  required=True)
-    amount = fields.Float(_('Price'), required=True)
-    quantity = fields.Integer(_('Quantity'), default=1, required=True)
+    amount = fields.Float('Price', required=True)
+    quantity = fields.Integer(default=1, required=True)
     subtotal = fields.Float(compute='_compute_subtotal', store=True,
                             digits_compute=dp.get_precision('Account'))
 
@@ -65,41 +65,41 @@ class recurring_contract(models.Model):
     ##########################################################################
 
     reference = fields.Char(
-        _('Reference'), default="/", required=True, readonly=True,
+        'Reference', default="/", required=True, readonly=True,
         states={'draft': [('readonly', False)]})
     start_date = fields.Date(
-        _('Start date'), default=datetime.today().strftime(DF),
+        'Start date', default=datetime.today().strftime(DF),
         required=True, readonly=True,
         states={'draft': [('readonly', False)]},
         track_visibility="onchange")
     end_date = fields.Date(
-        _('End date'), readonly=False,
+        'End date', readonly=False,
         states={'terminated': [('readonly', True)]},
         track_visibility="onchange")
     next_invoice_date = fields.Date(
-        _('Next invoice date'), readonly=False,
+        'Next invoice date', readonly=False,
         states={'draft': [('readonly', False)]},
         track_visibility="onchange")
     last_paid_invoice_date = fields.Date(
         compute='_get_last_paid_invoice', string=_('Last paid invoice date'))
     partner_id = fields.Many2one(
-        'res.partner', string=_('Partner'), required=True,
+        'res.partner', string='Partner', required=True,
         readonly=True, states={'draft': [('readonly', False)]},
         ondelete='restrict')
     group_id = fields.Many2one(
-        'recurring.contract.group', _('Payment Options'),
+        'recurring.contract.group', 'Payment Options',
         required=True, ondelete='cascade',
         track_visibility="onchange")
     invoice_line_ids = fields.One2many(
         'account.invoice.line', 'contract_id',
-        _('Related invoice lines'), readonly=True)
+        'Related invoice lines', readonly=True)
     contract_line_ids = fields.One2many(
         'recurring.contract.line', 'contract_id',
-        _('Contract lines'), track_visibility="onchange", copy=True)
+        'Contract lines', track_visibility="onchange", copy=True)
     state = fields.Selection([
         ('draft', _('Draft')),
         ('active', _('Active')),
-        ('terminated', _('Terminated'))], _('Status'), default='draft',
+        ('terminated', _('Terminated'))], 'Status', default='draft',
         select=True, readonly=True, track_visibility='onchange',
         help=_(" * The 'Draft' status is used when a user is encoding a "
                "new and unconfirmed Contract.\n"
@@ -114,7 +114,7 @@ class recurring_contract(models.Model):
     payment_term_id = fields.Many2one(
         relation='account.payment.term',
         related='group_id.payment_term_id', readonly=True,
-        string=_('Payment Term'), store=True)
+        string='Payment Term', store=True)
 
     ##########################################################################
     #                             FIELDS METHODS                             #
@@ -203,10 +203,6 @@ class recurring_contract(models.Model):
     #                             PUBLIC METHODS                             #
     ##########################################################################
 
-    @api.multi
-    def button_generate_invoices(self):
-        return self.group_id.button_generate_invoices()
-
     def clean_invoices(self, since_date=None, to_date=None, keep_lines=None):
         """ This method deletes invoices lines generated for a given contract
             having a due date >= current month. If the invoice_line was the
@@ -282,8 +278,8 @@ class recurring_contract(models.Model):
                         if line.state == 'cancel'] or [False])
                     if next_invoice_date:
                         super(recurring_contract, self).write({
-                                'next_invoice_date':
-                                next_invoice_date.strftime(DF)})
+                            'next_invoice_date':
+                            next_invoice_date.strftime(DF)})
 
         return True
 
@@ -311,11 +307,9 @@ class recurring_contract(models.Model):
             self.group_id = group_ids[0]
         return
 
-
     ##########################################################################
     #                            WORKFLOW METHODS                            #
     ##########################################################################
-
 
     @api.multi
     def button_generate_invoices(self):
@@ -479,30 +473,6 @@ class recurring_contract(models.Model):
             next_date = next_date + relativedelta(years=+rec_value)
 
         return next_date.strftime(DF)
-
-    @api.one
-    def _update_invoice_lines(self, invoice_ids):
-        """Update invoice lines generated by a contract, when the contract
-        was modified and corresponding invoices were cancelled.
-
-        Parameters:
-            - invoice_ids (list): ids of draft invoices to be
-                                  updated and validated
-        """
-        invoice_obj = self.env['account.invoice']
-        inv_line_obj = self.env['account.invoice.line']
-        group_obj = self.env['recurring.contract.group']
-        for invoice in invoice_obj.browse(invoice_ids):
-            # Update payment term and generate new invoice_lines
-            invoice.write({
-                'payment_term': self.group_id.payment_term_id and
-                self.group_id.payment_term_id.id or False})
-            old_lines = invoice.invoice_line.filtered(
-                lambda invl: invl.contract_id.id == self.id)
-            old_lines.unlink()
-            group_obj.with_context(
-                no_next_date_update=True)._generate_invoice_lines(self, invoice)
-            self.with_context(no_next_date_update=False)
 
     @api.one
     def _on_change_next_invoice_date(self, new_invoice_date):
