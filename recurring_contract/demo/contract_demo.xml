@@ -28,6 +28,11 @@
             <field name="close_method">unreconciled</field>
             <field name="code">87963</field>
         </record>    
+        <record id="account_type2" model="account.account.type">
+            <field name="name">Account Second Test</field>
+            <field name="close_method">none</field>
+            <field name="code">87964</field>
+        </record>    
         
         <!--
         account receivable creation
@@ -39,9 +44,9 @@
             <field name="user_type" ref="account_type"/>
             <field name="code">45917</field>
         </record>
-        
-        <!--
-        account payable creation
+
+        <!-- 
+        account creation 
         -->
         
         <record id="property_account_payable" model="account.account">
@@ -54,7 +59,14 @@
         <record id="property_account_income" model="account.account">
             <field name="name">Property Account Income Test</field>
             <field name="code">45646</field>
-            <field name="user_type" ref="account_type"/>
+            <field name="user_type" ref="account_type2"/>
+            <field name="type">receivable</field>
+        </record>
+        
+        <record id="property_account_expense" model="account.account">
+            <field name="name">Property Account Expense Test</field>
+            <field name="code">14447</field>
+            <field name="user_type" ref="account_type2"/>
             <field name="type">receivable</field>
         </record>
 
