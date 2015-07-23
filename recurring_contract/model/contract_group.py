@@ -131,8 +131,7 @@ class contract_group(orm.Model):
         # Any of these modifications implies generate and validate invoices
         generate_again = ('advance_billing_months' in vals or
                           'recurring_value' in vals or
-                          'recurring_unit' in vals or
-                          'change_method' in vals)
+                          'recurring_unit' in vals)
 
         for group in self.browse(cr, uid, ids, context):
 
@@ -143,18 +142,18 @@ class contract_group(orm.Model):
                 break
 
             # Get the method to apply changes
-            change_method = vals.get('change_method') or group.change_method
+            change_method = vals.get('change_method', group.change_method)
             change_method = getattr(self, change_method)
 
             res = super(contract_group, self).write(
                 cr, uid, group.id, vals, context) & res
 
             if generate_again:
-                change_method(
-                    cr, uid, group, context)
+                change_method(cr, uid, group, context)
 
         if generate_again:
-            invoicer_id = self.generate_invoices(cr, uid, ids, context=context)
+            invoicer_id = self.generate_invoices(cr, uid, ids,
+                                                 context=context)
             self.validate_invoices(cr, uid, invoicer_id, context)
 
         return res
@@ -180,9 +179,9 @@ class contract_group(orm.Model):
         generated taking into consideration the modifications of the
         contract group.
         """
-
         recurring_contract_obj = self.pool.get('recurring.contract')
-        contract_ids = [contract.id for contract in group.contract_ids]
+        contract_ids = [contract.id for contract in group.contract_ids
+                        if contract.state in self._get_gen_states()]
         since_date = datetime.today()
         if group.last_paid_invoice_date:
             last_paid_invoice_date = datetime.strptime(
@@ -210,7 +209,6 @@ class contract_group(orm.Model):
         journal_obj = self.pool.get('account.journal')
         contract_obj = self.pool.get('recurring.contract')
         gen_states = self._get_gen_states()
-
         if not ids:
             ids = self.search(cr, uid, [], context=context)
         if not invoicer_id:
@@ -307,7 +305,7 @@ class contract_group(orm.Model):
         return inv_line_data
 
     def _generate_invoice_lines(self, cr, uid, contract, invoice_id,
-                                context=None):
+                                context=None):                        
         inv_line_obj = self.pool.get('account.invoice.line')
         for contract_line in contract.contract_line_ids:
             inv_line_data = self._setup_inv_line_data(cr, uid, contract_line,
