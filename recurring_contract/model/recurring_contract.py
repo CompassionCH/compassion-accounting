@@ -15,7 +15,7 @@ from dateutil.relativedelta import relativedelta
 from openerp import api, exceptions, fields, models, netsvc, _
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 import openerp.addons.decimal_precision as dp
-
+import pdb
 
 class recurring_contract_line(models.Model):
     """ Each product sold through a contract """
@@ -292,7 +292,6 @@ class recurring_contract(models.Model):
         """ We automatically update next_invoice_date on start_date change """
         if self.start_date:
             self.next_invoice_date = self.start_date
-        return
 
     @api.onchange('partner_id')
     def on_change_partner_id(self):
@@ -301,11 +300,10 @@ class recurring_contract(models.Model):
         """
         group_ids = self.env['recurring.contract.group'].search(
             [('partner_id', '=', self.partner_id.id)])
-
+        # pdb.set_trace()
         self.group_id = None
         if len(group_ids) == 1:
             self.group_id = group_ids[0]
-        return
 
     ##########################################################################
     #                            WORKFLOW METHODS                            #
