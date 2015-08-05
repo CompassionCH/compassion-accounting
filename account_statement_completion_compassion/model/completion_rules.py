@@ -10,27 +10,27 @@
 ##############################################################################
 
 from openerp import api, exceptions, models, fields
-# from openerp.addons.account_statement_base_completion.statement \
-    # import ErrorTooManyPartner
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 from openerp import netsvc
-from openerp.addons.sponsorship_compassion.model.product import GIFT_CATEGORY, \
-    GIFT_NAMES
+from openerp.addons.sponsorship_compassion.model.product import \
+    GIFT_CATEGORY, GIFT_NAMES
 
 from datetime import datetime
 import time
 import sys
 
+
 class account_journal_completion(models.TransientModel):
 
     _inherit = 'account.journal'
-    
+
     completion_rules = fields.Many2many('account.statement.completion.rule')
+
 
 class account_bank_statement_import(models.TransientModel):
 
     _inherit = 'account.bank.statement.import'
-    
+
     def _create_bank_statements(self, stmts_vals):
         statement_ids, notifs = super(
             account_bank_statement_import,
@@ -38,19 +38,21 @@ class account_bank_statement_import(models.TransientModel):
         )._create_bank_statements(
             stmts_vals
         )
-        for stmt_line in self.env['account.bank.statement'].browse(statement_ids).mapped('line_ids'):
-            fields_update = stmt_line.journal_id.completion_rules.auto_complete(stmt_line)
+        for stmt_line in self.env['account.bank.statement'].browse(
+                statement_ids).mapped('line_ids'):
+            fields_update = stmt_line.journal_id.\
+                completion_rules.auto_complete(stmt_line)
             if fields_update:
                 stmt_line.write(fields_update)
         return statement_ids, notifs
+
 
 class StatementCompletionRule(models.Model):
     """ Add rules to complete account based on the BVR reference of the invoice
         and the reference of the partner."""
 
     _name = "account.statement.completion.rule"
-    
-    
+
     sequence = fields.Integer('Sequence',
                               help="Lower means parsed first.")
     name = fields.Char('Name', size=128)
@@ -77,8 +79,6 @@ class StatementCompletionRule(models.Model):
             ('get_from_move_line_ref',
              'Compassion: From line reference '
              '(based on previous move_line references)'),
-            # ('get_sponsor_name',
-             # 'Compassion: Match sponsor name '),
         ]
         return res
 
@@ -136,7 +136,6 @@ class StatementCompletionRule(models.Model):
                 # Get the accounting partner (company)
                 partner = partner_obj._find_accounting_partner(partner)
                 res['partner_id'] = partner.id
-                #res['account_id'] = partner.property_account_receivable.id
             else:
                 raise exceptions.Warning(
                     ('Line named "%s" (Ref:%s) was matched by more '
@@ -157,7 +156,6 @@ class StatementCompletionRule(models.Model):
             partner_obj = self.env['res.partner']
             partner = partner_obj._find_accounting_partner(partner)
             res['partner_id'] = partner.id
-            #res['account_id'] = partner.property_account_receivable.id
 
         return res
 
@@ -187,7 +185,7 @@ class StatementCompletionRule(models.Model):
         # We check only for debit entries
         if amount < 0:
             invoice_obj = self.env['account.invoice']
-            invoice_ids = invoice_obj.search(
+            invoices = invoice_obj.search(
                 [('type', '=', 'in_invoice'), ('state', '=', 'open'),
                  ('amount_total', '=', abs(amount))])
             res = {}
@@ -197,7 +195,6 @@ class StatementCompletionRule(models.Model):
                     partner = invoices.partner_id
                     res['partner_id'] = partner_obj._find_accounting_partner(
                         partner).id
-                    #res['account_id'] = invoices.account_id.id
                 else:
                     partner = invoices[0].partner_id
                     for invoice in invoices:
@@ -209,7 +206,6 @@ class StatementCompletionRule(models.Model):
                                 (st_line.name, st_line.ref))
                     res['partner_id'] = partner_obj._find_accounting_partner(
                         partner).id
-                    #res['account_id'] = invoices[0].account_id.id
 
         return res
 
@@ -271,8 +267,7 @@ class StatementCompletionRule(models.Model):
                  ('partner_id', '=', partner.id),
                  ('correspondant_id', '=', partner.id),
                  ('num_pol_ga', '=', contract_number),
-                 ('state', '!=', 'draft')
-                ])
+                 ('state', '!=', 'draft')])
             if len(contract) == 1:
                 # Retrieve the birthday of child
                 birthdate = ""
@@ -286,7 +281,7 @@ class StatementCompletionRule(models.Model):
             else:
                 res['name'] += " [Child not found] "
             return res
-        
+
         # Setup invoice data
         invoicer_id = st_line.statement_id.recurring_invoicer_id.id
         if not invoicer_id:

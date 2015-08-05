@@ -9,7 +9,7 @@
 #
 ##############################################################################
 
-from openerp import api, fields, models, netsvc, _
+from openerp import api, exceptions, fields, models, netsvc, _
 from openerp.tools import mod10r
 
 # Name of gifts products
@@ -23,7 +23,7 @@ GIFT_CATEGORY = "Sponsor gifts"
 SPONSORSHIP_CATEGORY = "Sponsorship"
 
 import time
-import pdb
+
 
 class AccountStatement(models.Model):
 
@@ -33,25 +33,14 @@ class AccountStatement(models.Model):
 
     recurring_invoicer_id = fields.Many2one(
         'recurring.invoicer', 'Invoicer')
-    generated_invoices_count = fields.Integer('Invoices', compute='_count_invoices')
-
-    # @api.one
-    # def button_auto_completion(self):
-        # invoicer = self.recurring_invoicer_id
-        # invoicer_obj = self.env['recurring.invoicer']
-        # if not invoicer:
-            # invoicer = invoicer_obj.create({})
-            # self.write({'recurring_invoicer_id': invoicer.id})
-
-        # super(AccountStatement, self).button_auto_completion()
-
-        # if not invoicer.invoice_ids:
-            # invoicer.unlink()
+    generated_invoices_count = fields.Integer('Invoices',
+                                              compute='_count_invoices')
 
     @api.one
     @api.depends('recurring_invoicer_id')
     def _count_invoices(self):
-        self.generated_invoices_count = len(self.recurring_invoicer_id.invoice_ids)
+        self.generated_invoices_count = len(
+            self.recurring_invoicer_id.invoice_ids)
 
     @api.multi
     def to_invoices(self):
@@ -61,7 +50,8 @@ class AccountStatement(models.Model):
             'view_mode': 'tree,form',
             'view_type': 'form',
             'res_model': 'account.invoice',
-            'domain': [('recurring_invoicer_id', '=', self.recurring_invoicer_id.id)],
+            'domain': [('recurring_invoicer_id', '=',
+                        self.recurring_invoicer_id.id)],
             'type': 'ir.actions.act_window',
             'target': 'current',
             'context': {'form_view_ref': 'account.invoice_form',
@@ -113,15 +103,8 @@ class AccountStatementLine(models.Model):
     product_id = fields.Many2one('product.product', 'Product')
     contract_id = fields.Many2one('recurring.contract', 'Sponsorship')
     user_id = fields.Many2one('res.partner', 'Ambassador')
-    invoice_id = fields.Many2one('account.invoice', 'Invoice')    
+    invoice_id = fields.Many2one('account.invoice', 'Invoice')
     already_completed = fields.Boolean('Auto-completed', readonly=True)
-
-    # _columns = {
-        # 'product_id': fields.many2one('product.product', _('Product')),
-        # 'contract_id': fields.many2one('recurring.contract', _('Sponsorship')),
-        # 'user_id': fields.many2one('res.partner', _('Ambassador')),
-        # 'invoice_id': fields.many2one('account.invoice', 'Invoice'),
-    # }
 
     @api.model
     def create(self, vals):
@@ -159,7 +142,7 @@ class AccountStatementLine(models.Model):
         res = dict()
         user = False
         if self.contract_id and self.contract_id.user_id:
-            user = contract.user_id.id
+            user = self.contract_id.user_id.id
 
         res['value'] = {'user_id': user}
         return res
@@ -198,12 +181,12 @@ class AccountStatementLine(models.Model):
         journal = self.env['account.journal'].search(
             [('type', '=', 'sale')], limit=1)
         payment_term_ids = self.env['account.payment.term'].with_context(
-            lang='en_US').search( [('name', '=', 'Bank Transfer')]).ids
+            lang='en_US').search([('name', '=', 'Bank Transfer')]).ids
         inv_data = {
             'account_id': self.partner_id.property_account_receivable.id,
             'type': 'out_invoice',
             'partner_id': self.partner_id.id,
-            'journal_id': journal_ids[0] if journal_ids else False,
+            'journal_id': journal.id if journal else False,
             'date_invoice': self.date,
             'payment_term': payment_term_ids and payment_term_ids[0] or 1,
             'bvr_reference': ref,
@@ -234,7 +217,7 @@ class AccountStatementLine(models.Model):
         }
 
         if self.product_id.categ_name in (GIFT_CATEGORY,
-                                            SPONSORSHIP_CATEGORY) and not \
+                                          SPONSORSHIP_CATEGORY) and not \
                 self.contract_id:
             raise exceptions.Warning(_('A field is required'),
                                      _('Add a Sponsorship'))
