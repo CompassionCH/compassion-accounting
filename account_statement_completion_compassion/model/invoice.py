@@ -9,22 +9,22 @@
 #
 ##############################################################################
 
-from openerp.osv import orm
+from openerp import api, models
 
 
-class account_invoice(orm.Model):
+class account_invoice(models.Model):
     """ Adds two buttons for opening transactions of partner from invoice
     which eases the verification of generated invoices for the user."""
 
     _inherit = "account.invoice"
 
-    def show_transactions(self, cr, uid, ids, context=None):
-        partner_obj = self.pool.get('res.partner')
-        partner_ids = [self.browse(cr, uid, ids[0], context).partner_id.id]
-        return partner_obj.show_lines(cr, uid, partner_ids, context)
+    @api.one
+    def show_transactions(self):
+        return self.partner_id.show_lines()
 
-    def show_move_lines(self, cr, uid, ids, context=None):
-        partner_id = self.browse(cr, uid, ids[0], context).partner_id.id
+    @api.one
+    def show_move_lines(self):
+        partner_id = self.partner_id.id
         action = {
             'name': 'Journal Items',
             'type': 'ir.actions.act_window',

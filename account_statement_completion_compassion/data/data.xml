@@ -37,11 +37,11 @@
         <field name="sequence">70</field>
         <field name="function_to_call">get_from_move_line_ref</field>
     </record>
-    
+    <!-- 
     <record id="bank_statement_completion_rule_sponsor_name" model="account.statement.completion.rule">
         <field name="name">Compassion: Match sponsor name (based on label)</field>
         <field name="sequence">90</field>
         <field name="function_to_call">get_sponsor_name</field>
-    </record>
+    </record> -->
 </data>
 </openerp>
