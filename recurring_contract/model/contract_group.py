@@ -209,7 +209,6 @@ class contract_group(orm.Model):
         journal_obj = self.pool.get('account.journal')
         contract_obj = self.pool.get('recurring.contract')
         gen_states = self._get_gen_states()
-
         if not ids:
             ids = self.search(cr, uid, [], context=context)
         if not invoicer_id:
