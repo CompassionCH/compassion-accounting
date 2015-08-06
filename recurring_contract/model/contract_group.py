@@ -305,7 +305,7 @@ class contract_group(orm.Model):
         return inv_line_data
 
     def _generate_invoice_lines(self, cr, uid, contract, invoice_id,
-                                context=None):                        
+                                context=None):
         inv_line_obj = self.pool.get('account.invoice.line')
         for contract_line in contract.contract_line_ids:
             inv_line_data = self._setup_inv_line_data(cr, uid, contract_line,
