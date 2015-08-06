@@ -173,7 +173,6 @@ class StatementCompletionRule(models.Model):
             partner_obj = self.env['res.partner']
             partner = partner_obj._find_accounting_partner(partner)
             res['partner_id'] = partner.id
-            # res['account_id'] = partner.property_account_receivable.id
 
         return res
 
@@ -244,7 +243,6 @@ class StatementCompletionRule(models.Model):
             partner_obj = self.env['res.partner']
             partner = partner_obj._find_accounting_partner(partner)
             res['partner_id'] = partner.id
-            # res['account_id'] = partner.property_account_receivable.id
 
         return res
 
