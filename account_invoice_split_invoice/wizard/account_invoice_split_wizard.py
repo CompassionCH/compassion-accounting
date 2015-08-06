@@ -11,28 +11,22 @@
 
 from openerp import api, fields, models, netsvc
 
+
 class split_invoice_wizard(models.TransientModel):
     """Wizard for selecting invoice lines to be moved
     onto a new invoice."""
     _name = 'account.invoice.split.wizard'
 
-    @api.model
-    def _get_invoice(self):
-        return self.env.context.get('active_id')
+    invoice_id = fields.Many2one(
+        'account.invoice', default=lambda self: self._get_invoice())
 
     invoice_line_ids = fields.Many2many(
         'account.invoice.line', 'account_invoice_line_2_splitwizard',
         string='Invoice lines')
 
-    invoice_id = fields.Many2one(
-        'account.invoice', default=_get_invoice)
-
-    def _copy_invoice(self, old_invoice):
-        # Create new invoice
-        new_invoice = old_invoice.copy(
-            default={'date_invoice': old_invoice.date_invoice})
-        new_invoice.invoice_line.unlink()
-        return new_invoice
+    @api.model
+    def _get_invoice(self):
+        return self.env.context.get('active_id')
 
     @api.multi
     def split_invoice(self):
@@ -44,7 +38,6 @@ class split_invoice_wizard(models.TransientModel):
             # to_move_lines = self.invoice_line_ids.filtered('split')
             invoice = self._copy_invoice(old_invoice)
             if old_invoice.state in ('draft', 'open'):
-                invoice_id = self._copy_invoice(old_invoice)
                 uid = self.env.user.id
                 cr = self.env.cr
                 self.invoice_line_ids.write({'invoice_id': invoice.id})
@@ -60,3 +53,10 @@ class split_invoice_wizard(models.TransientModel):
                         uid, 'account.invoice', invoice.id, 'invoice_open',
                         cr)
         return invoice
+
+    def _copy_invoice(self, old_invoice):
+        # Create new invoice
+        new_invoice = old_invoice.copy(
+            default={'date_invoice': old_invoice.date_invoice})
+        new_invoice.invoice_line.unlink()
+        return new_invoice

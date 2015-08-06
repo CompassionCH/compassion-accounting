@@ -67,10 +67,6 @@ class contract_group(models.Model):
     ##########################################################################
     #                             FIELDS METHODS                             #
     ##########################################################################
-    @api.multi
-    def _set_change_methods(self):
-        """ Call method which can be inherited """
-        return self._get_change_methods()
 
     @api.depends('contract_ids.next_invoice_date', 'contract_ids.state')
     @api.one

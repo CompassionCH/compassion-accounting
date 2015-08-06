@@ -291,7 +291,6 @@ class recurring_contract(models.Model):
         """ We automatically update next_invoice_date on start_date change """
         if self.start_date:
             self.next_invoice_date = self.start_date
-        return
 
     @api.onchange('partner_id')
     def on_change_partner_id(self):
@@ -304,7 +303,6 @@ class recurring_contract(models.Model):
         self.group_id = None
         if len(group_ids) == 1:
             self.group_id = group_ids[0]
-        return
 
     ##########################################################################
     #                            WORKFLOW METHODS                            #
