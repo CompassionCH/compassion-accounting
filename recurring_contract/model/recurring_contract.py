@@ -15,7 +15,7 @@ from dateutil.relativedelta import relativedelta
 from openerp import api, exceptions, fields, models, netsvc, _
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 import openerp.addons.decimal_precision as dp
-import pdb
+
 
 class recurring_contract_line(models.Model):
     """ Each product sold through a contract """
