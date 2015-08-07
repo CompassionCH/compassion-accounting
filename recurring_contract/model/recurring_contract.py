@@ -12,7 +12,7 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-from openerp import api, exceptions, fields, models, netsvc, _
+from openerp import api, exceptions, fields, models, _
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 import openerp.addons.decimal_precision as dp
 
@@ -212,40 +212,33 @@ class recurring_contract(models.Model):
         # Find all unpaid invoice lines after the given date
         inv_lines = self.env['account.invoice.line'].search(invl_search)
 
-        inv_ids = set()
-        empty_inv_ids = set()
-        to_remove_ids = []   # Invoice lines that will be moved or removed
+        invoices = inv_lines.mapped('invoice_id')
+        empty_invoices = self.env['account.invoice']
+        to_remove_invl = self.env['account.invoice.line']
         for inv_line in inv_lines:
             invoice = inv_line.invoice_id
-            inv_ids.add(invoice.id)
             # Check if invoice is empty after removing the invoice_lines
             # of the given contract
-            if invoice.id not in empty_inv_ids:
-                remaining_lines_ids = [
-                    invl.id for invl in invoice.invoice_line if
-                    not invl.contract_id or
-                    invl.contract_id and invl.contract_id.id not in self.ids]
-                if remaining_lines_ids:
+            if invoice not in empty_invoices:
+                remaining_lines = invoice.invoice_line.filtered(
+                    lambda l: not l.contract_id or l.contract_id not in self)
+                if remaining_lines:
                     # We can move or remove the line
-                    to_remove_ids.append(inv_line.id)
+                    to_remove_invl |= inv_line
                 else:
                     # The invoice would be empty if we remove the line
-                    empty_inv_ids.add(invoice.id)
+                    empty_invoices |= invoice
 
         if keep_lines:
-            self._move_cancel_lines(to_remove_ids, keep_lines)
+            self._move_cancel_lines(to_remove_invl, keep_lines)
         else:
-            to_remove_recset = self.env['account.invoice.line'].browse(
-                to_remove_ids)
-            to_remove_recset.unlink()
+            to_remove_invl.unlink()
 
         # Invoices to set back in open state
-        renew_inv_ids = list(inv_ids - empty_inv_ids)
+        renew_invs = invoices - empty_invoices
+        self._cancel_confirm_invoices(invoices, renew_invs, keep_lines)
 
-        self._cancel_confirm_invoices(list(inv_ids), renew_inv_ids,
-                                      keep_lines)
-
-        return inv_ids
+        return invoices
 
     def rewind_next_invoice_date(self):
         """ Rewinds the next invoice date of contract after the last
@@ -359,71 +352,50 @@ class recurring_contract(models.Model):
         invoices.action_cancel()
         invoices.action_cancel_draft()
         self._update_invoice_lines(invoices)
-        wf_service = netsvc.LocalService('workflow')
-        for invoice_id in invoices.ids:
-            wf_service.trg_validate(self.env.user.id, 'account.invoice',
-                                    invoice_id, 'invoice_open', self.env.cr)
+        invoices.signal_workflow('invoice_open')
 
     @api.one
-    def _move_cancel_lines(self, invoice_line_ids, message=None):
+    def _move_cancel_lines(self, invoice_lines, message=None):
         """ Method that takes out given invoice_lines from their invoice
         and put them in a cancelled copy of that invoice.
         Warning : this method does not recompute totals of original invoices,
                   and does not update related move lines.
         """
         invoice_obj = self.env['account.invoice']
-        invoice_line_obj = self.env['account.invoice.line']
         invoices_copy = dict()
-        for invoice_line in invoice_line_obj.browse(invoice_line_ids):
+        for invoice_line in invoice_lines:
             invoice = invoice_line.invoice_id
             copy_invoice_id = invoices_copy.get(invoice.id)
             if not copy_invoice_id:
-                invoice_obj.copy(invoice.id, {
-                    'date_invoice': invoice.date_invoice})
-                copy_invoice_id = invoice_obj.search(
-                    [('partner_id', '=', invoice.partner_id.id),
-                     ('state', '=', 'draft'), ('id', '!=', invoice.id),
-                     ('date_invoice', '=', invoice.date_invoice)])[0]
+                copy_invoice_id = invoice.copy({
+                    'date_invoice': invoice.date_invoice}).id
                 # Empty the new invoice
-                cancel_lines = invoice_line_obj.search([
+                cancel_lines = self.env['account.invoice.line'].search([
                     ('invoice_id', '=', copy_invoice_id)])
-                invoice_line_obj.unlink(cancel_lines)
+                cancel_lines.unlink()
                 invoices_copy[invoice.id] = copy_invoice_id
 
             # Move the line in the invoice copy
             invoice_line.write({'invoice_id': copy_invoice_id})
 
         # Compute and cancel invoice copies
-        cancel_ids = invoice_obj.browse(invoices_copy.values())
-        if cancel_ids:
-            cancel_ids.button_compute(set_total=True)
-            wf_service = netsvc.LocalService('workflow')
-            for cancel_id in cancel_ids:
-                wf_service.trg_validate(
-                    self.env.user.id, 'account.invoice', cancel_id,
-                    'invoice_cancel', self.env.cr)
-
-            cancel_ids.message_post(
+        cancel_invoices = invoice_obj.browse(invoices_copy.values())
+        if cancel_invoices:
+            cancel_invoices.button_compute(set_total=True)
+            cancel_invoices.signal_workflow('invoice_cancel')
+            cancel_invoices.message_post(
                 message, _("Invoice Cancelled"), 'comment')
 
         return True
 
     @api.one
-    def _cancel_confirm_invoices(self, cancel_ids, confirm_ids,
+    def _cancel_confirm_invoices(self, invoice_cancel, invoice_confirm,
                                  keep_lines=None):
         """ Cancels given invoices and validate again given invoices.
             confirm_ids must be a subset of cancel_ids ! """
-        inv_obj = self.env['account.invoice']
-        wf_service = netsvc.LocalService('workflow')
-        invoice_confirm = inv_obj.browse(confirm_ids)
-
-        for invoice_id in cancel_ids:
-            wf_service.trg_validate(self.env.user.id, 'account.invoice',
-                                    invoice_id, 'invoice_cancel', self.env.cr)
+        invoice_cancel.signal_workflow('invoice_cancel')
         invoice_confirm.action_cancel_draft()
-        for invoice_id in confirm_ids:
-            wf_service.trg_validate(self.env.user.id, 'account.invoice',
-                                    invoice_id, 'invoice_open', self.env.cr)
+        invoice_confirm.signal_workflow('invoice_open')
 
     def _compute_next_invoice_date(self):
         """ Compute next_invoice_date for a single contract. """
