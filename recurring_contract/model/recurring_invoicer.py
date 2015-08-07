@@ -11,7 +11,7 @@
 
 from datetime import datetime
 
-from openerp import api, exceptions, fields, models, netsvc, _
+from openerp import api, exceptions, fields, models, _
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 
 import logging
@@ -49,15 +49,13 @@ class recurring_invoicer(models.Model):
             raise exceptions.Warning('SelectionError',
                                      _('There is no invoice to validate'))
 
-        wf_service = netsvc.LocalService('workflow')
         logger.info("Invoice validation started.")
         count = 1
         nb_invoice = len(invoice_to_validate)
         for invoice in invoice_to_validate:
             logger.info("Validating invoice {0}/{1}".format(
                         count, nb_invoice))
-            wf_service.trg_validate(self.env.user.id, 'account.invoice',
-                                    invoice.id, 'invoice_open', self.env.cr)
+            invoice.signal_workflow('invoice_open')
             # After an invoice is validated, we commit all writes in order to
             # avoid doing it again in case of an error or a timeout
             self.env.cr.commit()
@@ -76,8 +74,5 @@ class recurring_invoicer(models.Model):
             raise exceptions.Warning('SelectionError',
                                      _('There is no invoice to cancel'))
 
-        wf_service = netsvc.LocalService('workflow')
-        for invoice in invoice_to_cancel:
-            wf_service.trg_validate(self.env.user.id, 'account.invoice',
-                                    invoice.id, 'invoice_cancel', self.env.cr)
+        invoice_to_cancel.signal_workflow('invoice_cancel')
         return True
