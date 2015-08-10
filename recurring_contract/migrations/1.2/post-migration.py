@@ -28,7 +28,7 @@ def migrate(cr, version):
     contract_groups = cr.fetchall()
 
     for contract_group in contract_groups:
-        delay = delay_dict[contract_group[1]] or 1
+        delay = delay_dict.get(contract_group[1], 1)
         cr.execute(
             '''
             UPDATE recurring_contract_group
