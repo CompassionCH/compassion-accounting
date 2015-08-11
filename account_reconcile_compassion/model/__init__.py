@@ -9,5 +9,4 @@
 #
 ##############################################################################
 
-from . import easy_reconcile
-from . import advanced_reconciliation
+from . import bank_statement_line

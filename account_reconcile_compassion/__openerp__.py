@@ -28,30 +28,22 @@
 ##############################################################################
 
 {
-    'name': 'Advanced Reconcile Compassion',
-    'description':  """
-    Reconcile rules with bvr_ref of invoice for Compassion CH.
-
-    It finds a matching invoice for the move_line and reconciles only if the
-    amount of the payment corresponds or if it is a multiple of the invoice
-    amount. If many invoices are found, the first reconciled invoice is the
-    current invoice (last invoice that is not in future).
-    Then it reconciles the other invoices from last invoice to first.
-    """,
-    'version': '1.2',
+    'name': 'Bank Statement Reconcile Compassion',
+    'version': '2.0.0-beta',
     'author': 'Compassion CH',
     'category': 'Finance',
     'website': 'http://www.compassion.ch',
-    'depends': ['account_advanced_reconcile',
-                'l10n_ch_payment_slip_base_transaction_id',
-                'account_analytic_attribution',
+    'depends': [
                 'crm_compassion',
                 'account_cancel'],
-    'data': ['view/easy_reconcile_view.xml',
+    'data': [
+             'view/account_reconcile_compassion.xml',
+             # 'view/bank_statement_view.xml',
              'view/reconcile_fund_wizard_view.xml',
              'view/reconcile_split_payment_wizard_view.xml',
-             'view/change_attribution_wizard_view.xml'],
-    'js': ['static/src/js/account_move_reconciliation.js'],
+             'view/change_attribution_wizard_view.xml'
+            ],
+    # 'js': ['static/src/js/account_move_reconciliation.js'],
     'qweb': ['static/src/xml/account_move_reconciliation.xml'],
     'demo': [],
     'test': [],
@@ -59,4 +51,3 @@
     'installable': True,
     'images': []
 }
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

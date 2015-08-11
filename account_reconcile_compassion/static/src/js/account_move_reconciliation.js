@@ -1,13 +1,99 @@
 /* This is Javascript extension of module account
    in order to add custom reconcile buttons in the 
    Manual Reconcile view */
-openerp.account_advanced_reconcile_compassion = function (instance) {
+openerp.account_reconcile_compassion = function (instance) {
     var _t = instance.web._t,
         _lt = instance.web._lt;
     var QWeb = instance.web.qweb;
     
 
-    // Extend the class written in module account
+    // Extend the class written in module account (bank statement view)
+    instance.web.account.bankStatementReconciliationLine.include({
+        events: _.extend({
+            // // TODO : this removes the ability to change partner of a line
+            // //        but this functionality may not be necessary for us.
+            "click .partner_name": "open_partner",
+        }, instance.web.account.bankStatementReconciliationLine.prototype.events),
+        
+        open_partner : function() {
+            this.do_action({
+                views: [[false, 'form']],
+                view_type: 'form',
+                view_mode: 'form',
+                res_model: 'res.partner',
+                type: 'ir.actions.act_window',
+                target: 'current',
+                res_id: this.partner_id,
+            });
+        },
+    })
+    
+    instance.web.account.bankStatementReconciliation.include({
+        // Add fields in reconcile view
+        init: function(parent, context) {
+            this._super(parent, context);
+            this.create_form_fields["product_id"] = {
+                id: "product_id",
+                index: 5,
+                corresponding_property: "product_id",
+                label: _t("Product"),
+                required: false,
+                tabindex: 15,
+                constructor: instance.web.form.FieldMany2One,
+                field_properties: {
+                    relation: "product.product",
+                    string: _t("Product"),
+                    type: "many2one",
+                }
+            };
+            this.create_form_fields["sponsorship_id"] = {
+                id: "sponsorship_id",
+                index: 6,
+                corresponding_property: "sponsorship_id",
+                label: _t("Sponsorship"),
+                required: false,
+                tabindex: 16,
+                constructor: instance.web.form.FieldMany2One,
+                field_properties: {
+                    relation: "recurring.contract",
+                    string: _t("Sponsorship"),
+                    type: "many2one",
+                    domain: ['|', '|', ['partner_id', '=', this.partner_id], ['partner_id.parent_id', '=', this.partner_id], ['correspondant_id', '=', this.partner_id], ['state', '!=', 'draft']],
+                    options: {'field_color': 'state',
+                              'colors': {'cancelled': 'gray', 'terminated': 'gray', 'mandate': 'red', 'waiting': 'green'}, 'create':false, 'create_edit':false},
+                }
+            };
+            this.create_form_fields["user_id"] = {
+                id: "user_id",
+                index: 7,
+                corresponding_property: "user_id",
+                label: _t("Ambassador"),
+                required: false,
+                tabindex: 17,
+                constructor: instance.web.form.FieldMany2One,
+                field_properties: {
+                    relation: "res.partner",
+                    string: _t("Ambassador"),
+                    type: "many2one",
+                }
+            };
+        },
+        
+        // Change behaviour when clicking on name of bank statement
+        statementNameClickHandler: function() {
+            this.do_action({
+                views: [[false, 'form']],
+                view_type: 'form',
+                view_mode: 'form',
+                res_model: 'account.bank.statement',
+                type: 'ir.actions.act_window',
+                target: 'current',
+                res_id: this.statement_ids[0],
+            });
+        }
+    })
+
+    // Extend the class written in module account (manual reconcile)
     instance.web.account.ReconciliationListView.include({
         init: function() {
             this._super.apply(this, arguments);
@@ -45,7 +131,7 @@ openerp.account_advanced_reconcile_compassion = function (instance) {
                     self.reconcile_split();
                 });
                 this.$(".oe_account_recon_open_partner").click(function() {
-                    self.open_partner();
+                    open_partner();
                 });
             }
             
@@ -90,7 +176,8 @@ openerp.account_advanced_reconcile_compassion = function (instance) {
                 });
             });
         },
-        open_partner: function() {
+        
+        open_partner : function() {
             this.do_action({
                 views: [[false, 'form']],
                 view_type: 'form',
@@ -101,6 +188,6 @@ openerp.account_advanced_reconcile_compassion = function (instance) {
                 res_id: this.partners[this.current_partner][0],
             });
         }
+        
     });
-    
 };
