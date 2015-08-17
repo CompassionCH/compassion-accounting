@@ -17,7 +17,6 @@ from openerp.addons.sponsorship_compassion.model.product import \
 
 from datetime import datetime
 import time
-import sys
 
 
 class account_journal_completion(models.TransientModel):
@@ -79,6 +78,9 @@ class StatementCompletionRule(models.Model):
             ('get_from_move_line_ref',
              'Compassion: From line reference '
              '(based on previous move_line references)'),
+            ('get_sponsor_name',
+             'Compassion[POST]: From sponsor reference '
+             '(based the sponsor name in the description)'),
         ]
         return res
 
@@ -205,13 +207,13 @@ class StatementCompletionRule(models.Model):
                                 (st_line.name, st_line.ref))
                     res['partner_id'] = partner_obj._find_accounting_partner(
                         partner).id
-
         return res
 
     def get_from_lsv_dd(self, st_line):
         """ If line is a LSV or DD credit, change the account to 1098. """
-        label = st_line.name
-        lsv_dd_strings = [u'BULLETIN DE VERSEMENT',
+        label = st_line.ref.replace('\n', ' ') if st_line.ref != '/' else \
+            st_line.name.replace('\n', ' ')
+        lsv_dd_strings = [u'BULLETIN DE VERSEMENT ORANGE',
                           u'ORDRE DEBIT DIRECT',
                           u'Crèdit LSV']
         is_lsv_dd = False
@@ -389,32 +391,46 @@ class StatementCompletionRule(models.Model):
         return partner
 
     def get_sponsor_name(self, st_line):
-        res = dict()
-        label = st_line.label
+        res = {}
+        reference = st_line.ref
+        sender_lines = []
 
-        # Fix encoding problem
-        reload(sys)
-        sys.setdefaultencoding('UTF8')
+        sender_lines.append(reference.replace('\n', ' ').split(
+            ' EXPÉDITEUR: '.decode('utf8')))
+        sender_lines.append(reference.replace('\n', ' ').split(
+            " DONNEUR D'ORDRE: ".decode('utf8')))
 
-        query_find_partner = (
-            "SELECT id from res_partner "
-            "WHERE ('{0}' ILIKE concat('%', trim(name), '%') "
-            "OR '{0}' ILIKE "
-            "CASE WHEN bank_statement_label <> '' THEN "
-            "   concat('%',"
-            "          trim(bank_statement_label),"
-            "          '%')"
-            "ELSE name "
-            "END) "
-            "AND name NOT ILIKE '%Compassion%'"
-            .format(label.replace("'", "''")))
-        self.env.cr.execute(query_find_partner)
-        partner_ids = self.env.cr.fetchall()
-        if len(partner_ids) == 1:
-            res['partner_id'] = partner_ids[0][0]
-        elif partner_ids:
-            raise exceptions.Warning(
-                ('Line named "%s" was matched by '
-                 'more than one sponsor') % st_line['name'])
+        id_line1 = 1 if len(sender_lines[0]) > 1 else False
+        id_line2 = 2 if len(sender_lines[1]) > 1 else False
 
-        return res
+        if not id_line1 and not id_line2:
+            return res
+
+        id_line = id_line1-1 if id_line1 else id_line2-1
+        sender_line = sender_lines[id_line][1].replace(',', '').split(' ')
+
+        index = 0
+        for word in sender_line:
+            try:
+                if index < len(sender_line):
+                    int(word)
+                for i in range(index-1, 0, -1):
+                    firstname = sender_line[i-1]
+                    partner = self.env['res.partner'].search(
+                        [('lastname', '=ilike', firstname),
+                         ('firstname', 'ilike', sender_line[i])])
+                    lastnames = sender_line[i].split('-') if not partner else \
+                        []
+
+                    for lastname in lastnames:
+                        partner = self.env['res.partner'].search(
+                            [('lastname', '=ilike', lastname),
+                             ('firstname', 'ilike', firstname)]) or \
+                            self.env['res.partner'].search(
+                            [('lastname', '=ilike', firstname),
+                             ('firstname', 'ilike', lastname)])
+                    if partner:
+                        res['partner_id'] = partner.id
+                        return res
+            except:
+                index += 1
