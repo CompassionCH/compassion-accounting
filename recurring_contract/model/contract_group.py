@@ -3,8 +3,7 @@
 #
 #    Copyright (C) 2014 Compassion CH (http://www.compassion.ch)
 #    Releasing children from poverty in Jesus' name
-#    @author: Cyril Sester <csester@compassion.ch>,
-#             Steve Ferry <steve.ferry1992@gmail.com>
+#    @author: Cyril Sester <csester@compassion.ch>, Steve Ferry
 #
 #    The licence is in the file __openerp__.py
 #
@@ -12,7 +11,6 @@
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-
 from openerp import api, fields, models, _
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 import logging
@@ -68,6 +66,7 @@ class contract_group(models.Model):
     ##########################################################################
     #                             FIELDS METHODS                             #
     ##########################################################################
+
     @api.depends('contract_ids.next_invoice_date', 'contract_ids.state')
     @api.one
     def _set_next_invoice_date(self):
@@ -218,6 +217,7 @@ class contract_group(models.Model):
     ##########################################################################
     #                             PRIVATE METHODS                            #
     ##########################################################################
+
     @api.multi
     def _get_change_methods(self):
         """ Method for applying changes """

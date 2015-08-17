@@ -28,11 +28,11 @@ class account_invoice_line(models.Model):
         'recurring.contract', 'Source contract')
 
     due_date = fields.Date(
-        compute='_get_invoice_lines_date_due', string='Due date',
+        compute='_get_invoice_lines_date_due',
         readonly=True, store=True)
 
     state = fields.Selection(
-        compute='_get_invoice_lines_state', string='State',
+        compute='_get_invoice_lines_state',
         readonly=True, store=True,
         selection=[('draft', 'Draft'),
                    ('proforma', 'Pro-forma'),

@@ -38,9 +38,12 @@
             <field name="model">account.analytic.default</field>
             <field name="inherit_id" ref="account_analytic_plans.view_default_inherit_form"/>
             <field name="arch" type="xml">
-                <field name="analytics_id" position="replace">
+                <field name="analytics_id" position="before">
                     <field name="type" invisible="1"/>
                     <field name="analytic_id"/>
+                </field>
+                <field name="analytics_id" position="attributes">
+                    <attribute name="attrs">{'invisible':[('type', '!=', 'attribution')]}</attribute>
                 </field>
                 <field name="product_id" position="attributes">
                     <attribute name="attrs">{'invisible':[('type', '=', 'attribution')]}</attribute>

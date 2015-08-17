@@ -9,8 +9,7 @@
 #
 ##############################################################################
 
-from openerp import api, fields, models, netsvc
-
+from openerp import api, fields, models
 
 class split_invoice_wizard(models.TransientModel):
     """Wizard for selecting invoice lines to be moved
@@ -38,20 +37,13 @@ class split_invoice_wizard(models.TransientModel):
             # to_move_lines = self.invoice_line_ids.filtered('split')
             invoice = self._copy_invoice(old_invoice)
             if old_invoice.state in ('draft', 'open'):
-                uid = self.env.user.id
-                cr = self.env.cr
                 self.invoice_line_ids.write({'invoice_id': invoice.id})
                 if old_invoice.state == 'open':
                     # Cancel and validate again invoices
                     old_invoice.action_cancel()
                     old_invoice.action_cancel_draft()
-                    wf_service = netsvc.LocalService('workflow')
-                    wf_service.trg_validate(
-                        uid, 'account.invoice', old_invoice.id,
-                        'invoice_open', cr)
-                    wf_service.trg_validate(
-                        uid, 'account.invoice', invoice.id, 'invoice_open',
-                        cr)
+                    old_invoice.signal_workflow('invoice_open')
+                    invoice.signal_workflow('invoice_open')
         return invoice
 
     def _copy_invoice(self, old_invoice):

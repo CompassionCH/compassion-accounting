@@ -57,6 +57,18 @@
             <field name="type">normal</field>
             <field name="code">ATT_SDS</field>
             <field name="parent_id" ref="account_analytic_root_to_attribute"/>
+        </record>    
+        <record id="account_attribution_SDS_field_mailing" model="account.analytic.account">
+            <field name="name">Field mailing</field>
+            <field name="type">normal</field>
+            <field name="code">ATT_SDS_field_mailing</field>
+            <field name="parent_id" ref="account_attribution_SDS"/>         
+        </record>      
+        <record id="account_attribution_SDS_sponsor_mailing" model="account.analytic.account">
+            <field name="name">Sponsor mailing</field>
+            <field name="type">normal</field>
+            <field name="code">ATT_SDS_sponsor_mailing</field>
+            <field name="parent_id" ref="account_attribution_SDS"/>         
         </record>      
         <record id="account_attribution_SDS_zivi-intern" model="account.analytic.account">
             <field name="name">SDS zivi-intern</field>
