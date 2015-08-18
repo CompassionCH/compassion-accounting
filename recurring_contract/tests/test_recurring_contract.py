@@ -9,15 +9,16 @@
 #
 ##############################################################################
 
-from openerp.tests import common
 from datetime import datetime, timedelta
 from openerp import netsvc
+from openerp.addons.recurring_contract.tests.test_base_contract \
+    import test_base_contract
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 import logging
 logger = logging.getLogger(__name__)
 
 
-class test_recurring_contract(common.TransactionCase):
+class test_recurring_contract(test_base_contract):
     """
         Test Project recurring contract.
         We are testing the three scenarios :
@@ -37,87 +38,6 @@ class test_recurring_contract(common.TransactionCase):
 
     def setUp(self):
         super(test_recurring_contract, self).setUp()
-        # Creation of an account
-        account_type = self.env['account.account.type'].search(
-            [('close_method', '=', 'unreconciled')])[0]
-        property_account_receivable = self.env['account.account'].search(
-            [
-                ('type', '=', 'receivable'),
-                ('user_type', '=', account_type.id)
-            ])[0]
-        property_account_payable = self.env['account.account'].search(
-            [('type', '=', 'payable')])[0]
-
-        # Creation of partners
-        partner_obj = self.env['res.partner']
-        self.partner_id = partner_obj.create(
-            {
-                'name': 'Monsieur Client 137',
-                'property_account_receivable': property_account_receivable.id,
-                'property_account_payable': property_account_payable.id,
-            }).id
-        self.partner_id1 = partner_obj.create(
-            {
-                'name': 'Client 137',
-                'property_account_receivable': property_account_receivable.id,
-                'property_account_payable': property_account_payable.id,
-            }).id
-        # Creation of payement terms
-        payment_term_obj = self.env['account.payment.term']
-        self.payment_term_id = payment_term_obj.search(
-            [('name', '=', '15 Days')])[0].id
-
-    def _create_contract(self, start_date, group_id, next_invoice_date):
-        """
-            Create a contract. For that purpose we have created a partner
-            to get his id
-        """
-        # Creation of a contract
-        contract_obj = self.env['recurring.contract']
-        group = self.env['recurring.contract.group'].browse(group_id)
-        partner_id = group.partner_id.id
-        contract_id = contract_obj.create(
-            {
-                'start_date': start_date,
-                'partner_id': partner_id,
-                'group_id': group_id,
-                'next_invoice_date': next_invoice_date,
-            }).id
-        return contract_id
-
-    def _create_contract_line(self, contract_id, price):
-        """ Create contract's lines """
-        contract_line_obj = self.env['recurring.contract.line']
-        contract_line_id = contract_line_obj.create(
-            {
-                'product_id': 1,
-                'amount': price,
-                'contract_id': contract_id,
-            }).id
-        return contract_line_id
-
-    def _create_group(self, change_method, rec_value, rec_unit, partner_id,
-                      adv_biling_months, payment_term_id, ref=None):
-        """
-            Create a group with 2 possibilities :
-                - ref is not given so it takes "/" default values
-                - ref is given
-        """
-        group_obj = self.env['recurring.contract.group']
-        group = group_obj.create(
-            {'partner_id': partner_id})
-        group_vals = {
-            'change_method': change_method,
-            'recurring_value': rec_value,
-            'recurring_unit': rec_unit,
-            'partner_id': partner_id,
-            'advance_billing_months': adv_biling_months,
-            'payment_term_id': payment_term_id,
-        }
-        if ref:
-            group_vals['ref'] = ref
-        group.write(group_vals)
-        return group.id
 
     def test_generated_invoice(self):
         """
@@ -127,7 +47,9 @@ class test_recurring_contract(common.TransactionCase):
         """
         # Creation of a group and a contracts with one line
         group_id = self._create_group(
-            'do_nothing', 1, 'month', self.partner_id, 1, self.payment_term_id)
+            'do_nothing', self.partners.ids[0], 1, self.payment_term_id,
+            ref=None,
+            other_vals={'recurring_value': 1, 'recurring_unit': 'month'})
         contract_id = self._create_contract(
             datetime.today().strftime(DF), group_id,
             datetime.today().strftime(DF))
@@ -180,8 +102,9 @@ class test_recurring_contract(common.TransactionCase):
         """
         # Creation of a group and two contracts with one line each
         group_id = self._create_group(
-            'do_nothing', 1, 'month', self.partner_id1, 2,
-            self.payment_term_id, '137 option payement')
+            'do_nothing', self.partners.ids[1], 2,
+            self.payment_term_id, '137 option payement',
+            other_vals={'recurring_value': 1, 'recurring_unit': 'month'})
 
         contract_id = self._create_contract(
             datetime.today() + timedelta(days=2), group_id,
@@ -241,7 +164,7 @@ class test_recurring_contract(common.TransactionCase):
         contract2.copy()
         contract_copied_id = contract_obj.search([
             ('state', '=', 'draft'),
-            ('partner_id', '=', self.partner_id1)], order='id DESC')[0]
+            ('partner_id', '=', self.partners.ids[1])], order='id DESC')[0]
         self.assertTrue(contract_copied_id)
         wf_service.trg_validate(
             self.uid, 'recurring.contract',
@@ -267,8 +190,9 @@ class test_recurring_contract(common.TransactionCase):
         """
         # Creation of a group
         group_id = self._create_group(
-            'do_nothing', 1, 'month', self.partner_id, 1,
-            self.payment_term_id)
+            'do_nothing', self.partners.ids[0], 1,
+            self.payment_term_id, ref=None,
+            other_vals={'recurring_value': 1, 'recurring_unit': 'month'})
 
         # Creation of three contracts with two lines each
         contract_id = self._create_contract(

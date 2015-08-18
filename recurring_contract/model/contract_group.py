@@ -175,7 +175,6 @@ class contract_group(models.Model):
         if not invoicer:
             invoicer = self.env['recurring.invoicer'].create(
                 {'source': self._name})
-
         journal_ids = journal_obj.search(
             [('type', '=', 'sale'), ('company_id', '=', 1 or False)], limit=1)
 
