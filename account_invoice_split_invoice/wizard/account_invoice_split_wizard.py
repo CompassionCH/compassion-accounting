@@ -11,6 +11,7 @@
 
 from openerp import api, fields, models
 
+
 class split_invoice_wizard(models.TransientModel):
     """Wizard for selecting invoice lines to be moved
     onto a new invoice."""

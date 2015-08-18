@@ -156,10 +156,10 @@ class AccountStatementLine(models.Model):
                 {'recurring_invoicer_id': invoicer.id})
 
         # Generate a unique bvr_reference
-        ref = b_line.ref
+        ref = self.ref
         if not ref or len(ref) < 26:
-            ref = mod10r((b_line.date.replace('-', '') + str(
-                b_line.statement_id.id) + str(b_line.id)).ljust(26, '0'))
+            ref = mod10r((self.date.replace('-', '') + str(
+                self.statement_id.id) + str(self.id)).ljust(26, '0'))
 
         # Lookup for an existing open invoice matching the criterias
         invoices = self._find_open_invoice()
@@ -167,7 +167,7 @@ class AccountStatementLine(models.Model):
             # Get the bvr reference of the invoice or set it
             invoice = invoices[0]
             invoice.write({'recurring_invoicer_id': invoicer.id})
-            if invoice.bvr_reference and not b_line.ref:
+            if invoice.bvr_reference and not self.ref:
                 ref = invoice.bvr_reference
             else:
                 invoice.write({'bvr_reference': ref})
