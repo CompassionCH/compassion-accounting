@@ -46,19 +46,14 @@ class test_recurring_contract(test_base_contract):
             of data when a contract generate invoice(s).
         """
         # Creation of a group and a contracts with one line
-        group_id = self._create_group(
+        group = self._create_group(
             'do_nothing', self.partners.ids[0], 1, self.payment_term_id,
-            ref=None,
             other_vals={'recurring_value': 1, 'recurring_unit': 'month'})
-        contract_id = self._create_contract(
-            datetime.today().strftime(DF), group_id,
+        contract = self._create_contract(
+            datetime.today().strftime(DF), group,
             datetime.today().strftime(DF))
-        self.contract_line_id = self._create_contract_line(
-            contract_id, '40.0')
-        contract_obj = self.env['recurring.contract']
-        contract_line_obj = self.env['recurring.contract.line']
-        contract = contract_obj.browse(contract_id)
-        contract_line = contract_line_obj.browse(self.contract_line_id)
+        contract_line = self._create_contract_line(
+            contract.id, '40.0')
 
         # Creation of data to test
         original_product = contract_line.product_id['name']
@@ -69,7 +64,7 @@ class test_recurring_contract(test_base_contract):
         # To generate invoices, the contract must be "active"
         wf_service = netsvc.LocalService('workflow')
         wf_service.trg_validate(self.uid, 'recurring.contract',
-                                contract_id, 'contract_validated',
+                                contract.id, 'contract_validated',
                                 self.cr)
         self.assertEqual(contract.state, 'active')
         invoicer_id = contract.button_generate_invoices()
@@ -85,7 +80,7 @@ class test_recurring_contract(test_base_contract):
 
         wf_service = netsvc.LocalService('workflow')
         wf_service.trg_validate(self.uid, 'recurring.contract',
-                                contract_id, 'contract_terminated',
+                                contract.id, 'contract_terminated',
                                 self.cr)
         self.assertEqual(contract.state, 'terminated')
 
@@ -101,40 +96,34 @@ class test_recurring_contract(test_base_contract):
             of invoices generated is correct
         """
         # Creation of a group and two contracts with one line each
-        group_id = self._create_group(
+        group = self._create_group(
             'do_nothing', self.partners.ids[1], 2,
             self.payment_term_id, '137 option payement',
             other_vals={'recurring_value': 1, 'recurring_unit': 'month'})
 
-        contract_id = self._create_contract(
-            datetime.today() + timedelta(days=2), group_id,
+        contract = self._create_contract(
+            datetime.today() + timedelta(days=2), group,
             datetime.today() + timedelta(days=2))
-        self.contract_line_id1 = self._create_contract_line(contract_id,
+        contract_line = self._create_contract_line(contract.id,
                                                             '75.0')
-        contract_id2 = self._create_contract(
+        contract2 = self._create_contract(
             datetime.today() + timedelta(days=2),
-            group_id, datetime.today() + timedelta(days=2))
-        self.contract_line_id2 = self._create_contract_line(
-            contract_id2, '85.0')
-        self.assertTrue(contract_id2)
+            group, datetime.today() + timedelta(days=2))
+        contract_line2 = self._create_contract_line(
+            contract2.id, '85.0')
 
-        contract_obj = self.env['recurring.contract']
-        contract2 = contract_obj.browse(contract_id2)
-        contract_line_obj = self.env['recurring.contract.line']
-        contract_line_1 = contract_line_obj.browse(self.contract_line_id1)
-        contract_line_2 = contract_line_obj.browse(self.contract_line_id2)
 
-        original_price1 = contract_line_1.subtotal
-        original_price2 = contract_line_2.subtotal
+        original_price1 = contract_line.subtotal
+        original_price2 = contract_line2.subtotal
 
         # We put the contracts in active state to generate invoices
         wf_service = netsvc.LocalService('workflow')
         wf_service.trg_validate(
             self.uid, 'recurring.contract',
-            contract_id, 'contract_validated', self.cr)
+            contract.id, 'contract_validated', self.cr)
         wf_service.trg_validate(
             self.uid, 'recurring.contract',
-            contract_id2, 'contract_validated', self.cr)
+            contract2.id, 'contract_validated', self.cr)
         self.assertEqual(contract2.state, 'active')
         invoicer_obj = self.env['recurring.invoicer']
         invoicer_id = contract2.button_generate_invoices()
@@ -146,8 +135,6 @@ class test_recurring_contract(test_base_contract):
             original_price1 + original_price2, invoice_fus.amount_untaxed)
 
         # Changement of the payment option
-        group_obj = self.env['recurring.contract.group']
-        group = group_obj.browse(group_id)
         group.write(
             {
                 'change_method': 'clean_invoices',
@@ -162,18 +149,16 @@ class test_recurring_contract(test_base_contract):
 
         # Copy of one contract to test copy method()
         contract2.copy()
-        contract_copied_id = contract_obj.search([
+        contract_copied = self.env['recurring.contract'].search([
             ('state', '=', 'draft'),
             ('partner_id', '=', self.partners.ids[1])], order='id DESC')[0]
-        self.assertTrue(contract_copied_id)
+        self.assertTrue(contract_copied.id)
         wf_service.trg_validate(
             self.uid, 'recurring.contract',
-            contract_copied_id.id, 'contract_validated', self.cr)
-        contract_copied_act = contract_obj.browse(contract_copied_id.id)
-        self.assertEqual(contract_copied_act.state, 'active')
-        contract_copied_line = contract_copied_act.contract_line_ids[0]
-        contract_line_obj.write(
-            {'amount': 160.0})
+            contract_copied.id, 'contract_validated', self.cr)
+        self.assertEqual(contract_copied.state, 'active')
+        contract_copied_line = contract_copied.contract_line_ids[0]
+        contract_copied_line.write({'amount': 160.0})
         new_price2 = contract_copied_line.subtotal
         invoicer_wizard_obj = self.env['recurring.invoicer.wizard']
         invoicer_wiz_id = invoicer_wizard_obj.generate()
@@ -189,44 +174,35 @@ class test_recurring_contract(test_base_contract):
             if we cancel one of the contracts if invoices are still correct.
         """
         # Creation of a group
-        group_id = self._create_group(
+        group = self._create_group(
             'do_nothing', self.partners.ids[0], 1,
-            self.payment_term_id, ref=None,
+            self.payment_term_id,
             other_vals={'recurring_value': 1, 'recurring_unit': 'month'})
 
         # Creation of three contracts with two lines each
-        contract_id = self._create_contract(
-            datetime.today().strftime(DF), group_id,
+        contract = self._create_contract(
+            datetime.today().strftime(DF), group,
             datetime.today().strftime(DF))
-        contract_id2 = self._create_contract(
-            datetime.today().strftime(DF), group_id,
+        contract2 = self._create_contract(
+            datetime.today().strftime(DF), group,
             datetime.today().strftime(DF))
-        contract_id3 = self._create_contract(
-            datetime.today().strftime(DF), group_id,
+        contract3 = self._create_contract(
+            datetime.today().strftime(DF), group,
             datetime.today().strftime(DF))
 
-        self.contract_line_id0 = self._create_contract_line(
-            contract_id, '10.0')
-        self.contract_line_id1 = self._create_contract_line(
-            contract_id, '20.0')
-        self.contract_line_id2 = self._create_contract_line(
-            contract_id2, '30.0')
-        self.contract_line_id3 = self._create_contract_line(
-            contract_id2, '40.0')
-        self.contract_line_id4 = self._create_contract_line(
-            contract_id3, '15.0')
-        self.contract_line_id5 = self._create_contract_line(
-            contract_id3, '25.0')
+        contract_line0 = self._create_contract_line(
+            contract.id, '10.0')
+        contract_line1 = self._create_contract_line(
+            contract.id, '20.0')
+        contract_line2 = self._create_contract_line(
+            contract2.id, '30.0')
+        contract_line3 = self._create_contract_line(
+            contract2.id, '40.0')
+        contract_line4 = self._create_contract_line(
+            contract3.id, '15.0')
+        contract_line5 = self._create_contract_line(
+            contract3.id, '25.0')
 
-        contract_obj = self.env['recurring.contract']
-        contract = contract_obj.browse(contract_id)
-        contract_line_obj = self.env['recurring.contract.line']
-        contract_line0 = contract_line_obj.browse(self.contract_line_id0)
-        contract_line1 = contract_line_obj.browse(self.contract_line_id1)
-        contract_line2 = contract_line_obj.browse(self.contract_line_id2)
-        contract_line3 = contract_line_obj.browse(self.contract_line_id3)
-        contract_line4 = contract_line_obj.browse(self.contract_line_id4)
-        contract_line5 = contract_line_obj.browse(self.contract_line_id5)
         # Creation of data to test
         original_product = contract_line0.product_id['name']
         original_partner = contract.partner_id['name']
@@ -242,14 +218,13 @@ class test_recurring_contract(test_base_contract):
         wf_service = netsvc.LocalService('workflow')
         wf_service.trg_validate(
             self.uid, 'recurring.contract',
-            contract_id, 'contract_validated', self.cr)
-        contract_obj = self.env['recurring.contract']
+            contract.id, 'contract_validated', self.cr)
         wf_service.trg_validate(
             self.uid, 'recurring.contract',
-            contract_id2, 'contract_validated', self.cr)
+            contract2.id, 'contract_validated', self.cr)
         wf_service.trg_validate(
             self.uid, 'recurring.contract',
-            contract_id3, 'contract_validated', self.cr)
+            contract3.id, 'contract_validated', self.cr)
 
         # Creation of a wizard to generate invoices
         invoicer_id = self.env['recurring.invoicer.wizard'].generate()
@@ -262,12 +237,11 @@ class test_recurring_contract(test_base_contract):
         # the invoice is well updated
         wf_service.trg_validate(
             self.uid, 'recurring.contract',
-            contract_id3, 'contract_terminated', self.cr)
-        contract_term = contract_obj.browse(contract_id3)
-        self.assertEqual(contract_term.state, 'terminated')
+            contract3.id, 'contract_terminated', self.cr)
+        self.assertEqual(contract3.state, 'terminated')
         self.assertEqual(original_product, invoice.invoice_line[0].name)
         self.assertEqual(original_partner, invoice.partner_id['name'])
         self.assertEqual(
-            original_price - contract_term.total_amount,
+            original_price - contract3.total_amount,
             invoice.amount_untaxed)
         self.assertEqual(original_start_date, invoice2.date_invoice)
