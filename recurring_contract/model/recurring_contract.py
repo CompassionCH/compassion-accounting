@@ -215,6 +215,7 @@ class recurring_contract(models.Model):
         invoices = inv_lines.mapped('invoice_id')
         empty_invoices = self.env['account.invoice']
         to_remove_invl = self.env['account.invoice.line']
+
         for inv_line in inv_lines:
             invoice = inv_line.invoice_id
             # Check if invoice is empty after removing the invoice_lines

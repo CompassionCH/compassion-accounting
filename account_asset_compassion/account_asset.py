@@ -9,28 +9,27 @@
 #
 ##############################################################################
 
-from openerp.osv import orm, fields
+from openerp import api, fields, models
 
 
-class asset_category(orm.Model):
+class asset_category(models.Model):
     _inherit = 'account.asset.category'
 
-    _columns = {
-        'analytics_id': fields.many2one('account.analytic.plan.instance',
-                                        'Analytic Distribution'),
-    }
+    analytics_id = fields.Many2one('account.analytic.plan.instance',
+                                   'Analytic Distribution')
 
 
-class account_asset_depreciation_line(orm.Model):
+class account_asset_depreciation_line(models.Model):
     _inherit = 'account.asset.depreciation.line'
 
+    @api.model
     def _setup_move_line_data(self, depreciation_line, depreciation_date,
-                              period_ids, account_id, type, move_id, context):
+                              period_ids, account_id, type, move_id):
         """ Add analytic distribution to move_line """
         move_line_data = super(account_asset_depreciation_line,
                                self)._setup_move_line_data(
             depreciation_line, depreciation_date, period_ids, account_id,
-            type, move_id, context)
+            type, move_id)
         if type == 'expense':
             move_line_data.update({
                 'analytics_id':
@@ -38,15 +37,16 @@ class account_asset_depreciation_line(orm.Model):
         return move_line_data
 
 
-class asset(orm.Model):
+class asset(models.Model):
     _inherit = 'account.asset.asset'
 
-    def close_old_asset(self, cr, uid, ids, context=None):
-        for asset in self.browse(cr, uid, ids, context):
-            asset.write({
+    @api.multi
+    def close_old_asset(self):
+        for asset in self:
+            asset.with_context(asset_validate_from_write=True).write({
                 # Triggers the computation of residual value
                 'purchase_value': asset.purchase_value,
                 'state': 'close'
-                }, context=dict(context, asset_validate_from_write=True))
+                })
 
         return True

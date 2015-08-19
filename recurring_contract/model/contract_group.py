@@ -11,7 +11,6 @@
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-
 from openerp import api, fields, models, _
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 import logging
@@ -218,6 +217,7 @@ class contract_group(models.Model):
     ##########################################################################
     #                             PRIVATE METHODS                            #
     ##########################################################################
+
     @api.multi
     def _get_change_methods(self):
         """ Method for applying changes """

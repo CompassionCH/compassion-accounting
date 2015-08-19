@@ -73,6 +73,6 @@ class recurring_invoicer(models.Model):
         if not invoice_to_cancel:
             raise exceptions.Warning('SelectionError',
                                      _('There is no invoice to cancel'))
-
         invoice_to_cancel.signal_workflow('invoice_cancel')
+
         return True
