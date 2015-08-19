@@ -62,6 +62,28 @@ class test_base_contract(common.TransactionCase):
         self.payment_term_id = payment_term_obj.search(
             [('name', '=', '15 Days')])[0].id
 
+    def _create_group(self, change_method, partner_id,
+                      adv_biling_months, payment_term_id, ref=None,
+                      other_vals=None):
+        """
+            Create a group with 2 possibilities :
+                - ref is not given so it takes "/" default values
+                - ref is given
+        """
+        group_obj = self.env['recurring.contract.group']
+        group_vals = {
+            'change_method': change_method,
+            'partner_id': partner_id,
+            'advance_billing_months': adv_biling_months,
+            'payment_term_id': payment_term_id,
+        }
+        if ref:
+            group_vals['ref'] = ref
+        if other_vals:
+            group_vals.update(other_vals)
+        group = group_obj.create(group_vals)
+        return group
+
     def _create_contract(self, start_date, group, next_invoice_date,
                          other_vals=None):
         """
@@ -98,25 +120,3 @@ class test_base_contract(common.TransactionCase):
 
         contract_line = contract_line_obj.create(vals)
         return contract_line
-
-    def _create_group(self, change_method, partner_id,
-                      adv_biling_months, payment_term_id, ref=None,
-                      other_vals=None):
-        """
-            Create a group with 2 possibilities :
-                - ref is not given so it takes "/" default values
-                - ref is given
-        """
-        group_obj = self.env['recurring.contract.group']
-        group_vals = {
-            'change_method': change_method,
-            'partner_id': partner_id,
-            'advance_billing_months': adv_biling_months,
-            'payment_term_id': payment_term_id,
-        }
-        if ref:
-            group_vals['ref'] = ref
-        if other_vals:
-            group_vals.update(other_vals)
-        group = group_obj.create(group_vals)
-        return group

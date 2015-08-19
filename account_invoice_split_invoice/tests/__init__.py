@@ -10,7 +10,3 @@
 ##############################################################################
 
 from . import test_split_invoice
-
-checks = [
-    test_split_invoice
-]
