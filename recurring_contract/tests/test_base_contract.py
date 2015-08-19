@@ -92,9 +92,6 @@ class test_base_contract(common.TransactionCase):
         """
         # Creation of a contract
         contract_obj = self.env['recurring.contract']
-        if other_vals and 'type' in other_vals:
-            contract_obj = contract_obj.with_context(
-                default_type=other_vals['type'])
         partner_id = group.partner_id.id
         vals = {
             'start_date': start_date,
@@ -104,6 +101,9 @@ class test_base_contract(common.TransactionCase):
         }
         if other_vals:
             vals.update(other_vals)
+            if other_vals and 'type' in other_vals:
+                contract_obj = contract_obj.with_context(
+                    default_type=other_vals['type'])
         contract = contract_obj.create(vals)
         return contract
 
