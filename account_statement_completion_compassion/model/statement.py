@@ -12,15 +12,8 @@
 from openerp import api, exceptions, fields, models, _
 from openerp.tools import mod10r
 
-# Name of gifts products
-GIFT_NAMES = ["Birthday Gift", "General Gift", "Family Gift", "Project Gift",
-              "Graduation Gift"]
-
-# Name of gift category
-GIFT_CATEGORY = "Sponsor gifts"
-
-# Name of sponsorship category
-SPONSORSHIP_CATEGORY = "Sponsorship"
+from openerp.addons.sponsorship_compassion.model.product import \
+    GIFT_CATEGORY, GIFT_NAMES
 
 import time
 
@@ -31,16 +24,28 @@ class AccountStatement(models.Model):
 
     _inherit = 'account.bank.statement'
 
+    ##########################################################################
+    #                                 FIELDS                                 #
+    ##########################################################################
+
     recurring_invoicer_id = fields.Many2one(
         'recurring.invoicer', 'Invoicer')
     generated_invoices_count = fields.Integer('Invoices',
                                               compute='_count_invoices')
+
+    ##########################################################################
+    #                             FIELDS METHODS                             #
+    ##########################################################################
 
     @api.one
     @api.depends('recurring_invoicer_id')
     def _count_invoices(self):
         self.generated_invoices_count = len(
             self.recurring_invoicer_id.invoice_ids)
+
+    ##########################################################################
+    #                             PUBLIC METHODS                             #
+    ##########################################################################
 
     @api.multi
     def to_invoices(self):
@@ -97,52 +102,15 @@ class AccountStatementLine(models.Model):
 
     _inherit = 'account.bank.statement.line'
 
-    product_id = fields.Many2one('product.product', 'Product')
-    contract_id = fields.Many2one('recurring.contract', 'Sponsorship')
-    user_id = fields.Many2one('res.partner', 'Ambassador')
-    invoice_id = fields.Many2one('account.invoice', 'Invoice')
+    ##########################################################################
+    #                                 FIELDS                                 #
+    ##########################################################################
+
     already_completed = fields.Boolean('Auto-completed', readonly=True)
 
-    @api.model
-    def create(self, vals):
-        """Generate invoice if a product is selected."""
-        res = super(AccountStatementLine, self).create(vals)
-        if 'product_id' in vals or 'contract_id' in vals:
-            # Generate new invoices
-            res.with_context(lang='en_US')._create_invoice_from_line()
-        return res
-
-    @api.multi
-    def write(self, vals):
-        """Generate invoice if a product is selected."""
-        if 'product_id' in vals or 'contract_id' in vals:
-            for line in self:
-                # Remove old invoice
-                invoice = line.invoice_id
-                if invoice:
-                    if not invoice.internal_number:
-                        invoice.unlink()
-                    else:
-                        invoice.write({
-                            'recurring_invoicer_id': False})
-                    line.write({'invoice_id': False, 'ref': '/'})
-        res = super(AccountStatementLine, self).write(vals)
-        if 'product_id' in vals or 'contract_id' in vals:
-            # Generate new invoices
-            self.with_context(lang='en_US')._create_invoice_from_line()
-        return res
-
-    @api.one
-    @api.onchange('contract_id')
-    def on_change_contract_id(self):
-        """ Pushes Ambassador. """
-        res = dict()
-        user = False
-        if self.contract_id and self.contract_id.user_id:
-            user = self.contract_id.user_id.id
-
-        res['value'] = {'user_id': user}
-        return res
+    ##########################################################################
+    #                             PRIVATE METHODS                            #
+    ##########################################################################
 
     @api.one
     def _create_invoice_from_line(self):

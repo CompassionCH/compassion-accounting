@@ -51,6 +51,10 @@ class StatementCompletionRule(models.Model):
         and the reference of the partner."""
 
     _name = "account.statement.completion.rule"
+    
+    ##########################################################################
+    #                                 FIELDS                                 #
+    ##########################################################################
 
     sequence = fields.Integer('Sequence',
                               help="Lower means parsed first.")
@@ -59,6 +63,10 @@ class StatementCompletionRule(models.Model):
         'account.journal',
         string='Related statement journal')
     function_to_call = fields.Selection('_get_functions', 'Method')
+    
+    ##########################################################################
+    #                             FIELDS METHODS                             #
+    ##########################################################################
 
     def _get_functions(self):
         res = [
@@ -83,6 +91,10 @@ class StatementCompletionRule(models.Model):
              '(based the sponsor name in the description)'),
         ]
         return res
+
+    ##########################################################################
+    #                             PUBLIC METHODS                             #
+    ##########################################################################
 
     @api.multi
     def auto_complete(self, stmt_line):
@@ -121,28 +133,25 @@ class StatementCompletionRule(models.Model):
         ref = st_line.ref
         res = {}
         partner_obj = self.env['res.partner']
-        partner_ids = partner_obj.search(
+        partner = partner_obj.search(
             [('ref', '=', ref[9:16]),
-             ('is_company', '=', False)]).ids
+             ('is_company', '=', False)], limit=1)
 
         # Test that only one partner matches.
-        partner = None
-        if partner_ids:
-            if len(partner_ids) == 1:
-                partner = partner_obj.browse(partner_ids[0])
-                # If we fall under this rule of completion, it means there is
-                # no open invoice corresponding to the payment. We may need to
-                # generate one depending on the payment type.
-                res.update(
-                    self._generate_invoice(st_line, partner))
-                # Get the accounting partner (company)
-                partner = partner_obj._find_accounting_partner(partner)
-                res['partner_id'] = partner.id
-            else:
-                raise exceptions.Warning(
-                    ('Line named "%s" (Ref:%s) was matched by more '
-                     'than one partner while looking on partners') %
-                    (st_line['name'], st_line['ref']))
+        if partner:
+            # If we fall under this rule of completion, it means there is
+            # no open invoice corresponding to the payment. We may need to
+            # generate one depending on the payment type.
+            res.update(
+                self._generate_invoice(st_line, partner))
+            # Get the accounting partner (company)
+            partner = partner_obj._find_accounting_partner(partner)
+            res['partner_id'] = partner.id
+        else:
+            raise exceptions.Warning(
+                ('Line named "%s" (Ref:%s) was matched by more '
+                 'than one partner while looking on partners') %
+                (st_line['name'], st_line['ref']))
         return res
 
     def get_from_bvr_ref(self, st_line):
@@ -248,6 +257,55 @@ class StatementCompletionRule(models.Model):
 
         return res
 
+    def get_sponsor_name(self, st_line):
+        res = {}
+        reference = st_line.ref
+        sender_lines = []
+
+        sender_lines.append(reference.replace('\n', ' ').split(
+            ' EXPÉDITEUR: '.decode('utf8')))
+        sender_lines.append(reference.replace('\n', ' ').split(
+            " DONNEUR D'ORDRE: ".decode('utf8')))
+
+        id_line1 = 1 if len(sender_lines[0]) > 1 else False
+        id_line2 = 2 if len(sender_lines[1]) > 1 else False
+
+        if not id_line1 and not id_line2:
+            return res
+
+        id_line = id_line1-1 if id_line1 else id_line2-1
+        sender_line = sender_lines[id_line][1].replace(',', '').split(' ')
+
+        index = 0
+        for word in sender_line:
+            try:
+                if index < len(sender_line):
+                    int(word)
+                for i in range(index-1, 0, -1):
+                    firstname = sender_line[i-1]
+                    partner = self.env['res.partner'].search(
+                        [('lastname', '=ilike', firstname),
+                         ('firstname', 'ilike', sender_line[i])])
+                    lastnames = sender_line[i].split('-') if not partner else \
+                        []
+
+                    for lastname in lastnames:
+                        partner = self.env['res.partner'].search(
+                            [('lastname', '=ilike', lastname),
+                             ('firstname', 'ilike', firstname)]) or \
+                            self.env['res.partner'].search(
+                            [('lastname', '=ilike', firstname),
+                             ('firstname', 'ilike', lastname)])
+                    if partner:
+                        res['partner_id'] = partner.id
+                        return res
+            except:
+                index += 1
+
+    ##########################################################################
+    #                             PRIVATE METHODS                            #
+    ##########################################################################
+
     def _generate_invoice(self, st_line, partner):
         """ Genereates an invoice corresponding to the statement line read
             in order to reconcile the corresponding move lines. """
@@ -288,6 +346,7 @@ class StatementCompletionRule(models.Model):
             invoicer_id = self.env['recurring.invoicer'].create(
                 {'source': st_line.statement_id._name}).id
             st_line.statement_id.write({'recurring_invoicer_id': invoicer_id})
+
         inv_data = {
             'account_id': partner.property_account_receivable.id,
             'type': 'out_invoice',
@@ -300,18 +359,13 @@ class StatementCompletionRule(models.Model):
         }
 
         # Create invoice and generate invoice lines
-        invoice_obj = self.env['account.invoice']
-        invoice = invoice_obj.with_context(lang='en_US').create(inv_data)
+        invoice = self.env['account.invoice'].with_context(
+            lang='en_US').create(inv_data)
 
         res.update(self._generate_invoice_line(
             invoice.id, product, st_line, partner.id))
 
-        if product.categ_name != GIFT_CATEGORY:
-            # Validate the invoice
-            wf_service = netsvc.LocalService('workflow')
-            wf_service.trg_validate(
-                self.env.user.id, 'account.invoice',
-                invoice.id, 'invoice_open', self.env.cr)
+        invoice.signal_workflow('invoice_open')
 
         return res
 
@@ -389,48 +443,3 @@ class StatementCompletionRule(models.Model):
             if invoices:
                 partner = invoices[0].partner_id
         return partner
-
-    def get_sponsor_name(self, st_line):
-        res = {}
-        reference = st_line.ref
-        sender_lines = []
-
-        sender_lines.append(reference.replace('\n', ' ').split(
-            ' EXPÉDITEUR: '.decode('utf8')))
-        sender_lines.append(reference.replace('\n', ' ').split(
-            " DONNEUR D'ORDRE: ".decode('utf8')))
-
-        id_line1 = 1 if len(sender_lines[0]) > 1 else False
-        id_line2 = 2 if len(sender_lines[1]) > 1 else False
-
-        if not id_line1 and not id_line2:
-            return res
-
-        id_line = id_line1-1 if id_line1 else id_line2-1
-        sender_line = sender_lines[id_line][1].replace(',', '').split(' ')
-
-        index = 0
-        for word in sender_line:
-            try:
-                if index < len(sender_line):
-                    int(word)
-                for i in range(index-1, 0, -1):
-                    firstname = sender_line[i-1]
-                    partner = self.env['res.partner'].search(
-                        [('lastname', '=ilike', firstname),
-                         ('firstname', 'ilike', sender_line[i])])
-                    lastnames = sender_line[i].split('-') if not partner else \
-                        []
-
-                    for lastname in lastnames:
-                        partner = self.env['res.partner'].search(
-                            [('lastname', '=ilike', lastname),
-                             ('firstname', 'ilike', firstname)]) or \
-                            self.env['res.partner'].search(
-                            [('lastname', '=ilike', firstname),
-                             ('firstname', 'ilike', lastname)])
-                    if partner:
-                        res['partner_id'] = partner.id
-                        return res
-            except:
-                index += 1
