@@ -11,7 +11,6 @@
 
 from openerp import api, exceptions, models, fields
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
-from openerp import netsvc
 from openerp.addons.sponsorship_compassion.model.product import \
     GIFT_CATEGORY, GIFT_NAMES
 
@@ -51,7 +50,7 @@ class StatementCompletionRule(models.Model):
         and the reference of the partner."""
 
     _name = "account.statement.completion.rule"
-    
+
     ##########################################################################
     #                                 FIELDS                                 #
     ##########################################################################
@@ -63,7 +62,7 @@ class StatementCompletionRule(models.Model):
         'account.journal',
         string='Related statement journal')
     function_to_call = fields.Selection('_get_functions', 'Method')
-    
+
     ##########################################################################
     #                             FIELDS METHODS                             #
     ##########################################################################

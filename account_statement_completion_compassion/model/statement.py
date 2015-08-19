@@ -13,7 +13,7 @@ from openerp import api, exceptions, fields, models, _
 from openerp.tools import mod10r
 
 from openerp.addons.sponsorship_compassion.model.product import \
-    GIFT_CATEGORY, GIFT_NAMES
+    GIFT_CATEGORY, GIFT_NAMES, SPONSORSHIP_CATEGORY
 
 import time
 
