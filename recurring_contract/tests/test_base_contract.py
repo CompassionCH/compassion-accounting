@@ -56,7 +56,7 @@ class test_base_contract(common.TransactionCase):
             'property_account_payable': property_account_payable,
             'notify_email': 'always',
             'ref': '00003333',
-        })    
+        })
         # Creation of payement terms
         payment_term_obj = self.env['account.payment.term']
         self.payment_term_id = payment_term_obj.search(

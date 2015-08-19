@@ -104,14 +104,12 @@ class test_recurring_contract(test_base_contract):
         contract = self._create_contract(
             datetime.today() + timedelta(days=2), group,
             datetime.today() + timedelta(days=2))
-        contract_line = self._create_contract_line(contract.id,
-                                                            '75.0')
+        contract_line = self._create_contract_line(contract.id, '75.0')
         contract2 = self._create_contract(
             datetime.today() + timedelta(days=2),
             group, datetime.today() + timedelta(days=2))
         contract_line2 = self._create_contract_line(
             contract2.id, '85.0')
-
 
         original_price1 = contract_line.subtotal
         original_price2 = contract_line2.subtotal
