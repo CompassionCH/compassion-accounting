@@ -34,6 +34,7 @@ install:
     - git clone https://github.com/OCA/account-financial-tools.git ${HOME}/build/CompassionCH/account-financial-tools -b 8.0
     - git clone https://github.com/CompassionCH/compassion-switzerland.git ${HOME}/build/CompassionCH/compassion-switzerland -b 8.0
     - git clone https://github.com/OCA/partner-contact.git ${HOME}/build/CompassionCH/partner-contact -b 8.0
+    - git clone https://github.com/OCA/connector.git ${HOME}/build/CompassionCH/connector -b 8.0
     - travis_install_nightly
 
 before_script:
