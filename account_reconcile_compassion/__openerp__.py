@@ -34,7 +34,7 @@
     'category': 'Finance',
     'website': 'http://www.compassion.ch',
     'depends': [
-                'crm_compassion',
+                'account_statement_completion_compassion',
                 'account_cancel'],
     'data': [
         'data/statement_operation.xml',

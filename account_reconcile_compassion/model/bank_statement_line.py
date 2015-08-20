@@ -110,12 +110,12 @@ class bank_statement_line(models.Model):
     ##########################################################################
     @api.model
     def _create_invoice_from_mv_lines(self, mv_line_dicts, invoice=None):
-        # Get the attached recurring invoicer TODO : Depend on completion_compassion to have this field !
-        # invoicer = self.statement_id.recurring_invoicer_id
-        # if not invoicer:
-            # invoicer_obj = self.env['recurring.invoicer']
-            # invoicer = invoicer_obj.create({'source': self._name})
-            # self.statement_id.write({'recurring_invoicer_id': invoicer.id})
+        # Get the attached recurring invoicer
+        invoicer = self.statement_id.recurring_invoicer_id
+        if not invoicer:
+            invoicer_obj = self.env['recurring.invoicer']
+            invoicer = invoicer_obj.create({'source': self._name})
+            self.statement_id.write({'recurring_invoicer_id': invoicer.id})
 
         # Generate a unique bvr_reference
         ref = self.ref
@@ -126,7 +126,7 @@ class bank_statement_line(models.Model):
         if invoice:
             invoice.action_cancel()
             invoice.action_cancel_draft()
-            # invoice.write({'recurring_invoicer_id': invoicer.id})
+            invoice.write({'recurring_invoicer_id': invoicer.id})
 
         else:
             # Lookup for an existing open invoice matching the criterias
@@ -134,7 +134,7 @@ class bank_statement_line(models.Model):
             if invoices:
                 # Get the bvr reference of the invoice or set it
                 invoice = invoices[0]
-                # invoice.write({'recurring_invoicer_id': invoicer.id})
+                invoice.write({'recurring_invoicer_id': invoicer.id})
                 if invoice.bvr_reference and not self.ref:
                     ref = invoice.bvr_reference
                 else:
@@ -157,7 +157,7 @@ class bank_statement_line(models.Model):
                 'date_invoice': self.date,
                 'payment_term': payment_term_id,
                 'bvr_reference': ref,
-                # 'recurring_invoicer_id': invoicer.id,
+                'recurring_invoicer_id': invoicer.id,
                 'currency_id': self.statement_id.currency.id,
             }
             invoice = self.env['account.invoice'].create(inv_data)
@@ -205,10 +205,7 @@ class bank_statement_line(models.Model):
 
         invoice.button_compute()
         invoice.signal_workflow('invoice_open')
-        self.write({
-            'ref': ref,
-            # 'invoice_id': invoice.id,
-            })
+        self.ref = ref
 
         # Update move_lines data
         counterpart_id = invoice.move_id.line_id.filtered(
