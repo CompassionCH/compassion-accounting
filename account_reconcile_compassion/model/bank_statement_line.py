@@ -9,206 +9,228 @@
 #
 ##############################################################################
 
-from openerp import api, models, _
+from openerp import api, models, exceptions, _
+from openerp.tools import mod10r, DEFAULT_SERVER_DATE_FORMAT as DF
+from openerp.addons.sponsorship_compassion.model.product import \
+    GIFT_CATEGORY, GIFT_NAMES, SPONSORSHIP_CATEGORY
 
-import datetime
-
-""" We keep track of reconciled debit lines so that we don't
-    try to reconcile them with multiple credit lines. """
-rec_debit_ids = {}
-
-# We keep track of reconciled credit lines
-rec_credit_ids = []
+from datetime import datetime
 
 
 class bank_statement_line(models.Model):
 
     _inherit = 'account.bank.statement.line'
 
-    
+    ##########################################################################
+    #                             PUBLIC METHODS                             #
+    ##########################################################################
     @api.model
-    def get_reconciliation_proposition(self, st_line, excluded_ids=None):
-        """ Returns move lines that constitute the best guess to reconcile a
-            statement line.
+    def get_move_lines_for_reconciliation(
+            self, st_line, excluded_ids=None, str=False, offset=0, limit=None,
+            count=False, additional_domain=None):
+        """ Sort move lines according to Compassion criterias :
+            Move line for current month at first,
+            Then other move_lines, from the oldest to the newest.
         """
-        return super(bank_statement_line, self).get_reconciliation_proposition(st_line, excluded_ids)
-        
-    # def _base_columns(self, rec):
-        # """ Mandatory columns for move lines queries
-        # An extra column aliased as ``key`` should be defined
-        # in each query."""
-        # aml_cols = (
-            # 'id',
-            # 'debit',
-            # 'credit',
-            # 'date',
-            # 'period_id',
-            # 'ref',
-            # 'name',
-            # 'partner_id',
-            # 'account_id',
-            # 'reconcile_partial_id',
-            # 'move_id',
-            # 'transaction_ref')
-        # return ["account_move_line.%s" % col for col in aml_cols]
+        # Propose up to 12 move lines for a complete year.
+        if limit is not None and limit < 12:
+            limit = 12
 
-    # def _query_debit(self, cr, uid, rec, context=None):
-        # """ Select all move (debit>0) as candidate.
-            # Inherit for ordering the debit lines as we want : at first the
-            # current move_line, then travelling to the past.
-            # At last, get the future ones.
-        # """
-        # # First select the current move_lines
-        # select_current = "SELECT * FROM (" + self._select(rec)
-        # from_current = self._from(rec)
-        # where_current, params_current = self._where(rec)
-        # where_current += (" AND account_move_line.debit > 0 AND "
-                          # "account_move_line.date_maturity <= CURRENT_DATE ")
-        # order_current = " ORDER BY date_maturity DESC ) CURR_MOVE "
+        # Only look for matching references
+        if additional_domain is None:
+            additional_domain = []
+        additional_domain += [('ref', '=', st_line.ref)]
 
-        # where2_current, params2_current = self._get_filter(
-            # cr, uid, rec, context=context)
+        res_asc = super(
+            bank_statement_line, self).get_move_lines_for_reconciliation(
+            st_line, excluded_ids, str, offset, limit, count,
+            additional_domain)
 
-        # # Select then the futur debit_moves (to be debited in the future)
-        # select_future = " UNION ALL " + select_current
-        # from_future = from_current
-        # where_future, params_future = self._where(rec)
-        # where_future += (" AND account_move_line.debit > 0 AND "
-                         # "account_move_line.date_maturity > CURRENT_DATE ")
-        # order_future = " ORDER BY date_maturity ASC ) FUTURE_MOVE "
-        # where2_future, params2_future = where2_current, params2_current
+        # Sort results
+        res_sorted = list()
+        today = datetime.today().date()
+        for mv_line_dict in res_asc:
+            mv_date = datetime.strptime(
+                mv_line_dict['date_maturity'] or mv_line_dict['date'], DF)
+            if mv_date.month == today.month:
+                res_sorted.insert(0, mv_line_dict)
+            else:
+                res_sorted.append(mv_line_dict)
+        return res_sorted
 
-        # query = ' '.join((select_current, from_current, where_current,
-                          # where2_current, order_current, select_future,
-                          # from_future, where_future, where2_future,
-                          # order_future))
+    @api.one
+    def process_reconciliation(self, mv_line_dicts):
+        """ Create invoice if product_id is set in move_lines
+        to be created. """
+        partner_invoices = dict()
+        partner_inv_data = dict()
+        old_counterparts = dict()
+        index = 0
+        for mv_line_dict in mv_line_dicts:
+            partner_id = self.partner_id.id
+            if mv_line_dict.get('product_id'):
+                # Create invoice
+                mv_line_dict['index'] = index
+                if partner_id in partner_inv_data:
+                    partner_inv_data[partner_id].append(mv_line_dict)
+                else:
+                    partner_inv_data[partner_id] = [mv_line_dict]
+            mv_line_id = mv_line_dict.get('counterpart_move_line_id')
+            if mv_line_id:
+                # An invoice exists for that partner, we will use it
+                # to put leftover amount in it, if any exists.
+                invoice = self.env['account.move.line'].browse(
+                    mv_line_id).invoice
+                if invoice:
+                    partner_invoices[partner_id] = invoice
+                    old_counterparts[invoice.id] = mv_line_id
+            index += 1
 
-        # cr.execute(
-            # query,
-            # params_current + params2_current + params_future + params2_future)
-        # return cr.dictfetchall()
+        # Create invoice and update move_line_dicts to reconcile them.
+        for partner_id, partner_data in partner_inv_data.iteritems():
+            invoice = partner_invoices.get(partner_id)
+            new_counterpart = self._create_invoice_from_mv_lines(
+                partner_data, invoice)
+            for data in partner_data:
+                index = data['index']
+                mv_line_dicts[index] = data
+                del mv_line_dicts[index]['index']
+            if invoice:
+                old_counterpart = old_counterparts[invoice.id]
+                for mv_line_dict in mv_line_dicts:
+                    counterpart = mv_line_dict.get('counterpart_move_line_id')
+                    if counterpart == old_counterpart:
+                        mv_line_dict[
+                            'counterpart_move_line_id'] = new_counterpart
 
-    # def _skip_line(self, cr, uid, rec, move_line, context=None):
-        # """
-        # When a move_line has no reference or no partner, skip reconciliation.
-        # Search for open invoices with same reference.
-        # If the amount of the credit line cannot fully reconcile an integer
-        # number of invoices, skip the reconciliation.
-        # """
-        # partner_id = move_line.get('partner_id')
-        # if move_line.get('ref') and partner_id:
-            # # Search for related customer invoices (same bvr reference).
-            # # and order them to reconcile them in specific order.
-            # invoice_obj = self.pool.get('account.invoice')
-            # present_invoice_ids = invoice_obj.search(
-                # cr, uid, [('bvr_reference', '=', move_line['ref']),
-                          # ('state', '=', 'open'),
-                          # ('date_due', '<=', datetime.date.today()),
-                          # ('partner_id', 'child_of', partner_id)],
-                # order='date_due desc', context=context)
-            # future_invoice_ids = invoice_obj.search(
-                # cr, uid, [('bvr_reference', '=', move_line['ref']),
-                          # ('state', '=', 'open'),
-                          # ('date_due', '>', datetime.date.today()),
-                          # ('partner_id', 'child_of', partner_id)],
-                # order='date_due asc', context=context)
-            # invoices = invoice_obj.browse(
-                # cr, uid, present_invoice_ids + future_invoice_ids,
-                # context=context)
-            # total_due = 0.0
-            # credit_amount = move_line['credit']
-            # for invoice in invoices:
-                # """ If invoice contain a child in a suspended project,
-                # we prevent the reconciliation and write in move line for
-                # users being able to decide how to assign the payment. """
-                # for invl in invoice.invoice_line:
-                    # if invl.contract_id and invl.contract_id.child_id:
-                        # project = invl.contract_id.child_id.project_id
-                        # if project.suspension == 'fund-suspended':
-                            # self.pool.get('account.move.line').write(
-                                # cr, uid, move_line['id'], {
-                                    # 'name': _('Project %s is '
-                                              # 'fund-suspended.') %
-                                    # project.code}, context)
-                            # return True
+        super(bank_statement_line, self).process_reconciliation(mv_line_dicts)
 
-                # total_due += invoice.amount_total
-                # if total_due == credit_amount:
-                    # """ The credit line can fully reconcile an integer number
-                        # of open invoices, it can be reconciled automatically.
-                    # """
-                    # return False
+    ##########################################################################
+    #                             PRIVATE METHODS                            #
+    ##########################################################################
+    @api.model
+    def _create_invoice_from_mv_lines(self, mv_line_dicts, invoice=None):
+        # Get the attached recurring invoicer TODO : Depend on completion_compassion to have this field !
+        # invoicer = self.statement_id.recurring_invoicer_id
+        # if not invoicer:
+            # invoicer_obj = self.env['recurring.invoicer']
+            # invoicer = invoicer_obj.create({'source': self._name})
+            # self.statement_id.write({'recurring_invoicer_id': invoicer.id})
 
-            # if credit_amount < total_due:
-                # """ Check for other unreconciled credit lines that could
-                    # complete the payment and reconcile all invoices. """
-                # credit_lines = self._query_credit(
-                    # cr, uid, rec, context=context)
-                # for other_credit in credit_lines:
-                    # if other_credit['ref'] == move_line['ref'] and not (
-                       # other_credit['id'] in rec_credit_ids):
-                        # credit_amount += other_credit['credit']
-                        # if total_due == credit_amount:
-                            # return False
+        # Generate a unique bvr_reference
+        ref = self.ref
+        if not ref or len(ref) < 26:
+            ref = mod10r((self.date.replace('-', '') + str(
+                self.statement_id.id) + str(self.id)).ljust(26, '0'))
 
-        # # Skip reconciliation for this credit line.
-        # return True
+        if invoice:
+            invoice.action_cancel()
+            invoice.action_cancel_draft()
+            # invoice.write({'recurring_invoicer_id': invoicer.id})
 
-    # def _matchers(self, cr, uid, rec, move_line, context=None):
-        # # We match all move_lines that have the same reference and limit the
-        # # matches within the "_search_opposites" function
-        # return (('ref', move_line['ref'].lower().replace(' ', '')),
-                # )
+        else:
+            # Lookup for an existing open invoice matching the criterias
+            invoices = self._find_open_invoice(mv_line_dicts)
+            if invoices:
+                # Get the bvr reference of the invoice or set it
+                invoice = invoices[0]
+                # invoice.write({'recurring_invoicer_id': invoicer.id})
+                if invoice.bvr_reference and not self.ref:
+                    ref = invoice.bvr_reference
+                else:
+                    invoice.write({'bvr_reference': ref})
+                self.write({
+                    'ref': ref,
+                    'invoice_id': invoice.id})
+                return True
 
-    # def _opposite_matchers(self, cr, uid, rec, move_line, context=None):
-        # # Must have the same BVR reference
-        # yield('ref', move_line['transaction_ref'])
+            # Setup a new invoice if no existing invoice is found
+            journal_id = self.env['account.journal'].search(
+                [('type', '=', 'sale')], limit=1).id
+            payment_term_id = self.env.ref(
+                'contract_compassion.payment_term_virement').id
+            inv_data = {
+                'account_id': self.partner_id.property_account_receivable.id,
+                'type': 'out_invoice',
+                'partner_id': self.partner_id.id,
+                'journal_id': journal_id,
+                'date_invoice': self.date,
+                'payment_term': payment_term_id,
+                'bvr_reference': ref,
+                # 'recurring_invoicer_id': invoicer.id,
+                'currency_id': self.statement_id.currency.id,
+            }
+            invoice = self.env['account.invoice'].create(inv_data)
 
-    # def _search_opposites(self, cr, uid, rec, move_line, opposite_move_lines,
-                          # context=None):
-        # """
-        # Search the opposite debit move lines given a credit move line.
-        # We limit the search to the number of move_lines that can be
-        # fully reconciled to avoid partial reconciliation.
-        # """
-        # matchers = self._matchers(cr, uid, rec, move_line, context=context)
-        # opposite_matchers = []
-        # amount_reconciled = 0.0
-        # for op in opposite_move_lines:
-            # if amount_reconciled < move_line['credit']:
-                # if self._compare_opposite(
-                    # cr, uid, rec, move_line, op,
-                    # matchers, context=context) and not self._debit_reconciled(
-                        # move_line, op):
+        for mv_line_dict in mv_line_dicts:
+            product = self.env['product.product'].browse(
+                mv_line_dict['product_id'])
+            sponsorship_id = mv_line_dict.get('sponsorship_id')
+            if not sponsorship_id:
+                related_contracts = invoice.mapped('invoice_line.contract_id')
+                if related_contracts:
+                    sponsorship_id = related_contracts[0].id
+            contract = self.env['recurring.contract'].browse(sponsorship_id)
+            if product.name == GIFT_NAMES[0] and contract and \
+                    contract.child_id and contract.child_id.birthdate:
+                invoice.date_invoice = self.env[
+                    'generate.gift.wizard'].compute_date_birthday_invoice(
+                    contract.child_id.birthdate, self.date)
 
-                    # opposite_matchers.append(op)
-                    # amount_reconciled += op['debit']
-            # else:
-                # break
+            amount = mv_line_dict['credit']
+            inv_line_data = {
+                'name': self.name,
+                'account_id': product.property_account_income.id,
+                'price_unit': amount,
+                'price_subtotal': amount,
+                'contract_id': contract.id,
+                'user_id': mv_line_dict.get('user_id'),
+                'quantity': 1,
+                'uos_id': False,
+                'product_id': product.id,
+                'partner_id': self.partner_id.id,
+                'invoice_id': invoice.id,
+                'account_analytic_id': mv_line_dict.get(
+                    'analytic_account_id',
+                    self.env['account.analytic.default'].account_get(
+                        product.id, self.partner_id.id).analytic_id.id)
+            }
 
-        # return opposite_matchers
+            if product.categ_name in (
+                    GIFT_CATEGORY, SPONSORSHIP_CATEGORY) and not contract:
+                raise exceptions.Warning(_('A field is required'),
+                                         _('Add a Sponsorship'))
 
-    # def _debit_reconciled(self, credit_line, debit_line):
-        # """
-        # Test if a debit line is already fully reconciled.
-        # If not, update the amount reconciled by credit_line.
-        # """
-        # debit_line_id = debit_line['id']
-        # amount_to_reconcile = min(debit_line['debit'], credit_line['credit'])
+            self.env['account.invoice.line'].create(inv_line_data)
 
-        # if debit_line_id in rec_debit_ids.keys():
-            # if rec_debit_ids[debit_line_id] == debit_line['debit']:
-                # return True
-            # amount_to_reconcile += rec_debit_ids[debit_line_id]
+        invoice.button_compute()
+        invoice.signal_workflow('invoice_open')
+        self.write({
+            'ref': ref,
+            # 'invoice_id': invoice.id,
+            })
 
-        # rec_debit_ids.update({
-            # debit_line_id: amount_to_reconcile
-        # })
+        # Update move_lines data
+        counterpart_id = invoice.move_id.line_id.filtered(
+            lambda ml: ml.debit > 0).id
+        for mv_line_dict in mv_line_dicts:
+            mv_line_dict['counterpart_move_line_id'] = counterpart_id
+            if 'sponsorship_id' in mv_line_dict:
+                del mv_line_dict['sponsorship_id']
+        return counterpart_id
 
-        # return False
+    def _find_open_invoice(self, mv_line_dicts):
+        """ Find an open invoice that matches the statement line and which
+        could be reconciled with. """
+        invoice_line_obj = self.env['account.invoice.line']
+        inv_lines = invoice_line_obj
+        for mv_line_dict in mv_line_dicts:
+            amount = mv_line_dict['credit']
+            inv_lines |= invoice_line_obj.search([
+                ('partner_id', '=', mv_line_dict.get('partner_id')),
+                ('state', 'in', ('open', 'draft')),
+                ('product_id', '=', mv_line_dict.get('product_id')),
+                ('price_subtotal', '=', amount)])
 
-    # def _reconcile_lines(self, cr, uid, rec, lines, allow_partial=False,
-                         # context=None):
-        # """ Never allow partial reconciliation. """
-        # return super(easy_reconcile_advanced_bvr_ref, self)._reconcile_lines(
-            # cr, uid, rec, lines, False, context)
+        return inv_lines.mapped('invoice_id').filtered(
+            lambda i: i.amount_total == self.amount)

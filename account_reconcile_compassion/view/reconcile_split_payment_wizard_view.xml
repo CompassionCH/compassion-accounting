@@ -13,7 +13,7 @@
                         </p>
                         <group>
                             <field name="comment" />
-                            <field name="contract_ids" context="{'tree_view_ref' : 'account_advanced_reconcile_compassion.view_contracts_tree_simplified'}"/>
+                            <field name="contract_ids" context="{'tree_view_ref' : 'account_reconcile_compassion.view_contracts_tree_simplified'}"/>
                         </group>
                     </sheet>
                     

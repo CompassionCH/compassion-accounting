@@ -26,9 +26,50 @@ openerp.account_reconcile_compassion = function (instance) {
                 res_id: this.partner_id,
             });
         },
+        
+         // Capture when product is selected to put the corresponding account.
+        formCreateInputChanged: function(elt, val) {
+            var line_created_being_edited = this.get("line_created_being_edited");
+            var self = this;
+
+            if (elt === this.product_id_field) {
+                var model_product = new instance.web.Model("product.product");
+                var product = new $.Deferred();
+                var product_id = elt.get("value");
+                product = $.when(model_product.call("read", [product_id, ['property_account_income']])).then(function(data){
+                    self.account_id_field.set_value(data.property_account_income[0]);
+                });
+            }
+            
+            this._super(elt, val);
+        },
+        
+        // Set domain of sponsorship field
+        initializeCreateForm: function() {
+            var self = this;
+            _.each(self.create_form, function(field) {
+                if (field.name == 'sponsorship_id') {
+                    field.field.domain = ['|', '|', ['partner_id', '=', self.partner_id], ['partner_id.parent_id', '=', self.partner_id], ['correspondant_id', '=', self.partner_id], ['state', '!=', 'draft']]
+                }
+            });
+            this._super()
+        },
+        
+        // Return values of new fields to python.
+        prepareCreatedMoveLineForPersisting: function(line) {
+            var dict = this._super(line);
+            if (line.product_id) dict['product_id'] = line.product_id;
+            if (line.sponsorship_id) dict['sponsorship_id'] = line.sponsorship_id;
+            if (line.user_id) dict['user_id'] = line.user_id;
+            return dict;
+        },
     })
     
     instance.web.account.bankStatementReconciliation.include({
+        events: _.extend({
+            "click .button_do_all": "reconcileAll",
+        }, instance.web.account.bankStatementReconciliation.prototype.events),
+        
         // Add fields in reconcile view
         init: function(parent, context) {
             this._super(parent, context);
@@ -58,7 +99,6 @@ openerp.account_reconcile_compassion = function (instance) {
                     relation: "recurring.contract",
                     string: _t("Sponsorship"),
                     type: "many2one",
-                    domain: ['|', '|', ['partner_id', '=', this.partner_id], ['partner_id.parent_id', '=', this.partner_id], ['correspondant_id', '=', this.partner_id], ['state', '!=', 'draft']],
                     options: {'field_color': 'state',
                               'colors': {'cancelled': 'gray', 'terminated': 'gray', 'mandate': 'red', 'waiting': 'green'}, 'create':false, 'create_edit':false},
                 }
@@ -79,6 +119,20 @@ openerp.account_reconcile_compassion = function (instance) {
             };
         },
         
+        // Add product_id to statement operations.
+        start: function() {
+            var self = this;
+            return this._super().then(function() {
+                new instance.web.Model("account.statement.operation.template")
+                .query(['id','name','account_id','label','amount_type','amount','tax_id','analytic_account_id','product_id'])
+                .all().then(function (data) {
+                    _(data).each(function(preset){
+                        self.presets[preset.id] = preset;
+                    });
+                })
+            });
+        },
+        
         // Change behaviour when clicking on name of bank statement
         statementNameClickHandler: function() {
             this.do_action({
@@ -90,7 +144,25 @@ openerp.account_reconcile_compassion = function (instance) {
                 target: 'current',
                 res_id: this.statement_ids[0],
             });
-        }
+        },
+
+        reconcileAll: function() {
+            this.reconcile_all = true;
+            var reconciliations = _.filter(this.getChildren(), function(o) { return o.get("balance").toFixed(3) === "0.000"; })
+            this.persistReconciliations(reconciliations);
+        },
+
+        displayReconciliations: function(number) {
+            var self = this;
+            return this._super(number).done(function() {
+                var reconciliations = _.filter(self.getChildren(), function(o) { return o.get("balance").toFixed(3) === "0.000"; })
+                if (self.reconcile_all && reconciliations.length > 0) {
+                    self.persistReconciliations(reconciliations);
+                } else {
+                    self.reconcile_all = false;
+                }
+            });
+        },
     })
 
     // Extend the class written in module account (manual reconcile)
@@ -131,7 +203,7 @@ openerp.account_reconcile_compassion = function (instance) {
                     self.reconcile_split();
                 });
                 this.$(".oe_account_recon_open_partner").click(function() {
-                    open_partner();
+                    self.open_partner();
                 });
             }
             
@@ -154,7 +226,7 @@ openerp.account_reconcile_compassion = function (instance) {
                 return false;
             }
 
-            new instance.web.Model("ir.model.data").call("get_object_reference", ["account_advanced_reconcile_compassion", action_wizard]).then(function(result) {
+            new instance.web.Model("ir.model.data").call("get_object_reference", ["account_reconcile_compassion", action_wizard]).then(function(result) {
                 var additional_context = _.extend({
                     active_id: ids[0],
                     active_ids: ids,

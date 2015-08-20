@@ -10,3 +10,5 @@
 ##############################################################################
 
 from . import bank_statement_line
+from . import statement_operation
+from . import move_line

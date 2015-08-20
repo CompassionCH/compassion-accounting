@@ -30,11 +30,11 @@ class account_analytic_default(orm.Model):
     }
 
     def account_get(self, cr, uid, product_id=None, partner_id=None,
-                    user_id=None, date=None, context=None):
+                    user_id=None, date=None, company_id=None, context=None):
         """ Rewrite method to return only normal type of defaults. """
         return self._get_default(
             cr, uid, 'default', product_id, partner_id, user_id, date,
-            context=context)
+            company_id, context)
 
     def get_attribution(self, cr, uid, analytic_id=None, account_id=None,
                         date=None, context=None):
