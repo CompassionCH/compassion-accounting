@@ -30,10 +30,8 @@ class change_attribution_wizard(models.TransientModel):
         ('rec', _('Reconcile'))], 'state', default='unrec')
     invoice_line_ids = fields.Many2many(
         'account.invoice.line', 'change_attribution_wizard_line_rel',
-        compute='_get_invoice_lines',
         string='Related invoice lines',
-        default=lambda self: self._get_invoice_lines(),
-        readonly=True, store=True)
+        default=lambda self: self._get_invoice_lines(), readonly=True)
     comment = fields.Text('Comment', help=_(
         "Explain why you changed the attribution."))
 
@@ -56,8 +54,8 @@ class change_attribution_wizard(models.TransientModel):
 
         invl_ids = invoices.mapped('invoice_line.id')
 
-        self.write({
-            'invoice_line_ids': [(6, 0, invl_ids)]})
+        # self.write({
+            # 'invoice_line_ids': [(6, 0, invl_ids)]})
         return invl_ids
 
     ##########################################################################

@@ -21,7 +21,7 @@ class reconcile_split_payment_wizard(models.TransientModel):
 
     comment = fields.Char('Indications on left amount', size=64)
     contract_ids = fields.Many2many(
-        'recurring.contract', compute='_get_contract_ids', store=True,
+        'recurring.contract',
         default=lambda self: self._get_contract_ids(),
         string='Related contracts')
 

@@ -22,7 +22,7 @@ class reconcile_fund_self(models.TransientModel):
         'product.product', 'Fund', required=True,
         default=lambda self: self._get_general_fund())
     contract_ids = fields.Many2many(
-        'recurring.contract', compute='_get_contract_ids', store=True,
+        'recurring.contract',
         string='Related contracts',
         default=lambda self: self._get_contract_ids())
 
