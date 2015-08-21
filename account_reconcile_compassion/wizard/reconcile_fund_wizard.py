@@ -34,8 +34,6 @@ class reconcile_fund_self(models.TransientModel):
             contract_ids = move_line_obj.browse(active_ids).filtered(
                 lambda mvl: mvl.debit > 0).mapped(
                 'invoice.invoice_line.contract_id.id') or False
-        if contract_ids:
-            self.write({'contract_ids': [(6, 0, contract_ids)]})
         return contract_ids
 
     def _write_contracts(self):

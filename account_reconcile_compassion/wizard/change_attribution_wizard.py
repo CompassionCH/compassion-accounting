@@ -43,20 +43,16 @@ class change_attribution_wizard(models.TransientModel):
         Context can either hold invoice ids or move line ids
         depending from where the user called the self.
         """
-        invl_ids = list()
         active_ids = self.env.context.get('active_ids')
         model = self.env.context.get('active_model')
+        invoices = self.env['account.invoice']
 
         if model == 'account.move.line':
             invoices = self._get_invoices_from_mvl_ids(active_ids)
         elif model == 'account.invoice':
-            invoices = self.env['account.invoice'].browse(active_ids)
+            invoices = invoices.browse(active_ids)
 
-        invl_ids = invoices.mapped('invoice_line.id')
-
-        # self.write({
-            # 'invoice_line_ids': [(6, 0, invl_ids)]})
-        return invl_ids
+        return invoices.mapped('invoice_line.id')
 
     ##########################################################################
     #                             VIEW CALLBACKS                             #
