@@ -1,0 +1,3 @@
+.openerp .oe_bank_statement_reconciliation .oe_bank_statement_reconciliation_line .partner_name {
+    cursor: pointer;
+}

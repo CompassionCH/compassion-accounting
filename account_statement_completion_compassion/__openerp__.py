@@ -33,7 +33,7 @@
     "author": "Emanuel Cino",
     "category": "Finance",
     "website": "http://www.compassion.ch",
-    "depends": ['crm_compassion',
+    "depends": ['crm_compassion', 'l10n_ch_account_statement_base_import',
                 'hr_expense'],
     "data": ['view/statement_view.xml',
              'view/invoice_view.xml',
