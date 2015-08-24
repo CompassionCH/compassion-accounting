@@ -40,10 +40,6 @@
         'view/account_invoice_split_wizard_view.xml',
     ],
     'demo': [],
-    'description': '''
-        This module adds the ability to split an existing invoice into
-        two different invoices.
-    ''',
     'active': False,
     'installable': True,
 }

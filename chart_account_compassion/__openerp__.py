@@ -28,8 +28,6 @@
 ##############################################################################
 
 {'name': 'Compassion - Accounting',
- 'description':  """
-""",
  'version': '7.1',
  'author': 'Compassion',
  'category': 'Localization/Account Charts',

@@ -19,11 +19,6 @@ To use this module, you need to:
 
 * Go to Accounting -> Bank Statement -> Reconcile
 
-Known issues / Roadmap
-======================
-
-* Migrate code for V8
-
 Credits
 =======
 
