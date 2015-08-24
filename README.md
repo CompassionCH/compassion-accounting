@@ -2,10 +2,6 @@
 [![Coverage Status](https://coveralls.io/repos/CompassionCH/compassion-accounting/badge.svg?branch=8.0&service=github)](https://coveralls.io/github/CompassionCH/compassion-accounting?branch=8.0)
 =====================
 
-[![Build Status](https://travis-ci.org/OCA/l10n-switzerland.svg?branch=8.0)](https://travis-ci.org/OCA/l10n-switzerland)
-[![Coverage Status](https://coveralls.io/repos/OCA/l10n-switzerland/badge.svg?branch=8.0)](https://coveralls.io/r/OCA/l10n-switzerland?branch=7.0)
-
-
 Compassion Accounting Modules 
 =============================
 
