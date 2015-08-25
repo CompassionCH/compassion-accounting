@@ -272,7 +272,7 @@ class contract_group(models.Model):
             inv_line_data['account_id'] = account.id
         return inv_line_data
 
-    @api.multi
+    @api.model
     def _generate_invoice_lines(self, contract, invoice):
         inv_line_obj = self.env['account.invoice.line']
         for contract_line in contract.contract_line_ids:
