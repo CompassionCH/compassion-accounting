@@ -38,10 +38,6 @@
     'external_dependencies': {},
     'data': ['account_asset_view.xml'],
     'demo': [],
-    'description': '''
-        Replace the account by the analytic account.
-        ! - This module overrides the prorata temporis asset process.
-    ''',
     'active': False,
     'installable': True,
 }
