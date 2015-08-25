@@ -26,6 +26,7 @@ Credits
 Contributors
 ------------
 
+* Steve Ferry <steve_ferry@outlook.com>
 * Emanuel Cino <ecino@compassion.ch>
 
 Maintainer
