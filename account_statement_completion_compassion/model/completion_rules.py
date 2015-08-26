@@ -134,23 +134,23 @@ class StatementCompletionRule(models.Model):
         partner_obj = self.env['res.partner']
         partner = partner_obj.search(
             [('ref', '=', ref[9:16]),
-             ('is_company', '=', False)], limit=1)
-
+             ('is_company', '=', False)])
         # Test that only one partner matches.
         if partner:
-            # If we fall under this rule of completion, it means there is
-            # no open invoice corresponding to the payment. We may need to
-            # generate one depending on the payment type.
-            res.update(
-                self._generate_invoice(st_line, partner))
-            # Get the accounting partner (company)
-            partner = partner_obj._find_accounting_partner(partner)
-            res['partner_id'] = partner.id
-        else:
-            raise exceptions.Warning(
-                ('Line named "%s" (Ref:%s) was matched by more '
-                 'than one partner while looking on partners') %
-                (st_line['name'], st_line['ref']))
+            if len(partner) == 1:
+                # If we fall under this rule of completion, it means there is
+                # no open invoice corresponding to the payment. We may need to
+                # generate one depending on the payment type.
+                res.update(
+                    self._generate_invoice(st_line, partner))
+                # Get the accounting partner (company)
+                partner = partner_obj._find_accounting_partner(partner)
+                res['partner_id'] = partner.id
+            else:
+                raise exceptions.Warning(
+                    ('Line named "%s" (Ref:%s) was matched by more '
+                     'than one partner while looking on partners') %
+                    (st_line['name'], st_line['ref']))
         return res
 
     def get_from_bvr_ref(self, st_line):
