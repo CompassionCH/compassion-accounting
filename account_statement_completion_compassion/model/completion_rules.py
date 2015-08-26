@@ -29,20 +29,20 @@ class account_bank_statement_import(models.TransientModel):
 
     _inherit = 'account.bank.statement.import'
 
-    def _create_bank_statements(self, stmts_vals):
-        statement_ids, notifs = super(
+    def _create_bank_statement(self, stmt_vals):
+        statement_id, notifs = super(
             account_bank_statement_import,
             self
-        )._create_bank_statements(
-            stmts_vals
+        )._create_bank_statement(
+            stmt_vals
         )
         for stmt_line in self.env['account.bank.statement'].browse(
-                statement_ids).mapped('line_ids'):
+                statement_id).mapped('line_ids'):
             fields_update = stmt_line.journal_id.\
                 completion_rules.auto_complete(stmt_line)
             if fields_update:
                 stmt_line.write(fields_update)
-        return statement_ids, notifs
+        return statement_id, notifs
 
 
 class StatementCompletionRule(models.Model):
