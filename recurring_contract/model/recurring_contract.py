@@ -342,11 +342,8 @@ class recurring_contract(models.Model):
     def _on_contract_lines_changed(self):
         """Update related invoices to reflect the changes to the contract.
         """
-        # Find all unpaid invoice lines after the given date
-        since_date = datetime.today().replace(day=1).strftime(DF)
         inv_lines = self.env['account.invoice.line'].search(
             [('contract_id', '=', self.id),
-             ('due_date', '>=', since_date),
              ('state', 'not in', ('paid', 'cancel'))])
 
         invoices = inv_lines.mapped('invoice_id')
