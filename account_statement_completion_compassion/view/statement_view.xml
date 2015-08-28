@@ -23,17 +23,23 @@
          <field eval="16" name="priority"/>
          <field name="type">form</field>
          <field name="arch" type="xml">
-             <div name="import_buttons" position="inside">
-                <button
-                  name="to_invoices"
-                  class="oe_stat_button"
-                  widget="statinfo"
-                  icon="fa fa-file-text-o"
-                  type="object"
-                  help="Show generated invoices">
-                    <field name="generated_invoices_count" widget="statinfo"/>
+            <data>
+                <div name="import_buttons" position="inside">
+                    <button
+                      name="to_invoices"
+                      class="oe_stat_button"
+                      widget="statinfo"
+                      icon="fa fa-file-text-o"
+                      type="object"
+                      help="Show generated invoices">
+                        <field name="generated_invoices_count" widget="statinfo"/>
+                    </button>
+                </div>
+                <!-- Display cancel button at any times -->
+                <button name="button_cancel" position="replace">
+                    <button name="button_cancel" string="Cancel Statement" type="object"/>
                 </button>
-             </div>
+            </data>
          </field>
      </record>
 </data>

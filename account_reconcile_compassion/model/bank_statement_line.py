@@ -25,6 +25,16 @@ class bank_statement_line(models.Model):
     #                             PUBLIC METHODS                             #
     ##########################################################################
     @api.model
+    def get_reconciliation_proposition(self, st_line, excluded_ids=None):
+        """ Never propose reconciliation when move_lines have not
+            the same reference.
+        """
+        res = super(bank_statement_line, self).get_reconciliation_proposition(
+            st_line, excluded_ids)
+        filtered_res = [data for data in res if data['ref'] == st_line.ref]
+        return filtered_res
+
+    @api.model
     def get_move_lines_for_reconciliation(
             self, st_line, excluded_ids=None, str=False, offset=0, limit=None,
             count=False, additional_domain=None):
@@ -36,26 +46,26 @@ class bank_statement_line(models.Model):
         if limit is not None and limit < 12:
             limit = 12
 
-        # Only look for matching references
-        if additional_domain is None:
-            additional_domain = []
-        additional_domain += [('ref', '=', st_line.ref)]
-
         res_asc = super(
             bank_statement_line, self).get_move_lines_for_reconciliation(
             st_line, excluded_ids, str, offset, limit, count,
             additional_domain)
 
-        # Sort results
+        # Sort results with date (current month at first)
         res_sorted = list()
         today = datetime.today().date()
         for mv_line_dict in res_asc:
             mv_date = datetime.strptime(
                 mv_line_dict['date_maturity'] or mv_line_dict['date'], DF)
-            if mv_date.month == today.month:
+            if mv_date.month == today.month and mv_date.year == today.year:
                 res_sorted.insert(0, mv_line_dict)
             else:
                 res_sorted.append(mv_line_dict)
+
+        # Put matching references at first
+        res_sorted = sorted(
+            res_sorted, key=lambda mvl_data: mvl_data['ref'] == st_line.ref,
+            reverse=True)
         return res_sorted
 
     @api.one

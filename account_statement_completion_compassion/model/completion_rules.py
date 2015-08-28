@@ -133,7 +133,7 @@ class StatementCompletionRule(models.Model):
         res = {}
         partner_obj = self.env['res.partner']
         partner = partner_obj.search(
-            [('ref', '=', ref[9:16]),
+            [('ref', '=', str(int(ref[9:16]))),
              ('is_company', '=', False)])
         # Test that only one partner matches.
         if partner:
@@ -330,7 +330,6 @@ class StatementCompletionRule(models.Model):
                 birthdate = ""
                 if product.name == GIFT_NAMES[0]:
                     birthdate = contract.child_id.birthdate
-                    res['child_birthdate'] = birthdate
                     birthdate = datetime.strptime(birthdate, DF).strftime(
                         "%d %b")
                 res['name'] += "[" + contract.child_id.code
