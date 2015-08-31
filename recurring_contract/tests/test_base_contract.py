@@ -64,7 +64,7 @@ class test_base_contract(common.TransactionCase):
         self.partners += partner_obj.create(
             {
                 'lang': 'en_US',
-                'lastname': 'Client 37',
+                'name': 'Client 37',
                 'property_account_receivable': property_account_receivable,
                 'property_account_payable': property_account_payable,
                 'notification_email_send': 'none',
