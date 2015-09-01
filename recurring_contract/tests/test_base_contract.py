@@ -59,14 +59,6 @@ class test_base_contract(common.TransactionCase):
             'ref': '00003333',
             'lang': 'en_US',
         })
-        self.partners += partner_obj.create(
-            {
-                'lang': 'en_US',
-                'name': 'Client 37',
-                'property_account_receivable': property_account_receivable,
-                'property_account_payable': property_account_payable,
-                'notification_email_send': 'none',
-            })
         # Creation of payement terms
         payment_term_obj = self.env['account.payment.term']
         self.payment_term_id = payment_term_obj.search(
