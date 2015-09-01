@@ -187,13 +187,13 @@ class contract_group(models.Model):
             while True:  # Emulate a do-while loop
                 # contract_group update 'cause next_inv_date has been modified
                 group_inv_date = contract_group.next_invoice_date
-                contracts = []
+                contracts = self.env['recurring.contract']
                 if group_inv_date and datetime.strptime(group_inv_date,
                                                         DF) <= limit_date:
-                    contracts = [c
-                                 for c in contract_group.contract_ids
-                                 if c.next_invoice_date <= group_inv_date and
-                                 c.state in gen_states]
+                    contracts = contract_group.contract_ids.filtered(
+                        lambda c: c.next_invoice_date <= group_inv_date and
+                        (not c.end_date or c.end_date > c.next_invoice_date)
+                        and c.state in gen_states)
                 if not contracts:
                     break
                 inv_data = contract_group._setup_inv_data(journal_ids,

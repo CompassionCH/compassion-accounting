@@ -195,7 +195,7 @@ class recurring_contract(models.Model):
     ##########################################################################
     #                             PUBLIC METHODS                             #
     ##########################################################################
-
+    @api.multi
     def clean_invoices(self, since_date=None, to_date=None, keep_lines=None):
         """ This method deletes invoices lines generated for a given contract
             having a due date >= current month. If the invoice_line was the
@@ -330,7 +330,7 @@ class recurring_contract(models.Model):
                                  ('end_date', '<=', today)])
 
         if contracts:
-            contracts.contract_terminated()
+            contracts.signal_workflow('contract_terminated')
 
         return True
 
@@ -352,7 +352,7 @@ class recurring_contract(models.Model):
         self._update_invoice_lines(invoices)
         invoices.signal_workflow('invoice_open')
 
-    @api.one
+    @api.model
     def _move_cancel_lines(self, invoice_lines, message=None):
         """ Method that takes out given invoice_lines from their invoice
         and put them in a cancelled copy of that invoice.
@@ -366,7 +366,8 @@ class recurring_contract(models.Model):
             copy_invoice_id = invoices_copy.get(invoice.id)
             if not copy_invoice_id:
                 copy_invoice_id = invoice.copy({
-                    'date_invoice': invoice.date_invoice}).id
+                    'date_invoice': invoice.date_invoice,
+                    'date_due': invoice.date_invoice}).id
                 # Empty the new invoice
                 cancel_lines = self.env['account.invoice.line'].search([
                     ('invoice_id', '=', copy_invoice_id)])
@@ -378,15 +379,14 @@ class recurring_contract(models.Model):
 
         # Compute and cancel invoice copies
         cancel_invoices = invoice_obj.browse(invoices_copy.values())
-        if cancel_invoices:
-            cancel_invoices.button_compute(set_total=True)
-            cancel_invoices.signal_workflow('invoice_cancel')
-            cancel_invoices.message_post(
-                message, _("Invoice Cancelled"), 'comment')
+        cancel_invoices.button_compute(set_total=True)
+        cancel_invoices.signal_workflow('invoice_cancel')
+        for ci in cancel_invoices:
+            ci.message_post(message, _("Invoice Cancelled"), 'comment')
 
         return True
 
-    @api.one
+    @api.model
     def _cancel_confirm_invoices(self, invoice_cancel, invoice_confirm,
                                  keep_lines=None):
         """ Cancels given invoices and validate again given invoices.

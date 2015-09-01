@@ -28,11 +28,11 @@ class account_invoice_line(models.Model):
         'recurring.contract', 'Source contract')
 
     due_date = fields.Date(
-        compute='_get_invoice_lines_date_due',
+        related='invoice_id.date_due',
         readonly=True, store=True)
 
     state = fields.Selection(
-        compute='_get_invoice_lines_state',
+        related='invoice_id.state',
         readonly=True, store=True,
         selection=[('draft', 'Draft'),
                    ('proforma', 'Pro-forma'),
@@ -40,13 +40,3 @@ class account_invoice_line(models.Model):
                    ('open', 'Open'),
                    ('paid', 'Paid'),
                    ('cancel', 'Cancelled')])
-
-    @api.depends('invoice_id.state')
-    def _get_invoice_lines_state(self):
-        for invoice_line in self:
-            invoice_line.state = invoice_line.invoice_id.state
-
-    @api.depends('invoice_id.date_due')
-    def _get_invoice_lines_date_due(self):
-        for invoice_line in self:
-            invoice_line.due_date = invoice_line.invoice_id.date_due
