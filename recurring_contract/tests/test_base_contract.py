@@ -31,7 +31,6 @@ class test_base_contract(common.TransactionCase):
         property_account_payable = account_obj.search([
             ('type', '=', 'payable'),
             ('user_type', '=', account_type)]).ids[0]
-
         # Creation of partners
         partner_obj = self.env['res.partner']
         self.partners = partner_obj.create(
@@ -41,6 +40,7 @@ class test_base_contract(common.TransactionCase):
                 'property_account_payable': property_account_payable,
                 'notify_email': 'none',
                 'ref': '00001111',
+                'lang': 'en_US',
             })
         self.partners += partner_obj.create(
             {
@@ -49,6 +49,7 @@ class test_base_contract(common.TransactionCase):
                 'property_account_payable': property_account_payable,
                 'notify_email': 'none',
                 'ref': '00002222',
+                'lang': 'en_US',
             })
         self.partners += partner_obj.create({
             'name': 'Monsieur Bryan',
@@ -56,6 +57,7 @@ class test_base_contract(common.TransactionCase):
             'property_account_payable': property_account_payable,
             'notify_email': 'always',
             'ref': '00003333',
+            'lang': 'en_US',
         })
         # Creation of payement terms
         payment_term_obj = self.env['account.payment.term']
