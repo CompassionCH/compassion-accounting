@@ -253,7 +253,7 @@ class recurring_contract(models.Model):
                     if line.state in ('open', 'paid')] or [False])
                 if last_invoice_date:
                     # Call super for allowing rewind.
-                    super(recurring_contract, self).write({
+                    super(recurring_contract, contract).write({
                         'next_invoice_date':
                         last_invoice_date.strftime(DF)})
                     contract.update_next_invoice_date()

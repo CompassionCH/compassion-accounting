@@ -118,13 +118,13 @@ class contract_group(models.Model):
                 change_method()
 
         if generate_again:
-            invoicer_id = self.generate_invoices()
-            self.validate_invoices(invoicer_id)
+            invoicer = self.generate_invoices()
+            self.validate_invoices(invoicer)
 
         return res
 
     ##########################################################################
-    #                              ORM METHODS                               #
+    #                             PUBLIC METHODS                             #
     ##########################################################################
 
     @api.multi
@@ -133,15 +133,11 @@ class contract_group(models.Model):
         self.validate_invoices(invoicer)
         return invoicer
 
-    @api.one
+    @api.model
     def validate_invoices(self, invoicer):
         # Check if there is invoice waiting for validation
         if invoicer.invoice_ids:
             invoicer.validate_invoices()
-
-    ##########################################################################
-    #                             PUBLIC METHODS                             #
-    ##########################################################################
 
     def clean_invoices(self):
         """ Change method which cancels generated invoices and rewinds
