@@ -18,15 +18,15 @@ from datetime import datetime
 import time
 
 
-class account_journal_completion(models.TransientModel):
-
+class account_journal_completion(models.Model):
+    """ Add completion rules to journals """
     _inherit = 'account.journal'
 
     completion_rules = fields.Many2many('account.statement.completion.rule')
 
 
 class account_bank_statement_import(models.TransientModel):
-
+    """ Launch completion a statement import """
     _inherit = 'account.bank.statement.import'
 
     def _create_bank_statement(self, stmt_vals):
