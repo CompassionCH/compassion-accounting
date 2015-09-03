@@ -66,13 +66,14 @@ class recurring_contract(models.Model):
 
     reference = fields.Char(
         default="/", required=True, readonly=True,
-        states={'draft': [('readonly', False)]})
+        states={'draft': [('readonly', False)]}, copy=False)
     start_date = fields.Date(
         default=datetime.today().strftime(DF), required=True, readonly=True,
-        states={'draft': [('readonly', False)]}, track_visibility="onchange")
+        states={'draft': [('readonly', False)]},
+        copy=False, track_visibility="onchange")
     end_date = fields.Date(
         readonly=False, states={'terminated': [('readonly', True)]},
-        track_visibility="onchange")
+        track_visibility="onchange", copy=False)
     next_invoice_date = fields.Date(
         readonly=False, states={'draft': [('readonly', False)]},
         track_visibility="onchange")
@@ -86,7 +87,7 @@ class recurring_contract(models.Model):
         required=True, ondelete='cascade', track_visibility="onchange")
     invoice_line_ids = fields.One2many(
         'account.invoice.line', 'contract_id',
-        'Related invoice lines', readonly=True)
+        'Related invoice lines', readonly=True, copy=False)
     contract_line_ids = fields.One2many(
         'recurring.contract.line', 'contract_id',
         'Contract lines', track_visibility="onchange", copy=True)
@@ -94,7 +95,7 @@ class recurring_contract(models.Model):
         ('draft', _('Draft')),
         ('active', _('Active')),
         ('terminated', _('Terminated'))], 'Status', default='draft',
-        select=True, readonly=True, track_visibility='onchange',
+        select=True, readonly=True, track_visibility='onchange', copy=False,
         help=_(" * The 'Draft' status is used when a user is encoding a "
                "new and unconfirmed Contract.\n"
                "* The 'Active' status is used when the contract is "
@@ -165,19 +166,9 @@ class recurring_contract(models.Model):
     @api.one
     def copy(self, default=None):
         default = default or dict()
-        today = datetime.today()
-        old_contract = self
-        next_invoice_date = datetime.strptime(old_contract.next_invoice_date,
-                                              DF)
-        next_invoice_date = next_invoice_date.replace(month=today.month)
-        default.update({
-            'state': 'draft',
-            'reference': '/',
-            'start_date': today.strftime(DF),
-            'end_date': False,
-            'next_invoice_date': next_invoice_date.strftime(DF),
-            'invoice_line_ids': False,
-        })
+        next_invoice_date = datetime.strptime(
+            self.last_paid_invoice_date, DF) + relativedelta(months=1)
+        default['next_invoice_date'] = next_invoice_date.strftime(DF)
         return super(recurring_contract, self).copy(default)
 
     @api.one
@@ -245,17 +236,15 @@ class recurring_contract(models.Model):
         """ Rewinds the next invoice date of contract after the last
         generated invoice. No open invoices exist after that date. """
         gen_states = self.env['recurring.contract.group']._get_gen_states()
-        for contract in self:
+        for contract in self.with_context(allow_rewind=True):
             if contract.state in gen_states:
                 last_invoice_date = max([
                     datetime.strptime(line.invoice_id.date_invoice, DF) for
                     line in contract.invoice_line_ids
                     if line.state in ('open', 'paid')] or [False])
                 if last_invoice_date:
-                    # Call super for allowing rewind.
-                    super(recurring_contract, contract).write({
-                        'next_invoice_date':
-                        last_invoice_date.strftime(DF)})
+                    contract.write({
+                        'next_invoice_date': last_invoice_date.strftime(DF)})
                     contract.update_next_invoice_date()
                 else:
                     # No open/paid invoices, look for cancelled ones
@@ -264,7 +253,7 @@ class recurring_contract(models.Model):
                         for line in contract.invoice_line_ids
                         if line.state == 'cancel'] or [False])
                     if next_invoice_date:
-                        super(recurring_contract, self).write({
+                        contract.write({
                             'next_invoice_date':
                             next_invoice_date.strftime(DF)})
 
@@ -439,7 +428,8 @@ class recurring_contract(models.Model):
         new_invoice_date = datetime.strptime(new_invoice_date, DF)
         if self.next_invoice_date:
             next_invoice_date = datetime.strptime(self.next_invoice_date, DF)
-            if next_invoice_date > new_invoice_date:
+            if next_invoice_date > new_invoice_date and not \
+                    self.env.context.get('allow_rewind'):
                 raise exceptions.Warning(
                     'Error', _('You cannot rewind the next invoice date.'))
         return True
