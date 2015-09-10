@@ -166,7 +166,7 @@ class recurring_contract(models.Model):
     @api.one
     def copy(self, default=None):
         default = default or dict()
-        if self.last_invoice_date:
+        if self.last_paid_invoice_date:
             next_invoice_date = datetime.strptime(
                 self.last_paid_invoice_date, DF) + relativedelta(months=1)
         else:
