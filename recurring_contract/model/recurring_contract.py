@@ -295,7 +295,7 @@ class recurring_contract(models.Model):
             [('partner_id', '=', self.partner_id.id)])
         if len(group_ids) == 1:
             self.group_id = group_ids[0]
-        else:    
+        else:
             self.group_id.unlink()
 
     ##########################################################################
