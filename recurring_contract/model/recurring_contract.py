@@ -287,10 +287,10 @@ class recurring_contract(models.Model):
         """
         group_ids = self.env['recurring.contract.group'].search(
             [('partner_id', '=', self.partner_id.id)])
-
-        self.group_id = None
         if len(group_ids) == 1:
             self.group_id = group_ids[0]
+        else:
+            self.group_id = False
 
     ##########################################################################
     #                            WORKFLOW METHODS                            #
