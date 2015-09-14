@@ -296,7 +296,7 @@ class recurring_contract(models.Model):
         if len(group_ids) == 1:
             self.group_id = group_ids[0]
         else:
-            self.group_id = None
+            self.group_id = False
 
     ##########################################################################
     #                            WORKFLOW METHODS                            #
