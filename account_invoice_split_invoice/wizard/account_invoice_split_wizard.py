@@ -36,8 +36,8 @@ class split_invoice_wizard(models.TransientModel):
         if self.invoice_line_ids:
             old_invoice = self.invoice_line_ids[0].invoice_id
             # to_move_lines = self.invoice_line_ids.filtered('split')
-            invoice = self._copy_invoice(old_invoice)
             if old_invoice.state in ('draft', 'open'):
+                invoice = self._copy_invoice(old_invoice)
                 self.invoice_line_ids.write({'invoice_id': invoice.id})
                 if old_invoice.state == 'open':
                     # Cancel and validate again invoices
