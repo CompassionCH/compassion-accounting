@@ -178,7 +178,7 @@ class recurring_contract(models.Model):
 
     @api.one
     def unlink(self):
-        if self.state not in ('draft', 'terminated'):
+        if self.state == 'active':
             raise exceptions.Warning(
                 'UserError',
                 _('You cannot delete a contract that is still active. '
