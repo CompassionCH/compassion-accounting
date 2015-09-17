@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenERP Server 7.0-20140602-231022\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-06-09 12:47+0000\n"
-"PO-Revision-Date: 2015-06-09 15:13+0100\n"
+"POT-Creation-Date: 2015-09-15 15:42+0000\n"
+"PO-Revision-Date: 2015-09-17 10:43+0100\n"
 "Last-Translator: Emanuel Cino <ecino@compassion.ch>\n"
 "Language-Team: \n"
 "Language: fr_CH\n"
@@ -18,46 +18,9 @@ msgstr ""
 "X-Generator: Poedit 1.6.4\n"
 
 #. module: account_statement_completion_compassion
-#: code:addons/account_statement_completion_compassion/model/statement.py:212
-#, python-format
-msgid "A field is required"
-msgstr "Un champs est requis"
-
-#. module: account_statement_completion_compassion
-#: model:ir.model,name:account_statement_completion_compassion.model_account_bank_statement_line
-msgid "Bank Statement Line"
-msgstr "Ligne de relevé"
-
-#. module: account_statement_completion_compassion
-#: field:account.bank.statement.line,user_id:0
-#: code:addons/account_statement_completion_compassion/model/statement.py:101
-#, python-format
-msgid "Ambassador"
-msgstr "Ambassadeur"
-
-#. module: account_statement_completion_compassion
-#: field:account.bank.statement,recurring_invoicer_id:0
-msgid "Invoicer"
-msgstr "Générateur de factures"
-
-#. module: account_statement_completion_compassion
-#: field:account.bank.statement.line,contract_id:0
-#: code:addons/account_statement_completion_compassion/model/statement.py:100
-#, python-format
-msgid "Sponsorship"
-msgstr "Parrainage"
-
-#. module: account_statement_completion_compassion
-#: view:account.invoice:0
-msgid "Show invoices"
-msgstr "Factures"
-
-#. module: account_statement_completion_compassion
-#: field:account.bank.statement.line,product_id:0
-#: code:addons/account_statement_completion_compassion/model/statement.py:99
-#, python-format
-msgid "Product"
-msgstr "Produit"
+#: field:account.bank.statement.line,already_completed:0
+msgid "Auto-completed"
+msgstr "Complété"
 
 #. module: account_statement_completion_compassion
 #: model:ir.model,name:account_statement_completion_compassion.model_account_bank_statement
@@ -65,37 +28,114 @@ msgid "Bank Statement"
 msgstr "Relevé bancaire"
 
 #. module: account_statement_completion_compassion
-#: model:ir.model,name:account_statement_completion_compassion.model_account_statement_completion_rule
-msgid "account.statement.completion.rule"
-msgstr "account.statement.completion.rule"
+#: model:ir.model,name:account_statement_completion_compassion.model_account_bank_statement_line
+msgid "Bank Statement Line"
+msgstr "Ligne de relevé"
 
 #. module: account_statement_completion_compassion
-#: field:account.bank.statement.line,file_name:0
-#: field:account.bank.statement.line,ir_attachment:0
-msgid "Attachment"
-msgstr "Pièce jointe"
+#: view:account.bank.statement:account_statement_completion_compassion.bank_statement_view_form_compassion
+msgid "Cancel Statement"
+msgstr "Annuler le relevé"
 
 #. module: account_statement_completion_compassion
-#: field:account.bank.statement.line,invoice_id:0
+#: view:account.journal:account_statement_completion_compassion.view_account_journal_completion_rule_form
+msgid "Completion Rules"
+msgstr "Règles de complétion"
+
+#. module: account_statement_completion_compassion
+#: field:account.journal,completion_rules:0
+msgid "Completion rules"
+msgstr "Règles de complétion"
+
+#. module: account_statement_completion_compassion
+#: model:ir.model,name:account_statement_completion_compassion.model_account_bank_statement_import
+msgid "Import Bank Statement"
+msgstr "Import de Relevé bancaire"
+
+#. module: account_statement_completion_compassion
 #: model:ir.model,name:account_statement_completion_compassion.model_account_invoice
 msgid "Invoice"
+msgstr "Facture"
+
+#. module: account_statement_completion_compassion
+#: field:account.bank.statement,recurring_invoicer_id:0
+msgid "Invoicer"
+msgstr "Générateur de factures"
+
+#. module: account_statement_completion_compassion
+#: model:ir.model,name:account_statement_completion_compassion.model_account_journal
+msgid "Journal"
+msgstr "Journal"
+
+#. module: account_statement_completion_compassion
+#: help:account.statement.completion.rule,sequence:0
+msgid "Lower means parsed first."
+msgstr "Les plus petits sont parsés les premiers"
+
+#. module: account_statement_completion_compassion
+#: field:account.statement.completion.rule,function_to_call:0
+msgid "Method"
+msgstr "Méthode"
+
+#. module: account_statement_completion_compassion
+#: field:account.statement.completion.rule,name:0
+msgid "Name"
+msgstr "Nom"
+
+#. module: account_statement_completion_compassion
+#: field:account.bank.statement.line,related_files:0
+msgid "Related files"
+msgstr "Fichiers reliés"
+
+#. module: account_statement_completion_compassion
+#: field:account.statement.completion.rule,journal_ids:0
+msgid "Related statement journal"
+msgstr "Journal relié"
+
+#. module: account_statement_completion_compassion
+#: field:account.statement.completion.rule,sequence:0
+msgid "Sequence"
+msgstr "Séquence"
+
+#. module: account_statement_completion_compassion
+#: view:account.bank.statement:account_statement_completion_compassion.bank_statement_view_form_compassion
+msgid "Show generated invoices"
+msgstr "Factures générées"
+
+#. module: account_statement_completion_compassion
+#: view:account.invoice:account_statement_completion_compassion.invoice_view_form_compassion
+msgid "Show invoices"
 msgstr "Factures"
 
 #. module: account_statement_completion_compassion
-#: view:account.invoice:0
+#: view:account.invoice:account_statement_completion_compassion.invoice_view_form_compassion
 msgid "Show unreconciled lines"
 msgstr "Transactions non lettrées"
 
 #. module: account_statement_completion_compassion
-#: view:account.bank.statement:0
-msgid "Generated invoices"
-msgstr "Factures générées"
+#: view:account.statement.completion.rule:account_statement_completion_compassion.statement_st_completion_rule_view_tree
+#: model:ir.actions.act_window,name:account_statement_completion_compassion.action_st_completion_rule_tree
+#: model:ir.ui.menu,name:account_statement_completion_compassion.menu_action_st_completion_rule_tree_menu
+msgid "Statement Completion Rule"
+msgstr "Règle de complétion de relevé"
 
-#. module: account_statement_completion_compassion
-#: code:addons/account_statement_completion_compassion/model/statement.py:213
-#, python-format
-msgid "Add a Sponsorship"
-msgstr "Ajouter un Parrainage"
+#~ msgid "A field is required"
+#~ msgstr "Un champs est requis"
+
+#~ msgid "Ambassador"
+#~ msgstr "Ambassadeur"
+
+#~ msgid "Sponsorship"
+#~ msgstr "Parrainage"
+
+#~ msgid "Product"
+#~ msgstr "Produit"
+
+#~ msgid "Attachment"
+#~ msgstr "Pièce jointe"
+
+#~ msgid "Add a Sponsorship"
+#~ msgstr "Ajouter un Parrainage"
 
 #~ msgid "Missing product"
 #~ msgstr "Produit manquant"
