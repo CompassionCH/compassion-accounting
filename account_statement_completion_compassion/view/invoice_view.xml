@@ -10,8 +10,15 @@
             <field name="arch" type="xml">
                 <xpath expr="//sheet[@string='Invoice']/h1" position="after">
                     <div class="oe_right oe_button_box" name="buttons">
-                        <button name="show_transactions" string="Show invoices" type="object" />
-                        <button name="show_move_lines" string="Show unreconciled lines" type="object" />
+                        <button name="show_transactions" type="object" string="Invoice Lines" class="oe_stat_button" icon="fa-list-alt" />
+                        <button name="show_move_lines" type="object" class="oe_stat_button" icon="fa-exchange">
+                            <div>
+                                <strong>
+                                    <field name="unrec_items" />
+                                </strong>
+                                <br/>Unreconciled Items
+                            </div>
+                        </button>
                     </div>
                 </xpath>
             </field>

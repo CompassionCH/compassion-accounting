@@ -9,7 +9,7 @@
 #
 ##############################################################################
 
-from openerp import api, models
+from openerp import api, models, fields
 
 
 class account_invoice(models.Model):
@@ -18,11 +18,13 @@ class account_invoice(models.Model):
 
     _inherit = "account.invoice"
 
-    @api.one
+    unrec_items = fields.Integer(related='partner_id.unrec_items')
+
+    @api.multi
     def show_transactions(self):
         return self.partner_id.show_lines()
 
-    @api.one
+    @api.multi
     def show_move_lines(self):
         partner_id = self.partner_id.id
         action = {
