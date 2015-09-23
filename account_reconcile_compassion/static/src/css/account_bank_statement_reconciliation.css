@@ -3,7 +3,7 @@
 }
 
 .popover {
-    max-width: none;
+    max-width: 600px;
     width: 60%;
 }
 
