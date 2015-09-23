@@ -26,21 +26,20 @@ openerp.account_reconcile_compassion = function (instance) {
                 res_id: this.partner_id,
             });
         },
-        
-         // Capture when product is selected to put the corresponding account.
+
+         // Capture when product is selected to put the corresponding account and analytic account.
         formCreateInputChanged: function(elt, val) {
             var line_created_being_edited = this.get("line_created_being_edited");
             var self = this;
 
             if (elt === this.product_id_field) {
-                var model_product = new instance.web.Model("product.product");
-                var product = new $.Deferred();
                 var product_id = elt.get("value");
-                product = $.when(model_product.call("read", [product_id, ['property_account_income']])).then(function(data){
-                    self.account_id_field.set_value(data.property_account_income[0]);
+                $.when(self.model_bank_statement_line.call("product_id_changed", [product_id])).then(function(data){
+                    self.account_id_field.set_value(data['account_id']);
+                    self.analytic_account_id_field.set_value(data['analytic_id']);
                 });
             }
-            
+
             this._super(elt, val);
         },
         
@@ -54,7 +53,7 @@ openerp.account_reconcile_compassion = function (instance) {
             });
             this._super()
         },
-        
+
         // Return values of new fields to python.
         prepareCreatedMoveLineForPersisting: function(line) {
             var dict = this._super(line);
@@ -64,12 +63,12 @@ openerp.account_reconcile_compassion = function (instance) {
             return dict;
         },
     })
-    
+
     instance.web.account.bankStatementReconciliation.include({
         events: _.extend({
             "click .button_do_all": "reconcileAll",
         }, instance.web.account.bankStatementReconciliation.prototype.events),
-        
+
         // Add fields in reconcile view
         init: function(parent, context) {
             this._super(parent, context);
@@ -118,7 +117,7 @@ openerp.account_reconcile_compassion = function (instance) {
                 }
             };
         },
-        
+
         // Add product_id to statement operations.
         start: function() {
             var self = this;
@@ -132,7 +131,7 @@ openerp.account_reconcile_compassion = function (instance) {
                 })
             });
         },
-        
+
         // Change behaviour when clicking on name of bank statement
         statementNameClickHandler: function() {
             this.do_action({
@@ -186,7 +185,7 @@ openerp.account_reconcile_compassion = function (instance) {
                 }
             });
         },
-        
+
         load_list: function() {
             var self = this;
             var tmp = this._super.apply(this, arguments);
@@ -206,7 +205,7 @@ openerp.account_reconcile_compassion = function (instance) {
                     self.open_partner();
                 });
             }
-            
+
             return tmp;
         },
         reconcile_fund: function() {
@@ -248,7 +247,7 @@ openerp.account_reconcile_compassion = function (instance) {
                 });
             });
         },
-        
+
         open_partner : function() {
             this.do_action({
                 views: [[false, 'form']],
@@ -260,6 +259,6 @@ openerp.account_reconcile_compassion = function (instance) {
                 res_id: this.partners[this.current_partner][0],
             });
         }
-        
+
     });
 };

@@ -115,6 +115,20 @@ class bank_statement_line(models.Model):
 
         super(bank_statement_line, self).process_reconciliation(mv_line_dicts)
 
+    @api.model
+    def product_id_changed(self, product_id):
+        """ Called when a product is selected for counterpart.
+        Returns useful info to fullfill other fields.
+        """
+        analytic_id = self.env['account.analytic.default'].account_get(
+            product_id).analytic_id.id
+        account_id = self.env['product.product'].browse(
+            product_id).property_account_income.id
+        return {
+            'analytic_id': analytic_id,
+            'account_id': account_id
+        }
+
     ##########################################################################
     #                             PRIVATE METHODS                            #
     ##########################################################################
