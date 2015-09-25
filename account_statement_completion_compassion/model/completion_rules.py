@@ -9,7 +9,7 @@
 #
 ##############################################################################
 
-from openerp import api, exceptions, models, fields
+from openerp import api, models, fields
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 from openerp.addons.sponsorship_compassion.model.product import \
     GIFT_CATEGORY, GIFT_NAMES
@@ -221,8 +221,8 @@ class StatementCompletionRule(models.Model):
 
     def get_from_lsv_dd(self, st_line):
         """ If line is a LSV or DD credit, change the account to 1098. """
-        label = st_line.ref.replace('\n', ' ') if st_line.ref != '/' else \
-            st_line.name.replace('\n', ' ')
+        label = st_line.name.replace('\n', ' ') if st_line.name != '/' else \
+            st_line.ref.replace('\n', ' ')
         lsv_dd_strings = [u'BULLETIN DE VERSEMENT ORANGE',
                           u'ORDRE DEBIT DIRECT',
                           u'Crèdit LSV']
@@ -260,12 +260,12 @@ class StatementCompletionRule(models.Model):
 
     def get_sponsor_name(self, st_line):
         res = {}
-        reference = st_line.ref
+        name = st_line.name
         sender_lines = []
 
-        sender_lines.append(reference.replace('\n', ' ').split(
+        sender_lines.append(name.replace('\n', ' ').split(
             ' EXPÉDITEUR: '.decode('utf8')))
-        sender_lines.append(reference.replace('\n', ' ').split(
+        sender_lines.append(name.replace('\n', ' ').split(
             " DONNEUR D'ORDRE: ".decode('utf8')))
 
         id_line1 = 1 if len(sender_lines[0]) > 1 else False

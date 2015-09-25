@@ -143,7 +143,9 @@ class bank_statement_line(models.Model):
 
         # Generate a unique bvr_reference
         ref = self.ref
-        if not ref or len(ref) < 26:
+        if ref and len(ref) > 27:
+            ref = mod10r(ref[:26])
+        elif len(ref) < 26:
             ref = mod10r((self.date.replace('-', '') + str(
                 self.statement_id.id) + str(self.id)).ljust(26, '0'))
 
