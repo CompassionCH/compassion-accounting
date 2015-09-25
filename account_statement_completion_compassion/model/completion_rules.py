@@ -16,6 +16,9 @@ from openerp.addons.sponsorship_compassion.model.product import \
 
 from datetime import datetime
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class account_journal_completion(models.Model):
@@ -113,7 +116,6 @@ class StatementCompletionRule(models.Model):
             method = getattr(self, rule.function_to_call)
             result = method(stmt_line)
             if result:
-                result['already_completed'] = True
                 return result
         return None
 
@@ -147,9 +149,9 @@ class StatementCompletionRule(models.Model):
                 partner = partner_obj._find_accounting_partner(partner)
                 res['partner_id'] = partner.id
             else:
-                raise exceptions.Warning(
-                    ('Line named "%s" (Ref:%s) was matched by more '
-                     'than one partner while looking on partners') %
+                logger.warning(
+                    'Line named "%s" (Ref:%s) was matched by more '
+                    'than one partner while looking on partners' %
                     (st_line['name'], st_line['ref']))
         return res
 
@@ -208,10 +210,10 @@ class StatementCompletionRule(models.Model):
                     partner = invoices[0].partner_id
                     for invoice in invoices:
                         if invoice.partner_id.id != partner.id:
-                            raise exceptions.Warning(
-                                ('Line named "%s" (Ref:%s) was matched by '
-                                 'more than one invoice while looking on open'
-                                 ' supplier invoices') %
+                            logger.warning(
+                                'Line named "%s" (Ref:%s) was matched by '
+                                'more than one invoice while looking on open'
+                                ' supplier invoices' %
                                 (st_line.name, st_line.ref))
                     res['partner_id'] = partner_obj._find_accounting_partner(
                         partner).id
