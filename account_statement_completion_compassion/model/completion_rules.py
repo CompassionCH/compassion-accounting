@@ -370,13 +370,13 @@ class StatementCompletionRule(models.Model):
     def _find_product_id(self, ref):
         """ Finds what kind of payment it is,
             based on the reference of the statement line. """
-        product_obj = self.env['product.product']
+        product_obj = self.env['product.product'].with_context(lang='en_US')
         payment_type = int(ref[21])
         product = 0
         if payment_type in range(1, 6):
             # Sponsor Gift
             products = product_obj.search(
-                [('name_template', '=', GIFT_NAMES[payment_type-1])])
+                [('name', '=', GIFT_NAMES[payment_type-1])])
             product = products[0] if products else 0
         elif payment_type in range(6, 8):
             # Fund donation
