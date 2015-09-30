@@ -27,7 +27,7 @@ openerp.account_reconcile_compassion = function (instance) {
             });
         },
 
-         // Capture when product is selected to put the corresponding account and analytic account.
+        // Capture when product is selected to put the corresponding account and analytic account.
         formCreateInputChanged: function(elt, val) {
             var line_created_being_edited = this.get("line_created_being_edited");
             var self = this;
@@ -43,7 +43,7 @@ openerp.account_reconcile_compassion = function (instance) {
             this._super(elt, val);
         },
         
-        // Set domain of sponsorship field
+        // Set domain of sponsorship field and auto-find sponsorship for gift payments
         initializeCreateForm: function() {
             var self = this;
             _.each(self.create_form, function(field) {
@@ -52,6 +52,30 @@ openerp.account_reconcile_compassion = function (instance) {
                 }
             });
             this._super()
+
+            var line_name = self.st_line.name;
+            var child_gift_match = line_name.match(/\[.+\]/);
+            if (child_gift_match) {
+                // Search Gift Product
+                var gift_name = line_name.replace(child_gift_match[0], "");
+                var product_obj = new instance.web.Model("product.product");
+                var product_search = [['name', 'like', gift_name]];
+                $.when(product_obj.call("search", [product_search])).then(function(product_ids){
+                    if (product_ids) {
+                        self.product_id_field.set_value(product_ids[0]);
+                    }
+                });
+                
+                // Search sponsorship
+                var child_code = child_gift_match[0].replace("[", "").replace("]", "").match(/\w+/)[0];
+                var sponsorship_obj = new instance.web.Model("recurring.contract");
+                var sponsorship_search = [['child_code', 'like', child_code]];
+                $.when(sponsorship_obj.call("search", [sponsorship_search])).then(function(sponsorship_ids){
+                    if (sponsorship_ids) {
+                        self.sponsorship_id_field.set_value(sponsorship_ids[0]);
+                    }
+                });
+            }
         },
 
         // Return values of new fields to python.
