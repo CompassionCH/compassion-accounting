@@ -34,7 +34,7 @@ class account_analytic_default(orm.Model):
         """ Rewrite method to return only normal type of defaults. """
         return self._get_default(
             cr, uid, 'default', product_id, partner_id, user_id, date,
-            company_id, context)
+            company_id, context=context)
 
     def get_attribution(self, cr, uid, analytic_id=None, account_id=None,
                         date=None, context=None):
@@ -95,8 +95,8 @@ class account_analytic_default(orm.Model):
         WHERE type IS NULL""")
 
     def _get_default(self, cr, uid, type, product_id=None, partner_id=None,
-                     user_id=None, date=None, analytic_id=None,
-                     account_id=None, context=None):
+                     user_id=None, date=None, company_id=None,
+                     analytic_id=None, account_id=None, context=None):
         domain = [('type', '=', type)]
         if product_id:
             domain += ['|', ('product_id', '=', product_id)]
@@ -106,6 +106,9 @@ class account_analytic_default(orm.Model):
         domain += [('partner_id', '=', False)]
         if user_id:
             domain += ['|', ('user_id', '=', user_id)]
+        if company_id:
+            domain += ['|', ('company_id', '=', company_id)]
+        domain += [('company_id', '=', False)]
         domain += [('user_id', '=', False)]
         if date:
             domain += ['|', ('date_start', '<=', date),
