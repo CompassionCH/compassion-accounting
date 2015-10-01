@@ -38,11 +38,14 @@ class split_invoice_wizard(models.TransientModel):
             # to_move_lines = self.invoice_line_ids.filtered('split')
             if old_invoice.state in ('draft', 'open'):
                 invoice = self._copy_invoice(old_invoice)
-                self.invoice_line_ids.write({'invoice_id': invoice.id})
-                if old_invoice.state == 'open':
-                    # Cancel and validate again invoices
+                was_open = old_invoice.state == 'open'
+                if was_open:
+                    # Workaround to fix cache issues
+                    self.env.invalidate_all()
                     old_invoice.action_cancel()
                     old_invoice.action_cancel_draft()
+                self.invoice_line_ids.write({'invoice_id': invoice.id})
+                if was_open:
                     old_invoice.signal_workflow('invoice_open')
                     invoice.signal_workflow('invoice_open')
         return invoice
