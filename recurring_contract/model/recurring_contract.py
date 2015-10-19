@@ -231,6 +231,8 @@ class recurring_contract(models.Model):
         else:
             to_remove_invl.unlink()
 
+        # Refresh cache before calling workflows
+        self.env.invalidate_all()
         # Invoices to set back in open state
         renew_invs = invoices - empty_invoices
         self._cancel_confirm_invoices(invoices, renew_invs, keep_lines)
