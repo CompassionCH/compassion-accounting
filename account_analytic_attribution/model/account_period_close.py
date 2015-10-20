@@ -12,7 +12,11 @@ from openerp.osv import orm
 
 
 class account_period_close(orm.TransientModel):
-    """ Launch analytic attribution when period is closed. """
+    """
+    When a period is closed:
+    - Transfer all open invoices' moves to the next opening period.
+      This allows to still cancel them after closing the period.
+    - Launch analytic attribution. """
     _inherit = "account.period.close"
 
     def data_save(self, cr, uid, ids, context=None):
@@ -20,6 +24,8 @@ class account_period_close(orm.TransientModel):
             'account.analytic.attribution.wizard')
         analytic_attribution_id = analytic_attribution_obj.create(
             cr, uid, dict(), context)
+        analytic_attribution_obj.transfer_moves_to_opening_period(
+            cr, uid, analytic_attribution_id, context)
         res = analytic_attribution_obj.perform_attribution(
             cr, uid, analytic_attribution_id, context)
         super(account_period_close, self).data_save(cr, uid, ids, context)
@@ -27,7 +33,11 @@ class account_period_close(orm.TransientModel):
 
 
 class account_fiscalyear_close(orm.TransientModel):
-    """ Launch analytic attribution when fiscalyear is closed. """
+    """
+    When a fiscalyear is closed:
+    - Transfer all open invoices' moves to the next opening period.
+      This allows to still cancel them after closing the period.
+    - Launch analytic attribution. """
     _inherit = "account.fiscalyear.close"
 
     def data_save(self, cr, uid, ids, context=None):
@@ -38,6 +48,8 @@ class account_fiscalyear_close(orm.TransientModel):
         analytic_attribution_id = analytic_attribution_obj.create(
             cr, uid, {
                 'fiscalyear_id': fy_id}, context)
+        analytic_attribution_obj.transfer_moves_to_opening_period(
+            cr, uid, analytic_attribution_id, context)
         res = analytic_attribution_obj.perform_attribution(
             cr, uid, analytic_attribution_id, context)
         super(account_fiscalyear_close, self).data_save(cr, uid, ids, context)
@@ -45,7 +57,11 @@ class account_fiscalyear_close(orm.TransientModel):
 
 
 class account_fiscalyear_state_close(orm.TransientModel):
-    """ Launch analytic attribution when fiscalyear is closed. """
+    """
+    When a fiscalyear is closed:
+    - Transfer all open invoices' moves to the next opening period.
+      This allows to still cancel them after closing the period.
+    - Launch analytic attribution. """
     _inherit = "account.fiscalyear.close.state"
 
     def data_save(self, cr, uid, ids, context=None):
@@ -56,6 +72,8 @@ class account_fiscalyear_state_close(orm.TransientModel):
         analytic_attribution_id = analytic_attribution_obj.create(
             cr, uid, {
                 'fiscalyear_id': fy_id}, context)
+        analytic_attribution_obj.transfer_moves_to_opening_period(
+            cr, uid, analytic_attribution_id, context)
         res = analytic_attribution_obj.perform_attribution(
             cr, uid, analytic_attribution_id, context)
         super(account_fiscalyear_state_close, self).data_save(cr, uid, ids,
