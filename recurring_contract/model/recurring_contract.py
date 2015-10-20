@@ -198,16 +198,7 @@ class recurring_contract(models.Model):
             only line in the invoice, we cancel the invoice. In the other
             case, we have to revalidate the invoice to update the move lines.
         """
-        invl_search = [('contract_id', 'in', self.ids),
-                       ('state', 'not in', ('paid', 'cancel'))]
-        if since_date:
-            invl_search.append(('due_date', '>=', since_date))
-        if to_date:
-            invl_search.append(('due_date', '<=', to_date))
-
-        # Find all unpaid invoice lines after the given date
-        inv_lines = self.env['account.invoice.line'].search(invl_search)
-
+        inv_lines = self._get_invoice_lines_to_clean(since_date, to_date)
         invoices = inv_lines.mapped('invoice_id')
         empty_invoices = self.env['account.invoice']
         to_remove_invl = self.env['account.invoice.line']
@@ -440,3 +431,15 @@ class recurring_contract(models.Model):
                 raise exceptions.Warning(
                     'Error', _('You cannot rewind the next invoice date.'))
         return True
+
+    def _get_invoice_lines_to_clean(self, since_date, to_date):
+        """ Find all unpaid invoice lines in the given period. """
+        invl_search = [('contract_id', 'in', self.ids),
+                       ('state', 'not in', ('paid', 'cancel')),
+                       ('invoice_id.period_id.state', '!=', 'done')]
+        if since_date:
+            invl_search.append(('due_date', '>=', since_date))
+        if to_date:
+            invl_search.append(('due_date', '<=', to_date))
+
+        return self.env['account.invoice.line'].search(invl_search)
