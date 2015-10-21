@@ -172,7 +172,8 @@ class recurring_contract(models.Model):
         else:
             today = datetime.today()
             next_invoice_date = datetime.strptime(self.next_invoice_date, DF)
-            next_invoice_date = next_invoice_date.replace(month=today.month)
+            next_invoice_date = next_invoice_date.replace(
+                month=today.month, year=today.year)
         default['next_invoice_date'] = next_invoice_date.strftime(DF)
         return super(recurring_contract, self).copy(default)
 
@@ -291,7 +292,7 @@ class recurring_contract(models.Model):
 
     @api.multi
     def button_generate_invoices(self):
-        return self.group_id.button_generate_invoices()
+        return self.mapped('group_id').button_generate_invoices()
 
     @api.multi
     def contract_draft(self):
@@ -436,6 +437,7 @@ class recurring_contract(models.Model):
         """ Find all unpaid invoice lines in the given period. """
         invl_search = [('contract_id', 'in', self.ids),
                        ('state', 'not in', ('paid', 'cancel')),
+                       '|', ('invoice_id.period_id', '=', False),
                        ('invoice_id.period_id.state', '!=', 'done')]
         if since_date:
             invl_search.append(('due_date', '>=', since_date))
