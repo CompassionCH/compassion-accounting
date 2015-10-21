@@ -31,7 +31,8 @@ class bank_statement_line(models.Model):
         """
         res = super(bank_statement_line, self).get_reconciliation_proposition(
             st_line, excluded_ids)
-        filtered_res = [data for data in res if data['ref'] == st_line.ref]
+        filtered_res = [data for data in res if data['ref'] == st_line.ref or
+                        data['account_type'] == 'payable']
         return filtered_res
 
     @api.model
