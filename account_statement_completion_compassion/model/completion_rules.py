@@ -342,6 +342,8 @@ class StatementCompletionRule(models.Model):
 
         # Setup invoice data
         invoicer_id = st_line.statement_id.recurring_invoicer_id.id
+        journal_id = self.env['account.journal'].search(
+            [('type', '=', 'sale')], limit=1).id
         if not invoicer_id:
             invoicer_id = self.env['recurring.invoicer'].create(
                 {'source': st_line.statement_id._name}).id
@@ -351,7 +353,7 @@ class StatementCompletionRule(models.Model):
             'account_id': partner.property_account_receivable.id,
             'type': 'out_invoice',
             'partner_id': partner.id,
-            'journal_id': st_line.statement_id.journal_id.id,
+            'journal_id': journal_id,
             'date_invoice': st_line.date,
             'payment_term': 1,  # Immediate payment
             'bvr_reference': st_line.ref,

@@ -91,7 +91,7 @@ class bank_statement_line(models.Model):
                 # to put leftover amount in it, if any exists.
                 invoice = self.env['account.move.line'].browse(
                     mv_line_id).invoice
-                if invoice:
+                if invoice and invoice.period_id.state != 'done':
                     partner_invoices[partner_id] = invoice
                     old_counterparts[invoice.id] = mv_line_id
             index += 1
@@ -132,7 +132,6 @@ class bank_statement_line(models.Model):
     ##########################################################################
     #                             PRIVATE METHODS                            #
     ##########################################################################
-    @api.model
     def _create_invoice_from_mv_lines(self, mv_line_dicts, invoice=None):
         # Get the attached recurring invoicer
         invoicer = self.statement_id.recurring_invoicer_id
@@ -173,8 +172,12 @@ class bank_statement_line(models.Model):
             # Setup a new invoice if no existing invoice is found
             journal_id = self.env['account.journal'].search(
                 [('type', '=', 'sale')], limit=1).id
-            payment_term_id = self.env.ref(
-                'contract_compassion.payment_term_virement').id
+            if self.journal_id.code == 'BVR':
+                payment_term_id = self.env.ref(
+                    'contract_compassion.payment_term_bvr').id
+            else:
+                payment_term_id = self.env.ref(
+                    'contract_compassion.payment_term_virement').id
             inv_data = {
                 'account_id': self.partner_id.property_account_receivable.id,
                 'type': 'out_invoice',
