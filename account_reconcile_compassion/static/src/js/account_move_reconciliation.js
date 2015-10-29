@@ -34,7 +34,7 @@ openerp.account_reconcile_compassion = function (instance) {
 
             if (elt === this.product_id_field) {
                 var product_id = elt.get("value");
-                $.when(self.model_bank_statement_line.call("product_id_changed", [product_id])).then(function(data){
+                $.when(self.model_bank_statement_line.call("product_id_changed", [product_id, self.st_line.date])).then(function(data){
                     self.account_id_field.set_value(data['account_id']);
                     self.analytic_account_id_field.set_value(data['analytic_id']);
                 });
@@ -69,7 +69,7 @@ openerp.account_reconcile_compassion = function (instance) {
                 // Search sponsorship
                 var child_code = child_gift_match[0].replace("[", "").replace("]", "").match(/\w+/)[0];
                 var sponsorship_obj = new instance.web.Model("recurring.contract");
-                var sponsorship_search = [['child_code', 'like', child_code]];
+                var sponsorship_search = [['child_code', 'like', child_code], ['partner_id', '=', self.st_line.partner_id]];
                 $.when(sponsorship_obj.call("search", [sponsorship_search])).then(function(sponsorship_ids){
                     if (sponsorship_ids) {
                         self.sponsorship_id_field.set_value(sponsorship_ids[0]);
