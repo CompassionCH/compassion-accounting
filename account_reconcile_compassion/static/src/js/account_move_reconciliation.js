@@ -15,7 +15,7 @@ openerp.account_reconcile_compassion = function (instance) {
             "click .partner_name": "open_partner",
         }, instance.web.account.bankStatementReconciliationLine.prototype.events),
         
-        open_partner : function() {
+        open_partner: function() {
             this.do_action({
                 views: [[false, 'form']],
                 view_type: 'form',
@@ -96,6 +96,21 @@ openerp.account_reconcile_compassion = function (instance) {
         // Add fields in reconcile view
         init: function(parent, context) {
             this._super(parent, context);
+
+            // Extend an arbitrary field/widget with an init function that
+            // will set the options attribute to a given object.
+            // This is useful to pass arguments for a field when using the
+            // web_m2x_options module.
+            function fieldWithOptions(fieldClass, options)
+            {
+                return fieldClass.extend({
+                    init: function() {
+                        this._super.apply(this, arguments);
+                        this.options = options;
+                    },
+                });
+            }
+
             this.create_form_fields["product_id"] = {
                 id: "product_id",
                 index: 5,
@@ -117,14 +132,19 @@ openerp.account_reconcile_compassion = function (instance) {
                 label: _t("Sponsorship"),
                 required: false,
                 tabindex: 16,
-                constructor: instance.web.form.FieldMany2One,
+                constructor: fieldWithOptions(instance.web.form.FieldMany2One,
+                    {
+                        'field_color': 'state',
+                        'colors': {'cancelled': 'gray', 'terminated': 'gray',
+                                   'mandate': 'red', 'waiting': 'green'},
+                        'create': false,
+                        'create_edit': false,
+                    }),
                 field_properties: {
                     relation: "recurring.contract",
                     string: _t("Sponsorship"),
                     type: "many2one",
-                    options: {'field_color': 'state',
-                              'colors': {'cancelled': 'gray', 'terminated': 'gray', 'mandate': 'red', 'waiting': 'green'}, 'create':false, 'create_edit':false},
-                }
+                },
             };
             this.create_form_fields["user_id"] = {
                 id: "user_id",
@@ -217,7 +237,7 @@ openerp.account_reconcile_compassion = function (instance) {
                 // Add the buttons of reconciliation
                 this.$(".oe_account_recon_reconcile").after(QWeb.render("AccountReconciliationCompassion", {widget: this}));
                 this.$(".oe_account_recon_next").after(QWeb.render("AccountReconciliationOpenPartner", {widget: this}));
-                
+
                 // Add listeners to button clicks and open the corresponding wizard
                 this.$(".oe_account_recon_reconcile_fund").click(function() {
                     self.reconcile_fund();
