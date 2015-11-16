@@ -35,7 +35,7 @@
     'author': 'Compassion CH',
     'website': 'http://www.compassion.ch',
     'category': 'Other',
-    'depends': ['base', 'sale'],
+    'depends': ['base', 'sale', 'connector'],
     'external_dependencies': {},
     'data': [
         'view/contract_group_view.xml',

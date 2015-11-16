@@ -26,6 +26,7 @@ class recurring_invoicer(models.Model):
     '''
     _name = 'recurring.invoicer'
     _rec_name = 'identifier'
+    _order = 'generation_date desc'
 
     identifier = fields.Char(
         required=True, default=lambda self: self.calculate_id())

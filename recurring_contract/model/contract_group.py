@@ -9,11 +9,16 @@
 #
 ##############################################################################
 
+import logging
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+
 from openerp import api, fields, models, _
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
-import logging
+
+from openerp.addons.connector.queue.job import job, related_action
+from openerp.addons.connector.session import ConnectorSession
+
 logger = logging.getLogger(__name__)
 
 
@@ -160,6 +165,18 @@ class contract_group(models.Model):
         pass
 
     def generate_invoices(self, invoicer=None):
+        session = ConnectorSession.from_env(self.env)
+        if invoicer is None:
+            invoicer = self.env['recurring.invoicer'].create(
+                {'source': self._name})
+        job_uuid = generate_invoices_job.delay(
+            session, self._name, self.ids, invoicer.id)
+        return invoicer
+
+    ##########################################################################
+    #                             PRIVATE METHODS                            #
+    ##########################################################################
+    def _generate_invoices(self, invoicer=None):
         """ Checks all contracts and generate invoices if needed.
         Create an invoice per contract group per date.
         """
@@ -167,9 +184,6 @@ class contract_group(models.Model):
         inv_obj = self.env['account.invoice']
         journal_obj = self.env['account.journal']
         gen_states = self._get_gen_states()
-        if not invoicer:
-            invoicer = self.env['recurring.invoicer'].create(
-                {'source': self._name})
         journal_ids = journal_obj.search(
             [('type', '=', 'sale'), ('company_id', '=', 1 or False)], limit=1)
 
@@ -208,10 +222,6 @@ class contract_group(models.Model):
             count += 1
         logger.info("Invoice generation successfully finished.")
         return invoicer
-
-    ##########################################################################
-    #                             PRIVATE METHODS                            #
-    ##########################################################################
 
     @api.multi
     def _get_change_methods(self):
@@ -278,3 +288,28 @@ class contract_group(models.Model):
 
         if not self.env.context.get('no_next_date_update'):
             contract.update_next_invoice_date()
+
+
+##############################################################################
+#                            CONNECTOR METHODS                               #
+##############################################################################
+def related_action_invoicer(session, job):
+    invoicer_id= job.args[2].id
+    action = {
+        'name': _("Message"),
+        'type': 'ir.actions.act_window',
+        'res_model': 'recurring.invoier',
+        'view_type': 'form',
+        'view_mode': 'form',
+        'res_id': invoicer_id,
+    }
+    return action
+
+
+@job(default_channel='root.recurring_invoicer')
+@related_action(action=related_action_invoicer)
+def generate_invoices_job(session, model_name, group_ids, invoicer_id):
+    """Job for processing an update commkit message."""
+    groups = session.env[model_name].browse(group_ids)
+    invoicer = session.env['recurring.invoicer'].browse(invoicer_id)
+    groups.generate_invoices(invoicer)
