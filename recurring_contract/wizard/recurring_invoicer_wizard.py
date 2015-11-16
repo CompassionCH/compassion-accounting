@@ -9,7 +9,7 @@
 #
 ##############################################################################
 
-from openerp import exceptions, fields, models, api
+from openerp import fields, models, api
 from openerp.tools.translate import _
 
 
@@ -32,9 +32,6 @@ class recurring_invoicer_wizard(models.TransientModel):
         invoicer = recurring_invoicer_obj.create({'source': self._name})
 
         contract_groups.generate_invoices(invoicer)
-        if not invoicer.invoice_ids:
-            raise exceptions.Warning('ZeroGenerationError',
-                                     _('0 invoices have been generated.'))
 
         return {
             'name': 'recurring.invoicer.form',

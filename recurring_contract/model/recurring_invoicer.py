@@ -26,6 +26,7 @@ class recurring_invoicer(models.Model):
     '''
     _name = 'recurring.invoicer'
     _rec_name = 'identifier'
+    _order = 'generation_date desc'
 
     identifier = fields.Char(
         required=True, default=lambda self: self.calculate_id())
@@ -41,13 +42,8 @@ class recurring_invoicer(models.Model):
     @api.one
     def validate_invoices(self):
         ''' Validates created invoices (set state from draft to open)'''
-        # Setup a popup message ?
         invoice_to_validate = self.invoice_ids.filtered(
             lambda invoice: invoice.state == 'draft')
-
-        if not invoice_to_validate:
-            raise exceptions.Warning('SelectionError',
-                                     _('There is no invoice to validate'))
 
         logger.info("Invoice validation started.")
         count = 1
@@ -62,8 +58,6 @@ class recurring_invoicer(models.Model):
             count += 1
         return invoice_to_validate
 
-    # When an invoice is cancelled, should we adjust next_invoice_date
-    # in contract ?
     @api.one
     def cancel_invoices(self):
         ''' Cancel created invoices (set state from open to cancelled) '''

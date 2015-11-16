@@ -12,6 +12,7 @@
 from datetime import datetime, timedelta
 from test_base_contract import test_base_contract
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
+from openerp import fields
 import logging
 logger = logging.getLogger(__name__)
 
@@ -137,8 +138,7 @@ class test_recurring_contract(test_base_contract):
         contract_copied_line = contract_copied.contract_line_ids[0]
         contract_copied_line.write({'amount': 160.0})
         new_price2 = contract_copied_line.subtotal
-        invoicer_wizard_obj = self.env['recurring.invoicer.wizard']
-        invoicer_wiz_id = invoicer_wizard_obj.generate()
+        invoicer_wiz_id = self.invoicer_wizard_obj.generate()
         invoicer_wiz = self.env['recurring.invoicer'].browse(
             invoicer_wiz_id['res_id'])
         new_invoices = invoicer_wiz.invoice_ids
@@ -196,7 +196,7 @@ class test_recurring_contract(test_base_contract):
         contract2.signal_workflow('contract_validated')
         contract3.signal_workflow('contract_validated')
         # Creation of a wizard to generate invoices
-        invoicer_id = self.env['recurring.invoicer.wizard'].generate()
+        invoicer_id = self.invoicer_wizard_obj.generate()
         invoicer = self.env['recurring.invoicer'].browse(invoicer_id['res_id'])
         invoices = invoicer.invoice_ids
         invoice = invoices[0]
@@ -204,11 +204,18 @@ class test_recurring_contract(test_base_contract):
 
         # We put the third contract in terminate state to see if
         # the invoice is well updated
+        date_finish = fields.Datetime.now()
         contract3.signal_workflow('contract_terminated')
+        # Check a job for cleaning invoices has been created
+        self.assertTrue(self.env['queue.job'].search([
+            ('name', '=', 'Job for cleaning invoices of contracts.'),
+            ('date_created', '>=', date_finish)]))
+        # Force cleaning invoices immediatley
+        contract3._clean_invoices()
         self.assertEqual(contract3.state, 'terminated')
         self.assertEqual(original_product, invoice.invoice_line[0].name)
         self.assertEqual(original_partner, invoice.partner_id['name'])
         self.assertEqual(
             original_price - contract3.total_amount,
-            invoice.amount_untaxed)
+            invoice.amount_total)
         self.assertEqual(original_start_date, invoice2.date_invoice)

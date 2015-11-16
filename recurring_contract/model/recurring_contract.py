@@ -16,6 +16,9 @@ from openerp import api, exceptions, fields, models, _
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 import openerp.addons.decimal_precision as dp
 
+from openerp.addons.connector.queue.job import job, related_action
+from openerp.addons.connector.session import ConnectorSession
+
 
 class recurring_contract_line(models.Model):
     """ Each product sold through a contract """
@@ -194,42 +197,17 @@ class recurring_contract(models.Model):
     ##########################################################################
     @api.multi
     def clean_invoices(self, since_date=None, to_date=None, keep_lines=None):
-        """ This method deletes invoices lines generated for a given contract
-            having a due date >= current month. If the invoice_line was the
-            only line in the invoice, we cancel the invoice. In the other
-            case, we have to revalidate the invoice to update the move lines.
+        """ By default, launch asynchronous job to perform the task.
+            Context value async_mode set to False can force to perform
+            the task immediately.
         """
-        inv_lines = self._get_invoice_lines_to_clean(since_date, to_date)
-        invoices = inv_lines.mapped('invoice_id')
-        empty_invoices = self.env['account.invoice']
-        to_remove_invl = self.env['account.invoice.line']
-
-        for inv_line in inv_lines:
-            invoice = inv_line.invoice_id
-            # Check if invoice is empty after removing the invoice_lines
-            # of the given contract
-            if invoice not in empty_invoices:
-                remaining_lines = invoice.invoice_line.filtered(
-                    lambda l: not l.contract_id or l.contract_id not in self)
-                if remaining_lines:
-                    # We can move or remove the line
-                    to_remove_invl |= inv_line
-                else:
-                    # The invoice would be empty if we remove the line
-                    empty_invoices |= invoice
-
-        if keep_lines:
-            self._move_cancel_lines(to_remove_invl, keep_lines)
+        if self.env.context.get('async_mode', True):
+            session = ConnectorSession.from_env(self.env)
+            clean_invoices_job.delay(
+                session, self._name, self.ids, since_date, to_date,
+                keep_lines)
         else:
-            to_remove_invl.unlink()
-
-        # Refresh cache before calling workflows
-        self.env.invalidate_all()
-        # Invoices to set back in open state
-        renew_invs = invoices - empty_invoices
-        self._cancel_confirm_invoices(invoices, renew_invs, keep_lines)
-
-        return invoices
+            self._clean_invoices(since_date, to_date, keep_lines)
 
     def rewind_next_invoice_date(self):
         """ Rewinds the next invoice date of contract after the last
@@ -286,14 +264,15 @@ class recurring_contract(models.Model):
         else:
             self.group_id = False
 
+    @api.multi
+    def button_generate_invoices(self):
+        """ Immediately generate invoices of the contract group. """
+        return self.mapped('group_id').with_context(
+            async_mode=False).button_generate_invoices()
+
     ##########################################################################
     #                            WORKFLOW METHODS                            #
     ##########################################################################
-
-    @api.multi
-    def button_generate_invoices(self):
-        return self.mapped('group_id').button_generate_invoices()
-
     @api.multi
     def contract_draft(self):
         self.write({'state': 'draft'})
@@ -325,6 +304,44 @@ class recurring_contract(models.Model):
     ##########################################################################
     #                             PRIVATE METHODS                            #
     ##########################################################################
+    @api.multi
+    def _clean_invoices(self, since_date=None, to_date=None, keep_lines=None):
+        """ This method deletes invoices lines generated for a given contract
+            having a due date >= current month. If the invoice_line was the
+            only line in the invoice, we cancel the invoice. In the other
+            case, we have to revalidate the invoice to update the move lines.
+        """
+        inv_lines = self._get_invoice_lines_to_clean(since_date, to_date)
+        invoices = inv_lines.mapped('invoice_id')
+        empty_invoices = self.env['account.invoice']
+        to_remove_invl = self.env['account.invoice.line']
+
+        for inv_line in inv_lines:
+            invoice = inv_line.invoice_id
+            # Check if invoice is empty after removing the invoice_lines
+            # of the given contract
+            if invoice not in empty_invoices:
+                remaining_lines = invoice.invoice_line.filtered(
+                    lambda l: not l.contract_id or l.contract_id not in self)
+                if remaining_lines:
+                    # We can move or remove the line
+                    to_remove_invl |= inv_line
+                else:
+                    # The invoice would be empty if we remove the line
+                    empty_invoices |= invoice
+
+        if keep_lines:
+            self._move_cancel_lines(to_remove_invl, keep_lines)
+        else:
+            to_remove_invl.unlink()
+
+        # Refresh cache before calling workflows
+        self.env.invalidate_all()
+        # Invoices to set back in open state
+        renew_invs = invoices - empty_invoices
+        self._cancel_confirm_invoices(invoices, renew_invs, keep_lines)
+
+        return invoices
 
     @api.one
     def _on_contract_lines_changed(self):
@@ -445,3 +462,28 @@ class recurring_contract(models.Model):
             invl_search.append(('due_date', '<=', to_date))
 
         return self.env['account.invoice.line'].search(invl_search)
+
+
+##############################################################################
+#                            CONNECTOR METHODS                               #
+##############################################################################
+def related_action_contract(session, job):
+    contract_id = job.args[2]
+    action = {
+        'name': _("Contract"),
+        'type': 'ir.actions.act_window',
+        'res_model': 'recurring.contract',
+        'view_type': 'form',
+        'view_mode': 'form',
+        'res_id': contract_id,
+    }
+    return action
+
+
+@job(default_channel='root.recurring_invoicer')
+@related_action(action=related_action_contract)
+def clean_invoices_job(session, model_name, contract_ids,
+                       since_date=None, to_date=None, keep_lines=None):
+    """Job for cleaning invoices of contracts."""
+    contracts = session.env[model_name].browse(contract_ids)
+    contracts._clean_invoices(since_date, to_date, keep_lines)

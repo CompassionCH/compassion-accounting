@@ -9,8 +9,11 @@
 #
 ##############################################################################
 
-from openerp.tests import common
 import logging
+from datetime import date
+from openerp import fields
+from openerp.tests import common
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,6 +21,10 @@ class test_base_contract(common.TransactionCase):
 
     def setUp(self):
         super(test_base_contract, self).setUp()
+
+        self.invoicer_wizard_obj = self.env[
+            'recurring.invoicer.wizard'].with_context(async_mode=False)
+
         # Creation of an account
         account_obj = self.env['account.account']
         account_type_obj = self.env['account.account.type']
@@ -64,6 +71,23 @@ class test_base_contract(common.TransactionCase):
         self.payment_term_id = payment_term_obj.search(
             [('name', '=', '15 Days')])[0].id
 
+        # Verify existing periods
+        today = date.today()
+        next_year = date(today.year + 1, 1, 1)
+        end_next_year = date(next_year.year, 12, 31)
+        fy_obj = self.env['account.fiscalyear']
+        fiscal_year = fy_obj.search([
+            ('date_start', '>=', fields.Date.to_string(next_year)),
+            ('date_stop', '<=', fields.Date.to_string(end_next_year))])
+        if not fiscal_year:
+            fiscal_year = fy_obj.create({
+                'name': 'Next year',
+                'code': 'NEXTYR',
+                'date_start': fields.Date.to_string(next_year),
+                'date_stop': fields.Date.to_string(end_next_year),
+            })
+            fiscal_year.create_period()
+
     def _create_group(self, change_method, partner_id,
                       adv_biling_months, payment_term_id, ref=None,
                       other_vals=None):
@@ -72,7 +96,8 @@ class test_base_contract(common.TransactionCase):
                 - ref is not given so it takes "/" default values
                 - ref is given
         """
-        group_obj = self.env['recurring.contract.group']
+        group_obj = self.env['recurring.contract.group'].with_context(
+            async_mode=False)
         group_vals = {
             'change_method': change_method,
             'partner_id': partner_id,
@@ -93,7 +118,8 @@ class test_base_contract(common.TransactionCase):
             to get his id
         """
         # Creation of a contract
-        contract_obj = self.env['recurring.contract']
+        contract_obj = self.env['recurring.contract'].with_context(
+            async_mode=False)
         partner_id = group.partner_id.id
         vals = {
             'start_date': start_date,
@@ -111,7 +137,8 @@ class test_base_contract(common.TransactionCase):
 
     def _create_contract_line(self, contract_id, price, other_vals=None):
         """ Create contract's lines """
-        contract_line_obj = self.env['recurring.contract.line']
+        contract_line_obj = self.env['recurring.contract.line'].with_context(
+            async_mode=False)
         vals = {
             'product_id': 1,
             'amount': price,

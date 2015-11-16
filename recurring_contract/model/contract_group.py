@@ -9,11 +9,16 @@
 #
 ##############################################################################
 
+import logging
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+
 from openerp import api, fields, models, _
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
-import logging
+
+from openerp.addons.connector.queue.job import job, related_action
+from openerp.addons.connector.session import ConnectorSession
+
 logger = logging.getLogger(__name__)
 
 
@@ -139,27 +144,43 @@ class contract_group(models.Model):
         if invoicer.invoice_ids:
             invoicer.validate_invoices()
 
+    @api.multi
     def clean_invoices(self):
-        """ Change method which cancels generated invoices and rewinds
-        the next_invoice_date of contracts, so that new invoices can be
-        generated taking into consideration the modifications of the
-        contract group.
+        """ By default, launch asynchronous job to perform the task.
+            Context value async_mode set to False can force to perform
+            the task immediately.
         """
-        since_date = datetime.today()
-        if self.last_paid_invoice_date:
-            last_paid_invoice_date = datetime.strptime(
-                self.last_paid_invoice_date, DF)
-            since_date = max(since_date, last_paid_invoice_date)
-        res = self.contract_ids.clean_invoices(
-            since_date=since_date.strftime(DF))
-        self.contract_ids.rewind_next_invoice_date()
-        return res
+        if self.env.context.get('async_mode', True):
+            session = ConnectorSession.from_env(self.env)
+            clean_invoices_job.delay(session, self._name, self.ids)
+        else:
+            self._clean_invoices()
+        return True
 
     def do_nothing(self):
         """ No changes before generation """
         pass
 
     def generate_invoices(self, invoicer=None):
+        """ By default, launch asynchronous job to perform the task.
+            Context value async_mode set to False can force to perform
+            the task immediately.
+        """
+        if invoicer is None:
+            invoicer = self.env['recurring.invoicer'].create(
+                {'source': self._name})
+        if self.env.context.get('async_mode', True):
+            session = ConnectorSession.from_env(self.env)
+            generate_invoices_job.delay(
+                session, self._name, self.ids, invoicer.id)
+        else:
+            self._generate_invoices(invoicer)
+        return invoicer
+
+    ##########################################################################
+    #                             PRIVATE METHODS                            #
+    ##########################################################################
+    def _generate_invoices(self, invoicer=None):
         """ Checks all contracts and generate invoices if needed.
         Create an invoice per contract group per date.
         """
@@ -167,9 +188,6 @@ class contract_group(models.Model):
         inv_obj = self.env['account.invoice']
         journal_obj = self.env['account.journal']
         gen_states = self._get_gen_states()
-        if not invoicer:
-            invoicer = self.env['recurring.invoicer'].create(
-                {'source': self._name})
         journal_ids = journal_obj.search(
             [('type', '=', 'sale'), ('company_id', '=', 1 or False)], limit=1)
 
@@ -209,9 +227,24 @@ class contract_group(models.Model):
         logger.info("Invoice generation successfully finished.")
         return invoicer
 
-    ##########################################################################
-    #                             PRIVATE METHODS                            #
-    ##########################################################################
+    @api.multi
+    def _clean_invoices(self):
+        """ Change method which cancels generated invoices and rewinds
+        the next_invoice_date of contracts, so that new invoices can be
+        generated taking into consideration the modifications of the
+        contract group.
+        """
+        res = self.env['account.invoice']
+        for group in self:
+            since_date = datetime.today()
+            if self.last_paid_invoice_date:
+                last_paid_invoice_date = datetime.strptime(
+                    self.last_paid_invoice_date, DF)
+                since_date = max(since_date, last_paid_invoice_date)
+            res += self.contract_ids._clean_invoices(
+                since_date=since_date.strftime(DF))
+            self.contract_ids.rewind_next_invoice_date()
+        return res
 
     @api.multi
     def _get_change_methods(self):
@@ -278,3 +311,35 @@ class contract_group(models.Model):
 
         if not self.env.context.get('no_next_date_update'):
             contract.update_next_invoice_date()
+
+
+##############################################################################
+#                            CONNECTOR METHODS                               #
+##############################################################################
+def related_action_invoicer(session, job):
+    invoicer_id = job.args[3]
+    action = {
+        'name': _("Message"),
+        'type': 'ir.actions.act_window',
+        'res_model': 'recurring.invoicer',
+        'view_type': 'form',
+        'view_mode': 'form',
+        'res_id': invoicer_id,
+    }
+    return action
+
+
+@job(default_channel='root.recurring_invoicer')
+@related_action(action=related_action_invoicer)
+def generate_invoices_job(session, model_name, group_ids, invoicer_id):
+    """Job for generating invoices."""
+    groups = session.env[model_name].browse(group_ids)
+    invoicer = session.env['recurring.invoicer'].browse(invoicer_id)
+    groups._generate_invoices(invoicer)
+
+
+@job(default_channel='root.recurring_invoicer')
+def clean_invoices_job(session, model_name, group_ids):
+    """Job for cleaning invoices of a contract group."""
+    groups = session.env[model_name].browse(group_ids)
+    groups._clean_invoices()
