@@ -298,7 +298,7 @@ def related_action_invoicer(session, job):
     action = {
         'name': _("Message"),
         'type': 'ir.actions.act_window',
-        'res_model': 'recurring.invoier',
+        'res_model': 'recurring.invoicer',
         'view_type': 'form',
         'view_mode': 'form',
         'res_id': invoicer_id,
@@ -309,7 +309,7 @@ def related_action_invoicer(session, job):
 @job(default_channel='root.recurring_invoicer')
 @related_action(action=related_action_invoicer)
 def generate_invoices_job(session, model_name, group_ids, invoicer_id):
-    """Job for processing an update commkit message."""
+    """Job for generating invoices."""
     groups = session.env[model_name].browse(group_ids)
     invoicer = session.env['recurring.invoicer'].browse(invoicer_id)
-    groups.generate_invoices(invoicer)
+    groups._generate_invoices(invoicer)
