@@ -36,7 +36,7 @@ class recurring_invoicer_wizard(models.TransientModel):
         return {
             'name': 'recurring.invoicer.form',
             'view_mode': 'form',
-            'view_type': 'form,tree',
+            'view_type': 'form',
             'res_id': invoicer.id,  # id of the object to which to redirect
             'res_model': 'recurring.invoicer',  # object name
             'type': 'ir.actions.act_window',
