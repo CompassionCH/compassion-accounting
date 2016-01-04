@@ -44,4 +44,7 @@ class recurring_invoicer_wizard(models.TransientModel):
 
     @api.model
     def generate_from_cron(self):
-        self.generate()
+        res = self.with_context(async_mode=False).generate()
+        invoicer_id = res['res_id']
+        invoicer = self.env['recurring.invoicer'].browse(invoicer_id)
+        invoicer.validate_invoices()
