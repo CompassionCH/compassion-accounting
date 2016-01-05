@@ -103,9 +103,8 @@ class bank_statement_line(models.Model):
             new_counterpart = self._create_invoice_from_mv_lines(
                 partner_data, invoice)
             for data in partner_data:
-                index = data['index']
+                index = data.pop('index')
                 mv_line_dicts[index] = data
-                del mv_line_dicts[index]['index']
             if invoice:
                 old_counterpart = old_counterparts[invoice.id]
                 for mv_line_dict in mv_line_dicts:
@@ -220,7 +219,9 @@ class bank_statement_line(models.Model):
                 'product_id': product.id,
                 'partner_id': self.partner_id.id,
                 'invoice_id': invoice.id,
-                'account_analytic_id': mv_line_dict.get(
+                # Remove analytic account from bank journal item:
+                # it is only useful in the invoice journal item
+                'account_analytic_id': mv_line_dict.pop(
                     'analytic_account_id',
                     self.env['account.analytic.default'].account_get(
                         product.id, self.partner_id.id).analytic_id.id)
