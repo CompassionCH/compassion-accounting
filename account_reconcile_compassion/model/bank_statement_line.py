@@ -16,6 +16,18 @@ from openerp.addons.sponsorship_compassion.model.product import \
 
 from datetime import datetime
 
+from openerp.addons.connector.queue.job import job
+from openerp.addons.connector.session import ConnectorSession
+
+
+class bank_statement(models.Model):
+    _inherit = 'account.bank.statement'
+
+    @api.multi
+    def button_confirm_bank(self):
+        return super(bank_statement, self.with_context(
+            async_mode=False)).button_confirm_bank()
+
 
 class bank_statement_line(models.Model):
 
@@ -69,8 +81,35 @@ class bank_statement_line(models.Model):
             reverse=True)
         return res_sorted
 
-    @api.one
+    @api.multi
     def process_reconciliation(self, mv_line_dicts):
+        """ Launch reconciliation in a job. """
+        if self.env.context.get('async_mode', True):
+            session = ConnectorSession.from_env(self.env)
+            process_reconciliation_job.delay(
+                session, self._name, self.ids, mv_line_dicts)
+        else:
+            self._process_reconciliation(mv_line_dicts)
+
+    @api.model
+    def product_id_changed(self, product_id, date):
+        """ Called when a product is selected for counterpart.
+        Returns useful info to fullfill other fields.
+        """
+        analytic_id = self.env['account.analytic.default'].account_get(
+            product_id, date=date).analytic_id.id
+        account_id = self.env['product.product'].browse(
+            product_id).property_account_income.id
+        return {
+            'analytic_id': analytic_id,
+            'account_id': account_id
+        }
+
+    ##########################################################################
+    #                             PRIVATE METHODS                            #
+    ##########################################################################
+    @api.one
+    def _process_reconciliation(self, mv_line_dicts):
         """ Create invoice if product_id is set in move_lines
         to be created. """
         partner_invoices = dict()
@@ -115,23 +154,6 @@ class bank_statement_line(models.Model):
 
         super(bank_statement_line, self).process_reconciliation(mv_line_dicts)
 
-    @api.model
-    def product_id_changed(self, product_id, date):
-        """ Called when a product is selected for counterpart.
-        Returns useful info to fullfill other fields.
-        """
-        analytic_id = self.env['account.analytic.default'].account_get(
-            product_id, date=date).analytic_id.id
-        account_id = self.env['product.product'].browse(
-            product_id).property_account_income.id
-        return {
-            'analytic_id': analytic_id,
-            'account_id': account_id
-        }
-
-    ##########################################################################
-    #                             PRIVATE METHODS                            #
-    ##########################################################################
     def _create_invoice_from_mv_lines(self, mv_line_dicts, invoice=None):
         # Get the attached recurring invoicer
         invoicer = self.statement_id.recurring_invoicer_id
@@ -262,3 +284,13 @@ class bank_statement_line(models.Model):
 
         return inv_lines.mapped('invoice_id').filtered(
             lambda i: i.amount_total == self.amount)
+
+
+##############################################################################
+#                            CONNECTOR METHODS                               #
+##############################################################################
+@job(default_channel='root.reconciliation')
+def process_reconciliation_job(session, model_name, line_ids, mv_line_dicts):
+    """Job for reconciling bank statment lines."""
+    statement_lines = session.env[model_name].browse(line_ids)
+    statement_lines._process_reconciliation(mv_line_dicts)
