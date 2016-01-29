@@ -245,13 +245,6 @@ class recurring_contract(models.Model):
     ##########################################################################
     #                             VIEW CALLBACKS                             #
     ##########################################################################
-
-    @api.onchange('start_date')
-    def on_change_start_date(self):
-        """ We automatically update next_invoice_date on start_date change """
-        if self.start_date:
-            self.next_invoice_date = self.start_date
-
     @api.onchange('partner_id')
     def on_change_partner_id(self):
         """ On partner change, we update the group_id. If partner has
