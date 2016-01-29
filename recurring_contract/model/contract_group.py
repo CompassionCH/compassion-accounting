@@ -13,7 +13,7 @@ import logging
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-from openerp import api, fields, models, _
+from openerp import api, fields, models, _, exceptions
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 
 from openerp.addons.connector.queue.job import job, related_action
@@ -174,6 +174,15 @@ class contract_group(models.Model):
             generate_invoices_job.delay(
                 session, self._name, self.ids, invoicer.id)
         else:
+            # Prevent two generations at the same time
+            jobs = self.env['queue.job'].search([
+                ('channel', '=', 'root.recurring_invoicer'),
+                ('state', '=', 'started')])
+            if jobs:
+                raise exceptions.Warning(
+                    _("Generation already running"),
+                    _("A generation has already started in background. "
+                      "Please wait for it to finish."))
             self._generate_invoices(invoicer)
         return invoicer
 
@@ -206,8 +215,8 @@ class contract_group(models.Model):
                                                         DF) <= limit_date:
                     contracts = contract_group.contract_ids.filtered(
                         lambda c: c.next_invoice_date <= group_inv_date and
-                        (not c.end_date or c.end_date > c.next_invoice_date)
-                        and c.state in gen_states)
+                        (not c.end_date or c.end_date >
+                         c.next_invoice_date) and c.state in gen_states)
                 if not contracts:
                     break
                 inv_data = contract_group._setup_inv_data(journal_ids,
