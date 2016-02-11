@@ -92,12 +92,12 @@ class test_recurring_contract(test_base_contract):
             other_vals={'recurring_value': 1, 'recurring_unit': 'month'})
 
         contract = self._create_contract(
-            datetime.today() + timedelta(days=2), group,
-            datetime.today() + timedelta(days=2))
+            (datetime.today() + timedelta(days=2)).strftime(DF), group,
+            (datetime.today() + timedelta(days=2)).strftime(DF))
         contract_line = self._create_contract_line(contract.id, '75.0')
         contract2 = self._create_contract(
-            datetime.today() + timedelta(days=2),
-            group, datetime.today() + timedelta(days=2))
+            (datetime.today() + timedelta(days=2)).strftime(DF),
+            group, (datetime.today() + timedelta(days=2)).strftime(DF))
         contract_line2 = self._create_contract_line(
             contract2.id, '85.0')
 

@@ -12,11 +12,11 @@
 		<field name="inherit_id" ref="base.view_partner_form" />
 		<field name="arch" type="xml">
 			<data>
-			<notebook position="inside">
+			<page string="Contacts" position="before">
 				<page string="Contracts">
 					<field name="contract_ids" context="{'partner_contracts_view': True, 'default_partner_id': active_id}" />
 				</page>
-			</notebook>
+			</page>
 			</data>
 		</field>
 	</record>
