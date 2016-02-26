@@ -7,8 +7,7 @@
 <openerp>
     <data noupdate="1">
         <function model="account.analytic.default" name="install"/>
-    </data>
-    <data>
+
         <!-- Root analytic account used for analytic lines which will be
             dispatched -->
         <record id="account_analytic_root_to_attribute" model="account.analytic.account">
