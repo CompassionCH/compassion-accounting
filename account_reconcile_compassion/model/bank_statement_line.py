@@ -163,9 +163,10 @@ class bank_statement_line(models.Model):
             self.statement_id.write({'recurring_invoicer_id': invoicer.id})
 
         # Generate a unique bvr_reference
-        ref = self.ref
-        if ref and len(ref) > 27:
-            ref = mod10r(ref[:26])
+        if self.ref and len(self.ref) == 27:
+            ref = self.ref
+        elif self.ref and len(self.ref) > 27:
+            ref = mod10r(self.ref[:26])
         else:
             ref = mod10r((self.date.replace('-', '') + str(
                 self.statement_id.id) + str(self.id)).ljust(26, '0'))
@@ -239,7 +240,8 @@ class bank_statement_line(models.Model):
                 'quantity': 1,
                 'uos_id': False,
                 'product_id': product.id,
-                'partner_id': self.partner_id.id,
+                'partner_id': contract.partner_id.id if contract else \
+                    self.partner_id.id,
                 'invoice_id': invoice.id,
                 # Remove analytic account from bank journal item:
                 # it is only useful in the invoice journal item
@@ -255,6 +257,9 @@ class bank_statement_line(models.Model):
                                          _('Add a Sponsorship'))
 
             self.env['account.invoice.line'].create(inv_line_data)
+            # Put payer as partner
+            if contract:
+                invoice.partner_id = contract.partner_id
 
         invoice.button_compute()
         invoice.signal_workflow('invoice_open')
