@@ -31,7 +31,8 @@ class recurring_invoicer_wizard(models.TransientModel):
         contract_groups = self.env['recurring.contract.group'].search([])
         invoicer = recurring_invoicer_obj.create({'source': self._name})
 
-        contract_groups.generate_invoices(invoicer)
+        contract_groups.with_context(async_mode=False).generate_invoices(
+            invoicer)
 
         return {
             'name': 'recurring.invoicer.form',
