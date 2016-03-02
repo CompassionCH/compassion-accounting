@@ -20,9 +20,6 @@ class recurring_invoicer_wizard(models.TransientModel):
     '''
     _name = 'recurring.invoicer.wizard'
 
-    invoice_ids = fields.One2many(
-        'account.invoice', 'recurring_invoicer_id',
-        _('Generated invoices'), readonly=True)
     generation_date = fields.Date(_('Generation date'), readonly=True)
 
     @api.multi

@@ -240,8 +240,8 @@ class bank_statement_line(models.Model):
                 'quantity': 1,
                 'uos_id': False,
                 'product_id': product.id,
-                'partner_id': contract.partner_id.id if contract else \
-                    self.partner_id.id,
+                'partner_id': contract.partner_id.id if contract else
+                self.partner_id.id,
                 'invoice_id': invoice.id,
                 # Remove analytic account from bank journal item:
                 # it is only useful in the invoice journal item
