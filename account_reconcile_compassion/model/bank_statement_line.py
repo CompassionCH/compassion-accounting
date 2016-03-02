@@ -16,7 +16,7 @@ from openerp.addons.sponsorship_compassion.model.product import \
 
 from datetime import datetime
 
-from openerp.addons.connector.queue.job import job
+from openerp.addons.connector.queue.job import job, related_action
 from openerp.addons.connector.session import ConnectorSession
 
 
@@ -81,15 +81,15 @@ class bank_statement_line(models.Model):
             reverse=True)
         return res_sorted
 
-    @api.multi
-    def process_reconciliation(self, mv_line_dicts):
+    @api.model
+    def process_reconciliations(self, mv_line_dicts):
         """ Launch reconciliation in a job. """
         if self.env.context.get('async_mode', True):
             session = ConnectorSession.from_env(self.env)
-            process_reconciliation_job.delay(
-                session, self._name, self.ids, mv_line_dicts)
+            process_reconciliations_job.delay(
+                session, self._name, mv_line_dicts)
         else:
-            self._process_reconciliation(mv_line_dicts)
+            self._process_reconciliations(mv_line_dicts)
 
     @api.model
     def product_id_changed(self, product_id, date):
@@ -108,8 +108,13 @@ class bank_statement_line(models.Model):
     ##########################################################################
     #                             PRIVATE METHODS                            #
     ##########################################################################
+    @api.model
+    def _process_reconciliations(self, mv_line_dicts):
+        super(bank_statement_line, self).process_reconciliations(
+                mv_line_dicts)
+
     @api.one
-    def _process_reconciliation(self, mv_line_dicts):
+    def process_reconciliation(self, mv_line_dicts):
         """ Create invoice if product_id is set in move_lines
         to be created. """
         partner_invoices = dict()
@@ -163,9 +168,10 @@ class bank_statement_line(models.Model):
             self.statement_id.write({'recurring_invoicer_id': invoicer.id})
 
         # Generate a unique bvr_reference
-        ref = self.ref
-        if ref and len(ref) > 27:
-            ref = mod10r(ref[:26])
+        if self.ref and len(self.ref) == 27:
+            ref = self.ref
+        elif self.ref and len(self.ref) > 27:
+            ref = mod10r(self.ref[:26])
         else:
             ref = mod10r((self.date.replace('-', '') + str(
                 self.statement_id.id) + str(self.id)).ljust(26, '0'))
@@ -239,7 +245,8 @@ class bank_statement_line(models.Model):
                 'quantity': 1,
                 'uos_id': False,
                 'product_id': product.id,
-                'partner_id': self.partner_id.id,
+                'partner_id': contract.partner_id.id if contract else
+                self.partner_id.id,
                 'invoice_id': invoice.id,
                 # Remove analytic account from bank journal item:
                 # it is only useful in the invoice journal item
@@ -255,6 +262,9 @@ class bank_statement_line(models.Model):
                                          _('Add a Sponsorship'))
 
             self.env['account.invoice.line'].create(inv_line_data)
+            # Put payer as partner
+            if contract:
+                invoice.partner_id = contract.partner_id
 
         invoice.button_compute()
         invoice.signal_workflow('invoice_open')
@@ -289,8 +299,24 @@ class bank_statement_line(models.Model):
 ##############################################################################
 #                            CONNECTOR METHODS                               #
 ##############################################################################
+def related_action_reconciliations(session, job):
+    line_ids = [arg[0] for arg in job.args[1]]
+    statement_lines = session.env[job.args[0]].browse(line_ids)
+    statement_ids = statement_lines.mapped('statement_id').ids
+    action = {
+        'name': _("Bank statements"),
+        'type': 'ir.actions.act_window',
+        'res_model': 'account.bank.statement',
+        'view_type': 'form',
+        'view_mode': 'form,tree',
+        'res_id': statement_ids[0],
+        'domain': [('id', 'in', statement_ids)],
+    }
+    return action
+
+
 @job(default_channel='root.reconciliation')
-def process_reconciliation_job(session, model_name, line_ids, mv_line_dicts):
+@related_action(action=related_action_reconciliations)
+def process_reconciliations_job(session, model_name, mv_line_dicts):
     """Job for reconciling bank statment lines."""
-    statement_lines = session.env[model_name].browse(line_ids)
-    statement_lines._process_reconciliation(mv_line_dicts)
+    session.env[model_name]._process_reconciliations(mv_line_dicts)

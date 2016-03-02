@@ -100,31 +100,18 @@ class contract_group(models.Model):
             - Another change method was selected
         """
         res = True
-        # to solve "NotImplementedError: Iteration is not allowed" error
-        # Any of these modifications implies generate and validate invoices
-        generate_again = ('advance_billing_months' in vals or
-                          'recurring_value' in vals or
-                          'recurring_unit' in vals)
-
         for group in self:
-
             # Check if group has an next_invoice_date
-            if not group.next_invoice_date:
-                res = super(contract_group, self).write(vals) and res
-                break
+            if not group.next_invoice_date or 'next_invoice_date' in vals:
+                res = super(contract_group, group).write(vals) and res
+                continue
 
             # Get the method to apply changes
             change_method = vals.get('change_method', group.change_method)
-            change_method = getattr(self, change_method)
+            change_method = getattr(group, change_method)
 
-            res = super(contract_group, self).write(vals) & res
-
-            if generate_again:
-                change_method()
-
-        if generate_again:
-            invoicer = self.generate_invoices()
-            self.validate_invoices(invoicer)
+            res = super(contract_group, group).write(vals) & res
+            change_method()
 
         return res
 
@@ -152,9 +139,9 @@ class contract_group(models.Model):
         """
         if self.env.context.get('async_mode', True):
             session = ConnectorSession.from_env(self.env)
-            clean_invoices_job.delay(session, self._name, self.ids)
+            clean_generate_job.delay(session, self._name, self.ids)
         else:
-            self._clean_invoices()
+            self._clean_generate_invoices()
         return True
 
     def do_nothing(self):
@@ -194,6 +181,9 @@ class contract_group(models.Model):
         Create an invoice per contract group per date.
         """
         logger.info("Invoice generation started.")
+        if invoicer is None:
+            invoicer = self.env['recurring.invoicer'].create(
+                {'source': self._name})
         inv_obj = self.env['account.invoice']
         journal_obj = self.env['account.journal']
         gen_states = self._get_gen_states()
@@ -237,7 +227,7 @@ class contract_group(models.Model):
         return invoicer
 
     @api.multi
-    def _clean_invoices(self):
+    def _clean_generate_invoices(self):
         """ Change method which cancels generated invoices and rewinds
         the next_invoice_date of contracts, so that new invoices can be
         generated taking into consideration the modifications of the
@@ -246,13 +236,16 @@ class contract_group(models.Model):
         res = self.env['account.invoice']
         for group in self:
             since_date = datetime.today()
-            if self.last_paid_invoice_date:
+            if group.last_paid_invoice_date:
                 last_paid_invoice_date = datetime.strptime(
-                    self.last_paid_invoice_date, DF)
+                    group.last_paid_invoice_date, DF)
                 since_date = max(since_date, last_paid_invoice_date)
-            res += self.contract_ids._clean_invoices(
+            res += group.contract_ids._clean_invoices(
                 since_date=since_date.strftime(DF))
-            self.contract_ids.rewind_next_invoice_date()
+            group.contract_ids.rewind_next_invoice_date()
+        # Generate again invoices
+        invoicer = self._generate_invoices()
+        self.validate_invoices(invoicer)
         return res
 
     @api.multi
@@ -348,7 +341,7 @@ def generate_invoices_job(session, model_name, group_ids, invoicer_id):
 
 
 @job(default_channel='root.recurring_invoicer')
-def clean_invoices_job(session, model_name, group_ids):
+def clean_generate_job(session, model_name, group_ids):
     """Job for cleaning invoices of a contract group."""
     groups = session.env[model_name].browse(group_ids)
-    groups._clean_invoices()
+    groups._clean_generate_invoices()

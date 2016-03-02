@@ -112,6 +112,7 @@ class recurring_contract(models.Model):
     payment_term_id = fields.Many2one(
         'account.payment.term', string='Payment Term',
         related='group_id.payment_term_id', readonly=True, store=True)
+    nb_invoices = fields.Integer(compute='_count_invoices')
 
     ##########################################################################
     #                             FIELDS METHODS                             #
@@ -139,6 +140,11 @@ class recurring_contract(models.Model):
             raise exceptions.ValidationError(
                 _('Error: Reference should be unique'))
         return True
+
+    def _count_invoices(self):
+        for contract in self:
+            contract.nb_invoices = len(
+                contract.mapped('invoice_line_ids.invoice_id'))
 
     ##########################################################################
     #                              ORM METHODS                               #
@@ -262,6 +268,20 @@ class recurring_contract(models.Model):
         """ Immediately generate invoices of the contract group. """
         return self.mapped('group_id').with_context(
             async_mode=False).button_generate_invoices()
+
+    @api.multi
+    def open_invoices(self):
+        self.ensure_one()
+        invoice_ids = self.mapped('invoice_line_ids.invoice_id').ids
+        return {
+            'name': _('Contract invoices'),
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'res_model': 'account.invoice',
+            'domain': [('id', 'in', invoice_ids)],
+            'target': 'current',
+        }
 
     ##########################################################################
     #                            WORKFLOW METHODS                            #
