@@ -20,9 +20,6 @@ class recurring_invoicer_wizard(models.TransientModel):
     '''
     _name = 'recurring.invoicer.wizard'
 
-    invoice_ids = fields.One2many(
-        'account.invoice', 'recurring_invoicer_id',
-        _('Generated invoices'), readonly=True)
     generation_date = fields.Date(_('Generation date'), readonly=True)
 
     @api.multi
@@ -31,7 +28,8 @@ class recurring_invoicer_wizard(models.TransientModel):
         contract_groups = self.env['recurring.contract.group'].search([])
         invoicer = recurring_invoicer_obj.create({'source': self._name})
 
-        contract_groups.generate_invoices(invoicer)
+        contract_groups.with_context(async_mode=False).generate_invoices(
+            invoicer)
 
         return {
             'name': 'recurring.invoicer.form',
