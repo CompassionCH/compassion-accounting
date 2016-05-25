@@ -334,7 +334,7 @@ class StatementCompletionRule(models.Model):
                     birthdate = contract.child_id.birthdate
                     birthdate = datetime.strptime(birthdate, DF).strftime(
                         "%d %b")
-                res['name'] += "[" + contract.child_id.code
+                res['name'] += "[" + contract.child_code
                 res['name'] += " (" + birthdate + ")]" if birthdate else "]"
             else:
                 res['name'] += " [Child not found] "
