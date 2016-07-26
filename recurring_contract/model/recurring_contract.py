@@ -481,14 +481,16 @@ class recurring_contract(models.Model):
 #                            CONNECTOR METHODS                               #
 ##############################################################################
 def related_action_contract(session, job):
-    contract_id = job.args[2]
+    contract_ids = job.args[1]
     action = {
         'name': _("Contract"),
         'type': 'ir.actions.act_window',
         'res_model': 'recurring.contract',
         'view_type': 'form',
-        'view_mode': 'form',
-        'res_id': contract_id,
+        'view_mode': 'form,tree',
+        'res_id': contract_ids[0],
+        'domain': [('id', 'in', contract_ids)],
+        'context': {'default_type': 'S'},
     }
     return action
 
