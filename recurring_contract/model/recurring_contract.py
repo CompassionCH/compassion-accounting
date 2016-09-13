@@ -74,7 +74,7 @@ class recurring_contract(models.Model):
         default=datetime.today().strftime(DF), required=True, readonly=True,
         states={'draft': [('readonly', False)]},
         copy=False, track_visibility="onchange")
-    end_date = fields.Date(
+    end_date = fields.Datetime(
         readonly=False, states={'terminated': [('readonly', True)]},
         track_visibility="onchange", copy=False)
     next_invoice_date = fields.Date(
