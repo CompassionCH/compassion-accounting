@@ -280,6 +280,8 @@ class recurring_contract(models.Model):
             'view_mode': 'tree,form',
             'res_model': 'account.invoice',
             'domain': [('id', 'in', invoice_ids)],
+            'context': self.with_context(
+                form_view_ref='account.invoice_form').env.context,
             'target': 'current',
         }
 
