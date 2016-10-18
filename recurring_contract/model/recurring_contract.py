@@ -114,6 +114,10 @@ class recurring_contract(models.Model):
         related='group_id.payment_term_id', readonly=True, store=True)
     nb_invoices = fields.Integer(compute='_count_invoices')
 
+    _sql_constraints = [
+        ('unique_ref', "unique(reference)", "Reference must be unique!")
+    ]
+
     ##########################################################################
     #                             FIELDS METHODS                             #
     ##########################################################################
@@ -129,17 +133,6 @@ class recurring_contract(models.Model):
         self.last_paid_invoice_date = max(
             [invl.invoice_id.date_invoice for invl in self.invoice_line_ids
              if invl.state == 'paid'] or [False])
-
-    @api.constrains('reference')
-    @api.one
-    def _check_unique_reference(self):
-        chk_list_contracts = self.search([]) - self
-        ref_lst = [contract.reference for contract in chk_list_contracts
-                   if contract.reference]
-        if self.reference in ref_lst:
-            raise exceptions.ValidationError(
-                _('Error: Reference should be unique'))
-        return True
 
     def _count_invoices(self):
         for contract in self:
