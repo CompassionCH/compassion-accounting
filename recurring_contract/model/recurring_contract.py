@@ -125,8 +125,10 @@ class recurring_contract(models.Model):
     @api.depends('contract_line_ids', 'contract_line_ids.amount',
                  'contract_line_ids.quantity')
     def _get_total_amount(self):
-        self.total_amount = sum([line.subtotal for line in
-                                 self.contract_line_ids])
+        for contract in self:
+            contract.total_amount = sum([
+                line.subtotal for line in contract.contract_line_ids
+            ])
 
     @api.one
     def _get_last_paid_invoice(self):
