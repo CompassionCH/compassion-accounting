@@ -30,6 +30,7 @@ class AccountInvoiceReport(osv.osv):
     _inherit = 'account.invoice.report'
     _description = "Invoices Statistics with FISCAL YEAR"
     _columns = {
+        'monthfy': fields.integer('month# in FY', readonly=True),  
         'fiscalyear_id': fields.related(
             'period_id', 'fiscalyear_id', type="many2one",
             relation="account.fiscalyear", string="fiscal year",
@@ -40,7 +41,7 @@ class AccountInvoiceReport(osv.osv):
         select_str = """
             SELECT sub.id, sub.date, sub.product_id, sub.partner_id,
                 sub.country_id,sub.fiscalyear_id, sub.payment_term,
-                sub.period_id, sub.uom_name, sub.currency_id, sub.journal_id,
+                sub.period_id, sub.uom_name,sub.monthfy, sub.currency_id, sub.journal_id,
                 sub.fiscal_position, sub.user_id, sub.company_id, sub.nbr,
                 sub.type, sub.state, sub.categ_id, sub.date_due,
                 sub.account_id, sub.account_line_id, sub.partner_bank_id,
@@ -58,7 +59,14 @@ SELECT min(ail.id) AS id,
     ail.product_id, ai.partner_id, ai.payment_term, ai.period_id,
     ap.fiscalyear_id,u2.name AS uom_name, ai.currency_id,
     ai.journal_id, ai.fiscal_position, ai.user_id, ai.company_id,
-    count(ail.*) AS nbr,
+    count(ail.*) AS nbr,case 
+						when left(ap.code,2)<>'00'
+						then case 
+							when left(ap.code,2)::int>6
+							then left(ap.code,2)::int-5
+							else left(ap.code,2)::int+5
+							end
+						end as monthfy,
     ai.type, ai.state, pt.categ_id, ai.date_due, ai.account_id,
     ail.account_id AS account_line_id, ai.partner_bank_id,
     SUM(CASE
@@ -128,7 +136,7 @@ SELECT min(ail.id) AS id,
                     ai.journal_id, ai.fiscal_position, ai.user_id,
                     ai.company_id, ai.type, ai.state, pt.categ_id,
                     ai.date_due, ai.account_id, ail.account_id,
-                    ai.partner_bank_id, ai.residual,
+                    ai.partner_bank_id, ai.residual,monthfy,
                     ai.amount_total, ai.commercial_partner_id,
                     partner.country_id
         """
