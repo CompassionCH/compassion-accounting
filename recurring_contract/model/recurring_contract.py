@@ -74,7 +74,7 @@ class recurring_contract(models.Model):
         default=datetime.today().strftime(DF), required=True, readonly=True,
         states={'draft': [('readonly', False)]},
         copy=False, track_visibility="onchange")
-    end_date = fields.Date(
+    end_date = fields.Datetime(
         readonly=False, states={'terminated': [('readonly', True)]},
         track_visibility="onchange", copy=False)
     next_invoice_date = fields.Date(
@@ -125,8 +125,10 @@ class recurring_contract(models.Model):
     @api.depends('contract_line_ids', 'contract_line_ids.amount',
                  'contract_line_ids.quantity')
     def _get_total_amount(self):
-        self.total_amount = sum([line.subtotal for line in
-                                 self.contract_line_ids])
+        for contract in self:
+            contract.total_amount = sum([
+                line.subtotal for line in contract.contract_line_ids
+            ])
 
     @api.one
     def _get_last_paid_invoice(self):
@@ -273,6 +275,8 @@ class recurring_contract(models.Model):
             'view_mode': 'tree,form',
             'res_model': 'account.invoice',
             'domain': [('id', 'in', invoice_ids)],
+            'context': self.with_context(
+                form_view_ref='account.invoice_form').env.context,
             'target': 'current',
         }
 

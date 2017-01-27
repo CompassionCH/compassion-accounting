@@ -11,7 +11,7 @@
 
 from openerp import api, models, exceptions, _
 from openerp.tools import mod10r, DEFAULT_SERVER_DATE_FORMAT as DF
-from openerp.addons.sponsorship_compassion.model.product import \
+from openerp.addons.sponsorship_compassion.models.product import \
     GIFT_CATEGORY, GIFT_NAMES, SPONSORSHIP_CATEGORY
 
 from datetime import datetime

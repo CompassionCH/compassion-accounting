@@ -11,7 +11,7 @@
 
 from openerp import api, models, fields
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
-from openerp.addons.sponsorship_compassion.model.product import \
+from openerp.addons.sponsorship_compassion.models.product import \
     GIFT_CATEGORY, GIFT_NAMES
 
 from datetime import datetime
@@ -334,7 +334,7 @@ class StatementCompletionRule(models.Model):
                     birthdate = contract.child_id.birthdate
                     birthdate = datetime.strptime(birthdate, DF).strftime(
                         "%d %b")
-                res['name'] += "[" + contract.child_id.code
+                res['name'] += "[" + contract.child_code
                 res['name'] += " (" + birthdate + ")]" if birthdate else "]"
             else:
                 res['name'] += " [Child not found] "
