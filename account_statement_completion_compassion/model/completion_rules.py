@@ -319,7 +319,8 @@ class StatementCompletionRule(models.Model):
         # Don't gengerate invoice if it's a Sponsor gift
         if product.categ_name == GIFT_CATEGORY:
             res['name'] = product.name
-            contract_obj = self.env['recurring.contract']
+            contract_obj = self.env['recurring.contract'].with_context(
+                lang='en_US')
             contract_number = int(st_line.ref[16:21])
             contract = contract_obj.search(
                 ['|',
@@ -331,11 +332,11 @@ class StatementCompletionRule(models.Model):
                 # Retrieve the birthday of child
                 birthdate = ""
                 if product.name == GIFT_NAMES[0]:
-                    birthdate = contract.child_id.birthdate
-                    birthdate = datetime.strptime(birthdate, DF).strftime(
-                        "%d %b")
-                res['name'] += "[" + contract.child_code
-                res['name'] += " (" + birthdate + ")]" if birthdate else "]"
+                    birthdate = fields.Date.from_string(
+                        contract.child_id.birthdate
+                    ).strftime("%d.%m")
+                res['name'] += u"[" + contract.child_code
+                res['name'] += u" (" + birthdate + u")]" if birthdate else u"]"
             else:
                 res['name'] += " [Child not found] "
             return res
@@ -385,7 +386,7 @@ class StatementCompletionRule(models.Model):
         elif payment_type in range(6, 8):
             # Fund donation
             products = product_obj.search(
-                [('gp_fund_id', '=', int(ref[22:26]))])
+                [('fund_id', '=', int(ref[22:26]))])
             product = products[0] if products else 0
 
         return product
