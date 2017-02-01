@@ -332,11 +332,11 @@ class StatementCompletionRule(models.Model):
                 # Retrieve the birthday of child
                 birthdate = ""
                 if product.name == GIFT_NAMES[0]:
-                    birthdate = fields.Date.from_string(
-                        contract.child_id.birthdate
-                    ).strftime("%d.%m")
-                res['name'] += u"[" + contract.child_code
-                res['name'] += u" (" + birthdate + u")]" if birthdate else u"]"
+                    birthdate = contract.child_id.birthdate
+                    birthdate = datetime.strptime(birthdate, DF).strftime(
+                        "%d %b").decode('utf-8')
+                res['name'] += "[" + contract.child_code
+                res['name'] += " (" + birthdate + ")]" if birthdate else "]"
             else:
                 res['name'] += " [Child not found] "
             return res
