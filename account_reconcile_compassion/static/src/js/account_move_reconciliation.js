@@ -84,6 +84,7 @@ openerp.account_reconcile_compassion = function (instance) {
             if (line.product_id) dict['product_id'] = line.product_id;
             if (line.sponsorship_id) dict['sponsorship_id'] = line.sponsorship_id;
             if (line.user_id) dict['user_id'] = line.user_id;
+            if (line.comment) dict['comment'] = line.comment;
             return dict;
         },
     })
@@ -158,6 +159,19 @@ openerp.account_reconcile_compassion = function (instance) {
                     relation: "res.partner",
                     string: _t("Ambassador"),
                     type: "many2one",
+                }
+            };
+            this.create_form_fields["comment"] = {
+                id: "comment",
+                index: 7,
+                corresponding_property: "comment",
+                label: _t("Gift Instructions"),
+                required: false,
+                tabindex: 17,
+                constructor: instance.web.form.FieldChar,
+                field_properties: {
+                    string: _t("Gift Instructions"),
+                    type: "char",
                 }
             };
         },

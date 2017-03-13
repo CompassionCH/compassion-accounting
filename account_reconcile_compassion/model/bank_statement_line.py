@@ -216,6 +216,9 @@ class bank_statement_line(models.Model):
                 'bvr_reference': ref,
                 'recurring_invoicer_id': invoicer.id,
                 'currency_id': self.statement_id.currency.id,
+                'comment': ';'.join(map(
+                    lambda d: d.get('comment', ''),
+                    mv_line_dicts))
             }
             invoice = self.env['account.invoice'].create(inv_data)
 
