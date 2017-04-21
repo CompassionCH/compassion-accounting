@@ -22,7 +22,7 @@ from openerp.addons.connector.session import ConnectorSession
 logger = logging.getLogger(__name__)
 
 
-class contract_group(models.Model):
+class ContractGroup(models.Model):
     _name = 'recurring.contract.group'
     _description = 'A group of contracts'
     _inherit = 'mail.thread'
@@ -31,8 +31,6 @@ class contract_group(models.Model):
     ##########################################################################
     #                                 FIELDS                                 #
     ##########################################################################
-
-    # TODO Add unit for advance_billing
     advance_billing_months = fields.Integer(
         'Advance billing months',
         help=_(
@@ -73,14 +71,13 @@ class contract_group(models.Model):
     ##########################################################################
 
     @api.depends('contract_ids.next_invoice_date', 'contract_ids.state')
-    @api.one
     def _set_next_invoice_date(self):
-        next_inv_date = min(
-            [c.next_invoice_date for c in self.contract_ids
-             if c.state in self._get_gen_states()] or [False])
-        self.next_invoice_date = next_inv_date
+        for group in self:
+            next_inv_date = min(
+                [c.next_invoice_date for c in self.contract_ids
+                 if c.state in self._get_gen_states()] or [False])
+            group.next_invoice_date = next_inv_date
 
-    @api.multi
     def _set_last_paid_invoice(self):
         for group in self:
             group.last_paid_invoice_date = max(
@@ -103,14 +100,14 @@ class contract_group(models.Model):
         for group in self:
             # Check if group has an next_invoice_date
             if not group.next_invoice_date or 'next_invoice_date' in vals:
-                res = super(contract_group, group).write(vals) and res
+                res = super(ContractGroup, group).write(vals) and res
                 continue
 
             # Get the method to apply changes
             change_method = vals.get('change_method', group.change_method)
             change_method = getattr(group, change_method)
 
-            res = super(contract_group, group).write(vals) & res
+            res = super(ContractGroup, group).write(vals) & res
             change_method()
 
         return res
@@ -163,7 +160,7 @@ class contract_group(models.Model):
         else:
             # Prevent two generations at the same time
             jobs = self.env['queue.job'].search([
-                ('channel', '=', 'root.recurring_invoicer'),
+                ('channel', '=', 'root.RecurringInvoicer'),
                 ('state', '=', 'started')])
             if jobs:
                 raise exceptions.Warning(
@@ -172,6 +169,25 @@ class contract_group(models.Model):
                       "Please wait for it to finish."))
             self._generate_invoices(invoicer)
         return invoicer
+
+    @api.multi
+    def get_relative_delta(self):
+        """
+        Get a relative delta given the recurring settings
+        :return: datetime.relativedelta object
+        """
+        self.ensure_one()
+        rec_unit = self.recurring_unit
+        rec_value = self.recurring_value
+        if rec_unit == 'day':
+            r = relativedelta(days=+rec_value)
+        elif rec_unit == 'week':
+            r = relativedelta(weeks=+rec_value)
+        elif rec_unit == 'month':
+            r = relativedelta(months=+rec_value)
+        else:
+            r = relativedelta(years=+rec_value)
+        return r
 
     ##########################################################################
     #                             PRIVATE METHODS                            #
@@ -185,43 +201,41 @@ class contract_group(models.Model):
             invoicer = self.env['recurring.invoicer'].create(
                 {'source': self._name})
         inv_obj = self.env['account.invoice']
-        journal_obj = self.env['account.journal']
         gen_states = self._get_gen_states()
-        journal_ids = journal_obj.search(
+        journal = self.env['account.journal'].search(
             [('type', '=', 'sale'), ('company_id', '=', 1 or False)], limit=1)
 
         nb_groups = len(self)
         count = 1
-        for contract_group in self:
-            logger.info("Generating invoices for group {0}/{1}".format(
-                count, nb_groups))
-            month_delta = contract_group.advance_billing_months or 1
-            limit_date = datetime.today() + relativedelta(months=+month_delta)
-            while True:  # Emulate a do-while loop
-                # contract_group update 'cause next_inv_date has been modified
-                group_inv_date = contract_group.next_invoice_date
-                contracts = self.env['recurring.contract']
-                if group_inv_date and datetime.strptime(group_inv_date,
-                                                        DF) <= limit_date:
-                    contracts = contract_group.contract_ids.filtered(
-                        lambda c: c.next_invoice_date <= group_inv_date and
-                        (not c.end_date or c.end_date >
-                         c.next_invoice_date) and c.state in gen_states)
-                if not contracts:
-                    break
-                inv_data = contract_group._setup_inv_data(journal_ids,
-                                                          invoicer)
-                invoice = inv_obj.create(inv_data)
-                for contract in contracts:
-                    contract_group._generate_invoice_lines(contract, invoice)
-                if invoice.invoice_line:
-                    invoice.button_compute()
-                else:
-                    invoice.unlink()
-
-            # After a contract_group is done, we commit all writes in order to
+        for contract_group in self.filtered('next_invoice_date'):
+            # After a ContractGroup is done, we commit all writes in order to
             # avoid doing it again in case of an error or a timeout
-            self.env.cr.commit()
+            with self.env.cr.savepoint():
+                logger.info("Generating invoices for group {0}/{1}".format(
+                    count, nb_groups))
+                month_delta = contract_group.advance_billing_months or 1
+                limit_date = datetime.today() + relativedelta(
+                    months=+month_delta)
+                current_date = fields.Datetime.from_string(
+                    contract_group.next_invoice_date)
+                while current_date <= limit_date:
+                    contracts = contract_group.contract_ids.filtered(
+                        lambda c: fields.Datetime.from_string(
+                            c.next_invoice_date) <= current_date and
+                        c.state in gen_states and not (
+                            c.end_date and c.end_date >= c.next_invoice_date)
+                    )
+                    if not contracts:
+                        break
+                    inv_data = contract_group._setup_inv_data(
+                        journal, invoicer, contracts)
+                    invoice = inv_obj.create(inv_data)
+                    if not invoice.invoice_line_ids:
+                        invoice.unlink()
+                    if not self.env.context.get('no_next_date_update'):
+                        contracts.update_next_invoice_date()
+                    current_date += contract_group.get_relative_delta()
+
             count += 1
         logger.info("Invoice generation successfully finished.")
         return invoicer
@@ -261,47 +275,30 @@ class contract_group(models.Model):
     def _get_gen_states(self):
         return ['active']
 
-    def _setup_inv_data(self, journal_ids, invoicer):
+    def _setup_inv_data(self, journal, invoicer, contracts):
         """ Setup a dict with data passed to invoice.create.
             If any custom data is wanted in invoice from contract group, just
             inherit this method.
         """
         partner = self.partner_id
+        # set context for invoice_line creation
+        contracts = contracts.with_context(journal_id=journal.id,
+                                           type='out_invoice')
         inv_data = {
-            'account_id': partner.property_account_receivable.id,
+            'account_id': partner.property_account_receivable_id.id,
             'type': 'out_invoice',
             'partner_id': partner.id,
-            'journal_id': len(journal_ids) and journal_ids[0].id or False,
+            'journal_id': journal.id,
             'currency_id':
-            partner.property_product_pricelist.currency_id.id or False,
+            partner.property_product_pricelist.currency_id.id,
             'date_invoice': self.next_invoice_date,
             'recurring_invoicer_id': invoicer.id,
-            'payment_term': self.payment_term_id and
-            self.payment_term_id.id or False,
+            'payment_term_id': self.payment_term_id.id,
+            'invoice_line_ids': [
+                (0, 0, invl) for invl in contracts.get_inv_lines_data()
+            ]
         }
-
         return inv_data
-
-    @api.multi
-    def _setup_inv_line_data(self, contract_line, invoice):
-        """ Setup a dict with data passed to invoice_line.create.
-        If any custom data is wanted in invoice line from contract,
-        just inherit this method.
-        """
-        product = contract_line.product_id
-        account = product.property_account_income
-        inv_line_data = {
-            'name': product.name,
-            'price_unit': contract_line.amount or 0.0,
-            'quantity': contract_line.quantity,
-            'uos_id': False,
-            'product_id': product.id or False,
-            'invoice_id': invoice.id,
-            'contract_id': contract_line.contract_id.id,
-        }
-        if account:
-            inv_line_data['account_id'] = account.id
-        return inv_line_data
 
     @api.model
     def _generate_invoice_lines(self, contract, invoice):
@@ -310,9 +307,6 @@ class contract_group(models.Model):
             inv_line_data = self._setup_inv_line_data(contract_line, invoice)
             if inv_line_data:
                 inv_line_obj.create(inv_line_data)
-
-        if not self.env.context.get('no_next_date_update'):
-            contract.update_next_invoice_date()
 
 
 ##############################################################################
@@ -331,7 +325,7 @@ def related_action_invoicer(session, job):
     return action
 
 
-@job(default_channel='root.recurring_invoicer')
+@job(default_channel='root.RecurringInvoicer')
 @related_action(action=related_action_invoicer)
 def generate_invoices_job(session, model_name, group_ids, invoicer_id):
     """Job for generating invoices."""
@@ -340,7 +334,7 @@ def generate_invoices_job(session, model_name, group_ids, invoicer_id):
     groups._generate_invoices(invoicer)
 
 
-@job(default_channel='root.recurring_invoicer')
+@job(default_channel='root.RecurringInvoicer')
 def clean_generate_job(session, model_name, group_ids):
     """Job for cleaning invoices of a contract group."""
     groups = session.env[model_name].browse(group_ids)

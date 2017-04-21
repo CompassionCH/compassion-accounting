@@ -111,7 +111,7 @@ class bank_statement_line(models.Model):
     @api.model
     def _process_reconciliations(self, mv_line_dicts):
         super(bank_statement_line, self).process_reconciliations(
-                mv_line_dicts)
+            mv_line_dicts)
 
     @api.one
     def process_reconciliation(self, mv_line_dicts):

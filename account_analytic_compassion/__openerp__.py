@@ -36,6 +36,6 @@
     'depends': ['account_analytic_attribution'],
     'data': [],
     'demo': ['analytic_account_data.xml'],
-    'installable': True,
+    'installable': False,
     'auto_install': False,
 }

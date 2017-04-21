@@ -9,8 +9,8 @@
 #                        /_/
 #                            in Jesus' name
 #
-#    Copyright (C) 2014 Compassion CH (http://www.compassion.ch)
-#    @author: Cyril Sester <csester@compassion.ch>
+#    Copyright (C) 2014-2017 Compassion CH (http://www.compassion.ch)
+#    @author: Cyril Sester <csester@compassion.ch>, Emanuel Cino
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -30,19 +30,19 @@
 {
     'name': 'Recurring contract',
     'summary': 'Contract for recurring invoicing',
-    'version': '1.2',
+    'version': '9.0.1.0.0',
     'license': 'AGPL-3',
     'author': 'Compassion CH',
     'website': 'http://www.compassion.ch',
-    'category': 'Other',
-    'depends': ['base', 'sale', 'connector'],
+    'category': 'Accounting',
+    'depends': ['sale', 'connector', 'account_cancel'],
     'external_dependencies': {},
     'data': [
-        'view/contract_group_view.xml',
-        'view/recurring_contract_view.xml',
-        'view/res_partner_view.xml',
-        'view/recurring_invoicer_view.xml',
-        'view/recurring_invoicer_wizard_view.xml',
+        'views/contract_group_view.xml',
+        'views/recurring_contract_view.xml',
+        'views/res_partner_view.xml',
+        'views/recurring_invoicer_view.xml',
+        'views/recurring_invoicer_wizard_view.xml',
         'workflow/recurring_contract_workflow.xml',
         'data/recurring_contract_sequence.xml',
         'data/recurring_invoicer_sequence.xml',
@@ -50,9 +50,5 @@
         'data/daily_invoicer_cron.xml',
         'security/ir.model.access.csv',
     ],
-    'demo': [
-        'demo/contract_demo.xml'
-    ],
-    'active': False,
     'installable': True,
 }

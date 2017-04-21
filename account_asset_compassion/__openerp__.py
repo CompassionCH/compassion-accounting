@@ -39,5 +39,5 @@
     'data': ['account_asset_view.xml'],
     'demo': [],
     'active': False,
-    'installable': True,
+    'installable': False,
 }

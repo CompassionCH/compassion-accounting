@@ -12,7 +12,7 @@
 from openerp import fields, models
 
 
-class account_invoice(models.Model):
+class AccountInvoice(models.Model):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
 
@@ -20,7 +20,7 @@ class account_invoice(models.Model):
         'recurring.invoicer', 'Invoicer')
 
 
-class account_invoice_line(models.Model):
+class AccountInvoiceLine(models.Model):
     _name = 'account.invoice.line'
     _inherit = 'account.invoice.line'
 
@@ -33,10 +33,4 @@ class account_invoice_line(models.Model):
 
     state = fields.Selection(
         related='invoice_id.state',
-        readonly=True, store=True,
-        selection=[('draft', 'Draft'),
-                   ('proforma', 'Pro-forma'),
-                   ('proforma2', 'Pro-forma'),
-                   ('open', 'Open'),
-                   ('paid', 'Paid'),
-                   ('cancel', 'Cancelled')])
+        readonly=True, store=True)

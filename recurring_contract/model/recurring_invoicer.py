@@ -19,7 +19,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class recurring_invoicer(models.Model):
+class RecurringInvoicer(models.Model):
     ''' An invoicer holds a bunch of invoices that have been generated
     in the same context. It also makes the validating or cancelling process
     of these contracts easy.
@@ -39,9 +39,10 @@ class recurring_invoicer(models.Model):
     def calculate_id(self):
         return self.env['ir.sequence'].next_by_code('rec.invoicer.ident')
 
-    @api.one
+    @api.multi
     def validate_invoices(self):
         ''' Validates created invoices (set state from draft to open)'''
+        self.ensure_one()
         invoice_to_validate = self.invoice_ids.filtered(
             lambda invoice: invoice.state == 'draft')
 
@@ -58,9 +59,10 @@ class recurring_invoicer(models.Model):
             count += 1
         return invoice_to_validate
 
-    @api.one
+    @api.multi
     def cancel_invoices(self):
         ''' Cancel created invoices (set state from open to cancelled) '''
+        self.ensure_one()
         invoice_to_cancel = self.invoice_ids.filtered(
             lambda invoice: invoice.state != 'cancel')
 
