@@ -4,31 +4,41 @@
 Analytic attribution
 ====================
 
-This module connects analytic defaults to analytic accounts in order to
-apply a distribution for attributing analytic lines into other axis of
-analysis.
+This module is meant to be the successor of Odoo 8 Analytic Defaults
+and Analytic Plans. However, it works a bit differently. Instead of directly
+dispatch analytic lines into several analytic accounts, you can setup rules
+on how you want to perform the distribution, and distribution will be done
+periodically (or can be triggered manually).
 
-The approach is different of module account_analyt_secondaxis as all move
-lines are still related to only one analytic account, but later on, the user
-can attribute the lines into other analytic accounts.
+Configuration
+=============
+In order to use Analytic Distribution, you must first set analytic tags
+on the analytic accounts for which you want to dispatch the analytic lines.
+Those tags will be used to create the rules.
+
+The module comes with a CRON `Perform Analytic Distribution` that you can
+enable to launch the attribution automatically when you want. It will
+perform the distribution for the last fiscal year (closed period). One good
+idea is to setup the CRON to launch at the beginning of your fiscal year.
 
 Usage
 =====
 
-To use this module, you need to:
+To use this module, go to menu Accounting/Configuration/Analytic Accounting:
 
-* Create analytic attributions and link them to specific analytic accounts you
-  want to attribute in other accounts.
-* go to Accounting -> Configuration -> Analytic Accounting -> Launch
-  attribution in order to attribute the lines for the given period. If an
-  attribution was already made for the period, it recomputes everything.
-* The attribution is automatically done when a period is closed.
+* Create analytic attributions: choose an analytic account and conditions
+  that will select this account when changing an Invoice Line. This the same
+  behaviour as the module `account_analytic_default` in Odoo 8.
+* Create analytic distributions: choose an analytic tag and setup the
+  distribution applied for this tag. You can add conditions to filter analytic
+  lines that will be distributed.
+* The distribution is either performed with the CRON or you can launch it
+  manually for the current fiscal year using the menu `Launch Distribution`
 
 Known issues / Roadmap
 ======================
 
-* Maybe setup a CRON which will perform the attribution each month.
-* Perform the attribution when closing a period.
+* None
 
 Credits
 =======
