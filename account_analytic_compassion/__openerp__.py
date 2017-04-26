@@ -29,13 +29,13 @@
 
 {
     'name': 'Compassion Analytic Accounts',
-    'version': '1.0',
+    'version': '9.0.1.0',
     'category': 'Other',
     'author': 'Compassion CH',
     'website': 'http://www.compassion.ch',
     'depends': ['account_analytic_attribution'],
     'data': [],
     'demo': ['analytic_account_data.xml'],
-    'installable': False,
+    'installable': True,
     'auto_install': False,
 }
