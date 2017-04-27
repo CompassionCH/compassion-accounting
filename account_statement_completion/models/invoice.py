@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 ##############################################################################
 #
-#    Copyright (C) 2014 Compassion CH (http://www.compassion.ch)
+#    Copyright (C) 2014-2017 Compassion CH (http://www.compassion.ch)
 #    Releasing children from poverty in Jesus' name
 #    @author: Emanuel Cino <ecino@compassion.ch>
 #
@@ -12,13 +12,23 @@
 from openerp import api, models, fields
 
 
-class account_invoice(models.Model):
+class AccountInvoice(models.Model):
     """ Adds two buttons for opening transactions of partner from invoice
     which eases the verification of generated invoices for the user."""
 
     _inherit = "account.invoice"
 
-    unrec_items = fields.Integer(related='partner_id.unrec_items')
+    unrec_items = fields.Integer(compute='_compute_unrec_items')
+
+    @api.multi
+    def _compute_unrec_items(self):
+        move_line_obj = self.env['account.move.line']
+        for invoice in self:
+            partner = self.partner_id
+            invoice.unrec_items = move_line_obj.search_count([
+                ('partner_id', '=', partner.id),
+                ('reconcile_id', '=', False),
+                ('account_id.reconcile_id', '!=', False)])
 
     @api.multi
     def show_transactions(self):

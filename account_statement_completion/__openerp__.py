@@ -9,7 +9,7 @@
 #                        /_/
 #                            in Jesus' name
 #
-#    Copyright (C) 2014 Compassion CH (http://www.compassion.ch)
+#    Copyright (C) 2014-2017 Compassion CH (http://www.compassion.ch)
 #    @author: Emanuel Cino <ecino@compassion.ch>
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -28,25 +28,20 @@
 ##############################################################################
 
 {
-    "name": "Account Statement Additions for Compassion CH",
-    "version": "1.5",
-    "author": "Emanuel Cino",
+    "name": "Account Statement Completion Rules",
+    "version": "9.0.1.0",
+    "author": "Compassion CH",
     "category": "Finance",
     "website": "http://www.compassion.ch",
-    "depends": ['crm_compassion', 'l10n_ch_account_statement_base_import',
-                'hr_expense'],
-    "data": ['view/statement_view.xml',
-             'view/invoice_view.xml',
-             'view/journal_view.xml',
+    "depends": ['account_bank_statement_import'],
+    "data": ['views/completion_rules_view.xml',
              'data/data.xml',
              'security/ir.model.access.csv'],
-    "css": ["static/src/css/sheet.css"],
     "demo": [],
     "test": [],
     "active": False,
     "license": "AGPL-3",
-    "installable": False,
+    "installable": True,
     "auto_install": False,
     "application": False,
 }
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
