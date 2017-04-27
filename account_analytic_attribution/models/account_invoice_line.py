@@ -24,6 +24,6 @@ class AccountInvoiceLine(models.Model):
         self.account_analytic_id = self.env[
             'account.analytic.attribution'].account_get(
             self.product_id.id, self.partner_id.id, self.invoice_id.user_id.id,
-            self.due_date
+            self.invoice_id.date_due
         ).id
         return res

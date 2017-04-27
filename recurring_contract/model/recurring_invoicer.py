@@ -62,13 +62,9 @@ class RecurringInvoicer(models.Model):
     @api.multi
     def cancel_invoices(self):
         ''' Cancel created invoices (set state from open to cancelled) '''
-        self.ensure_one()
-        invoice_to_cancel = self.invoice_ids.filtered(
+        invoice_to_cancel = self.mapped('invoice_ids').filtered(
             lambda invoice: invoice.state != 'cancel')
 
-        if not invoice_to_cancel:
-            raise exceptions.Warning('SelectionError',
-                                     _('There is no invoice to cancel'))
         invoice_to_cancel.signal_workflow('invoice_cancel')
 
         return True
