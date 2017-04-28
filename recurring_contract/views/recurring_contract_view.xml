@@ -122,7 +122,7 @@
 					<filter string="End date" domain="[]" context="{'group_by':'end_date'}"/>
 					<filter string="Payment term" domain="[]"  context="{'group_by':'payment_term_id'}"/>
 					<filter string="Total" domain="[]" context="{'group_by':'total_amount'}"/>
-					<filter string="Status" domain="[]"  context="{'group_by':'state'}"/>
+					<filter string="Status" name="state" domain="[]"  context="{'group_by':'state'}"/>
 				</group>
 		   </search>
 		</field>

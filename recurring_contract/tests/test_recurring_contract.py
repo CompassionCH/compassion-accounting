@@ -36,6 +36,33 @@ class BaseContractTest(TransactionCase):
     def ref(self, length):
         return ''.join(random.choice(string.lowercase) for i in range(length))
 
+    def create_group(self, vals):
+        base_vals = {
+            'advance_billing_months': 1,
+            'payment_term_id': self.payment_term.id,
+            'change_method': 'do_nothing',
+            'recurring_value': 1,
+            'recurring_unit': 'month',
+        }
+        base_vals.update(vals)
+        return self.group_obj.create(base_vals)
+
+    def create_contract(self, vals, line_vals):
+        base_vals = {
+            'reference': self.ref(10),
+            'start_date': fields.Date.today(),
+            'next_invoice_date': fields.Date.today(),
+            'state': 'draft',
+            'contract_line_ids': [(0, 0, l) for l in line_vals]
+        }
+        for line in base_vals['contract_line_ids']:
+            if 'product_id' not in line[2]:
+                line[2]['product_id'] = self.product.id
+            if 'quantity' not in line[2]:
+                line[2]['quantity'] = 1.0
+        base_vals.update(vals)
+        return self.con_obj.create(base_vals)
+
 
 class TestRecurringContract(BaseContractTest):
     """
@@ -61,27 +88,14 @@ class TestRecurringContract(BaseContractTest):
             of data when a contract generate invoice(s).
         """
         # Creation of a group and a contracts with one line
-        group = self.group_obj.create({
-            'advance_billing_months': 1,
-            'payment_term_id': self.payment_term.id,
-            'change_method': 'do_nothing',
-            'recurring_value': 1,
-            'recurring_unit': 'month',
-            'partner_id': self.michel.id
-        })
-        contract = self.con_obj.create({
-            'reference': self.ref(10),
-            'start_date': fields.Date.today(),
-            'next_invoice_date': fields.Date.today(),
-            'partner_id': self.michel.id,
-            'group_id': group.id,
-            'state': 'draft',
-            'contract_line_ids': [(0, 0, {
-                'product_id': self.product.id,
-                'amount': 40.0,
-                'quantity': 1
-            })]
-        })
+        group = self.create_group({'partner_id': self.michel.id})
+        contract = self.create_contract(
+            {
+                'partner_id': self.michel.id,
+                'group_id': group.id,
+            },
+            [{'amount': 40.0}]
+        )
 
         # Creation of data to test
         original_product = self.product.name
@@ -118,40 +132,21 @@ class TestRecurringContract(BaseContractTest):
             of invoices generated is correct
         """
         # Creation of a group and two contracts with one line each
-        group = self.group_obj.create({
-            'advance_billing_months': 1,
-            'payment_term_id': self.payment_term.id,
-            'change_method': 'do_nothing',
-            'recurring_value': 1,
-            'recurring_unit': 'month',
-            'partner_id': self.michel.id
-        })
-        contract = self.con_obj.create({
-            'reference': self.ref(10),
-            'start_date': fields.Date.today(),
-            'next_invoice_date': fields.Date.today(),
-            'partner_id': self.michel.id,
-            'group_id': group.id,
-            'state': 'draft',
-            'contract_line_ids': [(0, 0, {
-                'product_id': self.product.id,
-                'amount': 75.0,
-                'quantity': 1
-            })]
-        })
-        contract2 = self.con_obj.create({
-            'reference': self.ref(10),
-            'start_date': fields.Date.today(),
-            'next_invoice_date': fields.Date.today(),
-            'partner_id': self.michel.id,
-            'group_id': group.id,
-            'state': 'draft',
-            'contract_line_ids': [(0, 0, {
-                'product_id': self.product.id,
-                'amount': 85.0,
-                'quantity': 1
-            })]
-        })
+        group = self.create_group({'partner_id': self.michel.id})
+        contract = self.create_contract(
+            {
+                'partner_id': self.michel.id,
+                'group_id': group.id,
+            },
+            [{'amount': 75.0}]
+        )
+        contract2 = self.create_contract(
+            {
+                'partner_id': self.michel.id,
+                'group_id': group.id,
+            },
+            [{'amount': 85.0}]
+        )
 
         original_price1 = contract.total_amount
         original_price2 = contract2.total_amount
@@ -202,65 +197,28 @@ class TestRecurringContract(BaseContractTest):
             Creation of several contracts of the same group to test the case
             if we cancel one of the contracts if invoices are still correct.
         """
-        group = self.group_obj.create({
-            'advance_billing_months': 1,
-            'payment_term_id': self.payment_term.id,
-            'change_method': 'do_nothing',
-            'recurring_value': 1,
-            'recurring_unit': 'month',
-            'partner_id': self.michel.id
-        })
-        contract = self.con_obj.create({
-            'reference': self.ref(10),
-            'start_date': fields.Date.today(),
-            'next_invoice_date': fields.Date.today(),
-            'partner_id': self.michel.id,
-            'group_id': group.id,
-            'state': 'draft',
-            'contract_line_ids': [(0, 0, {
-                'product_id': self.product.id,
-                'amount': 10.0,
-                'quantity': 1
-            }), (0, 0, {
-                'product_id': self.product.id,
-                'amount': 20.0,
-                'quantity': 1
-            })]
-        })
-        contract2 = self.con_obj.create({
-            'reference': self.ref(10),
-            'start_date': fields.Date.today(),
-            'next_invoice_date': fields.Date.today(),
-            'partner_id': self.michel.id,
-            'group_id': group.id,
-            'state': 'draft',
-            'contract_line_ids': [(0, 0, {
-                'product_id': self.product.id,
-                'amount': 30.0,
-                'quantity': 1
-            }), (0, 0, {
-                'product_id': self.product.id,
-                'amount': 40.0,
-                'quantity': 1
-            })]
-        })
-        contract3 = self.con_obj.create({
-            'reference': self.ref(10),
-            'start_date': fields.Date.today(),
-            'next_invoice_date': fields.Date.today(),
-            'partner_id': self.michel.id,
-            'group_id': group.id,
-            'state': 'draft',
-            'contract_line_ids': [(0, 0, {
-                'product_id': self.product.id,
-                'amount': 15.0,
-                'quantity': 1
-            }), (0, 0, {
-                'product_id': self.product.id,
-                'amount': 25.0,
-                'quantity': 1
-            })]
-        })
+        group = self.create_group({'partner_id': self.michel.id})
+        contract = self.create_contract(
+            {
+                'partner_id': self.michel.id,
+                'group_id': group.id,
+            },
+            [{'amount': 10.0}, {'amount': 20.0}]
+        )
+        contract2 = self.create_contract(
+            {
+                'partner_id': self.michel.id,
+                'group_id': group.id,
+            },
+            [{'amount': 30.0}, {'amount': 40.0}]
+        )
+        contract3 = self.create_contract(
+            {
+                'partner_id': self.michel.id,
+                'group_id': group.id,
+            },
+            [{'amount': 15.0}, {'amount': 25.0}]
+        )
 
         # Creation of data to test
         original_product = self.product.name
