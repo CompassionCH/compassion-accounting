@@ -11,7 +11,7 @@ python:
 
 env:
     global:
-    - VERSION="9.0" ODOO_REPO="odoo/odoo" EXCLUDE="account_reconcile_compassion,account_statement_completion_compassion"
+    - VERSION="9.0" ODOO_REPO="odoo/odoo" EXCLUDE=""
     matrix:
     - LINT_CHECK="1"
 

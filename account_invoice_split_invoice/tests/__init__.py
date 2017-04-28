@@ -9,4 +9,4 @@
 #
 ##############################################################################
 
-# from . import test_split_invoice
+from . import test_split_invoice

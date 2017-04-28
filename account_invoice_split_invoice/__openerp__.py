@@ -29,7 +29,7 @@
 {
     'name': 'Split invoices',
     'summary': 'Split invoices into two separate invoices',
-    'version': '1.0',
+    'version': '9.0.1.0.0',
     'license': 'AGPL-3',
     'author': 'Compassion CH',
     'website': 'http://www.compassion.ch',
@@ -37,9 +37,9 @@
     'depends': ['account', 'account_cancel'],
     'external_dependencies': {},
     'data': [
-        'view/account_invoice_split_wizard_view.xml',
+        'views/account_invoice_split_wizard_view.xml',
     ],
     'demo': [],
     'active': False,
-    'installable': False,
+    'installable': True,
 }
