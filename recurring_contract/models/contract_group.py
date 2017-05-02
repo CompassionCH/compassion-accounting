@@ -219,7 +219,8 @@ class ContractGroup(models.Model):
                     contract_group.next_invoice_date)
                 while current_date <= limit_date:
                     contracts = contract_group.contract_ids.filtered(
-                        lambda c: fields.Datetime.from_string(
+                        lambda c: c.next_invoice_date and
+                        fields.Datetime.from_string(
                             c.next_invoice_date) <= current_date and
                         c.state in gen_states and not (
                             c.end_date and c.end_date >= c.next_invoice_date)
@@ -295,7 +296,7 @@ class ContractGroup(models.Model):
             'recurring_invoicer_id': invoicer.id,
             'payment_term_id': self.payment_term_id.id,
             'invoice_line_ids': [
-                (0, 0, invl) for invl in contracts.get_inv_lines_data()
+                (0, 0, invl) for invl in contracts.get_inv_lines_data() if invl
             ]
         }
         return inv_data

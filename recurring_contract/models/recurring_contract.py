@@ -451,7 +451,7 @@ class RecurringContract(models.Model):
         for contract in self:
             # Update payment term
             invoices.write({
-                'payment_term': contract.group_id.payment_term_id and
+                'payment_term_id': contract.group_id.payment_term_id and
                 contract.group_id.payment_term_id.id or False})
 
             for invoice in invoices:
@@ -462,7 +462,7 @@ class RecurringContract(models.Model):
                 journal = invoice.journal_id
                 invl = [(0, 0, l) for l in
                         contract.with_context(
-                            journal_id=journal.id).get_inv_lines_data()]
+                            journal_id=journal.id).get_inv_lines_data() if l]
                 invoice.write({'invoice_line_ids': invl})
 
     def _on_change_next_invoice_date(self, new_invoice_date):
