@@ -4,8 +4,8 @@
 Analytic attribution
 ====================
 
-This module is meant to be the successor of Odoo 8 Analytic Defaults
-and Analytic Plans. However, it works a bit differently. Instead of directly
+This module is meant to be the successor of Odoo 8 Analytic Plans.
+However, it works a bit differently. Instead of directly
 dispatch analytic lines into several analytic accounts, you can setup rules
 on how you want to perform the distribution, and distribution will be done
 periodically (or can be triggered manually).
@@ -26,10 +26,7 @@ Usage
 
 To use this module, go to menu Accounting/Configuration/Analytic Accounting:
 
-* Create analytic attributions: choose an analytic account and conditions
-  that will select this account when changing an Invoice Line. This the same
-  behaviour as the module `account_analytic_default` in Odoo 8.
-* Create analytic distributions: choose an analytic tag and setup the
+* Create analytic attributions: choose an analytic tag and setup the
   distribution applied for this tag. You can add conditions to filter analytic
   lines that will be distributed.
 * The distribution is either performed with the CRON or you can launch it

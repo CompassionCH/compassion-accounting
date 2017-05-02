@@ -10,4 +10,3 @@
 ##############################################################################
 from . import account_analytic_attribution
 from . import account_analytic_distribution_line
-from . import account_invoice_line

@@ -12,13 +12,6 @@ from openerp import models, fields
 
 
 class AccountDistributionLine(models.Model):
-    """
-    Attribution are used for 2 purposes:
-    1. Select automatically an analytic account when selecting a product
-       on invoices (type attribution)
-    2. Dispatch analytic lines into other analytic accounts
-       (type distribution)
-    """
     _name = "account.analytic.distribution.line"
     _description = "Analytic Distribution Line"
 

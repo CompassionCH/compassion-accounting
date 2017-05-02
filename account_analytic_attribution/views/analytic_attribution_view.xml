@@ -7,21 +7,6 @@
         <field name="arch" type="xml">
             <tree string="Analytic Attributions">
                 <field name="sequence"/>
-                <field name="product_id"/>
-                <field name="partner_id"/>
-                <field name="user_id"/>
-                <field name="date_start"/>
-                <field name="date_stop"/>
-                <field name="account_analytic_id"/>
-            </tree>
-        </field>
-    </record>
-    <record id="view_distribution_tree" model="ir.ui.view">
-        <field name="name">account.analytic.distribution.tree</field>
-        <field name="model">account.analytic.attribution</field>
-        <field name="arch" type="xml">
-            <tree string="Analytic Distributions">
-                <field name="sequence"/>
                 <field name="analytic_tag_id"/>
                 <field name="account_tag_id"/>
                 <field name="date_start"/>
@@ -31,11 +16,11 @@
     </record>
 
     <!-- Form views -->
-    <record id="view_distribution_form" model="ir.ui.view">
-        <field name="name">account.analytic.distribution.form</field>
+    <record id="view_attribution_form" model="ir.ui.view">
+        <field name="name">account.analytic.attribution.form</field>
         <field name="model">account.analytic.attribution</field>
         <field name="arch" type="xml">
-            <form string="Analytic Distribution">
+            <form string="Analytic Attribution">
                 <sheet>
                     <group>
                         <field name="sequence"/>
@@ -58,37 +43,16 @@
             </form>
         </field>
     </record>
-    <record id="view_attribution_form" model="ir.ui.view">
-        <field name="name">account.analytic.attribution.form</field>
-        <field name="model">account.analytic.attribution</field>
-        <field name="arch" type="xml">
-            <form string="Analytic Attribution">
-                <sheet>
-                    <group>
-                        <field name="sequence"/>
-                        <field name="account_analytic_id" required="1"/>
-                    </group>
-                    <group string="Conditions">
-                        <field name="product_id"/>
-                        <field name="partner_id"/>
-                        <field name="user_id"/>
-                        <field name="date_start"/>
-                        <field name="date_stop"/>
-                    </group>
-                </sheet>
-            </form>
-        </field>
-    </record>
 
-    <!-- Launch Distribution Wizard -->
+    <!-- Launch Attribution Wizard -->
     <record id="view_analytic_attribution_form" model="ir.ui.view">
         <field name="name">analytic.attribution.wizard.form</field>
         <field name="model">account.analytic.attribution.wizard</field>
         <field name="arch" type="xml">
-            <form string="Launch Analytic Distribution">
-                <p>This will trigger the analytic distribution for the current fiscal year.</p>
+            <form string="Launch Analytic Attribution">
+                <p>This will trigger the analytic attribution for the current fiscal year.</p>
                 <footer>
-                    <button name="perform_distribution" string="Launch distribution" type="object" class="oe_highlight"/>
+                    <button name="perform_attribution" string="Launch attribution" type="object" class="oe_highlight"/>
                 </footer>
             </form>
         </field>
@@ -96,48 +60,23 @@
 
     <!-- Add new menu entry for analytic attribution wizard -->
     <record id="action_analytic_attribution_wizard" model="ir.actions.act_window">
-        <field name="name">Launch Distribution</field>
+        <field name="name">Launch Attribution</field>
         <field name="res_model">account.analytic.attribution.wizard</field>
         <field name="view_type">form</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
     </record>
 
-    <!-- Add new menu entry for analytic attributions and distributions -->
+    <!-- Add new menu entry for analytic attributions and attributions -->
     <record id="action_attribution_list" model="ir.actions.act_window">
         <field name="name">Analytic Attributions</field>
         <field name="res_model">account.analytic.attribution</field>
         <field name="view_mode">tree,form</field>
-        <field name="context">{
-            "default_type":"attribution",
-            "tree_view_ref": "account_analytic_attribution.view_attribution_tree",
-            "form_view_ref": "account_analytic_attribution.view_attribution_form"
-            }
-        </field>
-        <field name="domain">[('type', '=', 'attribution')]</field>
     </record>
 
     <menuitem
             action="action_attribution_list"
             id="menu_analytic_attribution_list"
-            parent="account.menu_analytic_accounting"/>
-
-    <record id="action_distribution_list" model="ir.actions.act_window">
-        <field name="name">Analytic Distributions</field>
-        <field name="res_model">account.analytic.attribution</field>
-        <field name="view_mode">tree,form</field>
-        <field name="context">{
-            "default_type":"distribution",
-            "tree_view_ref": "account_analytic_attribution.view_distribution_tree",
-            "form_view_ref": "account_analytic_attribution.view_distribution_form"
-            }
-        </field>
-        <field name="domain">[('type', '=', 'distribution')]</field>
-    </record>
-
-    <menuitem
-            action="action_distribution_list"
-            id="menu_analytic_distribution_list"
             parent="account.menu_analytic_accounting"/>
 
     <menuitem

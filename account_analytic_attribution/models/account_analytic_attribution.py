@@ -17,41 +17,23 @@ from openerp import api, models, fields
 
 class AccountAttribution(models.Model):
     """
-    Attribution are used for 2 purposes:
-    1. Select automatically an analytic account when selecting a product
-       on invoices (type attribution)
-    2. Dispatch analytic lines into other analytic accounts
-       (type distribution)
+    Attribution are used for dispatching analytic lines into other analytic 
+    accounts.
     """
     _name = "account.analytic.attribution"
     _description = "Analytic Attribution"
     _order = "sequence desc"
 
-    type = fields.Selection(
-        [('distribution', 'Analytic Distribution'),
-         ('attribution', 'Product Attribution')],
-        required=True, default='attribution'
-    )
     account_tag_id = fields.Many2one(
         'account.account.tag', 'Account Tag', ondelete='cascade'
     )
-    account_analytic_id = fields.Many2one(
-        'account.analytic.account', 'Analytic Account', ondelete='cascade'
-    )
     analytic_tag_id = fields.Many2one(
-        'account.analytic.tag', 'Analytic Tag', ondelete='cascade'
+        'account.analytic.tag', 'Analytic Tag', required=True,
+        ondelete='cascade'
     )
     account_distribution_line_ids = fields.One2many(
-        'account.analytic.distribution.line', 'attribution_id', 'Distribution'
-    )
-    product_id = fields.Many2one(
-        'product.product', 'Product', ondelete='cascade'
-    )
-    partner_id = fields.Many2one(
-        'res.partner', 'Partner', ondelete='cascade'
-    )
-    user_id = fields.Many2one(
-        'res.users', 'User'
+        'account.analytic.distribution.line', 'attribution_id', 'Distribution',
+        required=True
     )
     date_start = fields.Date()
     date_stop = fields.Date()
@@ -67,48 +49,9 @@ class AccountAttribution(models.Model):
         return fields.Datetime.to_string(next_fy)
 
     @api.model
-    def account_get(self, product_id=None, partner_id=None, user_id=None,
-                    date=None):
-        """ Find analytic account given some parameters. """
-        domain = [('type', '=', 'attribution')]
-        if product_id:
-            domain += ['|', ('product_id', '=', product_id)]
-        domain += [('product_id', '=', False)]
-        if partner_id:
-            domain += ['|', ('partner_id', '=', partner_id)]
-        domain += [('partner_id', '=', False)]
-        if user_id:
-            domain += ['|', ('user_id', '=', user_id)]
-        domain += [('user_id', '=', False)]
-        if date:
-            domain += ['|', ('date_start', '<=', date),
-                       ('date_start', '=', False)]
-            domain += ['|', ('date_stop', '>=', date),
-                       ('date_stop', '=', False)]
-        best_index = -1
-        res = self.env['account.analytic.account']
-        for rec in self.search(domain):
-            index = 0
-            if rec.product_id:
-                index += 1
-            if rec.partner_id:
-                index += 1
-            if rec.user_id:
-                index += 1
-            if rec.date_start:
-                index += 1
-            if rec.date_stop:
-                index += 1
-            if index > best_index:
-                res = rec.account_analytic_id
-                best_index = index
-        return res
-
-    @api.model
     def get_attribution(self, account_tag_ids, analytic_tag_ids, date):
         """ Find a valid distribution rule given some data. """
         domain = [
-            ('type', '=', 'distribution'),
             '|', ('date_start', '<=', date), ('date_start', '=', False),
             '|', ('date_stop', '>=', date), ('date_stop', '=', False)
         ]
