@@ -17,7 +17,7 @@ from openerp import api, models, fields
 
 class AccountAttribution(models.Model):
     """
-    Attribution are used for dispatching analytic lines into other analytic 
+    Attribution are used for dispatching analytic lines into other analytic
     accounts.
     """
     _name = "account.analytic.attribution"
