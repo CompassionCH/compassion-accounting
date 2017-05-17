@@ -27,8 +27,8 @@ class AccountInvoice(models.Model):
             partner = self.partner_id
             invoice.unrec_items = move_line_obj.search_count([
                 ('partner_id', '=', partner.id),
-                ('reconcile_id', '=', False),
-                ('account_id.reconcile_id', '!=', False)])
+                ('reconciled', '=', False),
+                ('account_id.reconcile', '!=', False)])
 
     @api.multi
     def show_transactions(self):
