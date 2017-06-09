@@ -101,9 +101,9 @@ class RecurringContract(models.Model):
         'Total', compute='_get_total_amount',
         digits_compute=dp.get_precision('Account'),
         track_visibility="onchange", store=True)
-    payment_term_id = fields.Many2one(
-        'account.payment.term', string='Payment Term',
-        related='group_id.payment_term_id', readonly=True, store=True)
+    payment_mode_id = fields.Many2one(
+        'account.payment.mode', string='Payment mode',
+        related='group_id.payment_mode_id', readonly=True, store=True)
     nb_invoices = fields.Integer(compute='_count_invoices')
 
     _sql_constraints = [
@@ -451,8 +451,8 @@ class RecurringContract(models.Model):
         for contract in self:
             # Update payment term
             invoices.write({
-                'payment_term_id': contract.group_id.payment_term_id and
-                contract.group_id.payment_term_id.id or False})
+                'payment_mode_id': contract.payment_mode_id.id
+            })
 
             for invoice in invoices:
                 # Generate new invoice_lines

@@ -39,6 +39,12 @@ class ContractGroup(models.Model):
             'for each month of the year and send them to the '
             'customer in january.'
         ), default=1, ondelete='no action')
+    payment_mode_id = fields.Many2one(
+        'account.payment.mode', 'Payment mode',
+        domain=[('payment_type', '=', 'inbound')],
+        track_visibility='onchange'
+    )
+    # Todo remove after v9 migration
     payment_term_id = fields.Many2one('account.payment.term',
                                       'Payment Term',
                                       track_visibility="onchange")
@@ -294,7 +300,7 @@ class ContractGroup(models.Model):
             partner.property_product_pricelist.currency_id.id,
             'date_invoice': self.next_invoice_date,
             'recurring_invoicer_id': invoicer.id,
-            'payment_term_id': self.payment_term_id.id,
+            'payment_mode_id': self.payment_mode_id.id,
             'invoice_line_ids': [
                 (0, 0, invl) for invl in contracts.get_inv_lines_data() if invl
             ]

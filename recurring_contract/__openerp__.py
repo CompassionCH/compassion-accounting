@@ -35,7 +35,7 @@
     'author': 'Compassion CH',
     'website': 'http://www.compassion.ch',
     'category': 'Accounting',
-    'depends': ['sale', 'connector', 'account_cancel'],
+    'depends': ['account_payment_mode', 'connector', 'account_cancel'],
     'external_dependencies': {},
     'data': [
         'views/contract_group_view.xml',

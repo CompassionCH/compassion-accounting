@@ -27,8 +27,8 @@ class BaseContractTest(TransactionCase):
             async_mode=False)
         self.con_obj = self.env['recurring.contract'].with_context(
             async_mode=False)
-        self.payment_term = self.env.ref(
-            'account.account_payment_term_immediate')
+        self.payment_mode = self.env.ref(
+            'account_payment_mode.payment_mode_inbound_ct2')
         self.product = self.env.ref('product.product_product_35')
         # Make all journals cancellable
         self.env['account.journal'].search([]).write({'update_posted': True})
@@ -39,7 +39,7 @@ class BaseContractTest(TransactionCase):
     def create_group(self, vals):
         base_vals = {
             'advance_billing_months': 1,
-            'payment_term_id': self.payment_term.id,
+            'payment_mode_id': self.payment_mode.id,
             'change_method': 'do_nothing',
             'recurring_value': 1,
             'recurring_unit': 'month',
