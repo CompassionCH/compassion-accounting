@@ -9,8 +9,8 @@
 #
 ##############################################################################
 
-from openerp import fields
-from openerp.tests.common import TransactionCase
+from odoo import fields
+from odoo.tests.common import TransactionCase
 import logging
 import random
 import string

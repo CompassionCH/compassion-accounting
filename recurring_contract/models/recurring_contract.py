@@ -12,13 +12,12 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-from openerp import api, fields, models, _
-from openerp.exceptions import UserError
-from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
+from odoo import api, fields, models, _
+from odoo.exceptions import UserError
+from odoo.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 import openerp.addons.decimal_precision as dp
 
-from openerp.addons.connector.queue.job import job, related_action
-from openerp.addons.connector.session import ConnectorSession
+from odoo.addons.queue_job.job import job, related_action
 
 
 class ContractLine(models.Model):
@@ -205,10 +204,7 @@ class RecurringContract(models.Model):
             the task immediately.
         """
         if self.env.context.get('async_mode', True):
-            session = ConnectorSession.from_env(self.env)
-            clean_invoices_job.delay(
-                session, self._name, self.ids, since_date, to_date,
-                keep_lines)
+            self.with_delay()._clean_invoices(since_date, to_date, keep_lines)
         else:
             self._clean_invoices(since_date, to_date, keep_lines)
 
@@ -345,6 +341,8 @@ class RecurringContract(models.Model):
     #                             PRIVATE METHODS                            #
     ##########################################################################
     @api.multi
+    @job(default_channel='root.RecurringInvoicer')
+    @related_action(action='related_action_contract')
     def _clean_invoices(self, since_date=None, to_date=None, keep_lines=None):
         """ This method deletes invoices lines generated for a given contract
             having a due date >= current month. If the invoice_line was the
@@ -491,30 +489,3 @@ class RecurringContract(models.Model):
             invl_search.append(('due_date', '<=', to_date))
 
         return self.env['account.invoice.line'].search(invl_search)
-
-
-##############################################################################
-#                            CONNECTOR METHODS                               #
-##############################################################################
-def related_action_contract(session, job):
-    contract_ids = job.args[1]
-    action = {
-        'name': _("Contract"),
-        'type': 'ir.actions.act_window',
-        'res_model': 'recurring.contract',
-        'view_type': 'form',
-        'view_mode': 'form,tree',
-        'res_id': contract_ids[0],
-        'domain': [('id', 'in', contract_ids)],
-        'context': {'default_type': 'S'},
-    }
-    return action
-
-
-@job(default_channel='root.RecurringInvoicer')
-@related_action(action=related_action_contract)
-def clean_invoices_job(session, model_name, contract_ids,
-                       since_date=None, to_date=None, keep_lines=None):
-    """Job for cleaning invoices of contracts."""
-    contracts = session.env[model_name].browse(contract_ids)
-    contracts._clean_invoices(since_date, to_date, keep_lines)

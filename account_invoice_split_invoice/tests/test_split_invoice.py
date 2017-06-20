@@ -9,9 +9,9 @@
 #
 ##############################################################################
 
-from openerp.tests import common
+from odoo.tests import common
 from datetime import datetime
-from openerp import netsvc
+from odoo import netsvc
 import logging
 logger = logging.getLogger(__name__)
 

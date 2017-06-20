@@ -13,11 +13,10 @@ import logging
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-from openerp import api, fields, models, _, exceptions
-from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
+from odoo import api, fields, models, _, exceptions
+from odoo.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 
-from openerp.addons.connector.queue.job import job, related_action
-from openerp.addons.connector.session import ConnectorSession
+from odoo.addons.queue_job.job import job, related_action
 
 logger = logging.getLogger(__name__)
 
@@ -141,8 +140,7 @@ class ContractGroup(models.Model):
             the task immediately.
         """
         if self.env.context.get('async_mode', True):
-            session = ConnectorSession.from_env(self.env)
-            clean_generate_job.delay(session, self._name, self.ids)
+            self.with_delay()._clean_generate_invoices()
         else:
             self._clean_generate_invoices()
         return True
@@ -160,9 +158,7 @@ class ContractGroup(models.Model):
             invoicer = self.env['recurring.invoicer'].create(
                 {'source': self._name})
         if self.env.context.get('async_mode', True):
-            session = ConnectorSession.from_env(self.env)
-            generate_invoices_job.delay(
-                session, self._name, self.ids, invoicer.id)
+            self.with_delay()._generate_invoices(invoicer)
         else:
             # Prevent two generations at the same time
             jobs = self.env['queue.job'].search([
@@ -197,6 +193,9 @@ class ContractGroup(models.Model):
     ##########################################################################
     #                             PRIVATE METHODS                            #
     ##########################################################################
+    @api.multi
+    @job(default_channel='root.RecurringInvoicer')
+    @related_action(action='related_action_invoicer')
     def _generate_invoices(self, invoicer=None):
         """ Checks all contracts and generate invoices if needed.
         Create an invoice per contract group per date.
@@ -247,6 +246,7 @@ class ContractGroup(models.Model):
         return invoicer
 
     @api.multi
+    @job(default_channel='root.RecurringInvoicer')
     def _clean_generate_invoices(self):
         """ Change method which cancels generated invoices and rewinds
         the next_invoice_date of contracts, so that new invoices can be
@@ -306,35 +306,3 @@ class ContractGroup(models.Model):
             ]
         }
         return inv_data
-
-
-##############################################################################
-#                            CONNECTOR METHODS                               #
-##############################################################################
-def related_action_invoicer(session, job):
-    invoicer_id = job.args[3]
-    action = {
-        'name': _("Message"),
-        'type': 'ir.actions.act_window',
-        'res_model': 'recurring.invoicer',
-        'view_type': 'form',
-        'view_mode': 'form',
-        'res_id': invoicer_id,
-    }
-    return action
-
-
-@job(default_channel='root.RecurringInvoicer')
-@related_action(action=related_action_invoicer)
-def generate_invoices_job(session, model_name, group_ids, invoicer_id):
-    """Job for generating invoices."""
-    groups = session.env[model_name].browse(group_ids)
-    invoicer = session.env['recurring.invoicer'].browse(invoicer_id)
-    groups._generate_invoices(invoicer)
-
-
-@job(default_channel='root.RecurringInvoicer')
-def clean_generate_job(session, model_name, group_ids):
-    """Job for cleaning invoices of a contract group."""
-    groups = session.env[model_name].browse(group_ids)
-    groups._clean_generate_invoices()

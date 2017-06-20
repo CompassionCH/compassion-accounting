@@ -13,3 +13,4 @@ from . import contract_group
 from . import invoice
 from . import recurring_invoicer
 from . import recurring_contract
+from . import queue_job

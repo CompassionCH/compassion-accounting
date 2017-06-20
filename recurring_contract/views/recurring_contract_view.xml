@@ -144,6 +144,6 @@
 		</field>
 	</record>
 
-	<menuitem id="menu_contracts_section" parent="base.menu_base_partner" name="Contracts" sequence="20" groups="base.group_sale_manager"/>
+	<menuitem id="menu_contracts_section" parent="account.menu_finance" name="Contracts" sequence="2"/>
 	<menuitem id="menu_recurring_contract_form" parent="menu_contracts_section" action="action_recurring_contract_form" sequence="5"/>
 </odoo>
