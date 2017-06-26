@@ -1,7 +1,7 @@
 ﻿# -*- encoding: utf-8 -*-
 ##############################################################################
 #
-#    Copyright (C) 2014 Compassion CH (http://www.compassion.ch)
+#    Copyright (C) 2014-2017 Compassion CH (http://www.compassion.ch)
 #    Releasing children from poverty in Jesus' name
 #    @author: Emanuel Cino <ecino@compassion.ch>
 #
@@ -36,19 +36,17 @@ class SplitInvoiceWizard(models.TransientModel):
 
         if self.invoice_line_ids:
             old_invoice = self.invoice_line_ids[0].invoice_id
-            # to_move_lines = self.invoice_line_ids.filtered('split')
             if old_invoice.state in ('draft', 'open'):
                 invoice = self._copy_invoice(old_invoice)
                 was_open = old_invoice.state == 'open'
                 if was_open:
-                    # Workaround to fix cache issues
-                    self.env.invalidate_all()
-                    old_invoice.action_cancel()
-                    old_invoice.action_cancel_draft()
+                    old_invoice.action_invoice_cancel()
+                    old_invoice.action_invoice_draft()
+                    old_invoice.env.invalidate_all()
                 self.invoice_line_ids.write({'invoice_id': invoice.id})
                 if was_open:
-                    old_invoice.signal_workflow('invoice_open')
-                    invoice.signal_workflow('invoice_open')
+                    old_invoice.action_invoice_open()
+                    invoice.action_invoice_open()
         return invoice
 
     def _copy_invoice(self, old_invoice):
