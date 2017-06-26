@@ -299,6 +299,10 @@ class RecurringContract(models.Model):
             'type': 'ir.actions.act_window',
             'view_type': 'form',
             'view_mode': 'tree,form',
+            'views': [
+                (self.env.ref('account.invoice_tree').id, 'tree'),
+                (self.env.ref('account.invoice_form').id, 'form'),
+            ],
             'res_model': 'account.invoice',
             'domain': [('id', 'in', invoice_ids)],
             'context': self.with_context(
