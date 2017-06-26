@@ -52,7 +52,7 @@ class RecurringInvoicer(models.Model):
         for invoice in invoice_to_validate:
             logger.info("Validating invoice {0}/{1}".format(
                         count, nb_invoice))
-            invoice.signal_workflow('invoice_open')
+            invoice.action_invoice_open()
             # After an invoice is validated, we commit all writes in order to
             # avoid doing it again in case of an error or a timeout
             self.env.cr.commit()
@@ -65,6 +65,6 @@ class RecurringInvoicer(models.Model):
         invoice_to_cancel = self.mapped('invoice_ids').filtered(
             lambda invoice: invoice.state != 'cancel')
 
-        invoice_to_cancel.signal_workflow('invoice_cancel')
+        invoice_to_cancel.action_invoice_cancel()
 
         return True

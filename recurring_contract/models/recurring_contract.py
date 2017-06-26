@@ -389,10 +389,11 @@ class RecurringContract(models.Model):
              ('state', 'not in', ('paid', 'cancel'))])
 
         invoices = inv_lines.mapped('invoice_id')
-        invoices.action_cancel()
-        invoices.action_cancel_draft()
+        invoices.action_invoice_cancel()
+        invoices.action_invoice_draft()
+        invoices.env.invalidate_all()
         self._update_invoice_lines(invoices)
-        invoices.signal_workflow('invoice_open')
+        invoices.action_invoice_open()
 
     @api.model
     def _move_cancel_lines(self, invoice_lines, message=None):
@@ -433,8 +434,9 @@ class RecurringContract(models.Model):
         """ Cancels given invoices and validate again given invoices.
             confirm_ids must be a subset of cancel_ids ! """
         invoice_cancel.signal_workflow('invoice_cancel')
-        invoice_confirm.action_cancel_draft()
-        invoice_confirm.signal_workflow('invoice_open')
+        invoice_confirm.action_invoice_draft()
+        invoice_confirm.env.invalidate_all()
+        invoice_confirm.action_invoice_open()
 
     def _compute_next_invoice_date(self):
         """ Compute next_invoice_date for a single contract. """
