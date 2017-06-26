@@ -39,7 +39,7 @@ class ContractLine(models.Model):
     amount = fields.Float('Price', required=True)
     quantity = fields.Integer(default=1, required=True)
     subtotal = fields.Float(compute='_compute_subtotal', store=True,
-                            digits_compute=dp.get_precision('Account'))
+                            digits=dp.get_precision('Account'))
 
     @api.depends('amount', 'quantity')
     def _compute_subtotal(self):
@@ -98,7 +98,7 @@ class RecurringContract(models.Model):
         track_visibility='onchange', copy=False)
     total_amount = fields.Float(
         'Total', compute='_get_total_amount',
-        digits_compute=dp.get_precision('Account'),
+        digits=dp.get_precision('Account'),
         track_visibility="onchange", store=True)
     payment_mode_id = fields.Many2one(
         'account.payment.mode', string='Payment mode',
@@ -137,7 +137,9 @@ class RecurringContract(models.Model):
     def _count_invoices(self):
         for contract in self:
             contract.nb_invoices = len(
-                contract.mapped('invoice_line_ids.invoice_id'))
+                contract.mapped('invoice_line_ids.invoice_id').filtered(
+                    lambda i: i.state not in ('cancel', 'draft')
+                ))
 
     ##########################################################################
     #                              ORM METHODS                               #
@@ -302,7 +304,9 @@ class RecurringContract(models.Model):
             'res_model': 'account.invoice',
             'domain': [('id', 'in', invoice_ids)],
             'context': self.with_context(
-                form_view_ref='account.invoice_form').env.context,
+                form_view_ref='account.invoice_form',
+                search_default_invoices=True
+            ).env.context,
             'target': 'current',
         }
 
@@ -341,7 +345,7 @@ class RecurringContract(models.Model):
     #                             PRIVATE METHODS                            #
     ##########################################################################
     @api.multi
-    @job(default_channel='root.RecurringInvoicer')
+    @job(default_channel='root.recurring_invoicer')
     @related_action(action='related_action_contract')
     def _clean_invoices(self, since_date=None, to_date=None, keep_lines=None):
         """ This method deletes invoices lines generated for a given contract
@@ -422,7 +426,7 @@ class RecurringContract(models.Model):
 
         # Compute and cancel invoice copies
         cancel_invoices = invoice_obj.browse(invoices_copy.values())
-        cancel_invoices.signal_workflow('invoice_cancel')
+        cancel_invoices.action_invoice_cancel()
         for ci in cancel_invoices:
             ci.message_post(message, _("Invoice Cancelled"), 'comment')
 
@@ -433,7 +437,7 @@ class RecurringContract(models.Model):
                                  keep_lines=None):
         """ Cancels given invoices and validate again given invoices.
             confirm_ids must be a subset of cancel_ids ! """
-        invoice_cancel.signal_workflow('invoice_cancel')
+        invoice_cancel.action_invoice_cancel()
         invoice_confirm.action_invoice_draft()
         invoice_confirm.env.invalidate_all()
         invoice_confirm.action_invoice_open()

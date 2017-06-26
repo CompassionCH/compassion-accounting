@@ -29,7 +29,7 @@ class BaseContractTest(TransactionCase):
             async_mode=False)
         self.payment_mode = self.env.ref(
             'account_payment_mode.payment_mode_inbound_ct2')
-        self.product = self.env.ref('product.product_product_35')
+        self.product = self.env.ref('product.product_product_6')
         # Make all journals cancellable
         self.env['account.journal'].search([]).write({'update_posted': True})
 
@@ -241,12 +241,11 @@ class TestRecurringContract(BaseContractTest):
 
         # We put the third contract in terminate state to see if
         # the invoice is well updated
-        date_finish = fields.Datetime.now()
-        contract3.signal_workflow('contract_terminated')
+        contract3.with_context(async_mode=True).signal_workflow(
+            'contract_terminated')
         # Check a job for cleaning invoices has been created
         self.assertTrue(self.env['queue.job'].search([
-            ('name', '=', 'Job for cleaning invoices of contracts.'),
-            ('date_created', '>=', date_finish)]))
+            ('func_string', 'like', '_clean_invoices')]))
         # Force cleaning invoices immediatley
         contract3._clean_invoices()
         self.assertEqual(contract3.state, 'terminated')

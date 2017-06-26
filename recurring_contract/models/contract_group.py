@@ -194,7 +194,7 @@ class ContractGroup(models.Model):
     #                             PRIVATE METHODS                            #
     ##########################################################################
     @api.multi
-    @job(default_channel='root.RecurringInvoicer')
+    @job(default_channel='root.recurring_invoicer')
     @related_action(action='related_action_invoicer')
     def _generate_invoices(self, invoicer=None):
         """ Checks all contracts and generate invoices if needed.
@@ -246,7 +246,7 @@ class ContractGroup(models.Model):
         return invoicer
 
     @api.multi
-    @job(default_channel='root.RecurringInvoicer')
+    @job(default_channel='root.recurring_invoicer')
     def _clean_generate_invoices(self):
         """ Change method which cancels generated invoices and rewinds
         the next_invoice_date of contracts, so that new invoices can be
