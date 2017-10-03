@@ -9,7 +9,6 @@
 	<record id="view_recurring_contract_tree" model="ir.ui.view">
 		<field name="name">recurring.contract.tree</field>
 		<field name="model">recurring.contract</field>
-		<field name="priority" eval="8" />
 		<field name="arch" type="xml">
 			<tree string="Contracts" colors="blue:state == 'draft';black:state == 'active';gray:state == 'terminated'">
 				<field name="reference" />
@@ -28,7 +27,7 @@
 		<field name="name">recurring.contract.form</field>
 		<field name="model">recurring.contract</field>
 		<field name="arch" type="xml">
-			<form string="Contract" version="8.0">
+			<form string="Contract">
 			<header>
 				<field name="state" widget="statusbar" statusbar_visible="draft,active,terminated" />
 				<button name="contract_validated" class="oe_highlight" string="Validate" states="draft" />
@@ -94,7 +93,6 @@
 	<record id="view_recurring_contract_line_tree" model="ir.ui.view">
 		<field name="name">recurring.contract.line.tree</field>
 		<field name="model">recurring.contract.line</field>
-		<field name="priority" eval="8" />
 		<field name="arch" type="xml">
 			<tree string="Contract Lines" editable="bottom">
 				<field name="product_id"/>
