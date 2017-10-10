@@ -28,7 +28,7 @@ class AccountAttribution(models.Model):
         'account.account.tag', 'Account Tag', ondelete='cascade'
     )
     analytic_tag_id = fields.Many2one(
-        'account.analytic.tag', 'Analytic Tag', required=True,
+        'account.analytic.tag', 'Analytic Tag',
         ondelete='cascade'
     )
     account_distribution_line_ids = fields.One2many(
@@ -94,11 +94,9 @@ class AccountAttribution(models.Model):
         old_lines.unlink()
 
         # Perform the attribution for each analytic line
-        to_dispatch_tags = self.search([]).mapped('analytic_tag_id')
         analytic_lines = analytic_line_obj.search([
             ('date', '>=', date_start),
             ('date', '<=', date_stop),
-            ('account_id.tag_ids', 'in', to_dispatch_tags.ids)
         ])
         generated_lines = analytic_line_obj
 

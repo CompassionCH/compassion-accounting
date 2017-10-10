@@ -24,7 +24,7 @@
                 <sheet>
                     <group>
                         <field name="sequence"/>
-                        <field name="analytic_tag_id" required="1"/>
+                        <field name="analytic_tag_id"/>
                     </group>
                     <group colspan="2">
                         <field name="account_distribution_line_ids" required="1">
