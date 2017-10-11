@@ -40,7 +40,6 @@
     'data': [
         'views/contract_group_view.xml',
         'views/recurring_contract_view.xml',
-        'views/res_partner_view.xml',
         'views/recurring_invoicer_view.xml',
         'views/recurring_invoicer_wizard_view.xml',
         'workflow/recurring_contract_workflow.xml',
