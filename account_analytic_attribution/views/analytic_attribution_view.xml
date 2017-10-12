@@ -52,7 +52,7 @@
             <form string="Launch Analytic Attribution">
                 <p>This will trigger the analytic attribution for the current fiscal year.</p>
                 <footer>
-                    <button name="perform_attribution" string="Launch attribution" type="object" class="oe_highlight"/>
+                    <button name="perform_distribution" string="Launch attribution" type="object" class="oe_highlight"/>
                 </footer>
             </form>
         </field>
