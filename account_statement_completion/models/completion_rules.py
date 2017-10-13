@@ -92,12 +92,10 @@ class StatementCompletionRule(models.Model):
                 [('type', '=', 'in_invoice'), ('state', '=', 'open'),
                  ('amount_total', '=', abs(amount))])
             res = {}
-            partner_obj = self.pool.get('res.partner')
             if invoices:
                 if len(invoices) == 1:
                     partner = invoices.partner_id
-                    res['partner_id'] = partner_obj._find_accounting_partner(
-                        partner).id
+                    res['partner_id'] = partner.commercial_partner_id.id
                 else:
                     partner = invoices[0].partner_id
                     for invoice in invoices:
@@ -107,8 +105,7 @@ class StatementCompletionRule(models.Model):
                                 'more than one invoice while looking on open'
                                 ' supplier invoices' %
                                 (st_line['name'], st_line['ref']))
-                    res['partner_id'] = partner_obj._find_accounting_partner(
-                        partner).id
+                    res['partner_id'] = partner.commercial_partner_id.id
         return res
 
     def get_from_move_line_ref(self, stmts_vals, st_line):
@@ -125,8 +122,6 @@ class StatementCompletionRule(models.Model):
             partner = move_lines[0].partner_id
 
         if partner:
-            partner_obj = self.env['res.partner']
-            partner = partner_obj._find_accounting_partner(partner)
-            res['partner_id'] = partner.id
+            res['partner_id'] = partner.commercial_partner_id.id
 
         return res
