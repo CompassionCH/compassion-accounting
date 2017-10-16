@@ -1,7 +1,7 @@
 ﻿# -*- encoding: utf-8 -*-
 ##############################################################################
 #
-#    Copyright (C) 2014 Compassion CH (http://www.compassion.ch)
+#    Copyright (C) 2014-2017 Compassion CH (http://www.compassion.ch)
 #    Releasing children from poverty in Jesus' name
 #    @author: Cyril Sester <csester@compassion.ch>
 #
@@ -10,7 +10,6 @@
 ##############################################################################
 
 from odoo import fields, models, api
-from odoo.tools.translate import _
 
 
 class InvoicerWizard(models.TransientModel):

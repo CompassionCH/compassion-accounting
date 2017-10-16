@@ -1,7 +1,7 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    Copyright (C) 2014 Compassion CH (http://www.compassion.ch)
+#    Copyright (C) 2014-2017 Compassion CH (http://www.compassion.ch)
 #    Releasing children from poverty in Jesus' name
 #    @author: Cyril Sester <csester@compassion.ch>
 #
@@ -61,7 +61,10 @@ class RecurringInvoicer(models.Model):
 
     @api.multi
     def cancel_invoices(self):
-        ''' Cancel created invoices (set state from open to cancelled) '''
+        """
+        Cancel created invoices (set state from open to cancelled)
+        :return: True
+        """
         invoice_to_cancel = self.mapped('invoice_ids').filtered(
             lambda invoice: invoice.state != 'cancel')
 
