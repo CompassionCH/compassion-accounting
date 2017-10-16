@@ -5,7 +5,7 @@
 #    Releasing children from poverty in Jesus' name
 #    @author: Cyril Sester <csester@compassion.ch>
 #
-#    The licence is in the file __openerp__.py
+#    The licence is in the file __manifest__.py
 #
 ##############################################################################
 
@@ -13,14 +13,14 @@ from odoo import fields, models, api
 from odoo.tools.translate import _
 
 
-class recurring_invoicer_wizard(models.TransientModel):
+class InvoicerWizard(models.TransientModel):
 
     ''' This wizard generate invoices from contract groups when launched.
     By default, all contract groups are used.
     '''
     _name = 'recurring.invoicer.wizard'
 
-    generation_date = fields.Date(_('Generation date'), readonly=True)
+    generation_date = fields.Date(readonly=True)
 
     @api.multi
     def generate(self):
