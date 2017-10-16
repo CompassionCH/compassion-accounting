@@ -13,7 +13,7 @@
         <record id="tag_ss" model="account.analytic.tag">
             <field name="name">SS</field>
         </record>
-    	<!--
+        <!--
             Resource: account.analytic.account
         -->
         <record id="account_analytic_account_des" model="account.analytic.account">

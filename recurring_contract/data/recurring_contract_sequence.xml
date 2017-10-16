@@ -5,12 +5,12 @@
     The licence is in the file __manifest__.py
 -->
 <odoo>
-	<data noupdate="1">
-		<record id="recurring_contract_seq" model="ir.sequence">
-			<field name="name">Recurring Contract Reference</field>
-			<field name="code">recurring.contract.ref</field>
-			<field name="prefix">CON</field>
-			<field name="padding" eval="5"/>
-		</record>
-	</data>
+    <data noupdate="1">
+        <record id="recurring_contract_seq" model="ir.sequence">
+            <field name="name">Recurring Contract Reference</field>
+            <field name="code">recurring.contract.ref</field>
+            <field name="prefix">CON</field>
+            <field name="padding" eval="5"/>
+        </record>
+    </data>
 </odoo>

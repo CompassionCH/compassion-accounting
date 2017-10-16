@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #       ______ Releasing children from poverty      _
@@ -26,6 +26,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+# pylint: disable=C8101
 {
     'name': 'Split invoices',
     'summary': 'Split invoices into two separate invoices',
@@ -40,6 +41,5 @@
         'views/account_invoice_split_wizard_view.xml',
     ],
     'demo': [],
-    'active': False,
     'installable': True,
 }

@@ -5,12 +5,12 @@
     The licence is in the file __manifest__.py
 -->
 <odoo>
-	<data noupdate="1">
-		<record id="recurring_invoicer_seq" model="ir.sequence">
-			<field name="name">Recurring Invoicer Identifier</field>
-			<field name="code">rec.invoicer.ident</field>
-			<field name="prefix">%(year)s/%(month)s/%(day)s-</field>
-			<field name="padding" eval="4"/>
-		</record>
-	</data>
+    <data noupdate="1">
+        <record id="recurring_invoicer_seq" model="ir.sequence">
+            <field name="name">Recurring Invoicer Identifier</field>
+            <field name="code">rec.invoicer.ident</field>
+            <field name="prefix">%(year)s/%(month)s/%(day)s-</field>
+            <field name="padding" eval="4"/>
+        </record>
+    </data>
 </odoo>

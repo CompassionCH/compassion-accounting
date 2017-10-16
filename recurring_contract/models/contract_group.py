@@ -9,7 +9,6 @@
 #
 ##############################################################################
 
-import odoo
 import logging
 from datetime import datetime
 from dateutil.relativedelta import relativedelta

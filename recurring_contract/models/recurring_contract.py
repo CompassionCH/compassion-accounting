@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Copyright (C) 2014 Compassion CH (http://www.compassion.ch)
@@ -80,7 +80,7 @@ class RecurringContract(models.Model):
         readonly=False, states={'draft': [('readonly', False)]},
         track_visibility="onchange")
     last_paid_invoice_date = fields.Date(
-        compute='_get_last_paid_invoice')
+        compute='_compute_last_paid_invoice')
     partner_id = fields.Many2one(
         'res.partner', 'Partner', required=True, readonly=True,
         states={'draft': [('readonly', False)]}, ondelete='restrict')
@@ -97,13 +97,13 @@ class RecurringContract(models.Model):
         '_get_states', default='draft', readonly=True,
         track_visibility='onchange', copy=False)
     total_amount = fields.Float(
-        'Total', compute='_get_total_amount',
+        'Total', compute='_compute_total_amount',
         digits=dp.get_precision('Account'),
         track_visibility="onchange", store=True)
     payment_mode_id = fields.Many2one(
         'account.payment.mode', string='Payment mode',
         related='group_id.payment_mode_id', readonly=True, store=True)
-    nb_invoices = fields.Integer(compute='_count_invoices')
+    nb_invoices = fields.Integer(compute='_compute_invoices')
 
     _sql_constraints = [
         ('unique_ref', "unique(reference)", "Reference must be unique!")
@@ -122,19 +122,19 @@ class RecurringContract(models.Model):
 
     @api.depends('contract_line_ids', 'contract_line_ids.amount',
                  'contract_line_ids.quantity')
-    def _get_total_amount(self):
+    def _compute_total_amount(self):
         for contract in self:
             contract.total_amount = sum([
                 line.subtotal for line in contract.contract_line_ids
             ])
 
-    def _get_last_paid_invoice(self):
+    def _compute_last_paid_invoice(self):
         for contract in self:
             contract.last_paid_invoice_date = max(
                 [invl.invoice_id.date_invoice for invl in
                  contract.invoice_line_ids if invl.state == 'paid'] or [False])
 
-    def _count_invoices(self):
+    def _compute_invoices(self):
         for contract in self:
             contract.nb_invoices = len(
                 contract.mapped('invoice_line_ids.invoice_id').filtered(
