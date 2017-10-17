@@ -1,11 +1,11 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    Copyright (C) 2014 Compassion CH (http://www.compassion.ch)
+#    Copyright (C) 2014-2017 Compassion CH (http://www.compassion.ch)
 #    Releasing children from poverty in Jesus' name
-#    @author: Cyril Sester <csester@compassion.ch>, Steve Ferry
+#    @author: Cyril Sester <csester@compassion.ch>, Steve Ferry, Emanuel Cino
 #
-#    The licence is in the file __openerp__.py
+#    The licence is in the file __manifest__.py
 #
 ##############################################################################
 
@@ -32,12 +32,10 @@ class ContractGroup(models.Model):
     ##########################################################################
     advance_billing_months = fields.Integer(
         'Advance billing months',
-        help=_(
-            'Advance billing allows you to generate invoices in '
-            'advance. For example, you can generate the invoices '
-            'for each month of the year and send them to the '
-            'customer in january.'
-        ), default=1, ondelete='no action')
+        help='Advance billing allows you to generate invoices in '
+             'advance. For example, you can generate the invoices '
+             'for each month of the year and send them to the '
+             'customer in january.', default=1, ondelete='no action')
     payment_mode_id = fields.Many2one(
         'account.payment.mode', 'Payment mode',
         domain=[('payment_type', '=', 'inbound')],
@@ -48,10 +46,10 @@ class ContractGroup(models.Model):
                                       'Payment Term',
                                       track_visibility="onchange")
     next_invoice_date = fields.Date(
-        compute='_set_next_invoice_date',
+        compute='_compute_next_invoice_date',
         string='Next invoice date', store=True)
     last_paid_invoice_date = fields.Date(
-        compute='_set_last_paid_invoice',
+        compute='_compute_last_paid_invoice',
         string='Last paid invoice date')
 
     change_method = fields.Selection(
@@ -76,14 +74,14 @@ class ContractGroup(models.Model):
     ##########################################################################
 
     @api.depends('contract_ids.next_invoice_date', 'contract_ids.state')
-    def _set_next_invoice_date(self):
+    def _compute_next_invoice_date(self):
         for group in self:
             next_inv_date = min(
                 [c.next_invoice_date for c in group.contract_ids
                  if c.state in self._get_gen_states()] or [False])
             group.next_invoice_date = next_inv_date
 
-    def _set_last_paid_invoice(self):
+    def _compute_last_paid_invoice(self):
         for group in self:
             group.last_paid_invoice_date = max(
                 [c.last_paid_invoice_date for c in group.contract_ids] or
@@ -158,16 +156,16 @@ class ContractGroup(models.Model):
             invoicer = self.env['recurring.invoicer'].create(
                 {'source': self._name})
         if self.env.context.get('async_mode', True):
-            self.with_delay()._generate_invoices(invoicer)
-        else:
             # Prevent two generations at the same time
             jobs = self.env['queue.job'].search([
-                ('channel', '=', 'root.RecurringInvoicer'),
+                ('channel', '=', 'root.recurring_invoicer'),
                 ('state', '=', 'started')])
             if jobs:
                 raise exceptions.UserError(
                     _("A generation has already started in background. "
                       "Please wait for it to finish."))
+            self.with_delay()._generate_invoices(invoicer)
+        else:
             self._generate_invoices(invoicer)
         return invoicer
 
@@ -214,32 +212,32 @@ class ContractGroup(models.Model):
         for contract_group in self.filtered('next_invoice_date'):
             # After a ContractGroup is done, we commit all writes in order to
             # avoid doing it again in case of an error or a timeout
-            with self.env.cr.savepoint():
-                logger.info("Generating invoices for group {0}/{1}".format(
-                    count, nb_groups))
-                month_delta = contract_group.advance_billing_months or 1
-                limit_date = datetime.today() + relativedelta(
-                    months=+month_delta)
-                current_date = fields.Datetime.from_string(
-                    contract_group.next_invoice_date)
-                while current_date <= limit_date:
-                    contracts = contract_group.contract_ids.filtered(
-                        lambda c: c.next_invoice_date and
-                        fields.Datetime.from_string(
-                            c.next_invoice_date) <= current_date and
-                        c.state in gen_states and not (
-                            c.end_date and c.end_date >= c.next_invoice_date)
-                    )
-                    if not contracts:
-                        break
-                    inv_data = contract_group._setup_inv_data(
-                        journal, invoicer, contracts)
-                    invoice = inv_obj.create(inv_data)
-                    if not invoice.invoice_line_ids:
-                        invoice.unlink()
-                    if not self.env.context.get('no_next_date_update'):
-                        contracts.update_next_invoice_date()
-                    current_date += contract_group.get_relative_delta()
+            self.env.cr.commit()
+            logger.info("Generating invoices for group {0}/{1}".format(
+                count, nb_groups))
+            month_delta = contract_group.advance_billing_months or 1
+            limit_date = datetime.today() + relativedelta(
+                months=+month_delta)
+            current_date = fields.Datetime.from_string(
+                contract_group.next_invoice_date)
+            while current_date <= limit_date:
+                contracts = contract_group.contract_ids.filtered(
+                    lambda c: c.next_invoice_date and
+                    fields.Datetime.from_string(
+                        c.next_invoice_date) <= current_date and
+                    c.state in gen_states and not (
+                        c.end_date and c.end_date >= c.next_invoice_date)
+                )
+                if not contracts:
+                    break
+                inv_data = contract_group._setup_inv_data(
+                    journal, invoicer, contracts)
+                invoice = inv_obj.create(inv_data)
+                if not invoice.invoice_line_ids:
+                    invoice.unlink()
+                if not self.env.context.get('no_next_date_update'):
+                    contracts.update_next_invoice_date()
+                current_date += contract_group.get_relative_delta()
 
             count += 1
         logger.info("Invoice generation successfully finished.")

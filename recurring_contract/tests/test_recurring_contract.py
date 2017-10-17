@@ -1,11 +1,11 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Copyright (C) 2015-2017 Compassion CH (http://www.compassion.ch)
 #    Releasing children from poverty in Jesus' name
 #    @author: Albert SHENOUDA <albert.shenouda@efrei.net>, Emanuel Cino
 #
-#    The licence is in the file __openerp__.py
+#    The licence is in the file __manifest__.py
 #
 ##############################################################################
 
@@ -232,9 +232,7 @@ class TestRecurringContract(BaseContractTest):
         contract2.signal_workflow('contract_validated')
         contract3.signal_workflow('contract_validated')
         # Creation of a wizard to generate invoices
-        invoicer_id = self.env[
-            'recurring.invoicer.wizard'].generate().get('res_id')
-        invoicer = self.env['recurring.invoicer'].browse(invoicer_id)
+        invoicer = group.generate_invoices()
         invoices = invoicer.invoice_ids
         invoice = invoices[0]
         invoice2 = invoices[1]
@@ -246,7 +244,7 @@ class TestRecurringContract(BaseContractTest):
         # Check a job for cleaning invoices has been created
         self.assertTrue(self.env['queue.job'].search([
             ('func_string', 'like', '_clean_invoices')]))
-        # Force cleaning invoices immediatley
+        # Force cleaning invoices immediately
         contract3._clean_invoices()
         self.assertEqual(contract3.state, 'terminated')
         self.assertEqual(original_product, invoice.invoice_line_ids[0].name)

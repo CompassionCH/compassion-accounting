@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #       ______ Releasing children from poverty      _
@@ -26,7 +26,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
+# pylint: disable=C8101
 {
     "name": "Account Statement Completion Rules",
     "version": "10.0.1.0.0",
@@ -39,7 +39,6 @@
              'security/ir.model.access.csv'],
     "demo": [],
     "test": [],
-    "active": False,
     "license": "AGPL-3",
     "installable": True,
     "auto_install": False,

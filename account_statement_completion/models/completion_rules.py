@@ -1,11 +1,11 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Copyright (C) 2014-2017 Compassion CH (http://www.compassion.ch)
 #    Releasing children from poverty in Jesus' name
 #    @author: Emanuel Cino <ecino@compassion.ch>
 #
-#    The licence is in the file __openerp__.py
+#    The licence is in the file __manifest__.py
 #
 ##############################################################################
 
@@ -122,6 +122,6 @@ class StatementCompletionRule(models.Model):
             partner = move_lines[0].partner_id
 
         if partner:
-            res['partner_id'] = partner.commercial_partner_id.id
+            res['partner_id'] = partner.id
 
         return res

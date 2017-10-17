@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #       ______ Releasing children from poverty      _
@@ -26,6 +26,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+# pylint: disable=C8101
 {
     'name': 'Analytic attribution',
     'summary': 'Set rules to dispatch analytic lines into analytic accounts',
@@ -43,6 +44,5 @@
         'views/analytic_attribution_view.xml',
     ],
     'demo': [],
-    'active': False,
     'installable': True,
 }
