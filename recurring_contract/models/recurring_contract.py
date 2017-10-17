@@ -28,7 +28,7 @@ class ContractLine(models.Model):
 
     @api.multi
     def name_get(self):
-        res = [(cl.id, cl.product_id.name_template) for cl in self]
+        res = [(cl.id, cl.product_id.name) for cl in self]
         return res
 
     contract_id = fields.Many2one(
