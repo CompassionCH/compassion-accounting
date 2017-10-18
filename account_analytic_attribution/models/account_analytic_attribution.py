@@ -66,21 +66,19 @@ class AccountAttribution(models.Model):
         return self.search(domain, limit=1)
 
     @api.model
-    def perform_distribution(self, manual=False):
+    def perform_distribution(self, date_start=None, date_stop=None):
         """
         Perform the attribution of the analytic lines.
         The attribution is done for each general account.
         By default it takes the last fiscal year for the computation.
-        If manual is set to true, the computation will be made for the
-        current fiscal year.
         """
-        # Select the period
-        year = datetime.today()
-        if not manual:
+        if not date_start or not date_stop:
+            # Select the last year period
+            year = datetime.today()
             year = year - relativedelta(years=1)
-        fy = self.env.user.company_id.compute_fiscalyear_dates(year)
-        date_start = fields.Date.to_string(fy['date_from'])
-        date_stop = fields.Date.to_string(fy['date_to'])
+            fy = self.env.user.company_id.compute_fiscalyear_dates(year)
+            date_start = fields.Date.to_string(fy['date_from'])
+            date_stop = fields.Date.to_string(fy['date_to'])
 
         analytic_line_obj = self.env['account.analytic.line']
         tag_id = self.env.ref(
@@ -113,28 +111,29 @@ class AccountAttribution(models.Model):
             attribution_amounts[analytic_id] = analytic_attribution
 
         # Attribute the amounts
+        analytic_obj = self.env['account.analytic.account']
+        account_obj = self.env['account.account']
         for analytic_id, attribution in attribution_amounts.iteritems():
             for account_id, amount_total in attribution.iteritems():
+                account = account_obj.browse(account_id)
+                account_tag_ids = account.tag_ids.ids
+                analytic = analytic_obj.browse(analytic_id)
+                analytic_tag_ids = analytic.tag_ids.ids
                 attribution_rule = self.get_attribution(
-                    line.general_account_id.tag_ids.ids,
-                    line.account_id.tag_ids.ids,
-                    line.date
-                )
+                    account_tag_ids, analytic_tag_ids, date_stop)
                 if attribution_rule:
-                    analytic_account = self.env[
-                        'account.analytic.account'].browse(analytic_id)
-                    prefix = (analytic_account.code and
-                              analytic_account.code + '-') or ''
+                    prefix = (analytic.code and
+                              analytic.code + '-') or ''
                     for rule in attribution_rule.account_distribution_line_ids:
                         line = analytic_line_obj.create({
                             'name': 'Analytic attribution for ' +
-                                    analytic_account.name,
+                                    analytic.name,
                             'account_id': rule.account_analytic_id.id,
                             'date': date_stop,
                             'tag_ids': [(6, 0, [tag_id])],
                             'amount': amount_total * (rule.rate / 100),
                             'general_account_id': account_id,
-                            'ref': prefix + analytic_account.name,
+                            'ref': prefix + analytic.name,
                         })
                         generated_lines += line
 

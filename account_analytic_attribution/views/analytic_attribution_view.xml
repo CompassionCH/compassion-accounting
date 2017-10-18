@@ -51,6 +51,11 @@
         <field name="arch" type="xml">
             <form string="Launch Analytic Attribution">
                 <p>This will trigger the analytic attribution for the current fiscal year.</p>
+                <sheet>
+                    <group>
+                       <field name="date_range_id"/>
+                    </group>
+                </sheet>
                 <footer>
                     <button name="perform_distribution" string="Launch attribution" type="object" class="oe_highlight"/>
                 </footer>
