@@ -24,7 +24,7 @@ class AccountInvoice(models.Model):
     def _compute_unrec_items(self):
         move_line_obj = self.env['account.move.line']
         for invoice in self:
-            partner = self.partner_id
+            partner = invoice.partner_id
             invoice.unrec_items = move_line_obj.search_count([
                 ('partner_id', '=', partner.id),
                 ('reconciled', '=', False),

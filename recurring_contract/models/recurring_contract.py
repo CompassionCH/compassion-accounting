@@ -375,6 +375,9 @@ class RecurringContract(models.Model):
         if keep_lines:
             self._move_cancel_lines(to_remove_invl, keep_lines)
         else:
+            invoices.action_invoice_cancel()
+            invoices.action_invoice_draft()
+            invoices.env.invalidate_all()
             to_remove_invl.unlink()
 
         # Refresh cache before calling workflows
