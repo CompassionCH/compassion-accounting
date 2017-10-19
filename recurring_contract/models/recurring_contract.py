@@ -28,7 +28,7 @@ class ContractLine(models.Model):
 
     @api.multi
     def name_get(self):
-        res = [(cl.id, cl.product_id.name_template) for cl in self]
+        res = [(cl.id, cl.product_id.name) for cl in self]
         return res
 
     contract_id = fields.Many2one(
@@ -375,6 +375,9 @@ class RecurringContract(models.Model):
         if keep_lines:
             self._move_cancel_lines(to_remove_invl, keep_lines)
         else:
+            invoices.action_invoice_cancel()
+            invoices.action_invoice_draft()
+            invoices.env.invalidate_all()
             to_remove_invl.unlink()
 
         # Refresh cache before calling workflows
