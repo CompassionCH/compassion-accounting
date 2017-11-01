@@ -28,7 +28,9 @@ class AccountInvoice(models.Model):
             invoice.unrec_items = move_line_obj.search_count([
                 ('partner_id', '=', partner.id),
                 ('reconciled', '=', False),
-                ('account_id.reconcile', '!=', False)])
+                ('account_id.reconcile', '!=', False),
+                ('account_id.code', '=', '1050')
+            ])
 
     @api.multi
     def show_transactions(self):
@@ -36,6 +38,8 @@ class AccountInvoice(models.Model):
 
     @api.multi
     def show_move_lines(self):
+        account_ids = self.env['account.account'].search(
+            [('code', '=', '1050')]).ids
         partner_id = self.partner_id.id
         action = {
             'name': 'Journal Items',
@@ -45,7 +49,8 @@ class AccountInvoice(models.Model):
             'src_model': 'account.invoice',
             'context': {'search_default_partner_id': [partner_id],
                         'default_partner_id': partner_id,
-                        'search_default_unreconciled': 1},
+                        'search_default_unreconciled': 1,
+                        'search_default_account_id': account_ids[0]},
         }
 
         return action
