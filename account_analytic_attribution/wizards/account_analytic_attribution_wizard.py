@@ -9,7 +9,7 @@
 #
 ##############################################################################
 
-from odoo import api, models, _
+from odoo import api, models, fields, _
 
 
 class AttributionWizard(models.TransientModel):
@@ -17,11 +17,19 @@ class AttributionWizard(models.TransientModel):
     other analytic accounts."""
     _name = 'account.analytic.attribution.wizard'
 
+    date_range_id = fields.Many2one(
+        'date.range', 'Date range',
+        help='Takes the current year if none is selected.')
+    date_start = fields.Date(related='date_range_id.date_start')
+    date_stop = fields.Date(related='date_range_id.date_end')
+
     @api.multi
     def perform_distribution(self):
         """ Perform analytic attributions. """
+        self.ensure_one()
         lines = self.env[
-            'account.analytic.attribution'].perform_distribution(manual=True)
+            'account.analytic.attribution'].perform_distribution(
+            self.date_start, self.date_stop)
 
         return {
             'name': _('Generated Analytic Lines'),

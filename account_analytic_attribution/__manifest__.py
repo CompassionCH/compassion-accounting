@@ -35,7 +35,7 @@
     'author': 'Compassion CH',
     'website': 'http://www.compassion.ch',
     'category': 'Accounting',
-    'depends': ['analytic'],
+    'depends': ['analytic', 'date_range'],
     'external_dependencies': {},
     'data': [
         'security/ir.model.access.csv',
