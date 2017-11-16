@@ -16,3 +16,4 @@
 bank-payment
 queue
 server-tools
+account-financial-tools
