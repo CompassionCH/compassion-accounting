@@ -17,19 +17,22 @@ class AttributionWizard(models.TransientModel):
     other analytic accounts."""
     _name = 'account.analytic.attribution.wizard'
 
-    date_range_id = fields.Many2one(
-        'date.range', 'Date range',
-        help='Takes the current year if none is selected.')
-    date_start = fields.Date(related='date_range_id.date_start')
-    date_stop = fields.Date(related='date_range_id.date_end')
+    date_range_ids = fields.Many2many(
+        'date.range', 'attribution_wizard_date_range_rel',
+        string='Date range',
+        domain=[('type_id.fiscal_month', '=', True)],
+        help='Takes the current year if none is selected.'
+    )
 
     @api.multi
     def perform_distribution(self):
         """ Perform analytic attributions. """
         self.ensure_one()
-        lines = self.env[
-            'account.analytic.attribution'].perform_distribution(
-            self.date_start, self.date_stop)
+        lines = self.env['account.analytic.line']
+        for date_range in self.date_range_ids:
+            lines += self.env[
+                'account.analytic.attribution'].perform_distribution(
+                date_range.date_start, date_range.date_end)
 
         return {
             'name': _('Generated Analytic Lines'),

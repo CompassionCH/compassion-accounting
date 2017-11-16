@@ -50,10 +50,10 @@
         <field name="model">account.analytic.attribution.wizard</field>
         <field name="arch" type="xml">
             <form string="Launch Analytic Attribution">
-                <p>This will trigger the analytic attribution for the current fiscal year.</p>
+                <p>This will trigger the analytic attribution for the selected fiscal months.</p>
                 <sheet>
                     <group>
-                       <field name="date_range_id"/>
+                       <field name="date_range_ids"/>
                     </group>
                 </sheet>
                 <footer>

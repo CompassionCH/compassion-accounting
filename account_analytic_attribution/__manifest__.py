@@ -35,12 +35,11 @@
     'author': 'Compassion CH',
     'website': 'http://www.compassion.ch',
     'category': 'Accounting',
-    'depends': ['analytic', 'date_range'],
+    'depends': ['analytic', 'account_fiscal_month'],
     'external_dependencies': {},
     'data': [
         'security/ir.model.access.csv',
         'data/analytic_tag.xml',
-        'data/attribution_cron.xml',
         'views/analytic_attribution_view.xml',
     ],
     'demo': [],
