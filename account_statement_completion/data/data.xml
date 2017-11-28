@@ -13,4 +13,10 @@
         <field name="function_to_call">get_from_move_line_ref</field>
     </record>
 
+    <record id="bank_statement_completion_rule_payment_line" model="account.statement.completion.rule">
+        <field name="name">From line reference (based on payment line reference)</field>
+        <field name="sequence">10</field>
+        <field name="function_to_call">get_from_payment_line</field>
+    </record>
+
 </odoo>
