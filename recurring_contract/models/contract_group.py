@@ -118,19 +118,6 @@ class ContractGroup(models.Model):
     ##########################################################################
     #                             PUBLIC METHODS                             #
     ##########################################################################
-
-    @api.multi
-    def button_generate_invoices(self):
-        invoicer = self.generate_invoices()
-        self.validate_invoices(invoicer)
-        return invoicer
-
-    @api.model
-    def validate_invoices(self, invoicer):
-        # Check if there is invoice waiting for validation
-        if invoicer.invoice_ids:
-            invoicer.validate_invoices()
-
     @api.multi
     def clean_invoices(self):
         """ By default, launch asynchronous job to perform the task.
@@ -147,6 +134,7 @@ class ContractGroup(models.Model):
         """ No changes before generation """
         pass
 
+    @api.multi
     def generate_invoices(self, invoicer=None):
         """ By default, launch asynchronous job to perform the task.
             Context value async_mode set to False can force to perform
@@ -263,8 +251,7 @@ class ContractGroup(models.Model):
                 since_date=since_date.strftime(DF))
             group.contract_ids.rewind_next_invoice_date()
         # Generate again invoices
-        invoicer = self._generate_invoices()
-        self.validate_invoices(invoicer)
+        self._generate_invoices()
         return res
 
     @api.multi
