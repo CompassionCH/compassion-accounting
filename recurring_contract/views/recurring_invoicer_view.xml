@@ -25,9 +25,9 @@
         <field name="name">recurring.invoicer.form</field>
         <field name="model">recurring.invoicer</field>
         <field name="arch" type="xml">
-            <form string="Recurring invoicer" version="7.0" create="false">
+            <form string="Recurring invoicer" create="false">
                 <header>
-                    <button name="validate_invoices" string="Validate invoices" type="object" class="oe_highlight" />
+                    <button name="show_invoices" string="Show invoices" type="object" />
                     <button name="cancel_invoices" string="Cancel invoices" type="object" />
                 </header>
                 <sheet>
