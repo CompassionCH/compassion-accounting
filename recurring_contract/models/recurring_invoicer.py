@@ -11,7 +11,7 @@
 
 from datetime import datetime
 
-from odoo import api, fields, models
+from odoo import api, fields, models, _
 from odoo.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 
 import logging
@@ -40,26 +40,6 @@ class RecurringInvoicer(models.Model):
         return self.env['ir.sequence'].next_by_code('rec.invoicer.ident')
 
     @api.multi
-    def validate_invoices(self):
-        ''' Validates created invoices (set state from draft to open)'''
-        self.ensure_one()
-        invoice_to_validate = self.invoice_ids.filtered(
-            lambda invoice: invoice.state == 'draft')
-
-        logger.info("Invoice validation started.")
-        count = 1
-        nb_invoice = len(invoice_to_validate)
-        for invoice in invoice_to_validate:
-            logger.info("Validating invoice {0}/{1}".format(
-                        count, nb_invoice))
-            invoice.action_invoice_open()
-            # After an invoice is validated, we commit all writes in order to
-            # avoid doing it again in case of an error or a timeout
-            self.env.cr.commit()
-            count += 1
-        return invoice_to_validate
-
-    @api.multi
     def cancel_invoices(self):
         """
         Cancel created invoices (set state from open to cancelled)
@@ -71,3 +51,20 @@ class RecurringInvoicer(models.Model):
         invoice_to_cancel.action_invoice_cancel()
 
         return True
+
+    @api.multi
+    def show_invoices(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Invoices'),
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'views': [
+                (self.env.ref('account.invoice_tree').id, 'tree'),
+                (self.env.ref('account.invoice_form').id, 'form'),
+            ],
+            'res_model': 'account.invoice',
+            'domain': [('id', 'in', self.invoice_ids.ids)],
+            'target': 'current',
+            'context': self.env.context,
+        }

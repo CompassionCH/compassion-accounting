@@ -186,7 +186,8 @@ class TestRecurringContract(BaseContractTest):
         contract_copied_line.write({'amount': 160.0})
         new_price2 = contract_copied_line.subtotal
         invoicer_id = self.env[
-            'recurring.invoicer.wizard'].generate().get('res_id')
+            'recurring.invoicer.wizard'].with_context(
+            async_mode=False).generate().get('res_id')
         invoicer_wiz = self.env['recurring.invoicer'].browse(invoicer_id)
         new_invoices = invoicer_wiz.invoice_ids
         new_invoice_fus = new_invoices[-1]

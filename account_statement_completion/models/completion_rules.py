@@ -54,6 +54,8 @@ class StatementCompletionRule(models.Model):
             ('get_from_move_line_ref',
              'Compassion: From line reference '
              '(based on previous move_line references)'),
+            ('get_from_payment_line',
+             'From payment line reference')
         ]
         return res
 
@@ -124,4 +126,16 @@ class StatementCompletionRule(models.Model):
         if partner:
             res['partner_id'] = partner.id
 
+        return res
+
+    def get_from_payment_line(self, stmt_vals, st_line):
+        """ Search in account.payment.line """
+        ref = st_line['ref']
+        res = dict()
+
+        payment_line = self.env['bank.payment.line'].search([
+            ('name', '=', ref)
+        ], limit=1, order='date desc')
+        if payment_line:
+            res['partner_id'] = payment_line.partner_id.id
         return res

@@ -27,8 +27,7 @@ class InvoicerWizard(models.TransientModel):
         contract_groups = self.env['recurring.contract.group'].search([])
         invoicer = recurring_invoicer_obj.create({'source': self._name})
 
-        contract_groups.with_context(async_mode=False).generate_invoices(
-            invoicer)
+        contract_groups.generate_invoices(invoicer)
 
         return {
             'name': 'recurring.invoicer.form',
@@ -41,7 +40,5 @@ class InvoicerWizard(models.TransientModel):
 
     @api.model
     def generate_from_cron(self):
-        res = self.with_context(async_mode=False).generate()
-        invoicer_id = res['res_id']
-        invoicer = self.env['recurring.invoicer'].browse(invoicer_id)
-        invoicer.validate_invoices()
+        self.generate()
+        return True
