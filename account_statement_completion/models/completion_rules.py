@@ -112,8 +112,10 @@ class StatementCompletionRule(models.Model):
 
     def get_from_move_line_ref(self, stmts_vals, st_line):
         ''' Update partner if same reference is found '''
-        ref = st_line['ref']
-        res = {}
+        ref = st_line.get('ref')
+        res = dict()
+        if not ref:
+            return res
         partner = None
 
         # Search move lines
@@ -130,8 +132,10 @@ class StatementCompletionRule(models.Model):
 
     def get_from_payment_line(self, stmt_vals, st_line):
         """ Search in account.payment.line """
-        ref = st_line['ref']
+        ref = st_line.get('ref')
         res = dict()
+        if not ref:
+            return res
 
         payment_line = self.env['bank.payment.line'].search([
             ('name', '=', ref)
