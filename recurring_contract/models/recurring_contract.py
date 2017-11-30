@@ -357,7 +357,7 @@ class RecurringContract(models.Model):
             only line in the invoice, we cancel the invoice. In the other
             case, we have to revalidate the invoice to update the move lines.
         """
-        _logger.info("clean invoices called : ")
+        _logger.info("clean invoices called.")
         inv_lines = self._get_invoice_lines_to_clean(since_date, to_date)
         invoices = inv_lines.mapped('invoice_id')
         empty_invoices = self.env['account.invoice']
@@ -446,6 +446,9 @@ class RecurringContract(models.Model):
                                  keep_lines=None):
         """ Cancels given invoices and validate again given invoices.
             confirm_ids must be a subset of cancel_ids ! """
+        _logger.info("clean invoices : \n\t"
+                     "invoices to cancel : " + str(invoice_cancel.ids) +
+                     "\n\tinvoices to confirm : " + str(invoice_confirm.ids))
         invoice_cancel.action_invoice_cancel()
         invoice_confirm.action_invoice_draft()
         invoice_confirm.env.invalidate_all()
