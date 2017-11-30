@@ -9,15 +9,19 @@
 #
 ##############################################################################
 
+import logging
+
 from datetime import datetime
+
+import odoo.addons.decimal_precision as dp
 from dateutil.relativedelta import relativedelta
+from odoo.addons.queue_job.job import job, related_action
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 from odoo.tools import DEFAULT_SERVER_DATE_FORMAT as DF
-import openerp.addons.decimal_precision as dp
 
-from odoo.addons.queue_job.job import job, related_action
+_logger = logging.getLogger(__name__)
 
 
 class ContractLine(models.Model):
@@ -353,6 +357,7 @@ class RecurringContract(models.Model):
             only line in the invoice, we cancel the invoice. In the other
             case, we have to revalidate the invoice to update the move lines.
         """
+        _logger.info("clean invoices called : ")
         inv_lines = self._get_invoice_lines_to_clean(since_date, to_date)
         invoices = inv_lines.mapped('invoice_id')
         empty_invoices = self.env['account.invoice']
@@ -386,6 +391,7 @@ class RecurringContract(models.Model):
         renew_invs = invoices - empty_invoices
         self._cancel_confirm_invoices(invoices, renew_invs, keep_lines)
 
+        _logger.info(str(len(invoices)) + " invoices cleaned.")
         return invoices
 
     def _on_contract_lines_changed(self):
