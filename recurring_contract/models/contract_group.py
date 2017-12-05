@@ -221,8 +221,9 @@ class ContractGroup(models.Model):
                 inv_data = contract_group._setup_inv_data(
                     journal, invoicer, contracts)
                 invoice = inv_obj.create(inv_data)
-                invoice.action_invoice_open()
-                if not invoice.invoice_line_ids:
+                if invoice.invoice_line_ids:
+                    invoice.action_invoice_open()
+                else:
                     invoice.unlink()
                 if not self.env.context.get('no_next_date_update'):
                     contracts.update_next_invoice_date()
