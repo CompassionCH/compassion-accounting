@@ -190,8 +190,11 @@ class TestRecurringContract(BaseContractTest):
             async_mode=False).generate().get('res_id')
         invoicer_wiz = self.env['recurring.invoicer'].browse(invoicer_id)
         new_invoices = invoicer_wiz.invoice_ids
-        new_invoice_fus = new_invoices[-1]
-        self.assertEqual(new_price2, new_invoice_fus.amount_untaxed)
+        new_invoice_fus = new_invoices.filtered(
+            lambda i: i.mapped(
+                'invoice_line_ids.contract_id') == contract_copied
+        )[0]
+        self.assertEqual(new_price2, new_invoice_fus.amount_total)
 
     def test_generated_invoice_third_scenario(self):
         """
