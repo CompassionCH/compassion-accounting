@@ -148,11 +148,10 @@ class ContractGroup(models.Model):
             jobs = self.env['queue.job'].search([
                 ('channel', '=', 'root.recurring_invoicer'),
                 ('state', '=', 'started')])
+            delay = datetime.today()
             if jobs:
-                raise exceptions.UserError(
-                    _("A generation has already started in background. "
-                      "Please wait for it to finish."))
-            self.with_delay()._generate_invoices(invoicer)
+                delay += relativedelta(minutes=1)
+            self.with_delay(eta=delay)._generate_invoices(invoicer)
         else:
             self._generate_invoices(invoicer)
         return invoicer
