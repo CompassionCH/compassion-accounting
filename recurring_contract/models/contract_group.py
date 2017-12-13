@@ -13,7 +13,7 @@ import logging
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-from odoo import api, fields, models, _, exceptions
+from odoo import api, fields, models, _
 from odoo.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 
 from odoo.addons.queue_job.job import job, related_action
