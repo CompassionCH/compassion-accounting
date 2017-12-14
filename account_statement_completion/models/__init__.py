@@ -10,5 +10,4 @@
 ##############################################################################
 
 from . import bank_statement_import
-from . import invoice
 from . import completion_rules
