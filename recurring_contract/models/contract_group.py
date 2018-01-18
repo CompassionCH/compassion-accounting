@@ -217,17 +217,25 @@ class ContractGroup(models.Model):
                 )
                 if not contracts:
                     break
-                inv_data = contract_group._setup_inv_data(
-                    journal, invoicer, contracts)
-                invoice = inv_obj.create(inv_data)
-                if invoice.invoice_line_ids:
-                    invoice.action_invoice_open()
-                else:
-                    invoice.unlink()
-                if not self.env.context.get('no_next_date_update'):
-                    contracts.update_next_invoice_date()
-                current_date += contract_group.get_relative_delta()
-
+                try:
+                    inv_data = contract_group._setup_inv_data(
+                        journal, invoicer, contracts)
+                    invoice = inv_obj.create(inv_data)
+                    if invoice.invoice_line_ids:
+                        invoice.action_invoice_open()
+                    else:
+                        invoice.unlink()
+                    if not self.env.context.get('no_next_date_update'):
+                        contracts.update_next_invoice_date()
+                    current_date += contract_group.get_relative_delta()
+                except:
+                    self.env.cr.rollback()
+                    self.env.invalidate_all()
+                    logger.error(
+                        'contract group {0} failed during invoice generation'.
+                        format(contract_group.id),
+                        exc_info=True)
+                    break
             count += 1
         logger.info("Invoice generation successfully finished.")
         return invoicer
