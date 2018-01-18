@@ -153,7 +153,7 @@ class ContractGroup(models.Model):
                 delay += relativedelta(minutes=1)
             self.with_delay(eta=delay)._generate_invoices(invoicer)
         else:
-            self._generate_invoices(invoicer)
+            self.with_context(lsv=True)._generate_invoices(invoicer)
         return invoicer
 
     @api.multi
