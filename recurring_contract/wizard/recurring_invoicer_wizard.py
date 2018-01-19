@@ -33,8 +33,9 @@ class InvoicerWizard(models.TransientModel):
             ('next_invoice_date', '!=', False)])
 
         invoicer = recurring_invoicer_obj.create({'source': self._name})
-
-        contract_groups.generate_invoices(invoicer)
+        # Add a job for all groups and start the job when all jobs are created.
+        for group in contract_groups:
+            group.generate_invoices(invoicer)
 
         return {
             'name': 'recurring.invoicer.form',
