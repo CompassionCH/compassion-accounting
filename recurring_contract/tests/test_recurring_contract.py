@@ -1,23 +1,70 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    Copyright (C) 2015 Compassion CH (http://www.compassion.ch)
+#    Copyright (C) 2015-2017 Compassion CH (http://www.compassion.ch)
 #    Releasing children from poverty in Jesus' name
-#    @author: Albert SHENOUDA <albert.shenouda@efrei.net>
+#    @author: Albert SHENOUDA <albert.shenouda@efrei.net>, Emanuel Cino
 #
-#    The licence is in the file __openerp__.py
+#    The licence is in the file __manifest__.py
 #
 ##############################################################################
 
-from datetime import datetime, timedelta
-from test_base_contract import test_base_contract
-from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DF
-from openerp import fields
+from odoo import fields
+from odoo.tests.common import TransactionCase
 import logging
+import random
+import string
 logger = logging.getLogger(__name__)
 
 
-class test_recurring_contract(test_base_contract):
+class BaseContractTest(TransactionCase):
+    def setUp(self):
+        super(BaseContractTest, self).setUp()
+        self.thomas = self.env.ref('base.res_partner_address_3')
+        self.michel = self.env.ref('base.res_partner_address_4')
+        self.david = self.env.ref('base.res_partner_address_10')
+        self.group_obj = self.env['recurring.contract.group'].with_context(
+            async_mode=False)
+        self.con_obj = self.env['recurring.contract'].with_context(
+            async_mode=False)
+        self.payment_mode = self.env.ref(
+            'account_payment_mode.payment_mode_inbound_ct2')
+        self.product = self.env.ref('product.product_product_6')
+        # Make all journals cancellable
+        self.env['account.journal'].search([]).write({'update_posted': True})
+
+    def ref(self, length):
+        return ''.join(random.choice(string.lowercase) for i in range(length))
+
+    def create_group(self, vals):
+        base_vals = {
+            'advance_billing_months': 1,
+            'payment_mode_id': self.payment_mode.id,
+            'change_method': 'do_nothing',
+            'recurring_value': 1,
+            'recurring_unit': 'month',
+        }
+        base_vals.update(vals)
+        return self.group_obj.create(base_vals)
+
+    def create_contract(self, vals, line_vals):
+        base_vals = {
+            'reference': self.ref(10),
+            'start_date': fields.Date.today(),
+            'next_invoice_date': fields.Date.today(),
+            'state': 'draft',
+            'contract_line_ids': [(0, 0, l) for l in line_vals]
+        }
+        for line in base_vals['contract_line_ids']:
+            if 'product_id' not in line[2]:
+                line[2]['product_id'] = self.product.id
+            if 'quantity' not in line[2]:
+                line[2]['quantity'] = 1.0
+        base_vals.update(vals)
+        return self.con_obj.create(base_vals)
+
+
+class TestRecurringContract(BaseContractTest):
     """
         Test Project recurring contract.
         We are testing the three scenarios :
@@ -29,12 +76,11 @@ class test_recurring_contract(test_base_contract):
         We are testing if invoices data are coherent with data in the
         associate contract.
         The second scenario is created to test the fusion of invoices when two
-        contract.
+        contracts are present in same group.
         The third scenario consists in the creation of several contracts with
         several line, then we are testing that the invoices are good updated
         when we cancel one contract.
     """
-
     def test_generated_invoice(self):
         """
             Test the button_generate_invoices method which call a lot of
@@ -42,19 +88,19 @@ class test_recurring_contract(test_base_contract):
             of data when a contract generate invoice(s).
         """
         # Creation of a group and a contracts with one line
-        group = self._create_group(
-            'do_nothing', self.partners.ids[0], 1, self.payment_term_id,
-            other_vals={'recurring_value': 1, 'recurring_unit': 'month'})
-        contract = self._create_contract(
-            datetime.today().strftime(DF), group,
-            datetime.today().strftime(DF))
-        contract_line = self._create_contract_line(
-            contract.id, '40.0')
+        group = self.create_group({'partner_id': self.michel.id})
+        contract = self.create_contract(
+            {
+                'partner_id': self.michel.id,
+                'group_id': group.id,
+            },
+            [{'amount': 40.0}]
+        )
 
         # Creation of data to test
-        original_product = contract_line.product_id['name']
-        original_partner = contract.partner_id['name']
-        original_price = contract_line.subtotal
+        original_product = self.product.name
+        original_partner = self.michel.name
+        original_price = contract.total_amount
         original_start_date = contract.start_date
 
         # To generate invoices, the contract must be "active"
@@ -65,8 +111,8 @@ class test_recurring_contract(test_base_contract):
         nb_invoice = len(invoices)
         # 2 invoices must be generated with our parameters
         self.assertEqual(nb_invoice, 2)
-        invoice = invoices[0]
-        self.assertEqual(original_product, invoice.invoice_line[0].name)
+        invoice = invoices[1]
+        self.assertEqual(original_product, invoice.invoice_line_ids[0].name)
         self.assertEqual(original_partner, invoice.partner_id['name'])
         self.assertEqual(original_price, invoice.amount_untaxed)
         self.assertEqual(original_start_date, invoice.date_invoice)
@@ -86,23 +132,24 @@ class test_recurring_contract(test_base_contract):
             of invoices generated is correct
         """
         # Creation of a group and two contracts with one line each
-        group = self._create_group(
-            'do_nothing', self.partners.ids[1], 2,
-            self.payment_term_id, '137 option payement',
-            other_vals={'recurring_value': 1, 'recurring_unit': 'month'})
+        group = self.create_group({'partner_id': self.michel.id})
+        contract = self.create_contract(
+            {
+                'partner_id': self.michel.id,
+                'group_id': group.id,
+            },
+            [{'amount': 75.0}]
+        )
+        contract2 = self.create_contract(
+            {
+                'partner_id': self.michel.id,
+                'group_id': group.id,
+            },
+            [{'amount': 85.0}]
+        )
 
-        contract = self._create_contract(
-            (datetime.today() + timedelta(days=2)).strftime(DF), group,
-            (datetime.today() + timedelta(days=2)).strftime(DF))
-        contract_line = self._create_contract_line(contract.id, '75.0')
-        contract2 = self._create_contract(
-            (datetime.today() + timedelta(days=2)).strftime(DF),
-            group, (datetime.today() + timedelta(days=2)).strftime(DF))
-        contract_line2 = self._create_contract_line(
-            contract2.id, '85.0')
-
-        original_price1 = contract_line.subtotal
-        original_price2 = contract_line2.subtotal
+        original_price1 = contract.total_amount
+        original_price2 = contract2.total_amount
 
         # We put the contracts in active state to generate invoices
         contract.signal_workflow('contract_validated')
@@ -113,7 +160,7 @@ class test_recurring_contract(test_base_contract):
         invoices = invoicer_id.invoice_ids
         nb_invoice = len(invoices)
         self.assertEqual(nb_invoice, 2)
-        invoice_fus = invoices[0]
+        invoice_fus = invoices[-1]
         self.assertEqual(
             original_price1 + original_price2, invoice_fus.amount_untaxed)
 
@@ -138,57 +185,50 @@ class test_recurring_contract(test_base_contract):
         contract_copied_line = contract_copied.contract_line_ids[0]
         contract_copied_line.write({'amount': 160.0})
         new_price2 = contract_copied_line.subtotal
-        invoicer_wiz_id = self.invoicer_wizard_obj.generate()
-        invoicer_wiz = self.env['recurring.invoicer'].browse(
-            invoicer_wiz_id['res_id'])
+        invoicer_id = self.env[
+            'recurring.invoicer.wizard'].with_context(
+            async_mode=False).generate().get('res_id')
+        invoicer_wiz = self.env['recurring.invoicer'].browse(invoicer_id)
         new_invoices = invoicer_wiz.invoice_ids
-        new_invoice_fus = new_invoices[0]
-        self.assertEqual(new_price2, new_invoice_fus.amount_untaxed)
+        new_invoice_fus = new_invoices.filtered(
+            lambda i: i.mapped(
+                'invoice_line_ids.contract_id') == contract_copied
+        )[0]
+        self.assertEqual(new_price2, new_invoice_fus.amount_total)
 
     def test_generated_invoice_third_scenario(self):
         """
             Creation of several contracts of the same group to test the case
             if we cancel one of the contracts if invoices are still correct.
         """
-        # Creation of a group
-        group = self._create_group(
-            'do_nothing', self.partners.ids[0], 1,
-            self.payment_term_id,
-            other_vals={'recurring_value': 1, 'recurring_unit': 'month'})
-
-        # Creation of three contracts with two lines each
-        contract = self._create_contract(
-            datetime.today().strftime(DF), group,
-            datetime.today().strftime(DF))
-        contract2 = self._create_contract(
-            datetime.today().strftime(DF), group,
-            datetime.today().strftime(DF))
-        contract3 = self._create_contract(
-            datetime.today().strftime(DF), group,
-            datetime.today().strftime(DF))
-
-        contract_line0 = self._create_contract_line(
-            contract.id, '10.0')
-        contract_line1 = self._create_contract_line(
-            contract.id, '20.0')
-        contract_line2 = self._create_contract_line(
-            contract2.id, '30.0')
-        contract_line3 = self._create_contract_line(
-            contract2.id, '40.0')
-        contract_line4 = self._create_contract_line(
-            contract3.id, '15.0')
-        contract_line5 = self._create_contract_line(
-            contract3.id, '25.0')
+        group = self.create_group({'partner_id': self.michel.id})
+        contract = self.create_contract(
+            {
+                'partner_id': self.michel.id,
+                'group_id': group.id,
+            },
+            [{'amount': 10.0}, {'amount': 20.0}]
+        )
+        contract2 = self.create_contract(
+            {
+                'partner_id': self.michel.id,
+                'group_id': group.id,
+            },
+            [{'amount': 30.0}, {'amount': 40.0}]
+        )
+        contract3 = self.create_contract(
+            {
+                'partner_id': self.michel.id,
+                'group_id': group.id,
+            },
+            [{'amount': 15.0}, {'amount': 25.0}]
+        )
 
         # Creation of data to test
-        original_product = contract_line0.product_id['name']
-        original_partner = contract.partner_id['name']
-        original_price = sum([contract_line0.subtotal,
-                              contract_line1.subtotal,
-                              contract_line2.subtotal,
-                              contract_line3.subtotal,
-                              contract_line4.subtotal,
-                              contract_line5.subtotal])
+        original_product = self.product.name
+        original_partner = self.michel.name
+        original_price = sum((contract + contract2 + contract3).mapped(
+            'total_amount'))
         original_start_date = contract.start_date
 
         # We put all the contracts in active state
@@ -196,24 +236,22 @@ class test_recurring_contract(test_base_contract):
         contract2.signal_workflow('contract_validated')
         contract3.signal_workflow('contract_validated')
         # Creation of a wizard to generate invoices
-        invoicer_id = self.invoicer_wizard_obj.generate()
-        invoicer = self.env['recurring.invoicer'].browse(invoicer_id['res_id'])
+        invoicer = group.generate_invoices()
         invoices = invoicer.invoice_ids
         invoice = invoices[0]
         invoice2 = invoices[1]
 
         # We put the third contract in terminate state to see if
         # the invoice is well updated
-        date_finish = fields.Datetime.now()
-        contract3.signal_workflow('contract_terminated')
+        contract3.with_context(async_mode=True).signal_workflow(
+            'contract_terminated')
         # Check a job for cleaning invoices has been created
         self.assertTrue(self.env['queue.job'].search([
-            ('name', '=', 'Job for cleaning invoices of contracts.'),
-            ('date_created', '>=', date_finish)]))
-        # Force cleaning invoices immediatley
+            ('func_string', 'like', '_clean_invoices')]))
+        # Force cleaning invoices immediately
         contract3._clean_invoices()
         self.assertEqual(contract3.state, 'terminated')
-        self.assertEqual(original_product, invoice.invoice_line[0].name)
+        self.assertEqual(original_product, invoice.invoice_line_ids[0].name)
         self.assertEqual(original_partner, invoice.partner_id['name'])
         self.assertEqual(
             original_price - contract3.total_amount,

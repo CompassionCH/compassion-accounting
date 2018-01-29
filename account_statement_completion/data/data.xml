@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="bank_statement_completion_rule_supplier_amount" model="account.statement.completion.rule">
+        <field name="name">Match from line amount (based on supplier invoice amount)</field>
+        <field name="sequence">60</field>
+        <field name="function_to_call">get_from_amount</field>
+    </record>
+
+    <record id="bank_statement_completion_rule_move_line_ref" model="account.statement.completion.rule">
+        <field name="name">From line reference (based on previous move_line references)</field>
+        <field name="sequence">70</field>
+        <field name="function_to_call">get_from_move_line_ref</field>
+    </record>
+
+    <record id="bank_statement_completion_rule_payment_line" model="account.statement.completion.rule">
+        <field name="name">From line reference (based on payment line reference)</field>
+        <field name="sequence">10</field>
+        <field name="function_to_call">get_from_payment_line</field>
+    </record>
+
+</odoo>

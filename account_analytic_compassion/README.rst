@@ -11,7 +11,7 @@ Installation
 
 To install this module, you need to:
 
-* Install this module before 'compassion_sponsorship' in test databases.
+* Install this module before 'sponsorship_compassion' in test databases.
 
 Credits
 =======

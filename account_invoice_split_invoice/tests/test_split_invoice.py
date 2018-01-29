@@ -1,29 +1,29 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Copyright (C) 2015 Compassion CH (http://www.compassion.ch)
 #    Releasing children from poverty in Jesus' name
 #    @author: Albert SHENOUDA <albert.shenouda@efrei.net>
 #
-#    The licence is in the file __openerp__.py
+#    The licence is in the file __manifest__.py
 #
 ##############################################################################
 
-from openerp.tests import common
+from odoo.tests import common
 from datetime import datetime
-from openerp import netsvc
+from odoo import netsvc
 import logging
 logger = logging.getLogger(__name__)
 
 
-class test_split_invoice(common.TransactionCase):
+class TestSplitInvoice(common.TransactionCase):
     """ Test Project split invoice. 2 cases are tested :
            - open invoices
            - draft invoices
         This test check if the original invoice is well splitted in 2 invoices
         with the same informations and if the amount are matched """
     def setUp(self):
-        super(test_split_invoice, self).setUp()
+        super(TestSplitInvoice, self).setUp()
         self.invoice_id = self._create_invoice('SAJ/2015/0002')
         self.invoice_id1 = self._create_invoice('SAJ/2015/0003')
         self.invoice_line_id1 = self._create_invoice_line(
@@ -143,7 +143,7 @@ class test_split_invoice(common.TransactionCase):
             'name': 'Kevin',
         }).id
         account_id = self.env['account.account'].search(
-            [('type', '=', 'receivable')])[0].id
+            [('internal_type', '=', 'receivable')])[0].id
         invoice_obj = self.env['account.invoice']
         invoice_id = invoice_obj.create({
             'name': invoice_name,
@@ -157,9 +157,12 @@ class test_split_invoice(common.TransactionCase):
 
     def _create_invoice_line(self, description, amount, invoice_id):
         """ Create invoice's lines """
-        invoice_line_id = self.env['account.invoice.line'].create({
+        invl_obj = self.env['account.invoice.line'].with_context(
+            journal_id=1)
+        invoice_line_id = invl_obj.create({
             'name': description,
             'price_unit': amount,
             'invoice_id': invoice_id,
+            'account_id': invl_obj._default_account()
         }).id
         return invoice_line_id
