@@ -170,7 +170,8 @@ class BankStatementLine(models.Model):
             'origin': self.statement_id.name,
             'comment': ';'.join(map(
                 lambda d: d.get('comment', ''),
-                mv_line_dicts))
+                mv_line_dicts)),
+            'currency_id': self.journal_currency_id.id
         }
 
     def _get_invoice_line_data(self, mv_line_dict, invoice):
