@@ -25,11 +25,11 @@ class InvoicerWizard(models.TransientModel):
 
     @api.multi
     def generate(self):
-        date_limit = datetime.date.today() + relativedelta(day=1, months=+1)
+        date_limit = datetime.date.today() + relativedelta(months=+1)
 
         recurring_invoicer_obj = self.env['recurring.invoicer']
         contract_groups = self.env['recurring.contract.group'].search([
-            ('next_invoice_date', '<', date_limit),
+            ('next_invoice_date', '<=', date_limit),
             ('next_invoice_date', '!=', False)])
 
         invoicer = recurring_invoicer_obj.create({'source': self._name})
