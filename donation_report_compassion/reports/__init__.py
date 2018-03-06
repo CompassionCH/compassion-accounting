@@ -9,4 +9,5 @@
 #
 ##############################################################################
 
+from . import fiscal_year_report
 from . import account_invoice_report
