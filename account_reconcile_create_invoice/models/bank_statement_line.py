@@ -209,7 +209,7 @@ class BankStatementLine(models.Model):
             amount = mv_line_dict['credit']
             inv_lines |= invoice_line_obj.search([
                 ('partner_id', '=', mv_line_dict.get('partner_id')),
-                ('state', 'in', ('open', 'draft')),
+                ('invoice_id.state', 'in', ('open', 'draft')),
                 ('product_id', '=', mv_line_dict.get('product_id')),
                 ('price_subtotal', '=', amount)])
 
