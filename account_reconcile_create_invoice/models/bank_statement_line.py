@@ -54,6 +54,8 @@ class BankStatementLine(models.Model):
                               counterparts, self.env['account.move.line'])
         index = 0
         for mv_line_dict in new_aml_dicts:
+            # Add partner_id if missing from mvl_data
+            mv_line_dict['partner_id'] = partner_id
             if mv_line_dict.get('product_id'):
                 # Create invoice
                 if partner_id in partner_inv_data:
@@ -208,7 +210,7 @@ class BankStatementLine(models.Model):
         for mv_line_dict in mv_line_dicts:
             amount = mv_line_dict['credit']
             inv_lines |= invoice_line_obj.search([
-                ('partner_id', '=', mv_line_dict.get('partner_id')),
+                ('partner_id', 'child_of', mv_line_dict.get('partner_id')),
                 ('invoice_id.state', 'in', ('open', 'draft')),
                 ('product_id', '=', mv_line_dict.get('product_id')),
                 ('price_subtotal', '=', amount)])
