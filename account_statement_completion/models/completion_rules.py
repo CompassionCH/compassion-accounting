@@ -126,7 +126,7 @@ class StatementCompletionRule(models.Model):
             partner = move_lines[0].partner_id
 
         if partner:
-            res['partner_id'] = partner.id
+            res['partner_id'] = partner.commercial_partner_id.id
 
         return res
 
@@ -141,5 +141,6 @@ class StatementCompletionRule(models.Model):
             ('name', '=', ref)
         ], limit=1, order='date desc')
         if payment_line:
-            res['partner_id'] = payment_line.partner_id.id
+            res['partner_id'] = payment_line.partner_id.\
+                commercial_partner_id.id
         return res
