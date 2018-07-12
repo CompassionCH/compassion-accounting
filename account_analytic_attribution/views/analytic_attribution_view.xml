@@ -24,7 +24,6 @@
                 <sheet>
                     <group>
                         <field name="sequence"/>
-                        <field name="analytic_tag_id"/>
                     </group>
                     <group colspan="2">
                         <field name="account_distribution_line_ids" required="1">
@@ -36,6 +35,7 @@
                     </group>
                     <group string="Conditions">
                         <field name="account_tag_id"/>
+                        <field name="analytic_tag_id"/>
                         <field name="date_start"/>
                         <field name="date_stop"/>
                     </group>
