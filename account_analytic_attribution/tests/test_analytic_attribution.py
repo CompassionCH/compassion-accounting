@@ -25,11 +25,12 @@ class TestAnalyticAttribution(TransactionCase):
         self.account = self.env["account.account"] \
             .search([('code', '=', '1050')])
         self.tag = self.env.ref('account_analytic_attribution.tag_attribution')
+        self.Attribution = self.env['account.analytic.attribution']
 
     def test_perform_distribution__line_generation(self):
         self._create_line_with_amount_twelve(self.analytic_account)
         self._create_line_with_amount_twelve(self.analytic_account)
-        attribution = self.env['account.analytic.attribution'].create({})
+        attribution = self.Attribution.create({})
         self.env['account.analytic.distribution.line'].create({
             'rate': 40,
             'account_analytic_id': self.analytic_account.id,
@@ -49,14 +50,14 @@ class TestAnalyticAttribution(TransactionCase):
         line = self._create_line_with_amount_twelve(self.analytic_account)
         line.tag_ids += self.env \
             .ref('account_analytic_attribution.tag_attribution')
-        attribution = self.env['account.analytic.attribution'].create({})
+        attribution = self.Attribution.create({})
 
         self._assert_analytic_lines_count(1)
         attribution.perform_distribution()
         self._assert_analytic_lines_count(0)
 
     def test_get_attribution__match_if_filters_are_not_set(self):
-        attribution = self.env['account.analytic.attribution'].create({})
+        attribution = self.Attribution.create({})
         self.env['account.analytic.distribution.line'].create({
             'rate': 40,
             'account_analytic_id': self.analytic_account.id,
@@ -67,7 +68,7 @@ class TestAnalyticAttribution(TransactionCase):
         self.assertEqual(len(matched), 1)
 
     def test_get_attribution__matching_by_date(self):
-        attribution = self.env['account.analytic.attribution'].create({
+        attribution = self.Attribution.create({
             'rate': 40,
             'date_start': datetime.now(),
             'date_stop': datetime.now()
@@ -81,7 +82,7 @@ class TestAnalyticAttribution(TransactionCase):
         self.assertEqual(len(matched), 1)
 
     def test_get_attribution__matching_by_tag(self):
-        attribution = self.env['account.analytic.attribution'].create({
+        attribution = self.Attribution.create({
             'rate': 40
         })
         attribution.analytic_tag_id += self.tag

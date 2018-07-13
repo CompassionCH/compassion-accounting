@@ -41,14 +41,6 @@ class AccountAttribution(models.Model):
     next_fiscal_year = fields.Date(compute='_compute_next_fy')
 
     @api.model
-    def next_fiscal_year(self):
-        today = datetime.today()
-        fy = self.env.user.company_id.compute_fiscalyear_dates(today)
-        next_fy = fy['date_to'] + relativedelta(days=1)
-        next_fy.hour = 20
-        return fields.Datetime.to_string(next_fy)
-
-    @api.model
     def get_attribution(self, account_tag_ids, analytic_tag_ids, date):
         """ Find a valid distribution rule given some data. """
         domain = [
