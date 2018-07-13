@@ -24,6 +24,7 @@ class TestAnalyticAttribution(TransactionCase):
             .create({"name": "Test Account"})
         self.account = self.env["account.account"] \
             .search([('code', '=', '1050')])
+        self.tag = self.env.ref('account_analytic_attribution.tag_attribution')
 
     def test_perform_distribution__line_generation(self):
         self._create_line_with_amount_twelve(self.analytic_account)
@@ -77,6 +78,20 @@ class TestAnalyticAttribution(TransactionCase):
         self.assertEqual(len(rules), 0)
 
         matched = attribution.get_attribution(False, False, datetime.now())
+        self.assertEqual(len(matched), 1)
+
+    def test_get_attribution__matching_by_tag(self):
+        attribution = self.env['account.analytic.attribution'].create({
+            'rate': 40
+        })
+        attribution.analytic_tag_id += self.tag
+
+        now = datetime.now()
+        unknown_tag = 99
+        rules = attribution.get_attribution(False, [unknown_tag], now)
+        self.assertEqual(len(rules), 0)
+
+        matched = attribution.get_attribution(False, [self.tag.id], now)
         self.assertEqual(len(matched), 1)
 
     def _create_line_with_amount_twelve(self, account):
