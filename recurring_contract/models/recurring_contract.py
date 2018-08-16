@@ -74,8 +74,7 @@ class RecurringContract(models.Model):
         default="/", required=True, readonly=True,
         states={'draft': [('readonly', False)]}, copy=False)
     start_date = fields.Date(
-        default=datetime.today().strftime(DF), required=True, readonly=True,
-        states={'draft': [('readonly', False)]},
+        readonly=True, states={'draft': [('readonly', False)]},
         copy=False, track_visibility="onchange")
     end_date = fields.Datetime(
         readonly=False, states={'terminated': [('readonly', True)]},
@@ -163,6 +162,11 @@ class RecurringContract(models.Model):
         """ Perform various checks when a contract is modified. """
         if 'next_invoice_date' in vals:
             self._on_change_next_invoice_date(vals['next_invoice_date'])
+
+        # check if contract has been validated
+        if 'sds_state' in vals and (vals['sds_state'] == 'waiting_welcome'
+                                    or vals['sds_state'] == 'mandate'):
+            vals['start_date'] = datetime.today()
 
         res = super(RecurringContract, self).write(vals)
 
