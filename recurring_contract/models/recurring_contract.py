@@ -163,6 +163,11 @@ class RecurringContract(models.Model):
         if 'next_invoice_date' in vals:
             self._on_change_next_invoice_date(vals['next_invoice_date'])
 
+        # check if contract has been validated
+        if 'sds_state' in vals and (vals['sds_state'] == 'waiting_welcome'
+                                    or vals['sds_state'] == 'mandate'):
+            vals['start_date'] = datetime.today()
+
         res = super(RecurringContract, self).write(vals)
 
         if 'contract_line_ids' in vals:
