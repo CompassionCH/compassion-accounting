@@ -1,0 +1,22 @@
+<odoo>
+    <data>
+        <record id="view_account_config_settings_inherit" model="ir.ui.view">
+            <field name="name">account.settings.inherit</field>
+            <field name="model">account.config.settings</field>
+            <field name="inherit_id" ref="account.view_account_config_settings"/>
+            <field name="arch" type="xml">
+                <xpath expr ="//field[@name='fiscalyear_lock_date']" position="after">
+                    <div>
+                        <label for="move_bills_date"/>
+                        <field name="move_bills_date" class="oe_inline"/>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
+
+
+
+
+
