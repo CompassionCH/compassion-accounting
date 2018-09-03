@@ -74,8 +74,7 @@ class RecurringContract(models.Model):
         default="/", required=True, readonly=True,
         states={'draft': [('readonly', False)]}, copy=False)
     start_date = fields.Date(
-        default=datetime.today().strftime(DF), required=True, readonly=True,
-        states={'draft': [('readonly', False)]},
+        readonly=True, states={'draft': [('readonly', False)]},
         copy=False, track_visibility="onchange")
     end_date = fields.Datetime(
         readonly=False, states={'terminated': [('readonly', True)]},
