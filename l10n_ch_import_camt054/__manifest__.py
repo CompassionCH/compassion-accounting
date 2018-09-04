@@ -15,10 +15,7 @@
         'views/account_bank_statement_line_test.xml',
     ],
     'demo': [
-
-    ],
-    'test': [
-        'res/test_data.yml',
+        'demo/test_data.yml',
     ],
     'installable': True,
 }

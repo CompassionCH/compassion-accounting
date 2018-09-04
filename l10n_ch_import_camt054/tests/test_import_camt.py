@@ -1,23 +1,24 @@
 # -*- coding: utf-8 -*-
 import base64
 
-from odoo.tests import TransactionCase
+from odoo.tests import SingleTransactionCase
 from odoo.modules import get_module_resource
 
 
-class TestImportCamt(TransactionCase):
+class TestImportCamt(SingleTransactionCase):
 
-    def setUp(self):
-        super(TestImportCamt, self).setUp()
+    @classmethod
+    def setUpClass(cls):
+        super(TestImportCamt, cls).setUpClass()
 
         account_bank_statement_import_obj = \
-            self.env['account.bank.statement.import']
+            cls.env['account.bank.statement.import']
 
-        account_bank_statement_line_obj =\
-            self.env['account.bank.statement.line']
+        account_bank_statement_line_obj = \
+            cls.env['account.bank.statement.line']
 
-        account_account_obj = self.env['account.account']
-        account_move_line_obj = self.env['account.move.line']
+        account_account_obj = cls.env['account.account']
+        account_move_line_obj = cls.env['account.move.line']
 
         test_file_path_camt053 = get_module_resource(
             'l10n_ch_import_camt054', 'res', 'camt.053.demo-1000.xml')
