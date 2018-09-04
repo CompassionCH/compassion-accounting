@@ -9,8 +9,7 @@
 ##############################################################################
 # pylint: disable=C8101
 {
-    'name': 'Account configuration settings',
-    'summary': 'Move open bills to next fiscal year',
+    'name': 'Account move open bills to next fiscal year',
     'version': '10.0.0.0.0',
     'license': 'AGPL-3',
     'author': 'Compassion CH',

@@ -8,9 +8,8 @@
 #
 ##############################################################################
 
-from odoo import models, fields, api, _
-from datetime import datetime, timedelta
-from odoo.exceptions import ValidationError
+from odoo import models, fields, api
+from datetime import timedelta
 
 
 class ResCompany(models.Model):
@@ -21,26 +20,22 @@ class ResCompany(models.Model):
 
     @api.multi
     def _validate_fiscalyear_lock(self, values):
-        # res = super(ResCompany, self)._validate_fiscalyear_lock(values)
-        if values.get('fiscalyear_lock_date'):
-            nb_draft_entries = self.env['account.move'].search([
-                ('company_id', 'in', [c.id for c in self]),
-                ('state', 'in', ['draft', 'open']),
-                ('date', '<=', values['fiscalyear_lock_date'])])
-
+        super(ResCompany, self)._validate_fiscalyear_lock(values)
+        # Move open customer invoice open moves to next fiscal year
+        lock_date = values.get('fiscalyear_lock_date')
+        if lock_date:
             config = self.env['account.config.settings'].search([
-                ('company_id', '=', self.id)
+                ('company_id', 'in', self.ids)
             ], order="create_date desc", limit=1)
-
             if config.move_bills_date:
-                for entry in nb_draft_entries:
-                    # change date of billing to 1 day after last day of fiscal
-                    # year
-                    entry.sudo().write({'date': datetime.strptime(values.get(
-                        'fiscalyear_lock_date'), '%Y-%m-%d').date()
-                                                + timedelta(days=1)})
-            else:
-                raise ValidationError(_('There are still unposted entries in '
-                                        'the period you want to lock. You '
-                                        'should either post or delete them or '
-                                        'push them to next fiscal year'))
+
+                open_invoices = self.env['account.invoice'].search([
+                    ('state', '=', 'open'),
+                    ('type', '=', 'out_invoice'),
+                    ('date_invoice', '<=', lock_date)
+                ])
+                first_day_in_next_fy = fields.Date.from_string(
+                    lock_date) + timedelta(days=1)
+                open_invoices.mapped('move_id').sudo().write({
+                    'date': fields.Date.to_string(first_day_in_next_fy)
+                })
