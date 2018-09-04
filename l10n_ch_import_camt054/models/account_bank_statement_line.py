@@ -13,8 +13,9 @@ class AccountBankStatementLine(models.Model):
 
     def process_reconciliation(self, counterpart_aml_dicts=None,
                                payment_aml_rec=None, new_aml_dicts=None):
-        counterpart_moves = super(AccountBankStatementLine, self).process_reconciliation(
-            counterpart_aml_dicts, payment_aml_rec, new_aml_dicts)
+        counterpart_moves = super(
+            AccountBankStatementLine, self).process_reconciliation(
+                counterpart_aml_dicts, payment_aml_rec, new_aml_dicts)
 
         if hasattr(self, 'acct_svcr_ref') and self.acct_svcr_ref:
             for move_line in counterpart_moves.line_ids:

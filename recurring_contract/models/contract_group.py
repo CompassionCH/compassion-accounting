@@ -199,7 +199,7 @@ class ContractGroup(models.Model):
         for contract_group in self.filtered('next_invoice_date'):
             # After a ContractGroup is done, we commit all writes in order to
             # avoid doing it again in case of an error or a timeout
-            self.env.cr.commit()
+            self.env.cr.commit()    # pylint: disable=invalid-commit
             logger.info("Generating invoices for group {0}/{1}".format(
                 count, nb_groups))
             month_delta = contract_group.advance_billing_months or 1

@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
 {
     'name': 'CAMT 054 import and reconcile',
     'version': '10.0.1.0.0',
     'license': 'AGPL-3',
-    'author': 'Monzione Marco',
+    'author': 'Monzione Marco, Odoo Community Association (OCA)',
     'website': '...',
     'category': 'Banking addons',
     'depends': [
