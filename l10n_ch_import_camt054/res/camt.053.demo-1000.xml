@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.04" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:iso:std:iso:20022:tech:xsd:camt.053.001.04 camt.053.001.04.xsd">
+  <BkToCstmrStmt>
+    <GrpHdr>
+      <MsgId>20171016375204002967365</MsgId>
+      <CreDtTm>2017-10-16T15:06:00</CreDtTm>
+      <MsgPgntn>
+        <PgNb>1</PgNb>
+        <LastPgInd>true</LastPgInd>
+      </MsgPgntn>
+      <AddtlInf>Productive</AddtlInf>
+    </GrpHdr>
+    <Stmt>
+      <Id>20171016375204002967366</Id>
+      <ElctrncSeqNb>202</ElctrncSeqNb>
+      <CreDtTm>2017-10-16T15:06:00</CreDtTm>
+      <FrToDt>
+        <FrDtTm>2017-10-16T00:00:00</FrDtTm>
+        <ToDtTm>2017-10-16T23:59:59</ToDtTm>
+      </FrToDt>
+      <Acct>
+        <Id>
+          <IBAN>CH0110100001101001000</IBAN>
+        </Id>
+        <Ownr>
+          <Nm>Address test</Nm>
+        </Ownr>
+      </Acct>
+      <Bal>
+        <Tp>
+          <CdOrPrtry>
+            <Cd>OPBD</Cd>
+          </CdOrPrtry>
+        </Tp>
+        <Amt Ccy="CHF">0.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt>
+          <Dt>2017-10-13</Dt>
+        </Dt>
+      </Bal>
+      <Bal>
+        <Tp>
+          <CdOrPrtry>
+            <Cd>CLBD</Cd>
+          </CdOrPrtry>
+        </Tp>
+        <Amt Ccy="CHF">1000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt>
+          <Dt>2017-10-16</Dt>
+        </Dt>
+      </Bal>
+      <Ntry>
+        <Amt Ccy="CHF">1000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <RvslInd>false</RvslInd>
+        <Sts>BOOK</Sts>
+        <BookgDt>
+          <Dt>2017-10-16</Dt>
+        </BookgDt>
+        <ValDt>
+          <Dt>2017-10-16</Dt>
+        </ValDt>
+        <AcctSvcrRef>99999999999999999999999999999999</AcctSvcrRef>
+        <BkTxCd>
+          <Domn>
+            <Cd>PMNT</Cd>
+            <Fmly>
+              <Cd>ICDT</Cd>
+              <SubFmlyCd>ESCT</SubFmlyCd>
+            </Fmly>
+          </Domn>
+        </BkTxCd>
+        <NtryDtls>
+          <TxDtls>
+            <Refs>
+              <MsgId>2017/1029</MsgId>
+              <AcctSvcrRef>99999999999999999999999999999999</AcctSvcrRef>
+              <PmtInfId>38482</PmtInfId>
+              <EndToEndId>38482</EndToEndId>
+            </Refs>
+            <Amt Ccy="CHF">1000.00</Amt>
+            <CdtDbtInd>CRDT</CdtDbtInd>
+          </TxDtls>
+        </NtryDtls>
+        <AddtlNtryInf>Demo Camt053</AddtlNtryInf>
+      </Ntry>
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>

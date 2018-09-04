@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.054.001.04" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:iso:std:iso:20022:tech:xsd:camt.054.001.04 camt.054.001.04.xsd">
+  <BkToCstmrDbtCdtNtfctn>
+    <GrpHdr>
+      <MsgId>20171030375204003295156</MsgId>
+      <CreDtTm>2017-10-31T01:39:34</CreDtTm>
+      <MsgPgntn>
+        <PgNb>1</PgNb>
+        <LastPgInd>true</LastPgInd>
+      </MsgPgntn>
+      <AddtlInf>Productive</AddtlInf>
+    </GrpHdr>
+    <Ntfctn>
+      <Id>20171030375204003295155</Id>
+      <CreDtTm>2017-10-31T01:39:34</CreDtTm>
+      <FrToDt>
+        <FrDtTm>2017-10-28T00:00:00</FrDtTm>
+        <ToDtTm>2017-10-30T23:59:59</ToDtTm>
+      </FrToDt>
+      <Acct>
+        <Id>
+          <IBAN>CH1010101010101010101</IBAN>
+        </Id>
+        <Ownr>
+          <Nm>Address test</Nm>
+        </Ownr>
+      </Acct>
+      <Ntry>
+        <NtryRef>010101011</NtryRef>
+        <Amt Ccy="CHF">1000</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <RvslInd>false</RvslInd>
+        <Sts>BOOK</Sts>
+        <BookgDt>
+          <Dt>2017-10-30</Dt>
+        </BookgDt>
+        <ValDt>
+          <Dt>2017-10-30</Dt>
+        </ValDt>
+        <AcctSvcrRef>99999999999999999999999999999999</AcctSvcrRef>
+        <BkTxCd>
+          <Domn>
+            <Cd>PMNT</Cd>
+            <Fmly>
+              <Cd>IDDT</Cd>
+              <SubFmlyCd>PMDD</SubFmlyCd>
+            </Fmly>
+          </Domn>
+        </BkTxCd>
+        <NtryDtls>
+          <Btch>
+            <NbOfTxs>1</NbOfTxs>
+          </Btch>
+          <TxDtls>
+            <Refs>
+              <AcctSvcrRef>99999999999999999999999999999999</AcctSvcrRef>
+              <Prtry>
+              <Tp>04</Tp>
+                <Ref>01110000011010010000000</Ref>
+              </Prtry>
+            </Refs>
+            <Amt Ccy="CHF">400</Amt>
+            <CdtDbtInd>CRDT</CdtDbtInd>
+            <BkTxCd>
+              <Domn>
+                <Cd>PMNT</Cd>
+                <Fmly>
+                  <Cd>IDDT</Cd>
+                  <SubFmlyCd>PMDD</SubFmlyCd>
+                </Fmly>
+              </Domn>
+            </BkTxCd>
+            <RltdPties>
+              <Dbtr>
+                <Nm>Jean jacque</Nm>
+                <PstlAdr>
+                  <Ctry>CH</Ctry>
+                  <AdrLine>Street 10</AdrLine>
+                  <AdrLine>1010 test</AdrLine>
+                </PstlAdr>
+              </Dbtr>
+              <DbtrAcct>
+                <Id>
+                  <IBAN>CH0110111101111000000</IBAN>
+                </Id>
+              </DbtrAcct>
+            </RltdPties>
+            <RmtInf>
+              <Ustrd>Demo 1</Ustrd>
+            </RmtInf>
+            <RltdDts>
+              <AccptncDtTm>2017-10-28T20:00:00</AccptncDtTm>
+            </RltdDts>
+          </TxDtls>
+          <TxDtls>
+            <Refs>
+              <AcctSvcrRef>99999999999999999999999999999999</AcctSvcrRef>
+              <Prtry>
+              <Tp>04</Tp>
+                <Ref>01110000011010010000000</Ref>
+              </Prtry>
+            </Refs>
+            <Amt Ccy="CHF">600</Amt>
+            <CdtDbtInd>CRDT</CdtDbtInd>
+            <BkTxCd>
+              <Domn>
+                <Cd>PMNT</Cd>
+                <Fmly>
+                  <Cd>IDDT</Cd>
+                  <SubFmlyCd>PMDD</SubFmlyCd>
+                </Fmly>
+              </Domn>
+            </BkTxCd>
+            <RltdPties>
+              <Dbtr>
+                <Nm>bob bob</Nm>
+                <PstlAdr>
+                  <Ctry>CH</Ctry>
+                  <AdrLine>Street 10</AdrLine>
+                  <AdrLine>1010 test</AdrLine>
+                </PstlAdr>
+              </Dbtr>
+              <DbtrAcct>
+                <Id>
+                  <IBAN>CH0110111101111000000</IBAN>
+                </Id>
+              </DbtrAcct>
+            </RltdPties>
+            <RmtInf>
+              <Ustrd>Demo 2</Ustrd>
+            </RmtInf>
+            <RltdDts>
+              <AccptncDtTm>2017-10-28T20:00:00</AccptncDtTm>
+            </RltdDts>
+          </TxDtls>
+        </NtryDtls>
+        <AddtlNtryInf>Demo Camt054</AddtlNtryInf>
+      </Ntry>
+    </Ntfctn>
+  </BkToCstmrDbtCdtNtfctn>
+</Document>
