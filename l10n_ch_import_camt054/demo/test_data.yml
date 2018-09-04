@@ -1,0 +1,81 @@
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Create bank
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+-
+  !record {model: res.bank, id: bank_post, view: False}:
+    name: 'Postfinance AG'
+    bic: 'POFICHBEXXX'
+    street: 'Postfinance'
+    zip: '3030'
+    city: 'Bern'
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Create accounts types
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+-
+  !record {model: account.account.type, id: account_type_post, view: False}:
+    name: 'Bilan : Liquidites et titres'
+    type: 'liquidity'
+-
+  !record {model: account.account.type, id: account_type_asset, view: False}:
+    name: 'Asset'
+    type: 'other'
+-
+  !record {model: account.account.type, id: account_type_debiteur, view: False}:
+    name: 'Bilan : Debiteurs'
+    type: 'receivable'
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Create account
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+-
+  !record {model: account.account, id: post_account, view: False}:
+    code: '1010'
+    name: 'Postal Account CHF '
+    reconcile: True
+    user_type_id: account_type_post
+-
+  !record {model: account.account, id: post_account_lsv, view: False}:
+    code: '1098'
+    name: 'transfert lsv dd'
+    reconcile: True
+    user_type_id: account_type_asset
+-
+  !record {model: account.account, id: post_account_receivable, view: False}:
+    code: '1050'
+    name: 'Receivables'
+    reconcile: True
+    user_type_id: account_type_debiteur
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Create partner banks
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+-
+  !record {model: res.partner.bank, id: company_bank_post, view: False}:
+    acc_type: 'postal'
+    acc_number: 'CH0110100001101001000'
+    partner_id: base.main_partner #YourCompany
+    bank_id: bank_post
+-
+  !record {model: res.partner.bank, id: company_bank_lsv_transfert, view: False}:
+    acc_type: 'postal'
+    acc_number: '01-010101-1'
+    partner_id: base.main_partner #YourCompany
+    bank_id: bank_post
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Create journals
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+-
+  !record {model: account.journal, id: post_account_journal, view: False}:
+    name: 'Postal account'
+    type: bank
+    bank_account_id: company_bank_post
+    update_posted: True
+    default_debit_account_id: post_account
+    default_credit_account_id: post_account
+-
+  !record {model: account.journal, id: lsv_account_journal, view: False}:
+    name: 'LSV test'
+    type: bank
+    bank_account_id: company_bank_lsv_transfert
+    update_posted: True
+    default_debit_account_id: post_account_lsv
+    default_credit_account_id: post_account_lsv
+
