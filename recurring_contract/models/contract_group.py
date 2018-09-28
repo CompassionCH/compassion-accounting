@@ -14,11 +14,12 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models, _
-from odoo.tools import DEFAULT_SERVER_DATE_FORMAT as DF
+from odoo.tools import config
 
 from odoo.addons.queue_job.job import job, related_action
 
 logger = logging.getLogger(__name__)
+test_mode = config.get('test_enable')
 
 
 class ContractGroup(models.Model):
@@ -199,7 +200,8 @@ class ContractGroup(models.Model):
         for contract_group in self.filtered('next_invoice_date'):
             # After a ContractGroup is done, we commit all writes in order to
             # avoid doing it again in case of an error or a timeout
-            self.env.cr.commit()    # pylint: disable=invalid-commit
+            if not test_mode:
+                self.env.cr.commit()    # pylint: disable=invalid-commit
             logger.info("Generating invoices for group {0}/{1}".format(
                 count, nb_groups))
             month_delta = contract_group.advance_billing_months or 1
@@ -252,11 +254,11 @@ class ContractGroup(models.Model):
         for group in self:
             since_date = datetime.today()
             if group.last_paid_invoice_date:
-                last_paid_invoice_date = datetime.strptime(
-                    group.last_paid_invoice_date, DF)
+                last_paid_invoice_date = fields.Datetime.from_string(
+                    group.last_paid_invoice_date)
                 since_date = max(since_date, last_paid_invoice_date)
             res += group.contract_ids._clean_invoices(
-                since_date=since_date.strftime(DF))
+                since_date=fields.Datetime.to_string(since_date))
             group.contract_ids.rewind_next_invoice_date()
         # Generate again invoices
         self._generate_invoices()
