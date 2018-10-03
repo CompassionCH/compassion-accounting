@@ -36,6 +36,13 @@ class ResCompany(models.Model):
                 ])
                 first_day_in_next_fy = fields.Date.from_string(
                     lock_date) + timedelta(days=1)
-                open_invoices.mapped('move_id').sudo().write({
+                moves = open_invoices.mapped('move_id').sudo()
+                moves.write({
                     'date': fields.Date.to_string(first_day_in_next_fy)
                 })
+                analytic_lines = self.env['account.analytic.line'].sudo()\
+                    .search([
+                        ('move_id', 'in', moves.ids),
+                        ('date', '<=', lock_date)
+                    ])
+                analytic_lines.write({'date': first_day_in_next_fy})
