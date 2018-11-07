@@ -18,4 +18,5 @@ bank-statement-import
 l10n-switzerland https://github.com/CompassionCH/l10n-switzerland 10.0-mig-fds
 queue
 server-tools
+mis-builder
 account-financial-tools
