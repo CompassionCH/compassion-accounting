@@ -1,4 +1,5 @@
 CREATE OR REPLACE VIEW mis_unpaid_invoice AS (
+
 SELECT    aml.id as id,
     'unpaid invoice' AS line_type,
     ai.company_id,
@@ -15,4 +16,3 @@ FROM (account_move_line aml
 WHERE ai.state::text = 'open'::text 
 	AND (ai.type::text = ANY (ARRAY['out_invoice'::character varying::text, 'out_refund'::character varying::text]))
 )
-
