@@ -1,12 +1,13 @@
 CREATE OR REPLACE VIEW mis_unpaid_invoice AS (
-
 SELECT    aml.id as id,
     'unpaid invoice' AS line_type,
     ai.company_id,
+    aml.journal_id,
     aml.name,
-    aml.move_id AS move,
-    ai.id AS invoice,
+    aml.move_id,
+    ai.id AS invoice_id,
     aml.product_id,
+    aml.analytic_account_id,
     aml.date,
     aml.account_id,
     aml.debit,

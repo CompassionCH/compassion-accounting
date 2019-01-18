@@ -20,13 +20,21 @@ class MisUnpaidInvoice(models.Model):
         comodel_name='account.account',
         string='Account',
     )
-    invoice = fields.Many2one(
+    invoice_id = fields.Many2one(
         'account.invoice',
         string='Invoice',
     )
-    move = fields.Many2one(
+    journal_id = fields.Many2one(
+        'account.journal',
+        string='Journal',
+    )
+    move_id = fields.Many2one(
         'account.move',
         string='Accounting move',
+    )
+    analytic_account_id = fields.Many2one(
+        'account.analytic.account',
+        string='Analytic account',
     )
     product_id = fields.Many2one(
         'product.product',
