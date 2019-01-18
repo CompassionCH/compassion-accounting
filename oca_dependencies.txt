@@ -15,7 +15,7 @@
 # sale-workflow https://github.com/OCA/sale-workflow branchname
 bank-payment
 bank-statement-import
-l10n-switzerland https://github.com/CompassionCH/l10n-switzerland 10.0-mig-fds
+l10n-switzerland
 queue
 server-tools
 mis-builder

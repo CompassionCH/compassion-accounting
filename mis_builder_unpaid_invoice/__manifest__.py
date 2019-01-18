@@ -8,7 +8,7 @@
         unpaid invoice for MIS Builder""",
     'version': '10.0.3.0.0',
     'license': 'AGPL-3',
-    'author': 'compassion suisse',
+    'author': 'Odoo Community Association (OCA), Compassion Switzerland',
     'website': 'https://github.com/OCA/mis-builder',
     'depends': [
         'mis_builder',
