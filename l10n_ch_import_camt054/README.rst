@@ -9,7 +9,6 @@ This module allow you to import camt 054 and reconcile all lines in the transfer
 ** Features list :**
     * import camt 054
     * refuse the import of a camt 054 file when the NtryRef field is different from the original camt 054
-    * Add children in school to employee
     * New function to reconcile automatically all the lines from the transfert account
 
 ** Remarks :**

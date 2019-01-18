@@ -10,6 +10,9 @@
 ##############################################################################
 import logging
 from datetime import datetime, timedelta
+
+from dateutil.relativedelta import relativedelta
+
 from odoo import fields
 from odoo.tests.common import TransactionCase
 
@@ -96,12 +99,13 @@ class TestAnalyticAttribution(TransactionCase):
         self.assertEqual(len(matched), 1)
 
     def _create_line_with_amount_twelve(self, account):
+        date = datetime.now() - relativedelta(years=1)
         return self.env['account.analytic.line'].create({
             'name': 'test line',
             'amount': 12.0,
             'account_id': account.id,
             'general_account_id': 1,
-            'date': fields.Datetime.from_string('2017-05-05')
+            'date': fields.Datetime.to_string(date)
         })
 
     def _assert_analytic_lines_count(self, count):

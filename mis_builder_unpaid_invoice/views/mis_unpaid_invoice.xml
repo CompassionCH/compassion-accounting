@@ -13,8 +13,8 @@
                 <field name="date"/>
                 <field name="name"/>
                 <field name="account_id"/>
-                <field name="debit"/>
-                <field name="credit"/>
+                <field name="debit" sum="debit" />
+                <field name="credit" sum="credit" />
             </tree>
         </field>
     </record>

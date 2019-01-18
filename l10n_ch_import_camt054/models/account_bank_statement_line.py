@@ -33,37 +33,19 @@ class AccountBankStatementLine(models.Model):
     def camt054_reconcile(self, account_code):
         move_line_obj = self.env['account.move.line']
 
-        move_line_list = move_line_obj.search([
-            ('reconciled', '!=', 'False'),
+        all_move_lines = move_line_obj.search([
+            ('reconciled', '=', False),
             ('account_id.code', '=', account_code),
-            ('acct_svcr_ref', '!=', None)
+            ('acct_svcr_ref', '!=', False)
         ])
 
-        list_line = dict()
-
         # Group each line by acct_svcr_ref
-        for line in move_line_list:
-            acct_svcr_ref = line.acct_svcr_ref
-
-            # Add the acct_svcr_ref to the list if it's not already present
-            if acct_svcr_ref not in list_line:
-                list_line[acct_svcr_ref] = []
-            # If it is already present we add the line the the list of
-            # this acct_svcr_ref
-            list_line[acct_svcr_ref].append(line)
-
-        for list_acct_svcr_ref in list_line:
-
-            credit = 0
-            debit = 0
-            move_line_list = move_line_obj.search([
-                ('acct_svcr_ref', '=', list_acct_svcr_ref),
-                ('reconciled', '!=', 'False'),
-                ('account_id.code', '=', account_code)])
-
-            # Check if credit = debit
-            for line in move_line_list:
-                credit += line.credit
-                debit += line.debit
-            if credit == debit:
-                move_line_list.reconcile()
+        for acct_svcr_ref in set(all_move_lines.mapped('acct_svcr_ref')):
+            move_lines = move_line_obj.search([
+                ('reconciled', '=', False),
+                ('account_id.code', '=', account_code),
+                ('acct_svcr_ref', '=', acct_svcr_ref)
+            ])
+            if len(move_lines) > 1 and sum(move_lines.mapped('debit')) == \
+                    sum(move_lines.mapped('credit')):
+                move_lines.reconcile()
