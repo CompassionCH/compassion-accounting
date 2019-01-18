@@ -63,13 +63,12 @@ class TestImportCamt(SingleTransactionCase):
                               "debit": 0,
                               "name": statement_line_camt053.name})
 
-        statement_line_camt053.process_reconciliation([],
-                                                      account_move_line_obj,
-                                                      new_aml_dicts)
+        statement_line_camt053.process_reconciliation(
+            [], account_move_line_obj, new_aml_dicts)
 
         # Reconcile line from the camt 054
         statement_line_camt054 = account_bank_statement_line_obj.search(
-            [('name', '=', 'Demo Camt054')])
+            ['|', ('name', '=', 'Demo 1'), ('name', '=', 'Demo 2')])
 
         for statement_line in statement_line_camt054:
             new_aml_dicts = []
@@ -115,7 +114,7 @@ class TestImportCamt(SingleTransactionCase):
 
     def test_move_line054_exist(self):
         move_lines = self.env['account.move.line'].search(
-            [('name', '=', 'Demo Camt054')])
+            [('name', '=', 'Demo 2')])
 
         self.assertTrue(move_lines)
     # Test final reconciliation
