@@ -12,7 +12,7 @@
     'website': 'https://github.com/OCA/mis-builder',
     'depends': [
         'mis_builder',
-        'crm_event_compassion',
+        'crm_compassion',
         'account',
     ],
     'data': [
