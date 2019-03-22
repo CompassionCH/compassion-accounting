@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright 2018 Compassion Suisse
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
-
+# pylint: disable=C8101
 {
     'name': 'MIS Builder event & sponsorship info',
     'summary': """

@@ -8,7 +8,7 @@ from os.path import join as opj
 from odoo import api, fields, models, tools
 
 
-class misSpnEventInfo(models.Model):
+class MisSpnEventInfo(models.Model):
 
     _name = 'mis.spn_event.info'
     _description = 'MIS Sponsorship and Events info'
