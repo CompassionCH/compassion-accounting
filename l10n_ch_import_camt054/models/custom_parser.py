@@ -38,6 +38,10 @@ class CustomParser(models.AbstractModel):
             transaction, 'acct_svcr_ref'
         )
 
+        # save AddtlNtryInf for after to add it to name of transaction
+        addtl_ntry_inf = node.xpath(
+            './ns:AddtlNtryInf', namespaces={'ns': ns})
+
         # If there is a 'TxDtls' node in the XML we get the value of
         # 'AcctSvcrRef' in it.
         details_nodes = node.xpath(
@@ -92,6 +96,12 @@ class CustomParser(models.AbstractModel):
         for node in details_nodes:
             transaction = transaction_base.copy()
             self.parse_transaction_details(ns, node, transaction)
+
+            # If there is a AddtlNtryInf, then we do the concatenate
+            if addtl_ntry_inf:
+                transaction['name'] = transaction['name'] + \
+                                      ' - [' + addtl_ntry_inf[0].text + ']'
+
             yield transaction
 
     def parse_transaction_details(self, ns, node, transaction):
