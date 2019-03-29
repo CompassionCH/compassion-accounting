@@ -99,9 +99,7 @@ class CustomParser(models.AbstractModel):
 
             # If there is a AddtlNtryInf, then we do the concatenate
             if addtl_ntry_inf:
-                transaction['name'] = transaction['name'] + \
-                                      ' - [' + addtl_ntry_inf[0].text + ']'
-
+                transaction['name'] += u' - [{}]'.format(addtl_ntry_inf[0].text)
             yield transaction
 
     def parse_transaction_details(self, ns, node, transaction):
