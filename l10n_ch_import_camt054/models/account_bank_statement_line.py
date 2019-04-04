@@ -41,11 +41,8 @@ class AccountBankStatementLine(models.Model):
 
         # Group each line by acct_svcr_ref
         for acct_svcr_ref in set(all_move_lines.mapped('acct_svcr_ref')):
-            move_lines = move_line_obj.search([
-                ('reconciled', '=', False),
-                ('account_id.code', '=', account_code),
-                ('acct_svcr_ref', '=', acct_svcr_ref)
-            ])
+            move_lines = all_move_lines.filtered(
+                lambda x: x.acct_svcr_ref == acct_svcr_ref)
             if len(move_lines) > 1 and sum(move_lines.mapped('debit')) == \
                     sum(move_lines.mapped('credit')):
                 move_lines.reconcile()

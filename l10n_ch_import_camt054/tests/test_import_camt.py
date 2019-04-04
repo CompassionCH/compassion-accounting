@@ -118,6 +118,7 @@ class TestImportCamt(SingleTransactionCase):
             [('name', '=', 'Demo 2 - [Demo Camt054]')])
 
         self.assertTrue(move_lines)
+
     # Test final reconciliation
     def test_move_line_are_reconcilied(self):
         account_bank_statement_line_obj =\
