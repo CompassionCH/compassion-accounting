@@ -2,7 +2,7 @@
 """Add process_camt method to account.bank.statement.import."""
 # © 2017 Compassion CH <http://www.compassion.ch>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
-from odoo import models, fields
+from odoo import models, fields, release
 
 
 class AccountBankStatementLine(models.Model):
@@ -45,4 +45,10 @@ class AccountBankStatementLine(models.Model):
                 lambda x: x.acct_svcr_ref == acct_svcr_ref)
             if len(move_lines) > 1 and sum(move_lines.mapped('debit')) == \
                     sum(move_lines.mapped('credit')):
-                move_lines.reconcile()
+                # the reconcile function makes use of the recursive
+                # auto_reconcile function. This function is slow due to calls
+                # to _compute_partial_lines. This was improved in Odoo v12
+                # (see d3d26120614139fd7d7e888bd66d21de5158a034).
+                # We therefore skip the call when move_lines is too big.
+                if float(release.version) > 12 or len(move_lines) < 500:
+                    move_lines.reconcile()
