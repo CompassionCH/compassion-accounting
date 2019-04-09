@@ -330,7 +330,7 @@ class RecurringContract(models.Model):
     def contract_terminated(self):
         today = datetime.today().strftime(DF)
         self.write({'state': 'terminated', 'end_date': today})
-        self.clean_invoices()
+        self.clean_invoices(today)
         return True
 
     @api.model
