@@ -50,5 +50,5 @@ class AccountBankStatementLine(models.Model):
                 # to _compute_partial_lines. This was improved in Odoo v12
                 # (see d3d26120614139fd7d7e888bd66d21de5158a034).
                 # We therefore skip the call when move_lines is too big.
-                if float(release.version) > 12 or len(move_lines) < 500:
+                if float(release.version) >= 12 or len(move_lines) < 500:
                     move_lines.reconcile()
