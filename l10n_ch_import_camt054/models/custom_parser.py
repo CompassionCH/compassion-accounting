@@ -74,23 +74,26 @@ class CustomParser(models.AbstractModel):
         if transaction['sub_fmly_cd'] == 'RRTN':
             bank_payment_line = bank_payment_line_obj.search(
                 [('name', '=', transaction['EndToEndId'])])
+            # Cancel payment line only when the transaction id is found
+            if bank_payment_line.id:
+                payment_line = payment_line_obj.search(
+                    [('bank_line_id', '=', bank_payment_line.id)])
 
-            payment_line = payment_line_obj.search(
-                [('bank_line_id', '=', bank_payment_line.id)])
+                payment_order = bank_payment_line.order_id
+                data_supp['add_tl_inf'] = transaction['name']
 
-            payment_order = bank_payment_line.order_id
-            data_supp['add_tl_inf'] = transaction['name']
+                account_payment_mode = payment_order.payment_mode_id
 
-            account_payment_mode = payment_order.payment_mode_id
+                if account_payment_mode.offsetting_account \
+                        == 'transfer_account':
+                    transfer_account = account_payment_mode\
+                        .transfer_account_id
+                    transaction['account_id'] = transfer_account.id
 
-            if account_payment_mode.offsetting_account == 'transfer_account':
-                transfer_account = account_payment_mode.transfer_account_id
-                transaction['account_id'] = transfer_account.id
-
-            payment_line.write({
-                'cancel_reason': transaction['name'].encode('utf-8')
-            })
-            payment_line.cancel_line()
+                payment_line.write({
+                    'cancel_reason': transaction['name'].encode('utf-8')
+                })
+                payment_line.cancel_line()
 
         transaction_base = transaction
         for node in details_nodes:
