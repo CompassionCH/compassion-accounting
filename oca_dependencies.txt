@@ -20,3 +20,5 @@ queue
 server-tools
 mis-builder
 account-financial-tools
+report-print-send
+compassion-modules https://github.com/CompassionCH/compassion-modules devel
