@@ -15,5 +15,5 @@ SELECT    aml.id as id,
 FROM (account_move_line aml
      LEFT outer JOIN account_invoice ai ON ai.move_id = aml.move_id)
 WHERE ai.state::text = 'open'::text 
-	AND (ai.type::text = ANY (ARRAY['out_invoice'::character varying::text, 'out_refund'::character varying::text]))
+    AND (ai.type::text = ANY (ARRAY['out_invoice'::character varying::text, 'out_refund'::character varying::text]))
 )

@@ -1,5 +1,5 @@
 /* This is Javascript extension of module account
-   in order to add custom reconcile buttons in the 
+   in order to add custom reconcile buttons in the
    Manual Reconcile view */
 odoo.define('account_reconcile_create_invoice.reconciliation', function (require) {
     "use strict";
@@ -13,12 +13,12 @@ odoo.define('account_reconcile_create_invoice.reconciliation', function (require
     // Extend the class written in module account (bank statement view)
     reconciliation.bankStatementReconciliationLine.include({
         events: _.extend({
-            // this removes the ability to change partner of a line
-            // //        but this functionality may not be necessary for us.
-            "click .partner_name": "open_partner"
+            // This removes the ability to change partner of a line
+            // but this functionality may not be necessary for us.
+            "click .partner_name": "open_partner",
         }, reconciliation.bankStatementReconciliationLine.prototype.events),
 
-        open_partner: function() {
+        open_partner: function () {
             this.do_action({
                 views: [[false, 'form']],
                 view_type: 'form',
@@ -26,12 +26,12 @@ odoo.define('account_reconcile_create_invoice.reconciliation', function (require
                 res_model: 'res.partner',
                 type: 'ir.actions.act_window',
                 target: 'current',
-                res_id: this.partner_id
+                res_id: this.partner_id,
             });
         },
 
         // Return values of new fields to python.
-        prepareCreatedMoveLinesForPersisting: function(lines) {
+        prepareCreatedMoveLinesForPersisting: function (lines) {
             var result = this._super(lines);
             for (var i = 0; i < result.length; i++) {
                 if (lines[i].product_id) {
@@ -42,43 +42,32 @@ odoo.define('account_reconcile_create_invoice.reconciliation', function (require
         },
 
         // Update fields when product_id is changed.
-        createdLinesChanged: function() {
+        createdLinesChanged: function () {
             this._super();
             var model_presets = new Model("account.reconcile.model");
             var self = this;
             var product_id = self.product_id_field.get_value("product_id");
-            if (product_id != this.product_selected) {
+            if (product_id !== this.product_selected) {
                 this.product_selected = product_id;
-                model_presets.call("product_changed", [product_id]).then(function(values) {
-                    if (values) {
-                        self.account_id_field.set_value(values.account_id);
-                        if (self.analytic_account_id_field && values.analytic_id) {
-                            self.analytic_account_id_field.set_value(values.analytic_id);
+                model_presets.call("product_changed", [product_id]).then(
+                    function (values) {
+                        if (values) {
+                            self.account_id_field.set_value(values.account_id);
+                            if (self.analytic_account_id_field &&
+                            values.analytic_id) {
+                                self.analytic_account_id_field
+                                    .set_value(values.analytic_id);
+                            }
                         }
-                    }
-                });
+                    });
             }
-        }
+        },
     });
 
     reconciliation.abstractReconciliation.include({
         // Add fields in reconcile view
-        init: function(parent, context) {
+        init: function (parent, context) {
             this._super(parent, context);
-
-            // Extend an arbitrary field/widget with an init function that
-            // will set the options attribute to a given object.
-            // This is useful to pass arguments for a field when using the
-            // web_m2x_options module.
-            function fieldWithOptions(fieldClass, options) {
-                return fieldClass.extend({
-                    // pylint: disable=W7903
-                    init: function() {
-                        this._super.apply(this, arguments);
-                        this.options = options;
-                    }
-                });
-            }
 
             this.create_form_fields.product_id = {
                 id: "product_id",
@@ -91,26 +80,28 @@ odoo.define('account_reconcile_create_invoice.reconciliation', function (require
                 field_properties: {
                     relation: "product.product",
                     string: _t("Product"),
-                    type: "many2one"
-                }
+                    type: "many2one",
+                },
             };
         },
 
         // Add product_id to statement operations.
-        fetchPresets: function() {
+        fetchPresets: function () {
             var self = this;
-            return this._super().then(function() {
-                self.model_presets.query().order_by('-sequence', '-id').all().then(function (data) {
-                    _(data).each(function(datum){
-                        self.presets[datum.id].lines[0].product_id = datum.product_id;
+            return this._super().then(function () {
+                self.model_presets.query().order_by('-sequence', '-id').all()
+                    .then(function (data) {
+                        _(data).each(function (datum) {
+                            self.presets[datum.id].lines[0].product_id =
+                            datum.product_id;
+                        });
                     });
-                });
             });
 
         },
 
         // Change behaviour when clicking on name of bank statement
-        statementNameClickHandler: function() {
+        statementNameClickHandler: function () {
             this.do_action({
                 views: [[false, 'form']],
                 view_type: 'form',
@@ -118,14 +109,15 @@ odoo.define('account_reconcile_create_invoice.reconciliation', function (require
                 res_model: 'account.bank.statement',
                 type: 'ir.actions.act_window',
                 target: 'current',
-                res_id: this.statement_ids[0]
+                res_id: this.statement_ids[0],
             });
-        }
+        },
 
     });
 
     return {
         abstractReconciliation: reconciliation.abstractReconciliation,
-        bankStatementReconciliationLine: reconciliation.bankStatementReconciliationLine
-    }
+        bankStatementReconciliationLine:
+            reconciliation.bankStatementReconciliationLine,
+    };
 });
