@@ -19,5 +19,5 @@
     'external_dependencies': {},
     'data': ['views/res_config_bills_view.xml'],
     'demo': [],
-    'installable': True,
+    'installable': False,
 }

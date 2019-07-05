@@ -1,18 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Copyright (C) 2014 Compassion (http://www.compassion.ch)
+
+   <!-- Copyright (C) 2014 Compassion (http://www.compassion.ch)
     @author Cyril Sester <cyril.sester@outlook.com>
-    The licence is in the file __manifest__.py
 -->
-<odoo>
-    <!-- Workflow header -->
+<odoo><!--
     <record model="workflow" id="wkf_recurring_contract">
         <field name="name">recurring.contract.wkf</field>
         <field name="osv">recurring.contract</field>
         <field name="on_create" eval='True' />
     </record>
 
-    <!-- Workflow activities (what is done when state is reached) -->
     <record model="workflow.activity" id="act_draft">
         <field name="wkf_id" ref="wkf_recurring_contract" />
         <field name="flow_start" eval='True' />
@@ -36,7 +33,6 @@
         <field name="flow_stop" eval='True' />
     </record>
 
-    <!-- Workflow transitions (how are states reached) -->
     <record model="workflow.transition" id="t1">
         <field name="act_from" ref="act_draft" />
         <field name="act_to" ref="act_active" />
@@ -47,5 +43,5 @@
         <field name="act_from" ref="act_active" />
         <field name="act_to" ref="act_terminated" />
         <field name="signal">contract_terminated</field>
-    </record>
+    </record>-->
 </odoo>

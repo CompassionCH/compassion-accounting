@@ -30,12 +30,12 @@
 {
     'name': 'Recurring contract',
     'summary': 'Contract for recurring invoicing',
-    'version': '10.0.1.0.0',
+    'version': '11.0.1.0.0',
     'license': 'AGPL-3',
     'author': 'Compassion CH',
     'website': 'http://www.compassion.ch',
     'category': 'Accounting',
-    'depends': ['account_payment_partner', 'queue_job', 'account_cancel'],
+        'depends': ['account_payment_partner', 'queue_job', 'account_cancel', 'utm'],
     'external_dependencies': {},
     'data': [
         'views/contract_group_view.xml',
@@ -48,6 +48,13 @@
         'data/contract_expire_cron.xml',
         'data/daily_invoicer_cron.xml',
         'security/ir.model.access.csv',
+        'views/contract_group_view.xml',
+        'views/activate_contract_view.xml',
+        'views/utm_medium_view.xml',
+        'security/ir.model.access.csv',
+        'data/friday_invoicer_cron.xml',
+        'data/product.xml',
+        'data/utm_data.xml',
     ],
     'installable': True,
 }

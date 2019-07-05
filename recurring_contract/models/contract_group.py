@@ -42,10 +42,7 @@ class ContractGroup(models.Model):
         domain=[('payment_type', '=', 'inbound')],
         track_visibility='onchange'
     )
-    # Todo remove after v9 migration
-    payment_term_id = fields.Many2one('account.payment.term',
-                                      'Payment Term',
-                                      track_visibility="onchange")
+
     next_invoice_date = fields.Date(
         compute='_compute_next_invoice_date',
         string='Next invoice date', store=True)
@@ -215,7 +212,9 @@ class ContractGroup(models.Model):
                     fields.Datetime.from_string(
                         c.next_invoice_date) <= current_date and
                     c.state in gen_states and not (
-                        c.end_date and c.end_date >= c.next_invoice_date)
+                        c.end_date and fields.Datetime.from_string(
+                        c.end_date) <= fields.Datetime.from_string(
+                        c.next_invoice_date))
                 )
                 if not contracts:
                     break

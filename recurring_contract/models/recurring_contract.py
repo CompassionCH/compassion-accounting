@@ -63,7 +63,7 @@ class RecurringContract(models.Model):
 
     _name = "recurring.contract"
     _description = "Contract for recurring invoicing"
-    _inherit = ['mail.thread', 'ir.needaction_mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _rec_name = 'reference'
 
     ##########################################################################

@@ -31,8 +31,8 @@
             <form string="Contract">
                 <header>
                     <field name="state" widget="statusbar" statusbar_visible="draft,active,terminated" />
-                    <button name="contract_validated" class="oe_highlight" string="Validate" states="draft" />
-                    <button name="contract_terminated" class="oe_highlight" string="Terminate" states="active" confirm="Are you sure ?"/>
+                    <button name="contract_active" class="oe_highlight" string="Validate" states="draft" type="object" />
+                    <button name="contract_terminated" class="oe_highlight" string="Terminate" states="active" confirm="Are you sure ?" type="object"/>
                 </header>
                 <sheet>
                     <div class="oe_right oe_button_box">
