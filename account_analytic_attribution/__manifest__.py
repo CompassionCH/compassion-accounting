@@ -43,5 +43,5 @@
         'views/analytic_attribution_view.xml',
     ],
     'demo': [],
-    'installable': True,
+    'installable': False,
 }

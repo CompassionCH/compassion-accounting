@@ -18,6 +18,6 @@
         'security/mis_unpaid_invoice.xml',
         'views/mis_unpaid_invoice.xml',
     ],
-    'installable': True,
+    'installable': False,
     'maintainers': ['davidwul'],
 }

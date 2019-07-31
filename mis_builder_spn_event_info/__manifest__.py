@@ -19,6 +19,6 @@
         'security/mis_spn_event_info.xml',
         'views/mis_spn_event_info.xml',
     ],
-    'installable': True,
+    'installable': False,
     'maintainers': ['davidwul'],
 }
