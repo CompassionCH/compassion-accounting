@@ -48,6 +48,6 @@
     'demo': [],
     'test': [],
     'auto_install': False,
-    'installable': True,
+    'installable': False,
     'images': []
 }
