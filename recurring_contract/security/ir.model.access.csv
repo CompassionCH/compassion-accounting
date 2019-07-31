@@ -1,5 +1,9 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_recurring_contract,Full access on recurring.contract,model_recurring_contract,account.group_account_user,1,1,1,1
-access_recurring_contract_line,Full access on recurring.contract.line,model_recurring_contract_line,account.group_account_user,1,1,1,1
-access_recurring_contract_group,Full access on recurring.contract.group,model_recurring_contract_group,account.group_account_user,1,1,1,1
-access_recurring_invoicer,Full access on recurring.invoicer,model_recurring_invoicer,account.group_account_user,1,1,1,1
+write_access_recurring_contract,Write access on recurring.contract,model_recurring_contract,account.group_account_invoice,1,1,1,0
+access_recurring_contract_line,Full access on recurring.contract.line,model_recurring_contract_line,account.group_account_invoice,1,1,1,1
+write_access_recurring_contract_group,Write access on recurring.contract.group,model_recurring_contract_group,account.group_account_invoice,1,1,1,0
+access_recurring_invoicer,Full access on recurring.invoicer,model_recurring_invoicer,account.group_account_invoice,1,1,1,1
+access_recurring_contract,Full access on recurring.contract,model_recurring_contract,account.group_account_manager,1,1,1,1
+access_recurring_contract_group,Full access on recurring.contract.group,model_recurring_contract_group,account.group_account_manager,1,1,1,1
+read_access_end_reason,Read access on recurring.contract.end.reason,model_recurring_contract_end_reason,account.group_account_invoice,1,0,0,0
+full_access_end_reason,Full access on recurring.contract.end.reason,model_recurring_contract_end_reason,account.group_account_manager,1,1,1,1

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Copyright (C) 2014 Compassion CH (http://www.compassion.ch)
@@ -19,51 +18,16 @@ from odoo.addons.queue_job.job import job, related_action
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
-from odoo.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 
 _logger = logging.getLogger(__name__)
-
-
-class ContractLine(models.Model):
-    """ Each product sold through a contract """
-
-    _name = "recurring.contract.line"
-    _description = "A contract line"
-
-    @api.multi
-    def name_get(self):
-        res = [(cl.id, cl.product_id.name) for cl in self]
-        return res
-
-    contract_id = fields.Many2one(
-        'recurring.contract', 'Contract', required=True,
-        ondelete='cascade', readonly=True)
-    product_id = fields.Many2one('product.product', 'Product',
-                                 required=True)
-    amount = fields.Float('Price', required=True)
-    quantity = fields.Integer(default=1, required=True)
-    subtotal = fields.Float(compute='_compute_subtotal', store=True,
-                            digits=dp.get_precision('Account'))
-
-    @api.depends('amount', 'quantity')
-    def _compute_subtotal(self):
-        for contract in self:
-            contract.subtotal = contract.amount * contract.quantity
-
-    @api.onchange('product_id')
-    def on_change_product_id(self):
-        if not self.product_id:
-            self.amount = 0.0
-        else:
-            self.amount = self.product_id.list_price
 
 
 class RecurringContract(models.Model):
     """ A contract to perform recurring invoicing to a partner """
 
     _name = "recurring.contract"
-    _description = "Contract for recurring invoicing"
-    _inherit = ['mail.thread', 'ir.needaction_mixin']
+    _description = "Recurring contract"
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'utm.mixin']
     _rec_name = 'reference'
 
     ##########################################################################
@@ -73,14 +37,19 @@ class RecurringContract(models.Model):
     reference = fields.Char(
         default="/", required=True, readonly=True,
         states={'draft': [('readonly', False)]}, copy=False)
-    start_date = fields.Date(
+    start_date = fields.Datetime(
         readonly=True, states={'draft': [('readonly', False)]},
         copy=False, track_visibility="onchange")
     end_date = fields.Datetime(
         readonly=False, states={'terminated': [('readonly', True)]},
         track_visibility="onchange", copy=False)
+    end_reason_id = fields.Many2one(
+        'recurring.contract.end.reason', 'End reason', copy=False,
+        ondelete='restrict'
+    )
     next_invoice_date = fields.Date(
         readonly=False, states={'draft': [('readonly', False)]},
+        default=lambda c: c._default_next_invoice_date(),
         track_visibility="onchange")
     last_paid_invoice_date = fields.Date(
         compute='_compute_last_paid_invoice')
@@ -97,7 +66,13 @@ class RecurringContract(models.Model):
         'recurring.contract.line', 'contract_id',
         'Contract lines', track_visibility="onchange", copy=True)
     state = fields.Selection(
-        '_get_states', default='draft', readonly=True,
+        [
+            ('draft', _('Draft')),
+            ('waiting', _('Waiting Payment')),
+            ('active', _('Active')),
+            ('terminated', _('Terminated')),
+            ('cancelled', _('Cancelled'))
+        ], default='draft', readonly=True,
         track_visibility='onchange', copy=False)
     total_amount = fields.Float(
         'Total', compute='_compute_total_amount',
@@ -107,6 +82,13 @@ class RecurringContract(models.Model):
         'account.payment.mode', string='Payment mode',
         related='group_id.payment_mode_id', readonly=True, store=True)
     nb_invoices = fields.Integer(compute='_compute_invoices')
+    activation_date = fields.Datetime(readonly=True, copy=False)
+    company_id = fields.Many2one(
+        'res.company',
+        'Company',
+        required=True,
+        default=lambda self: self.env.user.company_id
+    )
 
     _sql_constraints = [
         ('unique_ref', "unique(reference)", "Reference must be unique!")
@@ -115,14 +97,6 @@ class RecurringContract(models.Model):
     ##########################################################################
     #                             FIELDS METHODS                             #
     ##########################################################################
-    @api.model
-    def _get_states(self):
-        return [
-            ('draft', _('Draft')),
-            ('active', _('Active')),
-            ('terminated', _('Terminated'))
-        ]
-
     @api.depends('contract_line_ids', 'contract_line_ids.amount',
                  'contract_line_ids.quantity')
     def _compute_total_amount(self):
@@ -144,6 +118,12 @@ class RecurringContract(models.Model):
                     lambda i: i.state not in ('cancel', 'draft')
                 ))
 
+    def _default_next_invoice_date(self):
+        # Use 1st of next month as default invoice date
+        today = datetime.today()
+        next_invoice = today.replace(day=1) + relativedelta(months=1)
+        return fields.Date.to_string(next_invoice)
+
     ##########################################################################
     #                              ORM METHODS                               #
     ##########################################################################
@@ -160,7 +140,7 @@ class RecurringContract(models.Model):
     @api.multi
     def write(self, vals):
         """ Perform various checks when a contract is modified. """
-        if 'next_invoice_date' in vals:
+        if vals.get('next_invoice_date'):
             self._on_change_next_invoice_date(vals['next_invoice_date'])
 
         res = super(RecurringContract, self).write(vals)
@@ -175,29 +155,26 @@ class RecurringContract(models.Model):
         for contract in self:
             default = default or dict()
             if contract.last_paid_invoice_date:
-                next_invoice_date = datetime.strptime(
-                    contract.last_paid_invoice_date,
-                    DF) + relativedelta(months=1)
+                last_paid_invoice = fields.Date.from_string(
+                    contract.last_paid_invoice)
+                next_invoice_date = fields.Date.to_string(
+                    last_paid_invoice + relativedelta(months=1))
             else:
                 today = datetime.today()
-                next_invoice_date = datetime.strptime(
-                    contract.next_invoice_date, DF)
+                next_invoice_date = fields.Date.from_string(
+                    contract.next_invoice_date)
                 next_invoice_date = next_invoice_date.replace(
                     month=today.month, year=today.year)
-            default['next_invoice_date'] = next_invoice_date.strftime(DF)
+            default['next_invoice_date'] = fields.Date.to_string(
+                next_invoice_date)
         return super(RecurringContract, self).copy(default)
 
     @api.multi
     def unlink(self):
-        for contract in self:
-            if contract.state == 'active':
-                raise UserError(
-                    _('You cannot delete a contract that is still active. '
-                      'Terminate it first.'))
-            else:
-                super(RecurringContract, contract).unlink()
-
-        return True
+        if self.filtered('start_date'):
+            raise UserError(
+                _('You cannot delete a validated contract.'))
+        return super(RecurringContract, self).unlink()
 
     ##########################################################################
     #                             PUBLIC METHODS                             #
@@ -217,26 +194,25 @@ class RecurringContract(models.Model):
         """ Rewinds the next invoice date of contract after the last
         generated invoice. No open invoices exist after that date. """
         gen_states = self.env['recurring.contract.group']._get_gen_states()
-        for contract in self.with_context(allow_rewind=True):
+        for contract in self:
             if contract.state in gen_states:
                 last_invoice_date = max([
-                    datetime.strptime(line.invoice_id.date_invoice, DF) for
+                    fields.Date.from_string(line.invoice_id.date_invoice) for
                     line in contract.invoice_line_ids
                     if line.state in ('open', 'paid')] or [False])
                 if last_invoice_date:
-                    contract.write({
-                        'next_invoice_date': last_invoice_date.strftime(DF)})
+                    contract.next_invoice_date = fields.Date.to_string(
+                        last_invoice_date)
                     contract.update_next_invoice_date()
                 else:
                     # No open/paid invoices, look for cancelled ones
                     next_invoice_date = min([
-                        datetime.strptime(line.invoice_id.date_invoice, DF)
+                        fields.Date.from_string(line.invoice_id.date_invoice)
                         for line in contract.invoice_line_ids
                         if line.state == 'cancel'] or [False])
                     if next_invoice_date:
-                        contract.write({
-                            'next_invoice_date':
-                            next_invoice_date.strftime(DF)})
+                        contract.next_invoice_date = fields.Date.to_string(
+                            next_invoice_date)
 
         return True
 
@@ -281,9 +257,11 @@ class RecurringContract(models.Model):
         group_ids = self.env['recurring.contract.group'].search(
             [('partner_id', '=', self.partner_id.id)])
         if len(group_ids) == 1:
-            self.group_id = group_ids[0]
+            self.group_id = group_ids
         else:
             self.group_id = False
+        if self.partner_id.company_id:
+            self.company_id = self.partner_id.company_id
 
     @api.multi
     def button_generate_invoices(self):
@@ -318,31 +296,129 @@ class RecurringContract(models.Model):
     ##########################################################################
     @api.multi
     def contract_draft(self):
+        if self.filtered(lambda c: c.state == 'active'):
+            raise UserError(_("Active contract cannot be put to draft"))
         self.write({'state': 'draft'})
         return True
 
     @api.multi
+    def contract_waiting(self):
+        if self.filtered(lambda c: c.state == 'active'):
+            raise UserError(_("Active contract cannot be put to waiting"))
+        if self.filtered(lambda c: not c.total_amount):
+            raise UserError(_("Please configure contract lines"))
+        return self.write({
+            'state': 'waiting',
+            'start_date': fields.Datetime.now()
+        })
+
+    @api.multi
     def contract_active(self):
-        self.write({'state': 'active'})
+        if self.filtered(lambda c: c.state != 'waiting'):
+            raise UserError(_('Only validated contracts can be activated.'))
+        self.write({
+            'state': 'active',
+            'activation_date': fields.Datetime.now(),
+        })
+        return True
+
+    @api.multi
+    def action_contract_terminate(self):
+        """
+        Action for finishing a contract. It will go in either 'terminated'
+        or 'cancelled' state depending if it was active or not.
+        :return: True
+        """
+        active_contracts = self.filtered('activation_date')
+        active_contracts.contract_terminated()
+        (self - active_contracts).contract_cancelled()
         return True
 
     @api.multi
     def contract_terminated(self):
-        today = datetime.today().strftime(DF)
-        self.write({'state': 'terminated', 'end_date': today})
+        now = fields.Datetime.now()
+        self.write({
+            'state': 'terminated',
+            'end_date': now
+        })
+        self.clean_invoices(now)
+        return True
+
+    @api.multi
+    def contract_cancelled(self):
+        self.write({
+            'state': 'cancelled',
+            'end_date': fields.Datetime.now()
+        })
         self.clean_invoices()
         return True
 
+    @api.multi
+    def action_cancel_draft(self):
+        """ Set back a cancelled contract to draft state. """
+        if self.filtered(lambda c: c.state != 'cancelled'):
+            raise UserError(_("Only cancelled contracts can be set back to "
+                              "draft."))
+        self.write({
+            'state': 'draft',
+            'end_date': False,
+            'activation_date': False,
+            'next_invoice_date': False,
+            'start_date': False
+        })
+        return True
+
+    @api.multi
+    def force_activation(self):
+        """ Used to transition contracts in active state. """
+        self.filtered(lambda c: c.state == 'draft').contract_waiting()
+        self.contract_active()
+        return True
+
+    @api.multi
+    def invoice_unpaid(self, invoice):
+        """ Hook when invoice is unpaid """
+        pass
+
+    @api.multi
+    def invoice_paid(self, invoice):
+        """ Activate contract if it is waiting for payment. """
+        activate_contracts = self.filtered(lambda c: c.state == 'waiting')
+        activate_contracts.contract_active()
+
     @api.model
     def end_date_reached(self):
-        today = datetime.today().strftime(DF)
-        contracts = self.search([('state', '=', 'active'),
-                                 ('end_date', '<=', today)])
+        now = fields.Datetime.now()
+        expired = self.search([
+            ('end_date', '>=', now),
+            ('state', 'not in', ['cancelled', 'terminated'])
+        ])
+        return expired.action_contract_terminate()
 
-        if contracts:
-            contracts.signal_workflow('contract_terminated')
+    def clean_invoices_paid(self, since_date, to_date):
+        """
+        Unreconcile paid invoices in the given period, so that they
+        can be cleaned with the clean_invoices process.
+        :param since_date: clean invoices with date greater than this
+        :param to_date: clean invoices with date lower than this
+        :return: invoices cleaned that contained other contracts than the
+                 the ones we are cleaning.
+        """
+        # Find all paid invoice lines after the given date
+        inv_line_obj = self.env['account.invoice.line']
+        invl_search = self._filter_clean_invoices(since_date, to_date)
+        inv_lines = inv_line_obj.search(invl_search)
+        move_lines = inv_lines.mapped('invoice_id.move_id.line_ids').filtered(
+            'reconciled')
+        reconciles = inv_lines.mapped(
+            'invoice_id.payment_move_line_ids.full_reconcile_id')
 
-        return True
+        # Unreconcile paid invoices
+        move_lines |= reconciles.mapped('reconciled_line_ids')
+        move_lines.remove_move_reconcile()
+
+        return move_lines.mapped('invoice_id.invoice_line_ids').filtered(
+            lambda l: l.contract_id not in self).mapped('invoice_id')
 
     ##########################################################################
     #                             PRIVATE METHODS                            #
@@ -350,13 +426,27 @@ class RecurringContract(models.Model):
     @api.multi
     @job(default_channel='root.recurring_invoicer')
     @related_action(action='related_action_contract')
-    def _clean_invoices(self, since_date=None, to_date=None, keep_lines=None):
-        """ This method deletes invoices lines generated for a given contract
-            having a due date >= current month. If the invoice_line was the
-            only line in the invoice, we cancel the invoice. In the other
-            case, we have to revalidate the invoice to update the move lines.
+    def _clean_invoices(self, since_date=None, to_date=None, keep_lines=None,
+                        clean_invoices_paid=True):
+        """
+        This method deletes invoices lines generated for a given contract
+        having a due date >= current month. If the invoice_line was the
+        only line in the invoice, we cancel the invoice. In the other
+        case, we have to revalidate the invoice to update the move lines.
+
+        When the sponsor has paid in advance, we cancel/modify the paid
+        invoices and let the user decide what to do with the payment.
+
+        :param since_date: optional date from which invoices will be cleaned
+        :param to_date: optional date limit for invoices we want to clean
+        :param keep_lines: set to true to avoid deleting invoice lines
+        :param clean_invoices_paid: set to true to unreconcile paid invoices
+                                    and clean them as well.
+        :return: invoices cleaned (which should be in cancel state)
         """
         _logger.info("clean invoices called.")
+        if clean_invoices_paid:
+            paid_invoices = self.clean_invoices_paid(since_date, to_date)
         inv_lines = self._get_invoice_lines_to_clean(since_date, to_date)
         invoices = inv_lines.mapped('invoice_id')
         empty_invoices = self.env['account.invoice']
@@ -381,14 +471,16 @@ class RecurringContract(models.Model):
         else:
             invoices.action_invoice_cancel()
             invoices.action_invoice_draft()
-            invoices.env.invalidate_all()
+            invoices.env.clear()
             to_remove_invl.unlink()
 
-        # Refresh cache before calling workflows
-        self.env.invalidate_all()
         # Invoices to set back in open state
+        self.env.clear()
         renew_invs = invoices - empty_invoices
         self._cancel_confirm_invoices(invoices, renew_invs, keep_lines)
+
+        if clean_invoices_paid:
+            paid_invoices.reconcile_after_clean()
 
         _logger.info(str(len(invoices)) + " invoices cleaned.")
         return invoices
@@ -403,7 +495,7 @@ class RecurringContract(models.Model):
         invoices = inv_lines.mapped('invoice_id')
         invoices.action_invoice_cancel()
         invoices.action_invoice_draft()
-        invoices.env.invalidate_all()
+        invoices.env.clear()
         self._update_invoice_lines(invoices)
         invoices.action_invoice_open()
 
@@ -436,8 +528,8 @@ class RecurringContract(models.Model):
         cancel_invoices = invoice_obj.browse(invoices_copy.values())
         cancel_invoices.action_invoice_cancel()
         for ci in cancel_invoices:
-            ci.message_post(message, _("Invoice Cancelled"), 'comment')
-
+            ci.message_post(message, _("Invoice Cancelled"),
+                            message_type='comment')
         return True
 
     @api.model
@@ -450,14 +542,14 @@ class RecurringContract(models.Model):
                      "\n\tinvoices to confirm : " + str(invoice_confirm.ids))
         invoice_cancel.action_invoice_cancel()
         invoice_confirm.action_invoice_draft()
-        invoice_confirm.env.invalidate_all()
+        invoice_confirm.env.clear()
         invoice_confirm.action_invoice_open()
 
     def _compute_next_invoice_date(self):
         """ Compute next_invoice_date for a single contract. """
-        next_date = datetime.strptime(self.next_invoice_date, DF)
+        next_date = fields.Date.from_string(self.next_invoice_date)
         next_date += self.group_id.get_relative_delta()
-        return next_date.strftime(DF)
+        return fields.Date.to_string(next_date)
 
     def _update_invoice_lines(self, invoices):
         """Update invoice lines generated by a contract, when the contract
@@ -486,14 +578,14 @@ class RecurringContract(models.Model):
 
     def _on_change_next_invoice_date(self, new_invoice_date):
         for contract in self:
-            new_invoice_date = datetime.strptime(new_invoice_date, DF)
+            new_invoice_date = fields.Date.from_string(new_invoice_date)
             if contract.next_invoice_date:
-                next_invoice_date = datetime.strptime(
-                    contract.next_invoice_date, DF)
-                if next_invoice_date > new_invoice_date and not \
-                        self.env.context.get('allow_rewind'):
-                    raise UserError(
-                        _('You cannot rewind the next invoice date.'))
+                next_invoice_date = fields.Date.from_string(
+                    contract.next_invoice_date)
+                if next_invoice_date > new_invoice_date:
+                    # Cancel invoices after new_invoice_date
+                    contract.clean_invoices(
+                        fields.Date.to_string(new_invoice_date))
         return True
 
     def _get_invoice_lines_to_clean(self, since_date, to_date):
@@ -506,3 +598,16 @@ class RecurringContract(models.Model):
             invl_search.append(('due_date', '<=', to_date))
 
         return self.env['account.invoice.line'].search(invl_search)
+
+    @api.multi
+    def _filter_clean_invoices(self, since_date, to_date):
+        """ Construct filter domain to be passed on method
+        clean_invoices_paid, which will determine which invoice lines will
+        be removed from invoices. """
+        if not since_date:
+            since_date = fields.Date.today()
+        invl_search = [('contract_id', 'in', self.ids), ('state', '=', 'paid'),
+                       ('due_date', '>=', since_date)]
+        if to_date:
+            invl_search.append(('due_date', '<=', to_date))
+        return invl_search

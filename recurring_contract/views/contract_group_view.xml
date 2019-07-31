@@ -25,8 +25,8 @@
                             <field name="advance_billing_months"/>
                         </group>
                         <group name="partner_info">
-                            <field name="partner_id" domain="[('customer', '=', True)]"/>
-                            <field name="payment_mode_id" />
+                            <field name="partner_id" domain="[('customer', '=', True)]" readonly="1"/>
+                            <field name="payment_mode_id"/>
                         </group>
                     </group>
                     <h2>Contracts</h2>
@@ -36,6 +36,7 @@
                     <field name="message_follower_ids" widget="mail_followers"/>
                     <field name="message_ids" widget="mail_thread"/>
                 </div>
+                <field name="change_method" position="replace"/>
             </form>
         </field>
     </record>

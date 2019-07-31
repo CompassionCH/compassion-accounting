@@ -12,8 +12,6 @@
         <field name="priority" eval="8" />
         <field name="arch" type="xml">
             <tree string="Recurring invoicers" create="false">
-                <field name="identifier" />
-                <field name="source" />
                 <field name="generation_date" />
                 <field name="invoice_ids" />
             </tree>
@@ -31,12 +29,6 @@
                     <button name="cancel_invoices" string="Cancel invoices" type="object" />
                 </header>
                 <sheet>
-                    <div class="oe_title">
-                        <h1>
-                            <field name="identifier" default_focus="1" />
-                        </h1>
-                    </div>
-                    <separator />
                     <h2><label for="invoice_ids" /></h2>
                     <field name="invoice_ids" context="{'form_view_ref': 'account.invoice_form'}">
                     </field>
