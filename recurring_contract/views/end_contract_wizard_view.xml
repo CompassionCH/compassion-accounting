@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="end_contract_view" model="ir.ui.view">
+        <field name="name">end.contract.wizard.view</field>
+        <field name="model">end.contract.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group name="settings">
+                    <group>
+                        <field name="end_date"/>
+                        <field name="end_reason_id"/>
+                        <field name="additional_notes"/>
+                    </group>
+                    <group/>
+                </group>
+                <group>
+                    <field name="contract_ids" readonly="1"/>
+                </group>
+
+                <!-- Action buttons in footer -->
+                <footer>
+                    <button name="end_contract" string="End contract"
+                            type="object" class="oe_highlight"/>
+                    <button string="Cancel" class="oe_link" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <act_window id="action_end_contract"
+                key2="client_action_multi"
+                name="End contract"
+                res_model="end.contract.wizard"
+                src_model="recurring.contract"
+                view_mode="form"
+                target="new"
+                view_type="form"
+    />
+</odoo>

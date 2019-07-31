@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Copyright (C) 2014-2017 Compassion CH (http://www.compassion.ch)
@@ -42,10 +41,7 @@ class ContractGroup(models.Model):
         domain=[('payment_type', '=', 'inbound')],
         track_visibility='onchange'
     )
-    # Todo remove after v9 migration
-    payment_term_id = fields.Many2one('account.payment.term',
-                                      'Payment Term',
-                                      track_visibility="onchange")
+
     next_invoice_date = fields.Date(
         compute='_compute_next_invoice_date',
         string='Next invoice date', store=True)
@@ -79,7 +75,8 @@ class ContractGroup(models.Model):
         for group in self:
             next_inv_date = min(
                 [c.next_invoice_date for c in group.contract_ids
-                 if c.state in self._get_gen_states()] or [False])
+                 if c.next_invoice_date and
+                 c.state in self._get_gen_states()] or [False])
             group.next_invoice_date = next_inv_date
 
     def _compute_last_paid_invoice(self):
@@ -142,8 +139,7 @@ class ContractGroup(models.Model):
             the task immediately.
         """
         if invoicer is None:
-            invoicer = self.env['recurring.invoicer'].create(
-                {'source': self._name})
+            invoicer = self.env['recurring.invoicer'].create({})
         if self.env.context.get('async_mode', True):
             # Prevent two generations at the same time
             jobs = self.env['queue.job'].search([
@@ -188,12 +184,13 @@ class ContractGroup(models.Model):
         """
         logger.info("Invoice generation started.")
         if invoicer is None:
-            invoicer = self.env['recurring.invoicer'].create(
-                {'source': self._name})
+            invoicer = self.env['recurring.invoicer'].create({})
         inv_obj = self.env['account.invoice']
         gen_states = self._get_gen_states()
-        journal = self.env['account.journal'].search(
-            [('type', '=', 'sale'), ('company_id', '=', 1)], limit=1)
+        journal = self.env['account.journal'].search([
+            ('type', '=', 'sale'),
+            ('company_id', 'in', self.mapped('contract_ids.company_id').ids)
+        ], limit=1)
 
         nb_groups = len(self)
         count = 1
@@ -215,7 +212,9 @@ class ContractGroup(models.Model):
                     fields.Datetime.from_string(
                         c.next_invoice_date) <= current_date and
                     c.state in gen_states and not (
-                        c.end_date and c.end_date >= c.next_invoice_date)
+                        c.end_date and fields.Datetime.from_string(
+                            c.end_date) <= fields.Datetime.from_string(
+                            c.next_invoice_date))
                 )
                 if not contracts:
                     break
@@ -232,7 +231,7 @@ class ContractGroup(models.Model):
                     current_date += contract_group.get_relative_delta()
                 except:
                     self.env.cr.rollback()
-                    self.env.invalidate_all()
+                    self.env.clear()
                     logger.error(
                         'contract group {0} failed during invoice generation'.
                         format(contract_group.id),
@@ -275,7 +274,7 @@ class ContractGroup(models.Model):
         ]
 
     def _get_gen_states(self):
-        return ['active']
+        return ['active', 'waiting']
 
     def _setup_inv_data(self, journal, invoicer, contracts):
         """ Setup a dict with data passed to invoice.create.
@@ -299,6 +298,7 @@ class ContractGroup(models.Model):
             'date_invoice': self.next_invoice_date,
             'recurring_invoicer_id': invoicer.id,
             'payment_mode_id': self.payment_mode_id.id,
+            'company_id': contracts.mapped('company_id')[:1].id,
             'invoice_line_ids': [
                 (0, 0, invl) for invl in contracts.get_inv_lines_data() if invl
             ]
