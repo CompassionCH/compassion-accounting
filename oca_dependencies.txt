@@ -13,12 +13,13 @@
 #
 # To provide both the URL and a branch, use:
 # sale-workflow https://github.com/OCA/sale-workflow branchname
-bank-payment
-bank-statement-import
-l10n-switzerland
 queue
-server-tools
-mis-builder
-account-financial-tools
-report-print-send
-compassion-modules https://github.com/CompassionCH/compassion-modules devel
+bank-payment
+# Uncomment only if needed
+# bank-statement-import
+# l10n-switzerland
+# server-tools
+# mis-builder
+# account-financial-tools
+# report-print-send
+# compassion-modules https://github.com/CompassionCH/compassion-modules devel

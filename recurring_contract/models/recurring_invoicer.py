@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Copyright (C) 2014-2017 Compassion CH (http://www.compassion.ch)
@@ -9,12 +8,8 @@
 #
 ##############################################################################
 
-from datetime import datetime
-
-from odoo import api, fields, models, _
-from odoo.tools import DEFAULT_SERVER_DATE_FORMAT as DF
-
 import logging
+from odoo import api, fields, models, _
 
 logger = logging.getLogger(__name__)
 
@@ -25,19 +20,13 @@ class RecurringInvoicer(models.Model):
     of these contracts easy.
     '''
     _name = 'recurring.invoicer'
-    _rec_name = 'identifier'
     _order = 'generation_date desc'
+    _description = 'Recurring invoicer'
 
-    identifier = fields.Char(
-        required=True, default=lambda self: self.calculate_id())
-    source = fields.Char('Source model', required=True)
-    generation_date = fields.Date(default=datetime.today().strftime(DF))
+    generation_date = fields.Datetime(default=fields.Datetime.now)
     invoice_ids = fields.One2many(
         'account.invoice', 'recurring_invoicer_id',
         'Generated invoices')
-
-    def calculate_id(self):
-        return self.env['ir.sequence'].next_by_code('rec.invoicer.ident')
 
     @api.multi
     def cancel_invoices(self):
@@ -47,9 +36,7 @@ class RecurringInvoicer(models.Model):
         """
         invoice_to_cancel = self.mapped('invoice_ids').filtered(
             lambda invoice: invoice.state != 'cancel')
-
         invoice_to_cancel.action_invoice_cancel()
-
         return True
 
     @api.multi

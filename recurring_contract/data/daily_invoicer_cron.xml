@@ -14,7 +14,7 @@
             <field name="interval_type">days</field>
             <field name="numbercall">-1</field> <!-- don't limit the number of calls -->
             <field name="doall" eval="False"/>
-            <field name="model" eval="'recurring.invoicer.wizard'"/>
+            <field name="model_id" ref="model_recurring_invoicer_wizard"/>
             <field name="function" eval="'generate_from_cron'" />
             <field name="args" eval="()"/>
         </record>

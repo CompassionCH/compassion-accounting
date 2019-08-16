@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #       ______ Releasing children from poverty      _
@@ -9,7 +8,7 @@
 #                        /_/
 #                            in Jesus' name
 #
-#    Copyright (C) 2014-2017 Compassion CH (http://www.compassion.ch)
+#    Copyright (C) 2014-2019 Compassion CH (http://www.compassion.ch)
 #    @author: Cyril Sester <csester@compassion.ch>, Emanuel Cino
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -30,24 +29,35 @@
 {
     'name': 'Recurring contract',
     'summary': 'Contract for recurring invoicing',
-    'version': '10.0.1.0.0',
+    'version': '11.0.1.0.0',
     'license': 'AGPL-3',
     'author': 'Compassion CH',
+    'development_status': 'Stable',
     'website': 'http://www.compassion.ch',
     'category': 'Accounting',
-    'depends': ['account_payment_partner', 'queue_job', 'account_cancel'],
+    'depends': [
+        'account_invoicing',
+        'account_payment_partner',  # OCA/bank-payment,
+        'queue_job',                # OCA/queue,
+        'account_cancel',
+        'utm'
+    ],
     'external_dependencies': {},
     'data': [
+        'views/end_contract_wizard_view.xml',
+        'views/activate_contract_view.xml',
         'views/contract_group_view.xml',
         'views/recurring_contract_view.xml',
         'views/recurring_invoicer_view.xml',
         'views/recurring_invoicer_wizard_view.xml',
-        'workflow/recurring_contract_workflow.xml',
+        'views/utm_medium_view.xml',
         'data/recurring_contract_sequence.xml',
         'data/recurring_invoicer_sequence.xml',
         'data/contract_expire_cron.xml',
         'data/daily_invoicer_cron.xml',
+        'data/utm_data.xml',
         'security/ir.model.access.csv',
+        'security/security.xml',
     ],
     'installable': True,
 }
