@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class BaseContractTest(TransactionCase):
     def setUp(self):
-        super(BaseContractTest, self).setUp()
+        super().setUp()
         self.thomas = self.env.ref('base.res_partner_address_3')
         self.michel = self.env.ref('base.res_partner_address_4')
         self.david = self.env.ref('base.res_partner_address_10')
@@ -268,8 +268,7 @@ class BaseContractCompassionTest(BaseContractTest):
             'type': 'O'
         }
         default_values.update(vals)
-        return super(BaseContractCompassionTest,
-                     self).create_contract(default_values, line_vals)
+        return super().create_contract(default_values, line_vals)
 
     def _pay_invoice(self, invoice):
         bank_journal = self.env['account.journal'].search(
