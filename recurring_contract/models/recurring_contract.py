@@ -135,7 +135,7 @@ class RecurringContract(models.Model):
             vals['reference'] = self.env['ir.sequence'].next_by_code(
                 'recurring.contract.ref')
 
-        return super(RecurringContract, self).create(vals)
+        return super().create(vals)
 
     @api.multi
     def write(self, vals):
@@ -143,7 +143,7 @@ class RecurringContract(models.Model):
         if vals.get('next_invoice_date'):
             self._on_change_next_invoice_date(vals['next_invoice_date'])
 
-        res = super(RecurringContract, self).write(vals)
+        res = super().write(vals)
 
         if 'contract_line_ids' in vals:
             self._on_contract_lines_changed()
@@ -167,14 +167,14 @@ class RecurringContract(models.Model):
                     month=today.month, year=today.year)
             default['next_invoice_date'] = fields.Date.to_string(
                 next_invoice_date)
-        return super(RecurringContract, self).copy(default)
+        return super().copy(default)
 
     @api.multi
     def unlink(self):
         if self.filtered('start_date'):
             raise UserError(
                 _('You cannot delete a validated contract.'))
-        return super(RecurringContract, self).unlink()
+        return super().unlink()
 
     ##########################################################################
     #                             PUBLIC METHODS                             #

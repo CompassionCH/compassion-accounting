@@ -199,8 +199,7 @@ class ContractGroup(models.Model):
             # avoid doing it again in case of an error or a timeout
             if not test_mode:
                 self.env.cr.commit()    # pylint: disable=invalid-commit
-            logger.info("Generating invoices for group {0}/{1}".format(
-                count, nb_groups))
+            logger.info(f"Generating invoices for group {count}/{nb_groups}")
             month_delta = contract_group.advance_billing_months or 1
             limit_date = datetime.today() + relativedelta(
                 months=+month_delta)
@@ -233,8 +232,8 @@ class ContractGroup(models.Model):
                     self.env.cr.rollback()
                     self.env.clear()
                     logger.error(
-                        'contract group {0} failed during invoice generation'.
-                        format(contract_group.id),
+                        f'contract group {contract_group.id} '
+                        f'failed during invoice generation',
                         exc_info=True)
                     break
             count += 1
