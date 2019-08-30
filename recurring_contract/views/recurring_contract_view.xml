@@ -52,6 +52,7 @@
                         <group>
                             <field name="partner_id"/>
                             <field name="group_id" domain="[('partner_id', '=', partner_id)]" context="{'default_partner_id': partner_id}" />
+                            <field name="company_id"/>
                         </group>
                         <group>
                             <field name="start_date"/>

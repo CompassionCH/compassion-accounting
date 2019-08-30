@@ -107,6 +107,12 @@ class RecurringContract(models.Model):
         'account.payment.mode', string='Payment mode',
         related='group_id.payment_mode_id', readonly=True, store=True)
     nb_invoices = fields.Integer(compute='_compute_invoices')
+    company_id = fields.Many2one(
+        'res.company',
+        'Company',
+        required=True,
+        default=lambda self: self.env.user.company_id.id
+    )
 
     _sql_constraints = [
         ('unique_ref', "unique(reference)", "Reference must be unique!")
@@ -284,6 +290,8 @@ class RecurringContract(models.Model):
             self.group_id = group_ids[0]
         else:
             self.group_id = False
+        if self.partner_id.company_id:
+            self.company_id = self.partner_id.company_id
 
     @api.multi
     def button_generate_invoices(self):
