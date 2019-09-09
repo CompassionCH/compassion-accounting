@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Copyright (C) 2015-2017 Compassion CH (http://www.compassion.ch)
@@ -78,8 +77,8 @@ class AccountAttribution(models.Model):
         # Attribute the amounts
         analytic_account_obj = self.env['account.analytic.account']
         account_obj = self.env['account.account']
-        for analytic_id, attribution in attribution_amounts.iteritems():
-            for account_id, amount_total in attribution.iteritems():
+        for analytic_id, attribution in attribution_amounts.items():
+            for account_id, amount_total in attribution.items():
                 account = account_obj.browse(account_id)
                 account_tag_ids = account.tag_ids.ids
                 analytic = analytic_account_obj.browse(analytic_id)

@@ -15,11 +15,12 @@
 # sale-workflow https://github.com/OCA/sale-workflow branchname
 queue
 bank-payment
+account-financial-tools
+server-ux
 # Uncomment only if needed
 # bank-statement-import
 # l10n-switzerland
 # server-tools
 # mis-builder
-# account-financial-tools
 # report-print-send
 # compassion-modules https://github.com/CompassionCH/compassion-modules devel
