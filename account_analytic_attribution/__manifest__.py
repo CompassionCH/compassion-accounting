@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #       ______ Releasing children from poverty      _
@@ -30,12 +29,14 @@
 {
     'name': 'Analytic attribution',
     'summary': 'Set rules to dispatch analytic lines into analytic accounts',
-    'version': '10.0.1.0.0',
+    'version': '11.0.1.0.0',
     'license': 'AGPL-3',
     'author': 'Compassion CH',
     'website': 'http://www.compassion.ch',
     'category': 'Accounting',
-    'depends': ['analytic', 'account_fiscal_month'],
+    'depends': ['analytic',
+                'account_fiscal_month'
+    ],
     'external_dependencies': {},
     'data': [
         'security/ir.model.access.csv',

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Copyright (C) 2015-2017 Compassion CH (http://www.compassion.ch)
@@ -74,8 +73,7 @@ class AccountAttribution(models.Model):
         """
         if not date_start or not date_stop:
             # Select the last year period
-            year = datetime.today()
-            year = year - relativedelta(years=1)
+            year = datetime.today() - relativedelta(years=1)
             fy = self.env.user.company_id.compute_fiscalyear_dates(year)
             date_start = fields.Date.to_string(fy['date_from'])
             date_stop = fields.Date.to_string(fy['date_to'])
@@ -131,7 +129,7 @@ class AccountAttribution(models.Model):
                             'account_id': rule.account_analytic_id.id,
                             'date': date_stop,
                             'tag_ids': [(6, 0, [tag_id])],
-                            'amount': amount_total * (rule.rate / 100),
+                            'amount': amount_total * (rule.rate // 100),
                             'general_account_id': account_id,
                             'ref': prefix + analytic.name,
                         })
