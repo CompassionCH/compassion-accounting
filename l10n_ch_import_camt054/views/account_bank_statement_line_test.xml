@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="statement_line_details_acct_svcr_ref" model="ir.ui.view">
+        <field name="name">bank.statement.line.details.acct_svcr_ref</field>
+        <field name="model">account.bank.statement.line</field>
+        <field name="type">form</field>
+        <field name="inherit_id" ref="account_bank_statement_import_camt_details.statement_line_details" />
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="acct_svcr_ref"/>
+            </field>
+        </field>
+    </record>
+</odoo>

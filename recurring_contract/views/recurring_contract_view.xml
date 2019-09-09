@@ -10,14 +10,16 @@
         <field name="name">recurring.contract.tree</field>
         <field name="model">recurring.contract</field>
         <field name="arch" type="xml">
-            <tree string="Contracts" colors="blue:state == 'draft';black:state == 'active';gray:state == 'terminated'">
-                <field name="reference" />
-                <field name="partner_id" />
-                <field name="start_date" />
-                <field name="end_date" />
-                <field name="payment_mode_id" />
-                <field name="total_amount" />
-                <field name="state" />
+            <tree string="Contracts" colors="blue:state == 'draft';green:state == 'waiting';black:state == 'active';gray:state in ('terminated','cancelled')">
+                <field name="reference"/>
+                <field name="partner_id"/>
+                <field name="create_date"/>
+                <field name="start_date"/>
+                <field name="activation_date"/>
+                <field name="end_date"/>
+                <field name="payment_mode_id"/>
+                <field name="total_amount"/>
+                <field name="state"/>
             </tree>
         </field>
     </record>
@@ -27,17 +29,17 @@
         <field name="name">recurring.contract.form</field>
         <field name="model">recurring.contract</field>
         <field name="arch" type="xml">
-            <form string="Contract">
+            <form>
                 <header>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,active,terminated" />
-                    <button name="contract_validated" class="oe_highlight" string="Validate" states="draft" />
-                    <button name="contract_terminated" class="oe_highlight" string="Terminate" states="active" confirm="Are you sure ?"/>
+                    <field name="state" widget="statusbar"/>
+                    <button name="contract_waiting" class="oe_highlight" string="Validate" states="draft" type="object"/>
+                    <button name="action_cancel_draft" type="object" string="Set back to draft" states="cancelled"/>
+                    <button name="%(action_end_contract)d" type="action" string="Terminate" class="oe_highlight" attrs="{'invisible': ['|', ('state', 'in', ['terminated', 'cancelled']), ('end_date', '!=', False)]}"/>
                 </header>
                 <sheet>
-                    <div class="oe_right oe_button_box">
-                        <!-- to change icone of smart button, you can find tag here:http://fortawesome.github.io/Font-Awesome/icons/ -->
-                        <button name="button_generate_invoices" type='object' groups="account.group_account_user" class="oe_inline oe_stat_button" icon="fa-refresh" string="Generate invoices" states="active" />
-                        <button name="open_invoices" type="object" groups="account.group_account_user" class="oe_inline oe_stat_button" icon="fa-pencil-square-o">
+                    <div class="oe_button_box" name="button_box">
+                        <button name="button_generate_invoices" type="object" class="oe_inline oe_stat_button" icon="fa-refresh" string="Generate invoices" states="waiting,active"/>
+                        <button name="open_invoices" type="object" class="oe_stat_button" icon="fa-pencil-square-o">
                             <field name="nb_invoices" widget="statinfo" string="Invoices"/>
                         </button>
                     </div>
@@ -49,13 +51,25 @@
                     </div>
                     <group>
                         <group>
-                            <field name="partner_id"/>
-                            <field name="group_id" domain="[('partner_id', '=', partner_id)]" context="{'default_partner_id': partner_id}" />
+                            <field name="partner_id" options="{'create': false, 'm2o_dialog': false}"/>
+                            <field name="group_id" domain="[('partner_id', '=', partner_id)]" context="{'default_partner_id': partner_id}"/>
+                            <field name="company_id"/>
                         </group>
                         <group>
+                            <field name="create_date"/>
                             <field name="start_date"/>
-                            <field name="end_date" />
-                            <field name="next_invoice_date" />
+                            <field name="activation_date"/>
+                            <field name="end_date"/>
+                            <field name="next_invoice_date" states="draft,waiting,active" />
+                            <field name="end_reason_id" states="terminated,cancelled"/>
+                        </group>
+                        <group>
+                            <field name="medium_id" domain="[('type', '=', 'manual')]"/>
+                            <field name="campaign_id"/>
+                            <field name="source_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="last_paid_invoice_date"/>
                         </group>
                     </group>
                     <notebook>
@@ -109,9 +123,10 @@
         <field name="arch" type="xml">
             <search string="Search contract">
                 <field name="reference" string="Contract" filter_domain="['|','|', ('reference','ilike',self), ('partner_id','child_of',self), ('payment_mode_id', 'ilike', self)]"/>
-                <filter name="draft" string="Draft" domain="[('state','=','draft')]" help="Draft Contracts"/>
-                <filter name="active" string="Active" domain="[('state','=','active')]" help="Active Contracts"/>
-                <filter name="terminated" string="Terminated" domain="[('state','=','terminated')]" help="Ended Contracts"/>
+                <filter name="draft" string="Draft" domain="[('state','=', 'draft')]"/>
+                <filter name="waiting" string="Waiting" domain="[('state','in', ('waiting','mandate'))]"/>
+                <filter name="active" string="Active" domain="[('activation_date', '!=', False), ('state', 'not in', ('cancelled','terminated'))]" help="Active Contracts"/>
+                <filter name="finished" string="Finished" domain="[('state','=', 'terminated')]"/>
                 <field name="partner_id" operator="child_of"/>
                 <field name="payment_mode_id" string="Payment term"/>
                 <group expand="0" string="Group By...">
