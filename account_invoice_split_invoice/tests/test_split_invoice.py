@@ -22,7 +22,7 @@ class TestSplitInvoice(common.TransactionCase):
         This test check if the original invoice is well splitted in 2 invoices
         with the same informations and if the amount are matched """
     def setUp(self):
-        super(TestSplitInvoice, self).setUp()
+        super().setUp()
         self.invoice_id = self._create_invoice('SAJ/2015/0002')
         self.invoice_id1 = self._create_invoice('SAJ/2015/0003')
         self.invoice_line_id1 = self._create_invoice_line(
