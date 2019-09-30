@@ -10,7 +10,6 @@
 
 from odoo.tests import common
 from datetime import datetime
-from odoo import netsvc
 import logging
 logger = logging.getLogger(__name__)
 
