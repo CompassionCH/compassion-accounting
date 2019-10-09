@@ -41,7 +41,7 @@ class SplitInvoiceWizard(models.TransientModel):
                 if was_open:
                     old_invoice.action_invoice_cancel()
                     old_invoice.action_invoice_draft()
-                    self.env.clear()
+                    old_invoice.env.clear()
                 self.invoice_line_ids.write({'invoice_id': invoice.id})
                 if was_open:
                     old_invoice.action_invoice_open()
