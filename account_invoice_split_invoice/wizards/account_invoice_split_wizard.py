@@ -1,5 +1,4 @@
-﻿# -*- coding: utf-8 -*-
-##############################################################################
+﻿##############################################################################
 #
 #    Copyright (C) 2014-2017 Compassion CH (http://www.compassion.ch)
 #    Releasing children from poverty in Jesus' name
@@ -42,7 +41,7 @@ class SplitInvoiceWizard(models.TransientModel):
                 if was_open:
                     old_invoice.action_invoice_cancel()
                     old_invoice.action_invoice_draft()
-                    old_invoice.env.invalidate_all()
+                    old_invoice.env.clear()
                 self.invoice_line_ids.write({'invoice_id': invoice.id})
                 if was_open:
                     old_invoice.action_invoice_open()
