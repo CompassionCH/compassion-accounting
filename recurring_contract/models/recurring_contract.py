@@ -346,9 +346,10 @@ class RecurringContract(models.Model):
 
     @api.multi
     def contract_cancelled(self):
+        today = fields.Datetime.now()
         self.write({
             'state': 'cancelled',
-            'end_date': fields.Datetime.now()
+            'end_date': today
         })
         self.clean_invoices(today)
         return True

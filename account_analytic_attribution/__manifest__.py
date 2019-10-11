@@ -34,8 +34,9 @@
     'author': 'Compassion CH',
     'website': 'http://www.compassion.ch',
     'category': 'Accounting',
-    'depends': ['analytic',
-                'account_fiscal_month'
+    'depends': [
+        'analytic',
+        'account_fiscal_month',
     ],
     'external_dependencies': {},
     'data': [
@@ -44,5 +45,5 @@
         'views/analytic_attribution_view.xml',
     ],
     'demo': [],
-    'installable': False,
+    'installable': True,
 }
