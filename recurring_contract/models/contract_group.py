@@ -192,8 +192,10 @@ class ContractGroup(models.Model):
                 {'source': self._name})
         inv_obj = self.env['account.invoice']
         gen_states = self._get_gen_states()
-        journal = self.env['account.journal'].search(
-            [('type', '=', 'sale'), ('company_id', '=', 1)], limit=1)
+        journal = self.env['account.journal'].search([
+            ('type', '=', 'sale'),
+            ('company_id', 'in', self.mapped('contract_ids.company_id').ids)
+        ], limit=1)
 
         nb_groups = len(self)
         count = 1
