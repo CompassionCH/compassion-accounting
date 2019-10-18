@@ -118,6 +118,7 @@ class RecurringContract(models.Model):
                     lambda i: i.state not in ('cancel', 'draft')
                 ))
 
+    @api.model
     def _default_next_invoice_date(self):
         # Use 1st of next month as default invoice date
         today = datetime.today()
@@ -154,12 +155,14 @@ class RecurringContract(models.Model):
     def copy(self, default=None):
         for contract in self:
             default = default or dict()
+            # Put next_invoice_date after last_paid_date when copying contract
             if contract.last_paid_invoice_date:
                 last_paid_invoice = fields.Date.from_string(
                     contract.last_paid_invoice)
                 next_invoice_date = fields.Date.to_string(
                     last_paid_invoice + relativedelta(months=1))
             else:
+                # If it wasn't paid, put it this month (same day as before)
                 today = datetime.today()
                 next_invoice_date = fields.Date.from_string(
                     contract.next_invoice_date)
@@ -364,8 +367,9 @@ class RecurringContract(models.Model):
             'state': 'draft',
             'end_date': False,
             'activation_date': False,
-            'next_invoice_date': False,
-            'start_date': False
+            'next_invoice_date': self._default_next_invoice_date(),
+            'start_date': False,
+            'end_reason_id': False
         })
         return True
 
