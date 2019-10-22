@@ -48,6 +48,7 @@
         'data/contract_expire_cron.xml',
         'data/daily_invoicer_cron.xml',
         'security/ir.model.access.csv',
+        'security/record_rules.xml',
     ],
     'installable': True,
 }
