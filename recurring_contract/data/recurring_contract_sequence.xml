@@ -11,6 +11,7 @@
             <field name="code">recurring.contract.ref</field>
             <field name="prefix">CON</field>
             <field name="padding" eval="5"/>
+            <field name="company_id" eval="False"/>
         </record>
     </data>
 </odoo>
