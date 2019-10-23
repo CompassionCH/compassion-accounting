@@ -52,8 +52,12 @@ odoo.define('account_reconcile_create_invoice.reconciliation', function (require
             });
         },
 
+        // obligé de surcharger toute la méthode juste pour ajouter la création du product_id....!
+        // TODO: trouver une meilleure façon de surcharger la méthode parente...
         _renderCreate: function (state) {
             /*
+            // ne fonctionne pas... ---> Uncaught TypeError: Cannot read property 'type' of undefined
+
             this._super(state);
             var self = this;
             this.model.makeRecord('account.bank.statement.line', [{
@@ -157,6 +161,8 @@ odoo.define('account_reconcile_create_invoice.reconciliation', function (require
     reconciliation_model.StatementModel.include({
         quickCreateFields: ['account_id', 'amount', 'analytic_account_id', 'label', 'tax_id', 'product_id'],
 
+        // obligé de surcharger toute la méthode juste pour changer le tableau fields et y ajouter product_id....!
+        // TODO: trouver une meilleure façon de surcharger la méthode parente...
         quickCreateProposition: function (handle, reconcileModelId) {
             var line = this.getLine(handle);
             var reconcileModel = _.find(this.reconcileModels, function (r) {return r.id === reconcileModelId;});
