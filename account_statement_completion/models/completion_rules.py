@@ -36,14 +36,11 @@ class StatementCompletionRule(models.Model):
         'account.journal',
         string='Related statement journal')
     function_to_call = fields.Selection([
-            ('get_from_amount',
-             'Compassion: From line amount '
-             '(based on the amount of the supplier invoice)'),
-            ('get_from_move_line_ref',
-             'Compassion: From line reference '
-             '(based on previous move_line references)'),
-            ('get_from_payment_line',
-             'From payment line reference')
+        ('get_from_amount', 'Compassion: From line amount '
+         '(based on the amount of the supplier invoice)'),
+        ('get_from_move_line_ref', 'Compassion: From line reference '
+         '(based on previous move_line references)'),
+        ('get_from_payment_line', 'From payment line reference')
         ], 'Method')
 
     ##########################################################################
@@ -90,7 +87,8 @@ class StatementCompletionRule(models.Model):
                     for invoice in invoices:
                         if invoice.partner_id.id != partner.id:
                             logger.warning(
-                                f"Line named {st_line['name']} (Ref:{st_line['ref']}) was matched by "
+                                f"Line named {st_line['name']} (Ref:{st_line['ref']})"
+                                f" was matched by "
                                 'more than one invoice while looking on open'
                                 ' supplier invoices')
                     res['partner_id'] = partner.commercial_partner_id.id
