@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Copyright (C) 2014-2017 Compassion CH (http://www.compassion.ch)
@@ -36,18 +35,7 @@ class StatementCompletionRule(models.Model):
     journal_ids = fields.Many2many(
         'account.journal',
         string='Related statement journal')
-    function_to_call = fields.Selection('_get_functions', 'Method')
-
-    ##########################################################################
-    #                             FIELDS METHODS                             #
-    ##########################################################################
-
-    def _get_functions(self):
-        """
-        Inherit this to implement new completion rules.
-        :return: List of tuples (function_name, Name)
-        """
-        res = [
+    function_to_call = fields.Selection([
             ('get_from_amount',
              'Compassion: From line amount '
              '(based on the amount of the supplier invoice)'),
@@ -56,8 +44,7 @@ class StatementCompletionRule(models.Model):
              '(based on previous move_line references)'),
             ('get_from_payment_line',
              'From payment line reference')
-        ]
-        return res
+        ], 'Method')
 
     ##########################################################################
     #                             PUBLIC METHODS                             #
@@ -103,10 +90,9 @@ class StatementCompletionRule(models.Model):
                     for invoice in invoices:
                         if invoice.partner_id.id != partner.id:
                             logger.warning(
-                                'Line named "%s" (Ref:%s) was matched by '
+                                f"Line named {st_line['name']} (Ref:{st_line['ref']}) was matched by "
                                 'more than one invoice while looking on open'
-                                ' supplier invoices' %
-                                (st_line['name'], st_line['ref']))
+                                ' supplier invoices')
                     res['partner_id'] = partner.commercial_partner_id.id
         return res
 
