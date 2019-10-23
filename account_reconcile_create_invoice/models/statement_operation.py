@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Copyright (C) 2014 Compassion CH (http://www.compassion.ch)
@@ -29,10 +28,25 @@ class AccountOperationTemplate(models.Model):
         :param product_id:
         :return: account_id, analytic_id
         """
-        if product_id:
-            product = self.env['product.product'].browse(product_id)
-            account_id = product.property_account_income_id.id
-            return {
-                'account_id': account_id,
-            }
+        if product_id and product_id['product_id']:
+            product = self.env['product.product'].browse(product_id['product_id'])
+            account = product.property_account_income_id
+            taxes = product.taxes_id
+            res = {}
+            if account:
+                res['account_id'] = {
+                    'id': account.id,
+                    'display_name': account.display_name
+                }
+            else:
+                res['account_id'] = False
+
+            if taxes:
+                res['tax_id'] = {
+                    'id': taxes.id,
+                    'display_name': taxes.display_name
+                }
+            else:
+                res['tax_id'] = False
+            return res
         return False
