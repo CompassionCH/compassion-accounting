@@ -10,7 +10,7 @@
         <field name="name">recurring.contract.tree</field>
         <field name="model">recurring.contract</field>
         <field name="arch" type="xml">
-            <tree string="Contracts" colors="blue:state == 'draft';green:state == 'waiting';black:state == 'active';gray:state in ('terminated','cancelled')">
+            <tree decoration-muted="state in ('terminated','cancelled')" decoration-success="state == 'waiting'" decoration-primary="state == 'draft'">
                 <field name="reference"/>
                 <field name="partner_id"/>
                 <field name="create_date"/>
