@@ -160,7 +160,7 @@ class AccountInvoiceLine(models.Model):
     _inherit = 'account.invoice.line'
 
     contract_id = fields.Many2one(
-        'recurring.contract', 'Source contract')
+        'recurring.contract', 'Source contract', index=True)
 
     due_date = fields.Date(
         related='invoice_id.date_due',
