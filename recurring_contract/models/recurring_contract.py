@@ -56,7 +56,9 @@ class RecurringContract(models.Model):
         compute='_compute_last_paid_invoice')
     partner_id = fields.Many2one(
         'res.partner', 'Partner', required=True, readonly=True,
-        states={'draft': [('readonly', False)]}, ondelete='restrict')
+        states={'draft': [('readonly', False)]}, ondelete='restrict',
+        index=True
+    )
     group_id = fields.Many2one(
         'recurring.contract.group', 'Payment Options',
         required=True, ondelete='cascade', track_visibility="onchange")
@@ -74,7 +76,7 @@ class RecurringContract(models.Model):
             ('terminated', _('Terminated')),
             ('cancelled', _('Cancelled'))
         ], default='draft', readonly=True,
-        track_visibility='onchange', copy=False)
+        track_visibility='onchange', copy=False, index=True)
     total_amount = fields.Float(
         'Total', compute='_compute_total_amount',
         digits=dp.get_precision('Account'),
