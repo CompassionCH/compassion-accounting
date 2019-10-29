@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Copyright (C) 2015-2017 Compassion CH (http://www.compassion.ch)
@@ -53,7 +52,6 @@ class BaseContractTest(TransactionCase):
     def create_contract(self, vals, line_vals):
         base_vals = {
             'reference': self.ref(10),
-            'start_date': fields.Date.today(),
             'next_invoice_date': fields.Date.today(),
             'state': 'draft',
             'contract_line_ids': [(0, 0, l) for l in line_vals]
@@ -104,7 +102,6 @@ class TestRecurringContract(BaseContractTest):
         original_product = self.product.name
         original_partner = self.michel.name
         original_price = contract.total_amount
-        original_start_date = contract.start_date[:10]
 
         # To generate invoices, the contract must be "waiting"
         contract.contract_waiting()
@@ -118,7 +115,6 @@ class TestRecurringContract(BaseContractTest):
         self.assertEqual(original_product, invoice.invoice_line_ids[0].name)
         self.assertEqual(original_partner, invoice.partner_id['name'])
         self.assertEqual(original_price, invoice.amount_untaxed)
-        self.assertEqual(original_start_date, invoice.date_invoice)
 
         contract.action_contract_terminate()
         self.assertEqual(contract.state, 'cancelled')
@@ -232,7 +228,6 @@ class TestRecurringContract(BaseContractTest):
         original_partner = self.michel.name
         original_price = sum((contract + contract2 + contract3).mapped(
             'total_amount'))
-        original_start_date = contract.start_date[:10]
 
         # We put all the contracts in active state
         contract.contract_waiting()
@@ -242,7 +237,6 @@ class TestRecurringContract(BaseContractTest):
         invoicer = group.generate_invoices()
         invoices = invoicer.invoice_ids
         invoice = invoices[0]
-        invoice2 = invoices[1]
 
         # We put the third contract in terminate state to see if
         # the invoice is well updated
@@ -258,7 +252,6 @@ class TestRecurringContract(BaseContractTest):
         self.assertEqual(
             original_price - contract3.total_amount,
             invoice.amount_total)
-        self.assertEqual(original_start_date, invoice2.date_invoice)
 
 
 class BaseContractCompassionTest(BaseContractTest):
