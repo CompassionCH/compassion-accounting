@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Copyright (C) 2017 Compassion CH (http://www.compassion.ch)
@@ -20,7 +19,7 @@ class AccountStatementImport(models.TransientModel):
         """
         Use completion rules in journal to find missing partners.
         """
-        stmts_vals = super(AccountStatementImport, self)._complete_stmts_vals(
+        stmts_vals = super()._complete_stmts_vals(
             stmts_vals, journal, account_number)
         if journal.completion_rules:
             for st_vals in stmts_vals:

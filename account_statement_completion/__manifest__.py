@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #       ______ Releasing children from poverty      _
@@ -29,18 +28,18 @@
 # pylint: disable=C8101
 {
     "name": "Account Statement Completion Rules",
-    "version": "10.0.1.0.0",
+    "version": "11.0.0.0.0",
     "author": "Compassion CH",
     "category": "Finance",
     "website": "http://www.compassion.ch",
-    "depends": ['account_bank_statement_import'],
+    "depends": ['account_bank_statement_import'],  # source/addons
     "data": ['views/completion_rules_view.xml',
              'data/data.xml',
              'security/ir.model.access.csv'],
     "demo": [],
     "test": [],
     "license": "AGPL-3",
-    "installable": False,
+    "installable": True,
     "auto_install": False,
     "application": False,
 }
