@@ -37,7 +37,6 @@
     'depends': [
         'account',
         'analytic',
-        'account_banking_reconciliation'  # oca/bank-statement-reconcile
     ],
     'data': [
         'views/statement_view.xml',
