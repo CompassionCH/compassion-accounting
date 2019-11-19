@@ -52,7 +52,6 @@
         'views/recurring_invoicer_wizard_view.xml',
         'views/utm_medium_view.xml',
         'data/recurring_contract_sequence.xml',
-        'data/recurring_invoicer_sequence.xml',
         'data/contract_expire_cron.xml',
         'data/daily_invoicer_cron.xml',
         'data/utm_data.xml',

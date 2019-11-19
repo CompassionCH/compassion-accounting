@@ -29,6 +29,7 @@ class RecurringContract(models.Model):
     _description = "Recurring contract"
     _inherit = ['mail.thread', 'mail.activity.mixin', 'utm.mixin']
     _rec_name = 'reference'
+    _order = "create_date desc"
 
     ##########################################################################
     #                                 FIELDS                                 #
@@ -55,7 +56,9 @@ class RecurringContract(models.Model):
         compute='_compute_last_paid_invoice')
     partner_id = fields.Many2one(
         'res.partner', 'Partner', required=True, readonly=True,
-        states={'draft': [('readonly', False)]}, ondelete='restrict')
+        states={'draft': [('readonly', False)]}, ondelete='restrict',
+        index=True
+    )
     group_id = fields.Many2one(
         'recurring.contract.group', 'Payment Options',
         required=True, ondelete='cascade', track_visibility="onchange")
@@ -73,7 +76,7 @@ class RecurringContract(models.Model):
             ('terminated', _('Terminated')),
             ('cancelled', _('Cancelled'))
         ], default='draft', readonly=True,
-        track_visibility='onchange', copy=False)
+        track_visibility='onchange', copy=False, index=True)
     total_amount = fields.Float(
         'Total', compute='_compute_total_amount',
         digits=dp.get_precision('Account'),
@@ -118,6 +121,7 @@ class RecurringContract(models.Model):
                     lambda i: i.state not in ('cancel', 'draft')
                 ))
 
+    @api.model
     def _default_next_invoice_date(self):
         # Use 1st of next month as default invoice date
         today = datetime.today()
@@ -154,12 +158,14 @@ class RecurringContract(models.Model):
     def copy(self, default=None):
         for contract in self:
             default = default or dict()
+            # Put next_invoice_date after last_paid_date when copying contract
             if contract.last_paid_invoice_date:
                 last_paid_invoice = fields.Date.from_string(
                     contract.last_paid_invoice)
                 next_invoice_date = fields.Date.to_string(
                     last_paid_invoice + relativedelta(months=1))
             else:
+                # If it wasn't paid, put it this month (same day as before)
                 today = datetime.today()
                 next_invoice_date = fields.Date.from_string(
                     contract.next_invoice_date)
@@ -346,9 +352,10 @@ class RecurringContract(models.Model):
 
     @api.multi
     def contract_cancelled(self):
+        today = fields.Datetime.now()
         self.write({
             'state': 'cancelled',
-            'end_date': fields.Datetime.now()
+            'end_date': today
         })
         self.clean_invoices(today)
         return True
@@ -363,8 +370,9 @@ class RecurringContract(models.Model):
             'state': 'draft',
             'end_date': False,
             'activation_date': False,
-            'next_invoice_date': False,
-            'start_date': False
+            'next_invoice_date': self._default_next_invoice_date(),
+            'start_date': False,
+            'end_reason_id': False
         })
         return True
 

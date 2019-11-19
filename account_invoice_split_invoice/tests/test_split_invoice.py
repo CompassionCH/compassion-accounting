@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Copyright (C) 2015 Compassion CH (http://www.compassion.ch)
@@ -11,7 +10,6 @@
 
 from odoo.tests import common
 from datetime import datetime
-from odoo import netsvc
 import logging
 logger = logging.getLogger(__name__)
 
@@ -23,7 +21,7 @@ class TestSplitInvoice(common.TransactionCase):
         This test check if the original invoice is well splitted in 2 invoices
         with the same informations and if the amount are matched """
     def setUp(self):
-        super(TestSplitInvoice, self).setUp()
+        super().setUp()
         self.invoice_id = self._create_invoice('SAJ/2015/0002')
         self.invoice_id1 = self._create_invoice('SAJ/2015/0003')
         self.invoice_line_id1 = self._create_invoice_line(
@@ -41,10 +39,7 @@ class TestSplitInvoice(common.TransactionCase):
         invoice_obj = self.env['account.invoice']
         invoice = invoice_obj.browse(self.invoice_id)
         self.assertTrue(invoice)
-        wf_service = netsvc.LocalService('workflow')
-        wf_service.trg_validate(
-            self.uid, 'account.invoice', self.invoice_id,
-            'invoice_open', self.cr)
+        invoice.action_invoice_open()
         wizard_obj = self.env['account.invoice.split.wizard'].with_context(
             {'active_id': self.invoice_id})
         wizard = wizard_obj.create({})

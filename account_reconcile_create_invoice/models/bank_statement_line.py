@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Copyright (C) 2014-2018 Compassion CH (http://www.compassion.ch)
@@ -14,6 +13,7 @@ import logging
 from odoo import api, models
 from odoo.exceptions import UserError
 from odoo.tools import mod10r
+from functools import reduce
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ class BankStatementLine(models.Model):
 
         # Create invoice and update move_line_dicts to reconcile them.
         nb_new_aml_removed = 0
-        for partner_id, partner_data in partner_inv_data.iteritems():
+        for partner_id, partner_data in list(partner_inv_data.items()):
             invoice = partner_invoices.get(partner_id)
             new_counterpart = self._create_invoice_from_mv_lines(
                 partner_data, invoice)
@@ -170,9 +170,7 @@ class BankStatementLine(models.Model):
             'date_invoice': self.date,
             'reference': ref,
             'origin': self.statement_id.name,
-            'comment': ';'.join(map(
-                lambda d: d.get('comment', ''),
-                mv_line_dicts)),
+            'comment': ';'.join([d.get('comment', '') for d in mv_line_dicts]),
             'currency_id': self.journal_currency_id.id
         }
 

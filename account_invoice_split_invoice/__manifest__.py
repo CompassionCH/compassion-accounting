@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #       ______ Releasing children from poverty      _
@@ -30,7 +29,7 @@
 {
     'name': 'Split invoices',
     'summary': 'Split invoices into two separate invoices',
-    'version': '10.0.1.0.0',
+    'version': '11.0.1.0.0',
     'license': 'AGPL-3',
     'author': 'Compassion CH',
     'website': 'http://www.compassion.ch',
@@ -41,5 +40,5 @@
         'views/account_invoice_split_wizard_view.xml',
     ],
     'demo': [],
-    'installable': False,
+    'installable': True,
 }

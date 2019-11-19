@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #       ______ Releasing children from poverty      _
@@ -30,14 +29,14 @@
 # pylint: disable=C8101
 {
     'name': 'Create invoices from bank statement reconciliation',
-    'version': '10.0.1.0.0',
+    'version': '11.0.1.0.0',
     'author': 'Compassion CH',
     'license': 'AGPL-3',
     'category': 'Finance',
     'website': 'http://www.compassion.ch',
     'depends': [
         'account',
-        'analytic'
+        'analytic',
     ],
     'data': [
         'views/statement_view.xml',
@@ -48,6 +47,6 @@
     'demo': [],
     'test': [],
     'auto_install': False,
-    'installable': False,
+    'installable': True,
     'images': []
 }

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #       ______ Releasing children from poverty      _
@@ -9,7 +8,7 @@
 #                        /_/
 #                            in Jesus' name
 #
-#    Copyright (C) 2015-2017 Compassion CH (http://www.compassion.ch)
+#    Copyright (C) 2015-2019 Compassion CH (http://www.compassion.ch)
 #    @author: Emanuel Cino <ecino@compassion.ch>
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -30,12 +29,15 @@
 {
     'name': 'Analytic attribution',
     'summary': 'Set rules to dispatch analytic lines into analytic accounts',
-    'version': '10.0.1.0.0',
+    'version': '11.0.1.0.0',
     'license': 'AGPL-3',
     'author': 'Compassion CH',
     'website': 'http://www.compassion.ch',
     'category': 'Accounting',
-    'depends': ['analytic', 'account_fiscal_month'],
+    'depends': [
+        'analytic',
+        'account_fiscal_month',  # oca/account-financial-tools,oca/server-ux
+    ],
     'external_dependencies': {},
     'data': [
         'security/ir.model.access.csv',
@@ -43,5 +45,6 @@
         'views/analytic_attribution_view.xml',
     ],
     'demo': [],
-    'installable': False,
+    'installable': True,
+    'development_status': 'Stable'
 }
