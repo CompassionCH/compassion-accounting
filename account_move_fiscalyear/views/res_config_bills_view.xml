@@ -1,11 +1,11 @@
 <odoo>
     <data>
         <record id="view_account_config_settings_inherit" model="ir.ui.view">
-            <field name="name">account.settings.inherit</field>
-            <field name="model">account.config.settings</field>
-            <field name="inherit_id" ref="account.view_account_config_settings"/>
+            <field name="name">res.settings.inherit</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="child_compassion.compassion_settings"/>
             <field name="arch" type="xml">
-                <xpath expr ="//field[@name='fiscalyear_lock_date']" position="after">
+                <xpath expr="//field[@name='disaster_notify_ids']" position="after">
                     <div>
                         <label for="move_bills_date"/>
                         <field name="move_bills_date" class="oe_inline"/>
