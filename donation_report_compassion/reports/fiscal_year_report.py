@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from odoo import models, fields
 
 
@@ -23,7 +21,7 @@ class AccountInvoiceReport(models.AbstractModel):
         :return: SELECT SQL query that can be used in a SQL view for
                  constructing the fiscal year fields.
         """
-        return """
+        return f"""
             CASE WHEN EXTRACT(month FROM {date_field}) > 6
             THEN EXTRACT(month FROM {date_field}) - 6
             ELSE EXTRACT(month FROM {date_field}) + 6
@@ -56,4 +54,4 @@ class AccountInvoiceReport(models.AbstractModel):
                  EXTRACT(year FROM {date_field})::varchar
             END
             AS fiscal_year
-        """.format(date_field=date_field)
+        """
