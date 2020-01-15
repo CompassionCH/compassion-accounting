@@ -3,7 +3,6 @@
      License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl). -->
 
 <odoo>
-
     <record model="ir.ui.view" id="mis_spn_event_info_tree_view">
         <field name="name">mis.spn_event.info.tree </field>
         <field name="model">mis.spn_event.info</field>
@@ -20,5 +19,4 @@
             </tree>
         </field>
     </record>
-
 </odoo>
