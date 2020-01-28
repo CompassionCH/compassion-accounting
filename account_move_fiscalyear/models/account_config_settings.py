@@ -19,5 +19,5 @@ class AccountConfigSettingsFiscalReport(models.TransientModel):
     @api.model
     def get_values(self):
         res = super().get_values()
-        res['move_bill_date'] = False
+        res['move_bills_date'] = False
         return res
