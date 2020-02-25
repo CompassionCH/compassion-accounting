@@ -21,6 +21,5 @@ server-ux
 # bank-statement-import
 # l10n-switzerland
 # server-tools
-# mis-builder
 # report-print-send
 # compassion-modules https://github.com/CompassionCH/compassion-modules devel
