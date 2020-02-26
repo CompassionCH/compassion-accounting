@@ -15,10 +15,10 @@
     'author': 'Compassion CH',
     'website': 'http://www.compassion.ch',
     'category': 'Accounting',
-    'depends': ['account',                      # source/addons/account
-                'child_compassion',
-                'account_lock_date_update'
-                ],
+    'depends': [
+        'account',                      # source/addons/account
+        'account_lock_date_update'      # oca_addons/account-financial-tools
+    ],
     'external_dependencies': {},
     'data': ['views/res_config_bills_view.xml'],
     'demo': [],
