@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Copyright (C) 2018 Compassion CH (http://www.compassion.ch)
@@ -20,7 +19,7 @@ class ResCompany(models.Model):
 
     @api.multi
     def _validate_fiscalyear_lock(self, values):
-        super(ResCompany, self)._validate_fiscalyear_lock(values)
+        super()._validate_fiscalyear_lock(values)
         # Move open customer invoice open moves to next fiscal year
         lock_date = values.get('fiscalyear_lock_date')
         if lock_date:
