@@ -37,3 +37,5 @@ def migrate(cr, version):
         ],
         'contract_compassion', 'recurring_contract'
     )
+
+    openupgrade.delete_model_workflow(cr, 'recurring.contract', True)
