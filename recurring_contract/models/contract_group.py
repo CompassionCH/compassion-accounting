@@ -39,7 +39,7 @@ class ContractGroup(models.Model):
     payment_mode_id = fields.Many2one(
         'account.payment.mode', 'Payment mode',
         domain=[('payment_type', '=', 'inbound')],
-        track_visibility='onchange'
+        track_visibility='onchange', readonly=False
     )
 
     next_invoice_date = fields.Date(
@@ -53,7 +53,7 @@ class ContractGroup(models.Model):
         '_get_change_methods', default='do_nothing')
     partner_id = fields.Many2one(
         'res.partner', 'Partner', required=True,
-        ondelete='cascade', track_visibility="onchange")
+        ondelete='cascade', track_visibility="onchange", readonly=False)
     ref = fields.Char('Reference', default="/")
     recurring_unit = fields.Selection([
         ('day', _('Day(s)')),
@@ -203,17 +203,13 @@ class ContractGroup(models.Model):
             month_delta = contract_group.advance_billing_months or 1
             limit_date = datetime.today() + relativedelta(
                 months=+month_delta)
-            current_date = fields.Datetime.from_string(
-                contract_group.next_invoice_date)
+            current_date = contract_group.next_invoice_date
             while current_date <= limit_date:
                 contracts = contract_group.contract_ids.filtered(
                     lambda c: c.next_invoice_date and
-                    fields.Datetime.from_string(
-                        c.next_invoice_date) <= current_date and
+                    c.next_invoice_date <= current_date and
                     c.state in gen_states and not (
-                        c.end_date and fields.Datetime.from_string(
-                            c.end_date) <= fields.Datetime.from_string(
-                            c.next_invoice_date))
+                        c.end_date and c.end_date <= c.next_invoice_date)
                 )
                 if not contracts:
                     break
@@ -252,11 +248,10 @@ class ContractGroup(models.Model):
         for group in self:
             since_date = datetime.today()
             if group.last_paid_invoice_date:
-                last_paid_invoice_date = fields.Datetime.from_string(
-                    group.last_paid_invoice_date)
+                last_paid_invoice_date = group.last_paid_invoice_date
                 since_date = max(since_date, last_paid_invoice_date)
             res += group.contract_ids._clean_invoices(
-                since_date=fields.Datetime.to_string(since_date))
+                since_date=since_date)
             group.contract_ids.rewind_next_invoice_date()
         # Generate again invoices
         self._generate_invoices()

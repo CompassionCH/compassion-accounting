@@ -6,6 +6,7 @@ class AccountInvoiceReport(models.AbstractModel):
     Abstract class used in reports to add fiscal year analysis on a date field
     """
     _name = "fiscal.year.report"
+    _description = "Fiscal Year Report"
 
     fiscal_month_number = fields.Integer(readonly=True)
     valid_month = fields.Boolean(

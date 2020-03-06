@@ -32,7 +32,7 @@
         <field name="model">account.invoice.report</field>
         <field name="inherit_id" ref="account.view_account_invoice_report_search"/>
         <field name="arch" type="xml">
-            <filter name="thisyear" position="after">
+            <filter name="my_invoice" position="after">
                 <filter string="Fiscal Year Analysis" name="fy_analysis" domain="[('valid_month', '=', True), ('date', '&lt;=', time.strftime('%%Y-%%m-%%d')), ('date', '&gt;=', '2015-07-01'), ('state', '=', 'paid')]" help="Compare fiscal years"/>
             </filter>
         </field>
