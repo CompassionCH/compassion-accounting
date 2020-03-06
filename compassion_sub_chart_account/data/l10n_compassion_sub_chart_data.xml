@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- account templates -->
+        <record id="transfer_account_id" model="account.account.template">
+            <field name="code">1090</field>
+            <field name="name">Internal Transfert</field>
+            <field name="user_type_id" ref="account.data_account_type_current_assets"/>
+            <field eval="True" name="reconcile"/>
+        </record>
+        <record id="compassion_sub_chart_template" model="account.chart.template">
+            <field name="name">Minimal Compassion subsidiary</field>
+            <field name="code_digits">4</field>
+            <field name="bank_account_code_prefix">102</field>
+            <field name="cash_account_code_prefix">100</field>
+            <field name="currency_id" ref="base.EUR"/>
+            <field name="transfer_account_id" ref="transfer_account_id"/>
+            <field name="spoken_languages" eval="'en_EN;fr_FR;it_IT;de_DE'"/>
+        </record>
+        <record id="transfer_account_id" model="account.account.template">
+            <field name="chart_template_id" ref="compassion_sub_chart_template"/>
+        </record>
+        <record id="compassion_coa_sub_1100" model="account.account.template">
+            <field name="code">1100</field>
+            <field name="name">Receivable</field>
+            <field name="user_type_id" ref="account.data_account_type_receivable"/>
+            <field eval="True" name="reconcile"/>
+            <field name="chart_template_id" ref="compassion_sub_chart_template"/>
+        </record>
+        <record id="compassion_coa_sub_3000" model="account.account.template">
+            <field name="code">3000</field>
+            <field name="name">Sponsorship</field>
+            <field name="user_type_id" ref="account.data_account_type_revenue"/>
+            <field eval="False" name="reconcile"/>
+            <field name="chart_template_id" ref="compassion_sub_chart_template"/>
+        </record>
+        <record id="compassion_coa_sub_3003" model="account.account.template">
+            <field name="code">3003</field>
+            <field name="name">Sponsorship gifts</field>
+            <field name="user_type_id" ref="account.data_account_type_revenue"/>
+            <field eval="False" name="reconcile"/>
+            <field name="chart_template_id" ref="compassion_sub_chart_template"/>
+        </record>
+        <record id="compassion_coa_sub_3004" model="account.account.template">
+            <field name="code">3004</field>
+            <field name="name">Sponsorship plus</field>
+            <field name="user_type_id" ref="account.data_account_type_revenue"/>
+            <field eval="False" name="reconcile"/>
+            <field name="chart_template_id" ref="compassion_sub_chart_template"/>
+        </record>
+        <record id="compassion_coa_sub_2000" model="account.account.template">
+            <field name="code">2000</field>
+            <field name="name">Payable</field>
+            <field name="user_type_id" ref="account.data_account_type_payable"/>
+            <field eval="True" name="reconcile"/>
+            <field name="chart_template_id" ref="compassion_sub_chart_template"/>
+        </record>
+    </data>
+</odoo>
