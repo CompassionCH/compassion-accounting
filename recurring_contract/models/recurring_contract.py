@@ -126,7 +126,7 @@ class RecurringContract(models.Model):
         # Use 1st of next month as default invoice date
         today = datetime.today()
         next_invoice = today.replace(day=1) + relativedelta(months=1)
-        return next_invoice
+        return next_invoice.date()
 
     ##########################################################################
     #                              ORM METHODS                               #
