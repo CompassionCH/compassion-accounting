@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
     'name': 'CAMT 054 import and reconcile',
     'version': '12.0.1.0.0',

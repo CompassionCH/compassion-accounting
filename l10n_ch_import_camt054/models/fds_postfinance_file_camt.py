@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
-from odoo import models, api
-
 import base64
 import logging
+
+from odoo import models, api
 
 _logger = logging.getLogger(__name__)
 

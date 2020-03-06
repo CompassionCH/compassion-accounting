@@ -197,6 +197,7 @@ odoo.define('account_reconcile_create_invoice.reconciliation', function (require
                     args:[{product_id: values.product_id.id}]
                 }).then(function(changes) {
                     if (changes) {
+                        // TODO CO-3158 FIXME This syntax seems wrong
                         values = {...values, ...changes}
                     }
                     return parent.call(context, handle, values)

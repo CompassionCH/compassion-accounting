@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 import base64
 
-from odoo.tests import SingleTransactionCase
 from odoo.modules import get_module_resource
+from odoo.tests import SingleTransactionCase
 
 
 class TestImportCamt(SingleTransactionCase):
