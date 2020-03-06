@@ -15,6 +15,7 @@ class AttributionWizard(models.TransientModel):
     """Wizard for performing attribution of analytic lines into
     other analytic accounts."""
     _name = 'account.analytic.attribution.wizard'
+    _description = 'Account Analytic Attribution Wizard'
 
     date_range_ids = fields.Many2many(
         'date.range', 'attribution_wizard_date_range_rel',

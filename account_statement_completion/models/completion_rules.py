@@ -24,6 +24,7 @@ class Journal(models.Model):
 class StatementCompletionRule(models.Model):
     """ Rules to complete account bank statements."""
     _name = "account.statement.completion.rule"
+    _description = 'Account Statement Completion Rule'
 
     ##########################################################################
     #                                 FIELDS                                 #
