@@ -21,7 +21,7 @@ class AccountStatement(models.Model):
     ##########################################################################
 
     invoice_ids = fields.Many2many(
-        'account.invoice', string='Invoices', compute='_compute_invoices'
+        'account.invoice', string='Invoices', compute='_compute_invoices', readonly=False
     )
     generated_invoices_count = fields.Integer(
         'Invoices', compute='_compute_invoices')

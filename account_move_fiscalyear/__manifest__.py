@@ -10,7 +10,7 @@
 # pylint: disable=C8101
 {
     'name': 'Account move open bills to next fiscal year',
-    'version': '11.0.0.0.0',
+    'version': '12.0.1.0.0',
     'license': 'AGPL-3',
     'author': 'Compassion CH',
     'website': 'http://www.compassion.ch',

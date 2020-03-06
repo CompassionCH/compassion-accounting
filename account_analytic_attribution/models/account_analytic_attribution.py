@@ -24,15 +24,15 @@ class AccountAttribution(models.Model):
     _order = "sequence desc"
 
     account_tag_id = fields.Many2one(
-        'account.account.tag', 'Account Tag', ondelete='cascade'
+        'account.account.tag', 'Account Tag', ondelete='cascade', readonly=False
     )
     analytic_tag_id = fields.Many2one(
         'account.analytic.tag', 'Analytic Tag',
-        ondelete='cascade'
+        ondelete='cascade', readonly=False
     )
     account_distribution_line_ids = fields.One2many(
         'account.analytic.distribution.line', 'attribution_id', 'Distribution',
-        required=True
+        required=True, readonly=False
     )
     date_start = fields.Date()
     date_stop = fields.Date()
@@ -109,8 +109,8 @@ class AccountAttribution(models.Model):
             year = datetime.today()
             year = year - relativedelta(years=1)
             fy = self.env.user.company_id.compute_fiscalyear_dates(year)
-            date_start = fields.Date.to_string(fy['date_from'])
-            date_stop = fields.Date.to_string(fy['date_to'])
+            date_start = fy['date_from']
+            date_stop = fy['date_to']
         return date_start, date_stop
 
     def _filter_analytic_lines_and_removed_old_ones(self, date_start,

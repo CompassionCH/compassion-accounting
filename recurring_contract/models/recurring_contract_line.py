@@ -32,7 +32,7 @@ class ContractLine(models.Model):
         'recurring.contract', 'Contract', required=True,
         ondelete='cascade', readonly=True)
     product_id = fields.Many2one('product.product', 'Product',
-                                 required=True)
+                                 required=True, readonly=False)
     amount = fields.Float('Price', required=True)
     quantity = fields.Integer(default=1, required=True)
     subtotal = fields.Float(compute='_compute_subtotal', store=True,

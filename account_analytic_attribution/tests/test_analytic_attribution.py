@@ -105,7 +105,7 @@ class TestAnalyticAttribution(TransactionCase):
             'amount': 12.0,
             'account_id': account.id,
             'general_account_id': 1,
-            'date': fields.Datetime.to_string(date)
+            'date': date
         })
 
     def _assert_analytic_lines_count(self, count):

@@ -29,7 +29,7 @@
 {
     'name': 'Analytic attribution',
     'summary': 'Set rules to dispatch analytic lines into analytic accounts',
-    'version': '11.0.1.0.0',
+    'version': '12.0.1.0.0',
     'license': 'AGPL-3',
     'author': 'Compassion CH',
     'website': 'http://www.compassion.ch',

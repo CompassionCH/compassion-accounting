@@ -15,7 +15,7 @@ class AccountOperationTemplate(models.Model):
 
     _inherit = 'account.reconcile.model'
 
-    product_id = fields.Many2one('product.product', 'Product')
+    product_id = fields.Many2one('product.product', 'Product', readonly=False)
 
     @api.onchange('product_id')
     def onchange_product_id(self):

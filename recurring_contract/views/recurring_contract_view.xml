@@ -131,11 +131,11 @@
                 <field name="partner_id" operator="child_of"/>
                 <field name="payment_mode_id" string="Payment term"/>
                 <group expand="0" string="Group By...">
-                    <filter string="Partner" domain="[]" context="{'group_by':'partner_id'}"/>
-                    <filter string="Start date" domain="[]"  context="{'group_by':'start_date'}"/>
-                    <filter string="End date" domain="[]" context="{'group_by':'end_date'}"/>
-                    <filter string="Payment mode" domain="[]"  context="{'group_by':'payment_mode_id'}"/>
-                    <filter string="Total" domain="[]" context="{'group_by':'total_amount'}"/>
+                    <filter string="Partner" name="partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                    <filter string="Start date" name="start_date" domain="[]"  context="{'group_by':'start_date'}"/>
+                    <filter string="End date" name="end_date" domain="[]" context="{'group_by':'end_date'}"/>
+                    <filter string="Payment mode" name="payment_mode" domain="[]"  context="{'group_by':'payment_mode_id'}"/>
+                    <filter string="Total" name="total" domain="[]" context="{'group_by':'total_amount'}"/>
                     <filter string="Status" name="state" domain="[]"  context="{'group_by':'state'}"/>
                 </group>
             </search>

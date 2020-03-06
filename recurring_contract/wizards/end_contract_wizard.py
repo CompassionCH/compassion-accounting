@@ -18,9 +18,9 @@ class EndContractWizard(models.TransientModel):
 
     contract_ids = fields.Many2many(
         'recurring.contract', string='Contracts',
-        default=lambda self: self.env.context.get('active_ids'))
+        default=lambda self: self.env.context.get('active_ids'), readonly=False)
     end_reason_id = fields.Many2one(
-        'recurring.contract.end.reason', required=True)
+        'recurring.contract.end.reason', required=True, readonly=False)
     end_date = fields.Datetime(default=fields.Datetime.now, required=True)
     additional_notes = fields.Text()
 
@@ -34,7 +34,7 @@ class EndContractWizard(models.TransientModel):
         if self.additional_notes:
             self.contract_ids.message_post(self.additional_notes)
         now = datetime.now()
-        end_date = fields.Datetime.from_string(self.end_date)
+        end_date = self.end_date
         if end_date > now:
             # The contract will be ended by CRON later
             return True

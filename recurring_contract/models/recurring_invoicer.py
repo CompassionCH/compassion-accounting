@@ -26,7 +26,7 @@ class RecurringInvoicer(models.Model):
     generation_date = fields.Datetime(default=fields.Datetime.now)
     invoice_ids = fields.One2many(
         'account.invoice', 'recurring_invoicer_id',
-        'Generated invoices')
+        'Generated invoices', readonly=False)
 
     @api.multi
     def cancel_invoices(self):

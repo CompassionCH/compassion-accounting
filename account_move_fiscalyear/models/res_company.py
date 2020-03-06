@@ -33,11 +33,10 @@ class ResCompany(models.Model):
                     ('type', '=', 'out_invoice'),
                     ('date_invoice', '<=', lock_date)
                 ])
-                first_day_in_next_fy = fields.Date.from_string(
-                    lock_date) + timedelta(days=1)
+                first_day_in_next_fy = lock_date + timedelta(days=1)
                 moves = open_invoices.mapped('move_id').sudo()
                 moves.write({
-                    'date': fields.Date.to_string(first_day_in_next_fy)
+                    'date': first_day_in_next_fy
 
                 })
                 analytic_lines = moves.mapped('line_ids.analytic_line_ids')

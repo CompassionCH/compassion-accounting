@@ -17,7 +17,7 @@ class AccountInvoice(models.Model):
     _inherit = 'account.invoice'
 
     recurring_invoicer_id = fields.Many2one(
-        'recurring.invoicer', 'Invoicer')
+        'recurring.invoicer', 'Invoicer', readonly=False)
 
     @api.multi
     def action_invoice_paid(self):
@@ -56,7 +56,7 @@ class AccountInvoice(models.Model):
         for partner_id in self.mapped('partner_id.id'):
             invoices = self.filtered(lambda i: i.partner_id.id == partner_id)
             past_invoices = invoices.filtered(
-                lambda i: fields.Date.from_string(i.date_invoice) <= today)
+                lambda i: i.date_invoice <= today)
             future_invoices = invoices - past_invoices
             past_amount = sum(past_invoices.mapped('amount_total'))
             future_amount = sum(future_invoices.mapped('amount_total'))
@@ -160,7 +160,7 @@ class AccountInvoiceLine(models.Model):
     _inherit = 'account.invoice.line'
 
     contract_id = fields.Many2one(
-        'recurring.contract', 'Source contract', index=True)
+        'recurring.contract', 'Source contract', index=True, readonly=False)
 
     due_date = fields.Date(
         related='invoice_id.date_due',

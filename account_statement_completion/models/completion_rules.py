@@ -18,7 +18,7 @@ class Journal(models.Model):
     """ Add completion rules to journals """
     _inherit = 'account.journal'
 
-    completion_rules = fields.Many2many('account.statement.completion.rule')
+    completion_rules = fields.Many2many('account.statement.completion.rule', readonly=False)
 
 
 class StatementCompletionRule(models.Model):
@@ -34,7 +34,7 @@ class StatementCompletionRule(models.Model):
     name = fields.Char('Name', size=128)
     journal_ids = fields.Many2many(
         'account.journal',
-        string='Related statement journal')
+        string='Related statement journal', readonly=False)
     function_to_call = fields.Selection([
         ('get_from_amount', 'Compassion: From line amount '
          '(based on the amount of the supplier invoice)'),

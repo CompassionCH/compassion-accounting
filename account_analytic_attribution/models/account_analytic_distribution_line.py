@@ -16,9 +16,9 @@ class AccountDistributionLine(models.Model):
 
     attribution_id = fields.Many2one(
         'account.analytic.attribution', 'Analytic Attribution',
-        required=True, ondelete='cascade'
+        required=True, ondelete='cascade', readonly=False
     )
     rate = fields.Float()
     account_analytic_id = fields.Many2one(
-        'account.analytic.account', 'Analytic Account', required=True
+        'account.analytic.account', 'Analytic Account', required=True, readonly=False
     )

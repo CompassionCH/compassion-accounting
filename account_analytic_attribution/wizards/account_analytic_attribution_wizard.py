@@ -20,7 +20,7 @@ class AttributionWizard(models.TransientModel):
         'date.range', 'attribution_wizard_date_range_rel',
         string='Date range',
         domain=[('type_id.fiscal_month', '=', True)],
-        help='Takes the current year if none is selected.'
+        help='Takes the current year if none is selected.', readonly=False
     )
 
     @api.multi

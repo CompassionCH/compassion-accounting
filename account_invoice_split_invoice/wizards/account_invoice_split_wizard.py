@@ -18,11 +18,11 @@ class SplitInvoiceWizard(models.TransientModel):
     _description = 'Split Invoice Wizard'
 
     invoice_id = fields.Many2one(
-        'account.invoice', default=lambda self: self._get_invoice())
+        'account.invoice', default=lambda self: self._get_invoice(), readonly=False)
 
     invoice_line_ids = fields.Many2many(
         'account.invoice.line', 'account_invoice_line_2_splitwizard',
-        string='Invoice lines')
+        string='Invoice lines', readonly=False)
 
     @api.model
     def _get_invoice(self):
