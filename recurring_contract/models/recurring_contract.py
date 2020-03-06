@@ -161,9 +161,8 @@ class RecurringContract(models.Model):
             # Put next_invoice_date after last_paid_date when copying contract
             if contract.last_paid_invoice_date:
                 last_paid_invoice = fields.Date.from_string(
-                    contract.last_paid_invoice)
-                next_invoice_date = fields.Date.to_string(
-                    last_paid_invoice + relativedelta(months=1))
+                    contract.last_paid_invoice_date)
+                next_invoice_date = last_paid_invoice + relativedelta(months=1)
             else:
                 # If it wasn't paid, put it this month (same day as before)
                 today = datetime.today()
