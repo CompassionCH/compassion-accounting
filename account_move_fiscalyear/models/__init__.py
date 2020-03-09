@@ -7,3 +7,5 @@
 #
 ##############################################################################
 
+from . import res_company
+from . import account_update_lock_date

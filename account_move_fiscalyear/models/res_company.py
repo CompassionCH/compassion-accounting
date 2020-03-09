@@ -15,8 +15,8 @@ from odoo import models, fields, api
 class ResCompany(models.Model):
     _inherit = 'res.company'
 
-    move_bills_date = fields.Boolean(string="Move unclosed bills to next "
-                                            "fiscal year", default=False)
+    move_bills_date = fields.Boolean(
+        string="Move unclosed bills to next fiscal year")
 
     @api.multi
     def _validate_fiscalyear_lock(self, values):
