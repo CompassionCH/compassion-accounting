@@ -9,13 +9,13 @@
 ##############################################################################
 
 import logging
-from datetime import datetime
+from datetime import datetime, date
+
 from dateutil.relativedelta import relativedelta
+from odoo.addons.queue_job.job import job, related_action
 
 from odoo import api, fields, models, _
 from odoo.tools import config
-
-from odoo.addons.queue_job.job import job, related_action
 
 logger = logging.getLogger(__name__)
 test_mode = config.get('test_enable')
@@ -201,7 +201,7 @@ class ContractGroup(models.Model):
                 self.env.cr.commit()    # pylint: disable=invalid-commit
             logger.info(f"Generating invoices for group {count}/{nb_groups}")
             month_delta = contract_group.advance_billing_months or 1
-            limit_date = datetime.today() + relativedelta(
+            limit_date = date.today() + relativedelta(
                 months=+month_delta)
             current_date = contract_group.next_invoice_date
             while current_date <= limit_date:

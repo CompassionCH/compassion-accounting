@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Copyright (C) 2018 Compassion CH (http://www.compassion.ch)
@@ -16,11 +15,11 @@
     'website': 'http://www.compassion.ch',
     'category': 'Accounting',
     'depends': [
-        'account',                      # source/addons/account
-        'account_lock_date_update'      # oca_addons/account-financial-tools
+        'account',  # source/addons/account
+        'account_lock_date_update'  # oca_addons/account-financial-tools
     ],
     'external_dependencies': {},
-    'data': ['views/res_config_bills_view.xml'],
+    'data': ['views/account_update_lock_date.xml'],
     'demo': [],
     'installable': True,
 }

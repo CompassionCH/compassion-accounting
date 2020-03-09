@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
-from odoo import api, models
-
 import base64
+
+from odoo import api, models
 
 
 class AccountStatementImportCustomCamt053(models.TransientModel):

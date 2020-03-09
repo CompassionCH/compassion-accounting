@@ -8,8 +8,9 @@
 #
 ##############################################################################
 
-from odoo import api, models, fields
 import logging
+
+from odoo import api, models, fields
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,8 @@ class Journal(models.Model):
     """ Add completion rules to journals """
     _inherit = 'account.journal'
 
-    completion_rules = fields.Many2many('account.statement.completion.rule', readonly=False)
+    completion_rules = fields.Many2many('account.statement.completion.rule',
+                                        readonly=False)
 
 
 class StatementCompletionRule(models.Model):
