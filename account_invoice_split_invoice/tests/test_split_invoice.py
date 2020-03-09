@@ -8,9 +8,11 @@
 #
 ##############################################################################
 
-from odoo.tests import common
-from datetime import datetime
 import logging
+from datetime import date
+
+from odoo.tests import common
+
 logger = logging.getLogger(__name__)
 
 
@@ -146,7 +148,7 @@ class TestSplitInvoice(common.TransactionCase):
             'currency_id': 1,
             'journal_id': 1,
             'partner_id': partner_id,
-            'date_invoice': datetime.today()
+            'date_invoice': date.today()
         }).id
         return invoice_id
 
