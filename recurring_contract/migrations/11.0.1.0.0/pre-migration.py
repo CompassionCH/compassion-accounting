@@ -15,13 +15,13 @@ def migrate(cr, version):
 
     openupgrade.rename_xmlids(
         cr,
-        [('contact_compassion.utm_medium_post',
+        [('contract_compassion.utm_medium_post',
           'recurring_contract.utm_medium_post'),
-         ('contact_compassion.utm_medium_payment',
+         ('contract_compassion.utm_medium_payment',
           'recurring_contract.utm_medium_payment'),
-         ('contact_compassion.utm_medium_instagram',
+         ('contract_compassion.utm_medium_instagram',
           'recurring_contract.utm_medium_instagram'),
-         ('contact_compassion.utm_medium_mass_mailing',
+         ('contract_compassion.utm_medium_mass_mailing',
           'recurring_contract.utm_medium_mass_mailing'),
          ])
 
