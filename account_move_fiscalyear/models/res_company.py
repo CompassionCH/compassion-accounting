@@ -24,11 +24,7 @@ class ResCompany(models.Model):
         # Move open customer invoice open moves to next fiscal year
         lock_date = values.get('fiscalyear_lock_date')
         if lock_date:
-            config = self.env['account.config.settings'].search([
-                ('company_id', 'in', self.ids)
-            ], order="create_date desc", limit=1)
-            if config.move_bills_date:
-
+            if values.get('move_bills_date'):
                 open_invoices = self.env['account.invoice'].search([
                     ('state', '=', 'open'),
                     ('type', '=', 'out_invoice'),
