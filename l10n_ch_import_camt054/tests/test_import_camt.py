@@ -8,7 +8,7 @@ class TestImportCamt(SingleTransactionCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestImportCamt, cls).setUpClass()
+        super().setUpClass()
 
         account_bank_statement_import_obj = \
             cls.env['account.bank.statement.import']

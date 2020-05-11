@@ -101,13 +101,11 @@ class CustomParser(models.AbstractModel):
 
             # If there is a AddtlNtryInf, then we do the concatenate
             if addtl_ntry_inf:
-                transaction['name'] += u' - [{}]'\
-                    .format(addtl_ntry_inf[0].text)
+                transaction['name'] += f' - [{addtl_ntry_inf[0].text}]'
             yield transaction
 
     def parse_transaction_details(self, ns, node, transaction):
-        super(CustomParser, self).parse_transaction_details(
-            ns, node, transaction)
+        super().parse_transaction_details(ns, node, transaction)
         # Check if a global AcctSvcrRef exist
         found_node = node.xpath('../../ns:AcctSvcrRef', namespaces={'ns': ns})
         if len(found_node) != 0:
@@ -124,7 +122,7 @@ class CustomParser(models.AbstractModel):
         entry_nodes = node.xpath('./ns:Ntry', namespaces={'ns': ns})
 
         if len(entry_nodes) > 0:
-            result = super(CustomParser, self).parse_statement(ns, node)
+            result = super().parse_statement(ns, node)
 
             entry_ref = node.xpath('./ns:Ntry/ns:NtryRef', namespaces={
                 'ns': ns})
@@ -146,7 +144,7 @@ class CustomParser(models.AbstractModel):
 
     def parse(self, data):
 
-        result = super(CustomParser, self).parse(data)
+        result = super().parse(data)
         currency = result[0]
         account_number = result[1]
         statements = result[2]
@@ -166,7 +164,7 @@ class CustomParser(models.AbstractModel):
         return currency, account_number, statements
 
     def get_balance_amounts(self, ns, node):
-        result = super(CustomParser, self).get_balance_amounts(ns, node)
+        result = super().get_balance_amounts(ns, node)
         start_balance_node = result[0]
         end_balance_node = result[0]
 
@@ -187,7 +185,7 @@ class CustomParser(models.AbstractModel):
 
     def check_version(self, ns, root):
         try:
-            super(CustomParser, self).check_version(ns, root)
+            super().check_version(ns, root)
         except ValueError:
             re_camt_version = re.compile(
                 r'(^urn:iso:std:iso:20022:tech:xsd:camt.054.'

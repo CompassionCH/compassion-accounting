@@ -29,12 +29,12 @@ class FdsPostfinanceFileCamt(models.Model):
                         'data': pf_file.data,
                     })
 
-                    _logger.info("[OK] import file '%s' as an empty camt",
-                                 pf_file.filename)
+                    _logger.info(
+                        f"[OK] import file '{pf_file.filename}' as an empty camt")
                     camt_files += pf_file
             except Exception as e:
                 self.env.cr.rollback()
-                self.env.invalidate_all()
+                self.env.clear()
                 if pf_file.state != 'error':
                     pf_file.write({
                         'state': 'error',
@@ -44,8 +44,8 @@ class FdsPostfinanceFileCamt(models.Model):
                     # can be unset by a next file producing an error
                     # pylint: disable=invalid-commit
                     self.env.cr.commit()
-                _logger.warning("[FAIL] import file '%s' as an empy camt",
-                                (pf_file.filename))
+                _logger.warning(
+                    f"[FAIL] import file '{pf_file.filename}' as an empy camt")
 
         return super(FdsPostfinanceFileCamt, self -
                      camt_files).import2bankStatements()

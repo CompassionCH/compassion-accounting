@@ -11,8 +11,7 @@ class AccountStatementImportCustomCamt053(models.TransientModel):
         # When a return transaction is found, it search for the
         # opposite transaction (same ref).
 
-        stmts_vals = super(AccountStatementImportCustomCamt053, self).\
-            _complete_stmts_vals(stmts_vals, journal, account_number)
+        stmts_vals = super()._complete_stmts_vals(stmts_vals, journal, account_number)
 
         list_transactions = stmts_vals[0]['transactions']
 
@@ -33,8 +32,7 @@ class AccountStatementImportCustomCamt053(models.TransientModel):
 
     def _create_bank_statements(self, stmts_vals):
         statement_ids, notifications =\
-            super(AccountStatementImportCustomCamt053, self).\
-            _create_bank_statements(stmts_vals)
+            super()._create_bank_statements(stmts_vals)
 
         if 'data_file' in stmts_vals[0]:
             # Add the file imported file to the statement.

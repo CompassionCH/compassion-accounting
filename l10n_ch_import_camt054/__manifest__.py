@@ -16,5 +16,5 @@
     'demo': [
         'demo/test_data.yml',
     ],
-    'installable': False,
+    'installable': True,
 }

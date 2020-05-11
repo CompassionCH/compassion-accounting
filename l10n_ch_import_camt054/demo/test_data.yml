@@ -27,7 +27,7 @@
 # Create account
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 -
-  !record {model: account.account, id: post_account, view: False}:
+  !record {model: account.account, id: post_account, view: False}:super
     code: '1010'
     name: 'Postal Account CHF '
     reconcile: True
