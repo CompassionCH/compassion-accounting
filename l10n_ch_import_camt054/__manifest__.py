@@ -8,7 +8,7 @@
     'depends': [
         'account_bank_statement_import_camt_details',
         'l10n_ch_fds_postfinance',
-        'account_payment_line_cancel',
+        # 'account_payment_line_cancel',
     ],
     'data': [
         'views/account_bank_statement_line_test.xml',
