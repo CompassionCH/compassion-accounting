@@ -8,8 +8,6 @@ class CustomParser(models.AbstractModel):
 
     def parse_entry(self, ns, node):
         """Parse an Ntry node and yield transactions"""
-        bank_payment_line_obj = self.env['bank.payment.line']
-        payment_line_obj = self.env['account.payment.line']
 
         # Get some basic infos about the transaction in the XML.
         transaction = {'name': '/', 'amount': 0}  # fallback defaults
@@ -64,8 +62,6 @@ class CustomParser(models.AbstractModel):
             './ns:NtryDtls/ns:TxDtls/ns:Refs/ns:EndToEndId',
             transaction,
             'EndToEndId')
-
-        data_supp = dict()
 
         transaction_base = transaction
         for node in details_nodes:
