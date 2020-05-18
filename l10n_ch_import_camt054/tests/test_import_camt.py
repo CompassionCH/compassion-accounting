@@ -33,8 +33,8 @@ class TestImportCamt(SingleTransactionCase):
         data053 = data053.replace("\n", "")
         data054 = data054.replace("\n", "")
         # Convert the content in base 64
-        data053_64 = base64.b64encode(data053)
-        data054_64 = base64.b64encode(data054)
+        data053_64 = base64.b64encode(str.encode(data053))
+        data054_64 = base64.b64encode(str.encode(data054))
 
         # import the file in the journal
         bank_import_053 = account_bank_statement_import_obj.create({
@@ -126,7 +126,8 @@ class TestImportCamt(SingleTransactionCase):
         account_1098 = self.env['account.account'].search(
             [('code', '=', '1098')])
 
-        account_bank_statement_line_obj.camt054_reconcile('1098')
+        if not account_1098.reconcile:
+            account_bank_statement_line_obj.camt054_reconcile('1098')
 
         move_lines = self.env['account.move.line'].search(
             [('acct_svcr_ref', '=', '99999999999999999999999999999999'),
