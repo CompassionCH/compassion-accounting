@@ -126,8 +126,7 @@ class TestImportCamt(SingleTransactionCase):
         account_1098 = self.env['account.account'].search(
             [('code', '=', '1098')])
 
-        if not account_1098.reconcile:
-            account_bank_statement_line_obj.camt054_reconcile('1098')
+        account_bank_statement_line_obj.camt054_reconcile('1098')
 
         move_lines = self.env['account.move.line'].search(
             [('acct_svcr_ref', '=', '99999999999999999999999999999999'),
