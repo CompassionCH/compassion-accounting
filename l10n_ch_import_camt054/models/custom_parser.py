@@ -8,8 +8,6 @@ class CustomParser(models.AbstractModel):
 
     def parse_entry(self, ns, node):
         """Parse an Ntry node and yield transactions"""
-        bank_payment_line_obj = self.env['bank.payment.line']
-        payment_line_obj = self.env['account.payment.line']
 
         # Get some basic infos about the transaction in the XML.
         transaction = {'name': '/', 'amount': 0}  # fallback defaults
@@ -65,35 +63,6 @@ class CustomParser(models.AbstractModel):
             transaction,
             'EndToEndId')
 
-        data_supp = dict()
-
-        # In the case of a transaction return we try to find the original
-        # transaction and link them together, we cancel the transaction
-        # in the payment order too.
-        if transaction['sub_fmly_cd'] == 'RRTN':
-            bank_payment_line = bank_payment_line_obj.search(
-                [('name', '=', transaction['EndToEndId'])])
-            # Cancel payment line only when the transaction id is found
-            if bank_payment_line.id:
-                payment_line = payment_line_obj.search(
-                    [('bank_line_id', '=', bank_payment_line.id)])
-
-                payment_order = bank_payment_line.order_id
-                data_supp['add_tl_inf'] = transaction['name']
-
-                account_payment_mode = payment_order.payment_mode_id
-
-                if account_payment_mode.offsetting_account \
-                        == 'transfer_account':
-                    transfer_account = account_payment_mode\
-                        .transfer_account_id
-                    transaction['account_id'] = transfer_account.id
-
-                payment_line.write({
-                    'cancel_reason': transaction['name'].encode('utf-8')
-                })
-                payment_line.cancel_line()
-
         transaction_base = transaction
         for node in details_nodes:
             transaction = transaction_base.copy()
@@ -101,13 +70,11 @@ class CustomParser(models.AbstractModel):
 
             # If there is a AddtlNtryInf, then we do the concatenate
             if addtl_ntry_inf:
-                transaction['name'] += u' - [{}]'\
-                    .format(addtl_ntry_inf[0].text)
+                transaction['name'] += f' - [{addtl_ntry_inf[0].text}]'
             yield transaction
 
     def parse_transaction_details(self, ns, node, transaction):
-        super(CustomParser, self).parse_transaction_details(
-            ns, node, transaction)
+        super().parse_transaction_details(ns, node, transaction)
         # Check if a global AcctSvcrRef exist
         found_node = node.xpath('../../ns:AcctSvcrRef', namespaces={'ns': ns})
         if len(found_node) != 0:
@@ -124,7 +91,7 @@ class CustomParser(models.AbstractModel):
         entry_nodes = node.xpath('./ns:Ntry', namespaces={'ns': ns})
 
         if len(entry_nodes) > 0:
-            result = super(CustomParser, self).parse_statement(ns, node)
+            result = super().parse_statement(ns, node)
 
             entry_ref = node.xpath('./ns:Ntry/ns:NtryRef', namespaces={
                 'ns': ns})
@@ -146,7 +113,7 @@ class CustomParser(models.AbstractModel):
 
     def parse(self, data):
 
-        result = super(CustomParser, self).parse(data)
+        result = super().parse(data)
         currency = result[0]
         account_number = result[1]
         statements = result[2]
@@ -166,7 +133,7 @@ class CustomParser(models.AbstractModel):
         return currency, account_number, statements
 
     def get_balance_amounts(self, ns, node):
-        result = super(CustomParser, self).get_balance_amounts(ns, node)
+        result = super().get_balance_amounts(ns, node)
         start_balance_node = result[0]
         end_balance_node = result[0]
 
@@ -187,7 +154,7 @@ class CustomParser(models.AbstractModel):
 
     def check_version(self, ns, root):
         try:
-            super(CustomParser, self).check_version(ns, root)
+            super().check_version(ns, root)
         except ValueError:
             re_camt_version = re.compile(
                 r'(^urn:iso:std:iso:20022:tech:xsd:camt.054.'

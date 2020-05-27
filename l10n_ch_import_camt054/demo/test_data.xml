@@ -1,0 +1,84 @@
+<odoo>
+    <data>
+<!--        Bank-->
+        <record id="bank_post" model="res.bank">
+            <field name="name">Postfinance AG</field>
+            <field name="bic">POFICHBEXXX</field>
+            <field name="street">Postfinance</field>
+            <field name="zip">3030</field>
+            <field name="city">Bern</field>
+        </record>
+
+<!--        Account types-->
+        <record id="account_type_post" model="account.account.type">
+            <field name="name">Bilan : Liquidites et titres</field>
+            <field name="type">liquidity</field>
+        </record>
+
+        <record id="account_type_asset" model="account.account.type">
+            <field name="name">asset</field>
+            <field name="type">other</field>
+        </record>
+
+        <record id="account_type_debiteur" model="account.account.type">
+            <field name="name">Bilan : Debiteurs</field>
+            <field name="type">receivable</field>
+        </record>
+
+<!--        Accounts-->
+        <record id="post_account" model="account.account">
+            <field name="name">Postal Account CHF</field>
+            <field name="code">1010</field>
+            <field name="reconcile" eval="True"/>
+            <field name="user_type_id" ref="l10n_ch_import_camt054.account_type_post"/>
+        </record>
+
+        <record id="post_account_lsv" model="account.account">
+            <field name="name">transfert lsv dd</field>
+            <field name="code">1098</field>
+            <field name="reconcile" eval="True"/>
+            <field name="user_type_id" ref="l10n_ch_import_camt054.account_type_asset"/>
+        </record>
+
+        <record id="post_account_receivable" model="account.account">
+            <field name="name">Receivables</field>
+            <field name="code">1050</field>
+            <field name="reconcile" eval="True"/>
+            <field name="user_type_id" ref="l10n_ch_import_camt054.account_type_debiteur"/>
+        </record>
+
+<!--        Partner banks-->
+        <record id="company_bank_post" model="res.partner.bank">
+            <field name="acc_type">postal</field>
+            <field name="acc_number">CH0110100001101001000</field>
+            <field name="partner_id" ref="base.main_partner"/>
+            <field name="bank_id" ref="l10n_ch_import_camt054.bank_post"/>
+        </record>
+
+        <record id="company_bank_lsv_transfert" model="res.partner.bank">
+            <field name="acc_type">postal</field>
+            <field name="acc_number">01-010101-1</field>
+            <field name="partner_id" ref="base.main_partner"/>
+            <field name="bank_id" ref="l10n_ch_import_camt054.bank_post"/>
+        </record>
+
+<!--        Journals-->
+        <record id="post_account_journal" model="account.journal">
+            <field name="name">Postal account</field>
+            <field name="type">bank</field>
+            <field name="bank_account_id" ref="l10n_ch_import_camt054.company_bank_post"/>
+            <field name="update_posted" eval="True"/>
+            <field name="default_debit_account_id" ref="l10n_ch_import_camt054.post_account"/>
+            <field name="default_credit_account_id" ref="l10n_ch_import_camt054.post_account"/>
+        </record>
+
+        <record id="lsv_account_journal" model="account.journal">
+            <field name="name">LSV test</field>
+            <field name="type">bank</field>
+            <field name="bank_account_id" ref="l10n_ch_import_camt054.company_bank_lsv_transfert"/>
+            <field name="update_posted" eval="True"/>
+            <field name="default_debit_account_id" ref="l10n_ch_import_camt054.post_account_lsv"/>
+            <field name="default_credit_account_id" ref="l10n_ch_import_camt054.post_account_lsv"/>
+        </record>
+    </data>
+</odoo>

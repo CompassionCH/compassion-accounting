@@ -12,9 +12,8 @@ class AccountBankStatementLine(models.Model):
 
     def process_reconciliation(self, counterpart_aml_dicts=None,
                                payment_aml_rec=None, new_aml_dicts=None):
-        counterpart_moves = super(
-            AccountBankStatementLine, self).process_reconciliation(
-                counterpart_aml_dicts, payment_aml_rec, new_aml_dicts)
+        counterpart_moves = super().process_reconciliation(
+            counterpart_aml_dicts, payment_aml_rec, new_aml_dicts)
 
         if hasattr(self, 'acct_svcr_ref') and self.acct_svcr_ref:
             for move_line in counterpart_moves.line_ids:
@@ -23,8 +22,7 @@ class AccountBankStatementLine(models.Model):
         return counterpart_moves
 
     def _prepare_reconciliation_move_line(self, move, amount):
-        data = super(AccountBankStatementLine, self).\
-            _prepare_reconciliation_move_line(move, amount)
+        data = super()._prepare_reconciliation_move_line(move, amount)
         # Add the acct svcr ref to both move line.
         data['acct_svcr_ref'] = self.acct_svcr_ref
         return data
@@ -39,7 +37,7 @@ class AccountBankStatementLine(models.Model):
         ])
 
         # Group each line by acct_svcr_ref
-        for acct_svcr_ref in set(all_move_lines.mapped('acct_svcr_ref')):
+        for acct_svcr_ref in list(set(all_move_lines.mapped('acct_svcr_ref'))):
             move_lines = all_move_lines.filtered(
                 lambda x: x.acct_svcr_ref == acct_svcr_ref)
             if len(move_lines) > 1 and sum(move_lines.mapped('debit')) == \

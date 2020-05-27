@@ -18,8 +18,8 @@ bank-payment
 queue
 server-ux
 # Uncomment only if needed
-# bank-statement-import
-# l10n-switzerland
+bank-statement-import https://github.com/CompassionCH/bank-statement-import 12.0-camt-details
+l10n-switzerland https://github.com/CompassionCH/l10n-switzerland 12.0-everything-migrated
 # server-tools
 # report-print-send
 # compassion-modules https://github.com/CompassionCH/compassion-modules devel
