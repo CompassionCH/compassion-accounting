@@ -33,8 +33,14 @@
     'author': 'Compassion CH',
     'license': 'AGPL-3',
     'website': 'http://www.compassion.ch',
-    'depends': ['account_analytic_attribution'],
-    'data': [],
+    'depends': [
+        'analytic',
+        'account',
+        'product',
+    ],
+    'data': [
+        'views/product_view.xml'
+    ],
     'demo': ['analytic_account_data.xml'],
     'installable': True,
     'auto_install': False,
