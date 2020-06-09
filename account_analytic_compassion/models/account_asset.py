@@ -8,6 +8,7 @@
 ##############################################################################
 from odoo import models, fields
 
+
 class AccountAsset(models.Model):
     _inherit = 'account.asset'
 
@@ -47,6 +48,6 @@ class AccountAssetLine(models.Model):
             'analytic_account_id': analytic_id,
             'date': depreciation_date,
             'asset_id': asset.id,
-            'analytic_tag_ids': asset.analytic_tag_ids.ids, # new key:value of move_line_data
+            'analytic_tag_ids': asset.analytic_tag_ids.ids
         }
         return move_line_data
