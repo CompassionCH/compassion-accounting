@@ -16,5 +16,4 @@ class ProductTemplate(models.Model):
     analytic_default_id = fields.Many2one(
         "account.analytic.default",
         "Analytic Default",
-        required=True,
     )

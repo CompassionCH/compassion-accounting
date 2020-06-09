@@ -7,7 +7,7 @@
         <field name="type">form</field>
         <field name="arch" type="xml">
             <field name="property_account_income_id" position="after">
-                <field name="analytic_default_id"/>
+                <field name="analytic_default_id" required="1"/>
             </field>
         </field>
     </record>

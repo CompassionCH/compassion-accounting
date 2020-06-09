@@ -36,7 +36,7 @@
     'depends': [
         'analytic',
         'account',
-        'product'
+        'product',
     ],
     'data': [
         'views/product_view.xml'
