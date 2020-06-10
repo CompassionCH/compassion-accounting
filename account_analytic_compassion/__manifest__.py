@@ -34,7 +34,6 @@
     'license': 'AGPL-3',
     'website': 'http://www.compassion.ch',
     'depends': [
-        'account_analytic_attribution',
         'account_asset_management',
         'analytic',
         'account',
