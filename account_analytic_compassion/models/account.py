@@ -10,6 +10,7 @@
 from odoo import _, api, models
 import re
 
+
 class AccountMoveLine(models.Model):
     _inherit = "account.move.line"
 
