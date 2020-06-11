@@ -34,12 +34,14 @@
     'license': 'AGPL-3',
     'website': 'http://www.compassion.ch',
     'depends': [
+        'account_asset_management',
         'analytic',
         'account',
         'product',
     ],
     'data': [
-        'views/product_view.xml'
+        'views/product_view.xml',
+        'views/account_asset_view.xml',
     ],
     'demo': ['analytic_account_data.xml'],
     'installable': True,
