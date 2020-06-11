@@ -21,4 +21,3 @@ class AccountMoveLine(models.Model):
         pattern = r'.*mutually exclusive.*'
         if message and not re.match(pattern, message, re.IGNORECASE):
             return message
-            pass
