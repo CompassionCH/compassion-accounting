@@ -32,7 +32,7 @@ class EndContractWizard(models.TransientModel):
             'end_date': self.end_date
         })
         if self.additional_notes:
-            self.contract_ids.message_post(self.additional_notes)
+            self.contract_ids.message_post(body=self.additional_notes)
         now = datetime.now()
         end_date = self.end_date
         if end_date > now:

@@ -530,7 +530,7 @@ class RecurringContract(models.Model):
         cancel_invoices = invoice_obj.browse(invoices_copy.values())
         cancel_invoices.action_invoice_cancel()
         for ci in cancel_invoices:
-            ci.message_post(message, _("Invoice Cancelled"),
+            ci.message_post(body=message, subject=_("Invoice Cancelled"),
                             message_type='comment')
         return True
 
