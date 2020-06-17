@@ -22,7 +22,6 @@ class AccountMoveLine(models.Model):
         if message and not re.match(pattern, message, re.IGNORECASE):
             return message
 
-
     @api.model
     def _get_asset_analytic_values(self, vals, asset_vals):
         super()._get_asset_analytic_values(vals, asset_vals)
