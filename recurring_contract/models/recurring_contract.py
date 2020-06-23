@@ -10,7 +10,7 @@
 
 import logging
 
-from datetime import datetime
+from datetime import datetime, date
 
 import odoo.addons.decimal_precision as dp
 from dateutil.relativedelta import relativedelta
@@ -447,6 +447,10 @@ class RecurringContract(models.Model):
         :return: invoices cleaned (which should be in cancel state)
         """
         _logger.info("clean invoices called.")
+        if isinstance(since_date, (date, datetime)):
+            since_date = fields.Date.to_string(since_date)
+        if isinstance(to_date, (date, datetime)):
+            to_date = fields.Date.to_string(to_date)
         if clean_invoices_paid:
             paid_invoices = self.clean_invoices_paid(since_date, to_date)
         inv_lines = self._get_invoice_lines_to_clean(since_date, to_date)
@@ -583,10 +587,9 @@ class RecurringContract(models.Model):
             new_invoice_date = new_invoice_date
             if contract.next_invoice_date:
                 next_invoice_date = contract.next_invoice_date
-                if next_invoice_date > new_invoice_date:
+                if next_invoice_date > fields.Date.to_date(new_invoice_date):
                     # Cancel invoices after new_invoice_date
-                    contract.clean_invoices(
-                        new_invoice_date)
+                    contract.clean_invoices(new_invoice_date)
         return True
 
     def _get_invoice_lines_to_clean(self, since_date, to_date):
