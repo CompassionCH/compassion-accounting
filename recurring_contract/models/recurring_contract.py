@@ -584,7 +584,7 @@ class RecurringContract(models.Model):
 
     def _on_change_next_invoice_date(self, new_invoice_date):
         for contract in self:
-            new_invoice_date = new_invoice_date
+            new_invoice_date = fields.Date.from_string(new_invoice_date)
             if contract.next_invoice_date:
                 next_invoice_date = contract.next_invoice_date
                 if next_invoice_date > fields.Date.to_date(new_invoice_date):
