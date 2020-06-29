@@ -209,7 +209,8 @@ class ContractGroup(models.Model):
                     lambda c: c.next_invoice_date and
                     c.next_invoice_date <= current_date and
                     c.state in gen_states and not (
-                        c.end_date and c.end_date <= c.next_invoice_date)
+                        c.end_date and fields.Date.to_date(c.end_date) <=
+                        c.next_invoice_date)
                 )
                 if not contracts:
                     break
