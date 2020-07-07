@@ -585,7 +585,8 @@ class RecurringContract(models.Model):
                             journal_id=journal.id).get_inv_lines_data() if l]
                 if invl:
                     invoice.write({'invoice_line_ids': invl})
-                success &= invl
+                else:
+                    success = False
         return success
 
     def _on_change_next_invoice_date(self, new_invoice_date):
