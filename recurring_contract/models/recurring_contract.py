@@ -502,8 +502,8 @@ class RecurringContract(models.Model):
         invoices.action_invoice_cancel()
         invoices.action_invoice_draft()
         invoices.env.clear()
-        self._update_invoice_lines(invoices)
-        invoices.action_invoice_open()
+        if self._update_invoice_lines(invoices):
+            invoices.action_invoice_open()
 
     @api.model
     def _move_cancel_lines(self, invoice_lines, message=None):
@@ -564,7 +564,10 @@ class RecurringContract(models.Model):
         Parameters:
             - invoice_ids (list): ids of draft invoices to be
                                   updated and validated
+        Returns:
+            - True if all writes were successful, False otherwise
         """
+        success = True
         for contract in self:
             # Update payment term
             invoices.write({
@@ -580,7 +583,10 @@ class RecurringContract(models.Model):
                 invl = [(0, 0, l) for l in
                         contract.with_context(
                             journal_id=journal.id).get_inv_lines_data() if l]
-                invoice.write({'invoice_line_ids': invl})
+                if invl:
+                    invoice.write({'invoice_line_ids': invl})
+                success &= invl
+        return success
 
     def _on_change_next_invoice_date(self, new_invoice_date):
         for contract in self:
