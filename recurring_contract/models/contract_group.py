@@ -247,7 +247,7 @@ class ContractGroup(models.Model):
         """
         res = self.env['account.invoice']
         for group in self:
-            since_date = datetime.today()
+            since_date = date.today()
             if group.last_paid_invoice_date:
                 last_paid_invoice_date = group.last_paid_invoice_date
                 since_date = max(since_date, last_paid_invoice_date)
