@@ -30,5 +30,5 @@ class AccountAssetLine(models.Model):
                                                        account,
                                                        ml_type,
                                                        move)
-        move_line_data['analytic_tag_ids'] = [(6, 0, self.asset.analytic_tag_ids.ids)]
+        move_line_data['analytic_tag_ids'] = [(6, 0, self.asset_id.analytic_tag_ids.ids)]
         return move_line_data
