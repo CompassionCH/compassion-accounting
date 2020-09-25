@@ -82,7 +82,8 @@ class ContractGroup(models.Model):
     def _compute_last_paid_invoice(self):
         for group in self:
             group.last_paid_invoice_date = max(
-                [c.last_paid_invoice_date for c in group.contract_ids] or
+                [c.last_paid_invoice_date for c in group.contract_ids
+                 if c.last_paid_invoice_date] or
                 [False])
 
     ##########################################################################
@@ -247,7 +248,7 @@ class ContractGroup(models.Model):
         """
         res = self.env['account.invoice']
         for group in self:
-            since_date = datetime.today()
+            since_date = date.today()
             if group.last_paid_invoice_date:
                 last_paid_invoice_date = group.last_paid_invoice_date
                 since_date = max(since_date, last_paid_invoice_date)
