@@ -50,8 +50,10 @@ class BaseContractTest(TransactionCase):
         return self.group_obj.create(base_vals)
 
     def create_contract(self, vals, line_vals):
+        name = self.ref(10)
         base_vals = {
-            'reference': self.ref(10),
+            'name': name,
+            'reference': name,
             'next_invoice_date': fields.Date.today(),
             'state': 'draft',
             'contract_line_ids': [(0, 0, l) for l in line_vals]
