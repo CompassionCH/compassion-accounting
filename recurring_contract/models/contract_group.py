@@ -252,9 +252,7 @@ class ContractGroup(models.Model):
             if group.last_paid_invoice_date:
                 last_paid_invoice_date = group.last_paid_invoice_date
                 since_date = max(since_date, last_paid_invoice_date)
-            res += group.contract_ids._clean_invoices(
-                since_date=since_date)
-            group.contract_ids.rewind_next_invoice_date()
+            group.contract_ids.with_context(async_mode=False).rewind_next_invoice_date()
         # Generate again invoices
         self._generate_invoices()
         return res

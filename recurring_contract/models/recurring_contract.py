@@ -431,7 +431,7 @@ class RecurringContract(models.Model):
     @related_action(action='related_action_contract')
     def _clean_invoices(self, since_date=None, to_date=None, keep_lines=None,
                         clean_invoices_paid=True):
-        """
+        """ Clean invoices
         This method deletes invoices lines generated for a given contract
         having a due date >= current month. If the invoice_line was the
         only line in the invoice, we cancel the invoice. In the other
