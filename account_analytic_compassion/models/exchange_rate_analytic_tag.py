@@ -6,7 +6,8 @@
 #    The licence is in the file __manifest__.py
 #
 ##############################################################################
-from odoo import models, fields, api
+from odoo import models, api
+
 
 class AccountPartialReconcile(models.Model):
     _inherit = "account.partial.reconcile"
@@ -18,4 +19,4 @@ class AccountPartialReconcile(models.Model):
         return super(AccountPartialReconcile, self.with_context(
             default_analytic_tag_ids=[
                 (6, 0, [exchange_analytic_tag_id])
-            ])).create_exchange_rate_entry( aml_to_fix, move)
+            ])).create_exchange_rate_entry(aml_to_fix, move)

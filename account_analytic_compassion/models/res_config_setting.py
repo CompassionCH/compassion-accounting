@@ -1,4 +1,4 @@
-from odoo import api, fields, models, _
+from odoo import api, fields, models
 
 
 class ResConfigSettings(models.TransientModel):
@@ -8,6 +8,7 @@ class ResConfigSettings(models.TransientModel):
                                       readonly=False, help="analytic tag id to use "
                                       "when automatic move are created."
                                       )
+
     @api.multi
     def set_values(self):
         super().set_values()
