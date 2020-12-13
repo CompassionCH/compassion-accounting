@@ -9,6 +9,7 @@
     'category': 'Accounting & Finance',
     'depends': [
         'account_ebics',
+        'account_payment_line_free',
         'account_payment_return'],
     'data': [
 #        'views/account_payment_order.xml',
