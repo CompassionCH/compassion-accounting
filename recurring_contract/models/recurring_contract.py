@@ -387,7 +387,8 @@ class RecurringContract(models.Model):
     def invoice_paid(self, invoice):
         """ Activate contract if it is waiting for payment. """
         activate_contracts = self.filtered(lambda c: c.state == 'waiting')
-        activate_contracts.contract_active()
+        if activate_contracts:
+            activate_contracts.contract_active()
 
     @api.model
     def end_date_reached(self):
