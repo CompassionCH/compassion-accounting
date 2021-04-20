@@ -179,13 +179,16 @@ class ContractGroup(models.Model):
     @api.multi
     @job(default_channel='root.recurring_invoicer')
     @related_action(action='related_action_invoicer')
-    def _generate_invoices(self, invoicer=None):
+    def _generate_invoices(self, invoicer=None, ignore_categories=None):
         """ Checks all contracts and generate invoices if needed.
         Create an invoice per contract group per date.
         """
         logger.info("Invoice generation started.")
         if invoicer is None:
             invoicer = self.env['recurring.invoicer'].create({})
+
+        ignore_categories = self.env.context.get("ignore_categories", ignore_categories)
+
         inv_obj = self.env['account.invoice']
         gen_states = self._get_gen_states()
         journal = self.env['account.journal'].search([
@@ -199,30 +202,37 @@ class ContractGroup(models.Model):
             # After a ContractGroup is done, we commit all writes in order to
             # avoid doing it again in case of an error or a timeout
             if not test_mode:
-                self.env.cr.commit()    # pylint: disable=invalid-commit
+                self.env.cr.commit()  # pylint: disable=invalid-commit
             logger.info(f"Generating invoices for group {count}/{nb_groups}")
             month_delta = contract_group.advance_billing_months or 1
             limit_date = date.today() + relativedelta(
                 months=+month_delta)
             current_date = contract_group.next_invoice_date
+            already_paid_inv = contract_group.contract_ids.mapped("invoice_line_ids.invoice_id").filtered(
+                lambda x: x.date_invoice > current_date and x.state == "paid")
+
+            if ignore_categories:
+                already_paid_inv = already_paid_inv.filtered(lambda x: x.invoice_category not in ignore_categories)
+
             while current_date <= limit_date:
                 contracts = contract_group.contract_ids.filtered(
                     lambda c: c.next_invoice_date and
-                    c.next_invoice_date <= current_date and
-                    c.state in gen_states and not (
-                        c.end_date and fields.Date.to_date(c.end_date) <=
-                        c.next_invoice_date)
+                              c.next_invoice_date <= current_date and
+                              c.state in gen_states and not (
+                            c.end_date and fields.Date.to_date(c.end_date) <=
+                            c.next_invoice_date)
                 )
                 if not contracts:
                     break
                 try:
-                    inv_data = contract_group._setup_inv_data(
-                        journal, invoicer, contracts)
-                    invoice = inv_obj.create(inv_data)
-                    if invoice.invoice_line_ids:
-                        invoice.action_invoice_open()
-                    else:
-                        invoice.unlink()
+                    if current_date not in already_paid_inv.mapped("date_invoice"):
+                        inv_data = contract_group._setup_inv_data(
+                            journal, invoicer, contracts)
+                        invoice = inv_obj.create(inv_data)
+                        if invoice.invoice_line_ids:
+                            invoice.action_invoice_open()
+                        else:
+                            invoice.unlink()
                     if not self.env.context.get('no_next_date_update'):
                         contracts.update_next_invoice_date()
                     current_date += contract_group.get_relative_delta()
@@ -247,14 +257,17 @@ class ContractGroup(models.Model):
         contract group.
         """
         res = self.env['account.invoice']
+
+        ignore_categories = ["gift", "fund", "other"]
+
         for group in self:
-            since_date = date.today()
-            if group.last_paid_invoice_date:
-                last_paid_invoice_date = group.last_paid_invoice_date
-                since_date = max(since_date, last_paid_invoice_date)
-            group.contract_ids.with_context(async_mode=False).rewind_next_invoice_date()
+            group.contract_ids.with_context(
+                async_mode=False,
+                clean_invoices_paid=False,
+                ignore_categories=ignore_categories).update_invoice_date_after_group_change()
+
         # Generate again invoices
-        self._generate_invoices()
+        self.with_context(ignore_categories=ignore_categories)._generate_invoices()
         return res
 
     @api.multi
@@ -288,7 +301,7 @@ class ContractGroup(models.Model):
             'payment_term_id': self.env.ref(
                 'account.account_payment_term_immediate').id,
             'currency_id':
-            partner.property_product_pricelist.currency_id.id,
+                partner.property_product_pricelist.currency_id.id,
             'date_invoice': self.next_invoice_date,
             'recurring_invoicer_id': invoicer.id,
             'payment_mode_id': self.payment_mode_id.id,

@@ -19,6 +19,8 @@ class AccountInvoice(models.Model):
     recurring_invoicer_id = fields.Many2one(
         'recurring.invoicer', 'Invoicer', readonly=False)
 
+    invoice_category = fields.Selection()
+
     @api.multi
     def action_invoice_paid(self):
         """ Call invoice_paid method on related contracts. """

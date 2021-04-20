@@ -199,20 +199,66 @@ class RecurringContract(models.Model):
         for contract in self:
             if contract.state in gen_states:
                 last_invoice_date = max([
-                    line.invoice_id.date_invoice for
-                    line in contract.invoice_line_ids
-                    if line.state in ('open', 'paid')] or [False])
+                                            line.invoice_id.date_invoice for
+                                            line in contract.invoice_line_ids
+                                            if line.state in ('open', 'paid')] or [False])
                 if last_invoice_date:
                     contract.next_invoice_date = last_invoice_date
                     contract.update_next_invoice_date()
                 else:
                     # No open/paid invoices, look for cancelled ones
                     next_invoice_date = min([
-                        line.invoice_id.date_invoice
-                        for line in contract.invoice_line_ids
-                        if line.state == 'cancel'] or [False])
+                                                line.invoice_id.date_invoice
+                                                for line in contract.invoice_line_ids
+                                                if line.state == 'cancel'] or [False])
                     if next_invoice_date:
                         contract.next_invoice_date = next_invoice_date
+
+        return True
+
+    def update_invoice_date_after_group_change(self, ignore_categories=None):
+        """Change the next invoice date after a contract group change. Will look
+        for the oldest open invoice and set the next_invoice_date at this point.
+        Pay attention that paid invoice could be cancelled (a context variable can
+        be set to avoid this issue)."""
+
+        ignore_categories = self.env.context.get("ignore_categories", ignore_categories)
+
+        gen_states = self.env['recurring.contract.group']._get_gen_states()
+        for contract in self.filtered(lambda c: c.state in gen_states):
+
+            invoice_lines = contract.invoice_line_ids.filtered(
+                lambda line: line.invoice_id.invoice_category not in ignore_categories) \
+                if ignore_categories else contract.invoice_line_ids
+
+            oldest_open_invoice_date = min([
+                                               line.invoice_id.date_invoice for
+                                               line in invoice_lines
+                                               if line.state == "open"] or [False])
+
+            if oldest_open_invoice_date:
+                contract.next_invoice_date = oldest_open_invoice_date
+                continue
+
+            # if there is no open invoice. look for the newest paid
+            newest_paid_invoice_date = max([
+                                               line.invoice_id.date_invoice for
+                                               line in invoice_lines
+                                               if line.state == "paid"] or [False])
+
+            if newest_paid_invoice_date:
+                # the invoice is already paid no need to recreate it. So the relative delta is added
+                contract.next_invoice_date = newest_paid_invoice_date + contract.group_id.get_relative_delta()
+                continue
+
+            # No open/paid invoices, look for cancelled ones
+            oldest_cancelled_invoice_date = min([
+                                                    line.invoice_id.date_invoice
+                                                    for line in invoice_lines
+                                                    if line.state == 'cancel'] or [False])
+
+            if oldest_cancelled_invoice_date:
+                contract.next_invoice_date = oldest_cancelled_invoice_date
 
         return True
 
@@ -241,7 +287,7 @@ class RecurringContract(models.Model):
                 'product_id': product.id,
                 'contract_id': contract_line.contract_id.id,
                 'account_id': product.property_account_income_id.id or
-                default_account
+                              default_account
             }
             res.append(inv_line_data)
         return res
@@ -430,7 +476,7 @@ class RecurringContract(models.Model):
     @job(default_channel='root.recurring_invoicer')
     @related_action(action='related_action_contract')
     def _clean_invoices(self, since_date=None, to_date=None, keep_lines=None,
-                        clean_invoices_paid=True):
+                        clean_invoices_paid=True, ignore_categories=None):
         """ Clean invoices
         This method deletes invoices lines generated for a given contract
         having a due date >= current month. If the invoice_line was the
@@ -445,9 +491,16 @@ class RecurringContract(models.Model):
         :param keep_lines: set to true to avoid deleting invoice lines
         :param clean_invoices_paid: set to true to unreconcile paid invoices
                                     and clean them as well.
+        :param ignore_categories: list of invoice categories to ignore on cleaning
         :return: invoices cleaned (which should be in cancel state)
         """
         _logger.info("clean invoices called.")
+
+        # clean_invoice_paid can be set via context. will default to parameter's value
+        clean_invoices_paid = self.env.context.get("clean_invoices_paid", clean_invoices_paid)
+
+        ignore_categories = self.env.context.get("ignore_categories", ignore_categories)
+
         if isinstance(since_date, (date, datetime)):
             since_date = fields.Date.to_string(since_date)
         if isinstance(to_date, (date, datetime)):
@@ -461,17 +514,18 @@ class RecurringContract(models.Model):
 
         for inv_line in inv_lines:
             invoice = inv_line.invoice_id
-            # Check if invoice is empty after removing the invoice_lines
-            # of the given contract
-            if invoice not in empty_invoices:
-                remaining_lines = invoice.invoice_line_ids.filtered(
-                    lambda l: not l.contract_id or l.contract_id not in self)
-                if remaining_lines:
-                    # We can move or remove the line
-                    to_remove_invl |= inv_line
-                else:
-                    # The invoice would be empty if we remove the line
-                    empty_invoices |= invoice
+            remaining_lines = invoice.invoice_line_ids.filtered(
+                lambda l: not l.contract_id or l.contract_id not in self)
+
+            if not remaining_lines:
+                # The invoice would be empty if we remove the line.
+                empty_invoices |= invoice
+
+            to_remove_invl |= inv_line
+
+        if ignore_categories:
+            invoices = invoices.filtered(lambda inv: inv.invoice_category not in ignore_categories)
+            to_remove_invl = to_remove_invl.filtered(lambda line: line in invoices.mapped("invoice_line_ids"))
 
         if keep_lines:
             self._move_cancel_lines(to_remove_invl, keep_lines)
