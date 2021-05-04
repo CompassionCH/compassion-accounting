@@ -46,6 +46,9 @@ class AccountInvoice(models.Model):
             - amount for reconciling the future invoices
             - leftover amount that will stay in the client balance
         Then the invoices will be reconciled again
+
+        Invoices should be opened or canceled. if they are canceled they will
+        first be reopened
         :return: True
         """
         # At first we open again the cancelled invoices

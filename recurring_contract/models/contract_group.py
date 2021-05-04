@@ -134,7 +134,7 @@ class ContractGroup(models.Model):
         pass
 
     @api.multi
-    def generate_invoices(self, invoicer=None):
+    def generate_invoices(self, invoicer=None, cancelled_invoices=None):
         """ By default, launch asynchronous job to perform the task.
             Context value async_mode set to False can force to perform
             the task immediately.
@@ -149,9 +149,9 @@ class ContractGroup(models.Model):
             delay = datetime.today()
             if jobs:
                 delay += relativedelta(minutes=1)
-            self.with_delay(eta=delay)._generate_invoices(invoicer)
+            self.with_delay(eta=delay)._generate_invoices(invoicer, cancelled_invoices=cancelled_invoices)
         else:
-            self._generate_invoices(invoicer)
+            self._generate_invoices(invoicer, cancelled_invoices=cancelled_invoices)
         return invoicer
 
     @api.multi
@@ -179,13 +179,15 @@ class ContractGroup(models.Model):
     @api.multi
     @job(default_channel='root.recurring_invoicer')
     @related_action(action='related_action_invoicer')
-    def _generate_invoices(self, invoicer=None):
+    def _generate_invoices(self, invoicer=None, cancelled_invoices=None):
         """ Checks all contracts and generate invoices if needed.
         Create an invoice per contract group per date.
         """
         logger.info("Invoice generation started.")
         if invoicer is None:
             invoicer = self.env['recurring.invoicer'].create({})
+        if cancelled_invoices is None:
+            cancelled_invoices = self.env["account.invoice"]
         inv_obj = self.env['account.invoice']
         gen_states = self._get_gen_states()
         journal = self.env['account.journal'].search([
@@ -216,9 +218,20 @@ class ContractGroup(models.Model):
                 if not contracts:
                     break
                 try:
+                    inv_to_reopen = cancelled_invoices.filtered(lambda inv: inv.date_invoice == current_date)
+
                     inv_data = contract_group._setup_inv_data(
                         journal, invoicer, contracts)
-                    invoice = inv_obj.create(inv_data)
+                    if not inv_to_reopen:
+                        invoice = inv_obj.create(inv_data)
+                    else:
+                        inv_to_reopen.action_invoice_draft()
+                        inv_to_reopen.env.clear()
+                        old_lines = inv_to_reopen.invoice_line_ids.filtered(
+                            lambda line: line.contract_id.id in contracts.ids)
+                        old_lines.unlink()
+                        inv_to_reopen.write(inv_data)
+                        invoice = inv_to_reopen
                     if invoice.invoice_line_ids:
                         invoice.action_invoice_open()
                     else:
@@ -247,14 +260,20 @@ class ContractGroup(models.Model):
         contract group.
         """
         res = self.env['account.invoice']
+        since_date = date.today()
         for group in self:
-            since_date = date.today()
-            if group.last_paid_invoice_date:
-                last_paid_invoice_date = group.last_paid_invoice_date
-                since_date = max(since_date, last_paid_invoice_date)
-            group.contract_ids.with_context(async_mode=False).rewind_next_invoice_date()
+
+            # invoice for current contract might not be up to date. since we are changing the value of next_invoice_date
+            # this might cause some issue if we don't first generate the missing one.
+            if group.next_invoice_date and group.next_invoice_date < since_date:
+                group._generate_invoices()
+
+            res |= group.contract_ids.with_context(async_mode=False).rewind_next_invoice_date()
         # Generate again invoices
-        self._generate_invoices()
+        self._generate_invoices(invoicer=None, cancelled_invoices=res.filtered(
+            lambda inv: inv.state == "cancel" and inv.date_invoice >= since_date
+        ))
+
         return res
 
     @api.multi

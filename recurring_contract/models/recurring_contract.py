@@ -144,10 +144,13 @@ class RecurringContract(models.Model):
     @api.multi
     def write(self, vals):
         """ Perform various checks when a contract is modified. """
-        if vals.get('next_invoice_date'):
+        if vals.get('next_invoice_date') and not self.env.context.get("no_clean_on_write", False):
             self._on_change_next_invoice_date(vals['next_invoice_date'])
 
         res = super().write(vals)
+
+        if "partner_id" in vals:
+            self.group_id.partner_id = vals["partner_id"]
 
         if 'contract_line_ids' in vals:
             self._on_contract_lines_changed()
@@ -182,39 +185,54 @@ class RecurringContract(models.Model):
     #                             PUBLIC METHODS                             #
     ##########################################################################
     @api.multi
-    def clean_invoices(self, since_date=None, to_date=None, keep_lines=None):
+    def clean_invoices(self, since_date=None, to_date=None, keep_lines=None, **kwargs):
         """ By default, launch asynchronous job to perform the task.
             Context value async_mode set to False can force to perform
             the task immediately.
         """
         if self.env.context.get('async_mode', True):
-            self.with_delay()._clean_invoices(since_date, to_date, keep_lines)
+            self.with_delay()._clean_invoices(since_date, to_date, keep_lines, **kwargs)
         else:
-            self._clean_invoices(since_date, to_date, keep_lines)
+            self._clean_invoices(since_date, to_date, keep_lines, **kwargs)
 
     def rewind_next_invoice_date(self):
         """ Rewinds the next invoice date of contract after the last
         generated invoice. No open invoices exist after that date. """
         gen_states = self.env['recurring.contract.group']._get_gen_states()
+
+        res = self.env["account.invoice"]
+
         for contract in self:
             if contract.state in gen_states:
-                last_invoice_date = max([
-                    line.invoice_id.date_invoice for
-                    line in contract.invoice_line_ids
-                    if line.state in ('open', 'paid')] or [False])
+                last_invoice_date, is_paid = min(
+                    [(line.invoice_id.date_invoice, line.state == "paid") for
+                     line in contract.invoice_line_ids
+                     if line.state in ("open", "paid") and
+                     line.invoice_id.date_invoice >= date.today()] or [
+                        (False, False)])
+
+                if last_invoice_date and is_paid:
+                    last_invoice_date += contract.group_id.get_relative_delta()
+
                 if last_invoice_date:
-                    contract.next_invoice_date = last_invoice_date
-                    contract.update_next_invoice_date()
+                    res |= contract._clean_invoices(last_invoice_date)
+                    contract.with_context(no_clean_on_write=True).write({
+                        "next_invoice_date": last_invoice_date
+                    })
                 else:
                     # No open/paid invoices, look for cancelled ones
-                    next_invoice_date = min([
-                        line.invoice_id.date_invoice
-                        for line in contract.invoice_line_ids
-                        if line.state == 'cancel'] or [False])
-                    if next_invoice_date:
-                        contract.next_invoice_date = next_invoice_date
+                    next_invoice_date = min(
+                        [line.invoice_id.date_invoice
+                         for line in contract.invoice_line_ids
+                         if line.state == 'cancel'] or [False])
 
-        return True
+                    if next_invoice_date:
+                        res |= contract._clean_invoices(next_invoice_date)
+                        contract.with_context(no_clean_on_write=True).write({
+                            "next_invoice_date": last_invoice_date
+                        })
+
+        return res
 
     def update_next_invoice_date(self):
         """ Recompute and set next_invoice date. """
@@ -307,7 +325,6 @@ class RecurringContract(models.Model):
             raise UserError(_("Active contract cannot be put to waiting"))
         if self.filtered(lambda c: not c.total_amount):
             raise UserError(_("Please configure contract lines"))
-        self.mapped("group_id").generate_invoices()
         return self.write({
             'state': 'waiting',
             'start_date': fields.Datetime.now()
@@ -342,7 +359,7 @@ class RecurringContract(models.Model):
             'state': 'terminated',
             'end_date': now
         })
-        self.clean_invoices(now)
+        self.clean_invoices(now, clean_invoices_paid=True)
         return True
 
     @api.multi
@@ -352,7 +369,7 @@ class RecurringContract(models.Model):
             'state': 'cancelled',
             'end_date': today
         })
-        self.clean_invoices(today)
+        self.clean_invoices(today, clean_invoices_paid=True)
         return True
 
     @api.multi
@@ -430,7 +447,7 @@ class RecurringContract(models.Model):
     @job(default_channel='root.recurring_invoicer')
     @related_action(action='related_action_contract')
     def _clean_invoices(self, since_date=None, to_date=None, keep_lines=None,
-                        clean_invoices_paid=True):
+                        clean_invoices_paid=False):
         """ Clean invoices
         This method deletes invoices lines generated for a given contract
         having a due date >= current month. If the invoice_line was the
@@ -463,6 +480,7 @@ class RecurringContract(models.Model):
             invoice = inv_line.invoice_id
             # Check if invoice is empty after removing the invoice_lines
             # of the given contract
+            # TODO add check if call is made trough contract group
             if invoice not in empty_invoices:
                 remaining_lines = invoice.invoice_line_ids.filtered(
                     lambda l: not l.contract_id or l.contract_id not in self)
@@ -474,6 +492,7 @@ class RecurringContract(models.Model):
                     empty_invoices |= invoice
 
         if keep_lines:
+            # move invoice lines in a cancelled copy of their invoice
             self._move_cancel_lines(to_remove_invl, keep_lines)
         else:
             invoices.action_invoice_cancel()
