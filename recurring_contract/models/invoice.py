@@ -8,7 +8,8 @@
 #
 ##############################################################################
 
-from odoo import fields, models, api
+from odoo import fields, models, api, _
+from odoo.exceptions import UserError
 from datetime import date
 
 
@@ -75,9 +76,12 @@ class AccountInvoice(models.Model):
             ])
             for payment in open_payments:
                 if not is_past_reconciled and payment.credit == past_amount:
-                    past_invoices.mapped('')
+                    lines = past_invoices.mapped('move_id.line_ids').filtered("debit")
+                    (lines + payment).reconcile()
                     is_past_reconciled = True
-                elif not is_future_reconciled:
+                elif not is_future_reconciled and payment.credit == future_amount:
+                    lines = future_invoices.mapped('move_id.line_ids').filtered("debit")
+                    (lines + payment).reconcile()
                     is_future_reconciled = True
 
             # If no matching payment found, we will group or split.
@@ -111,13 +115,13 @@ class AccountInvoice(models.Model):
             order='date asc', limit=1)
         if payment_greater_than_reconcile:
             # Split the payment move line to isolate reconcile amount
-            (payment_greater_than_reconcile | move_lines) \
-                .split_payment_and_reconcile()
-            return True
+            return (payment_greater_than_reconcile | move_lines).split_payment_and_reconcile()
         else:
             # Group several payments to match the invoiced amount
             # Limit to 12 move_lines to avoid too many computations
             open_payments = line_obj.search(payment_search, limit=12)
+            if sum(open_payments.mapped("credit")) < reconcile_amount:
+                raise UserError(_("Cannot reconcile invoices, not enough credit."))
 
             # Search for a combination giving the invoiced amount recursively
             # https://stackoverflow.com/questions/4632322/finding-all-possible-
@@ -152,8 +156,7 @@ class AccountInvoice(models.Model):
                     if payment_line.credit > missing_amount:
                         # Split last added line amount to perfectly match
                         # the total amount we are looking for
-                        return (open_payments[:index + 1] | move_lines) \
-                            .split_payment_and_reconcile()
+                        return (open_payments[:index + 1] | move_lines).split_payment_and_reconcile()
                     payment_amount += payment_line.credit
                 return (open_payments | move_lines).reconcile()
 
