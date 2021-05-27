@@ -268,7 +268,7 @@ class ContractGroup(models.Model):
             if group.next_invoice_date and group.next_invoice_date < since_date:
                 group._generate_invoices()
 
-            res |= group.contract_ids.with_context(async_mode=False).rewind_next_invoice_date()
+            res |= group.contract_ids.with_context(async_mode=False, called_from_group=True).rewind_next_invoice_date()
         # Generate again invoices
         self._generate_invoices(invoicer=None, cancelled_invoices=res.filtered(
             lambda inv: inv.state == "cancel" and inv.date_invoice >= since_date
@@ -307,7 +307,7 @@ class ContractGroup(models.Model):
             'payment_term_id': self.env.ref(
                 'account.account_payment_term_immediate').id,
             'currency_id':
-            partner.property_product_pricelist.currency_id.id,
+                partner.property_product_pricelist.currency_id.id,
             'date_invoice': self.next_invoice_date,
             'recurring_invoicer_id': invoicer.id,
             'payment_mode_id': self.payment_mode_id.id,

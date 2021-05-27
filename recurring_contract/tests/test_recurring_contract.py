@@ -495,8 +495,8 @@ class TestContractCompassion(BaseContractCompassionTest):
 
         self.assertEqual(len(invoices), 4)
 
-        # ensure we pay the most recent invoice
-        invoice_to_pay = self.env["account.invoice"].search([("id", "in", invoices.ids)], order="date_invoice desc",
+        # ensure we pay the most earliest invoice
+        invoice_to_pay = self.env["account.invoice"].search([("id", "in", invoices.ids)], order="date_invoice asc",
                                                             limit=1)
         self._pay_invoice(invoice_to_pay)
         self.assertEqual(invoice_to_pay.state, "paid")
@@ -517,10 +517,10 @@ class TestContractCompassion(BaseContractCompassionTest):
         self.assertEqual(len(invoices.filtered(lambda x: x.state == "paid")), 1)
 
         # 2 invoices should be open
-        self.assertEqual(len(invoices.filtered(lambda x: x.state == "open")), 2)
+        self.assertEqual(len(invoices.filtered(lambda x: x.state == "open")), 1)
 
         # 1 invoice should be canceled
-        self.assertEqual(len(invoices.filtered(lambda x: x.state == "cancel")), 1)
+        self.assertEqual(len(invoices.filtered(lambda x: x.state == "cancel")), 2)
 
     def _test_invoice_generation_behavior_on_new_contract_in_group(self):
         """When a new contract is added to a contract group invoices should be merged"""
@@ -559,3 +559,38 @@ class TestContractCompassion(BaseContractCompassionTest):
         contract2.button_generate_invoices()
 
         self.assertEqual(len(contract_group.mapped("contract_ids.invoice_line_ids.invoice_id")), 3)
+
+    def test_multiple_paid_in_clean_range(self):
+        """assess good behavior if we found multiple paid invoices in the month to come and we do a clean"""
+
+        contract_group = self.create_group(
+            {
+                "partner_id": self.michel.id,
+                "change_method": "clean_invoices",
+                "advance_billing_months": 3
+            }
+        )
+        contract = self.create_contract(
+            {
+                "partner_id": self.michel.id,
+                "group_id": contract_group.id,
+            },
+            [{"amount": 50.0}])
+
+        contract.contract_waiting()
+        invoices = contract.button_generate_invoices().invoice_ids
+
+        sorted_invoices = sorted(invoices, key=lambda e: e.date)
+
+        self.assertEqual(len(sorted_invoices), 4)
+
+        for inv in sorted_invoices[:3]:
+            self._pay_invoice(inv)
+            self.assertEqual(inv.state, "paid")
+
+        contract_group.clean_invoices()
+
+        all_contract_invoice = self.env["account.invoice.line"].search([("contract_id", "=", contract.id)]).mapped(
+            "invoice_id")
+
+        self.assertEqual(len(all_contract_invoice), 4)

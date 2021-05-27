@@ -150,7 +150,7 @@ class RecurringContract(models.Model):
         res = super().write(vals)
 
         if "partner_id" in vals:
-            self.group_id.partner_id = vals["partner_id"]
+            self.mapped("group_id").write({"partner_id": vals["partner_id"]})
 
         if 'contract_line_ids' in vals:
             self._on_contract_lines_changed()
@@ -196,28 +196,38 @@ class RecurringContract(models.Model):
             self._clean_invoices(since_date, to_date, keep_lines, **kwargs)
 
     def rewind_next_invoice_date(self):
-        """ Rewinds the next invoice date of contract after the last
-        generated invoice. No open invoices exist after that date. """
+        """ Rewinds the next invoice date. rewind date will be between today and the
+        newest opened invoice date. latest paid invoice date if exist else earliest open one (starting from today)
+        all invoices after rewind date will be cleaned
+        """
         gen_states = self.env['recurring.contract.group']._get_gen_states()
 
         res = self.env["account.invoice"]
 
         for contract in self:
             if contract.state in gen_states:
-                last_invoice_date, is_paid = min(
-                    [(line.invoice_id.date_invoice, line.state == "paid") for
+
+                # if paid invoice exist in range next_invoice should be *after* latest paid invoice
+                latest_paid_invoice_date = max(
+                    [line.invoice_id.date_invoice + contract.group_id.get_relative_delta() for
                      line in contract.invoice_line_ids
-                     if line.state in ("open", "paid") and
-                     line.invoice_id.date_invoice >= date.today()] or [
-                        (False, False)])
+                     if line.state == "paid" and
+                     line.invoice_id.date_invoice >= date.today()] or [False])
 
-                if last_invoice_date and is_paid:
-                    last_invoice_date += contract.group_id.get_relative_delta()
+                # if there is only open invoice we are looking for the oldest one (within the range)
+                earliest_open_invoice_date = min(
+                    [line.invoice_id.date_invoice for
+                     line in contract.invoice_line_ids
+                     if line.state == "open" and
+                     line.invoice_id.date_invoice >= date.today()] or [False])
 
-                if last_invoice_date:
-                    res |= contract._clean_invoices(last_invoice_date)
+                rewind_invoice_date = latest_paid_invoice_date or earliest_open_invoice_date
+
+                if rewind_invoice_date:
+
+                    res |= contract._clean_invoices(rewind_invoice_date)
                     contract.with_context(no_clean_on_write=True).write({
-                        "next_invoice_date": last_invoice_date
+                        "next_invoice_date": rewind_invoice_date
                     })
                 else:
                     # No open/paid invoices, look for cancelled ones
@@ -229,7 +239,7 @@ class RecurringContract(models.Model):
                     if next_invoice_date:
                         res |= contract._clean_invoices(next_invoice_date)
                         contract.with_context(no_clean_on_write=True).write({
-                            "next_invoice_date": last_invoice_date
+                            "next_invoice_date": rewind_invoice_date
                         })
 
         return res
@@ -480,11 +490,10 @@ class RecurringContract(models.Model):
             invoice = inv_line.invoice_id
             # Check if invoice is empty after removing the invoice_lines
             # of the given contract
-            # TODO add check if call is made trough contract group
             if invoice not in empty_invoices:
                 remaining_lines = invoice.invoice_line_ids.filtered(
                     lambda l: not l.contract_id or l.contract_id not in self)
-                if remaining_lines:
+                if remaining_lines and not self.env.context.get("called_from_group", False):
                     # We can move or remove the line
                     to_remove_invl |= inv_line
                 else:
