@@ -493,7 +493,7 @@ class RecurringContract(models.Model):
             if invoice not in empty_invoices:
                 remaining_lines = invoice.invoice_line_ids.filtered(
                     lambda l: not l.contract_id or l.contract_id not in self)
-                if remaining_lines and not self.env.context.get("called_from_group", False):
+                if remaining_lines:
                     # We can move or remove the line
                     to_remove_invl |= inv_line
                 else:

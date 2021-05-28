@@ -268,7 +268,7 @@ class ContractGroup(models.Model):
             if group.next_invoice_date and group.next_invoice_date < since_date:
                 group._generate_invoices()
 
-            res |= group.contract_ids.with_context(async_mode=False, called_from_group=True).rewind_next_invoice_date()
+            res |= group.contract_ids.with_context(async_mode=False).rewind_next_invoice_date()
         # Generate again invoices
         self._generate_invoices(invoicer=None, cancelled_invoices=res.filtered(
             lambda inv: inv.state == "cancel" and inv.date_invoice >= since_date
