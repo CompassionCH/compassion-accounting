@@ -218,7 +218,8 @@ class ContractGroup(models.Model):
                 if not contracts:
                     break
                 try:
-                    inv_to_reopen = cancelled_invoices.filtered(lambda inv: inv.date_invoice == current_date)
+                    inv_to_reopen = cancelled_invoices.filtered(
+                        lambda inv: inv.date_invoice == current_date)
 
                     inv_data = contract_group._setup_inv_data(
                         journal, invoicer, contracts)
@@ -260,20 +261,20 @@ class ContractGroup(models.Model):
         contract group.
         """
         res = self.env['account.invoice']
-        since_date = date.today()
         for group in self:
 
-            # invoice for current contract might not be up to date. since we are changing the value of next_invoice_date
+            # invoice for current contract might not be up to date.
+            # since we are changing the value of next_invoice_date
             # this might cause some issue if we don't first generate the missing one.
-            if group.next_invoice_date and group.next_invoice_date < since_date:
+            if group.next_invoice_date and group.next_invoice_date <= date.today():
                 group._generate_invoices()
 
-            res |= group.contract_ids.with_context(async_mode=False).rewind_next_invoice_date()
+            res |= group.contract_ids.with_context(
+                async_mode=False).rewind_next_invoice_date()
         # Generate again invoices
         self._generate_invoices(invoicer=None, cancelled_invoices=res.filtered(
-            lambda inv: inv.state == "cancel" and inv.date_invoice >= since_date
+            lambda inv: inv.state == "cancel"
         ))
-
         return res
 
     @api.multi

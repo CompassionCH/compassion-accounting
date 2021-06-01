@@ -208,23 +208,25 @@ class RecurringContract(models.Model):
         res = self.env["account.invoice"]
 
         for contract in self:
-            if contract.state in gen_states:
+            if contract.state not in ["terminated", "cancelled"]:
 
-                # if paid invoice exist in range next_invoice should be *after* latest paid invoice
+                # if paid invoice exist in range next_invoice should be *after*
+                # latest paid invoice
                 latest_paid_invoice_date = max(
-                    [line.invoice_id.date_invoice + contract.group_id.get_relative_delta() for
+                    [line.invoice_id.date_invoice +
+                     contract.group_id.get_relative_delta() for
                      line in contract.invoice_line_ids
-                     if line.state == "paid" and
-                     line.invoice_id.date_invoice >= date.today()] or [False])
+                     if line.state == "paid"] or [False])
 
-                # if there is only open invoice we are looking for the oldest one (within the range)
+                # if there is only open invoice we are looking for the
+                # oldest one (within the range)
                 earliest_open_invoice_date = min(
                     [line.invoice_id.date_invoice for
                      line in contract.invoice_line_ids
-                     if line.state == "open" and
-                     line.invoice_id.date_invoice >= date.today()] or [False])
+                     if line.state == "open"] or [False])
 
-                rewind_invoice_date = latest_paid_invoice_date or earliest_open_invoice_date
+                rewind_invoice_date = latest_paid_invoice_date or \
+                        earliest_open_invoice_date
 
                 if rewind_invoice_date:
 
