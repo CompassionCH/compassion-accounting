@@ -150,11 +150,17 @@ class RecurringContract(models.Model):
 
         res = super().write(vals)
 
+        clean_is_done = False
         if "partner_id" in vals:
             self.mapped("group_id").write({"partner_id": vals["partner_id"]})
+            clean_is_done = "clean_invoices" in self.mapped("group_id.change_method")
 
-        if 'contract_line_ids' in vals:
+        if 'contract_line_ids' in vals and not clean_is_done:
             self._on_contract_lines_changed()
+            clean_is_done = True
+
+        if ("group_id" in vals or "partner_id" in vals) and not clean_is_done:
+            self.group_id.clean_invoices()
 
         return res
 
