@@ -187,7 +187,6 @@ class AccountInvoiceLine(models.Model):
         :return: account.invoice.line recordset
         """
         company = self.mapped("contract_id.company_id")
-        company.ensure_one()
         lock_date = company.period_lock_date
         return self.filtered(
             lambda l: l.state == filter_state and
