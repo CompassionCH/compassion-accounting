@@ -115,7 +115,8 @@ class AccountInvoice(models.Model):
             order='date asc', limit=1)
         if payment_greater_than_reconcile:
             # Split the payment move line to isolate reconcile amount
-            return (payment_greater_than_reconcile | move_lines).split_payment_and_reconcile()
+            return (payment_greater_than_reconcile | move_lines)\
+                .split_payment_and_reconcile()
         else:
             # Group several payments to match the invoiced amount
             # Limit to 12 move_lines to avoid too many computations
@@ -156,7 +157,8 @@ class AccountInvoice(models.Model):
                     if payment_line.credit > missing_amount:
                         # Split last added line amount to perfectly match
                         # the total amount we are looking for
-                        return (open_payments[:index + 1] | move_lines).split_payment_and_reconcile()
+                        return (open_payments[:index + 1] | move_lines)\
+                            .split_payment_and_reconcile()
                     payment_amount += payment_line.credit
                 return (open_payments | move_lines).reconcile()
 
@@ -175,3 +177,19 @@ class AccountInvoiceLine(models.Model):
     state = fields.Selection(
         related='invoice_id.state',
         readonly=True, store=True)
+
+    @api.multi
+    def filter_for_contract_rewind(self, filter_state):
+        """
+        Returns a subset of invoice lines that should be used to find after which one
+        we will set the next_invoice_date of a contract.
+        :param filter_state: filter invoice lines that have the desired state
+        :return: account.invoice.line recordset
+        """
+        company = self.mapped("contract_id.company_id")
+        company.ensure_one()
+        lock_date = company.period_lock_date
+        return self.filtered(
+            lambda l: l.state == filter_state and
+            (not lock_date or l.due_date > lock_date)
+        )

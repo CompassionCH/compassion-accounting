@@ -206,49 +206,45 @@ class RecurringContract(models.Model):
 
     def rewind_next_invoice_date(self):
         """ Rewinds the next invoice date. rewind date will be between today and the
-        newest opened invoice date. latest paid invoice date if exist else earliest open one (starting from today)
+        newest opened invoice date. latest paid invoice date if exist else earliest
+        open one (starting from today)
         all invoices after rewind date will be cleaned
         """
-        gen_states = self.env['recurring.contract.group']._get_gen_states()
-
         res = self.env["account.invoice"]
 
         for contract in self:
             if contract.state not in ["terminated", "cancelled"]:
-
                 # if paid invoice exist in range next_invoice should be *after*
                 # latest paid invoice
                 latest_paid_invoice_date = max(
-                    [line.invoice_id.date_invoice +
-                     contract.group_id.get_relative_delta() for
-                     line in contract.invoice_line_ids
-                     if line.state == "paid"] or [False])
+                    contract.invoice_line_ids.filter_for_contract_rewind("paid")
+                    .mapped("invoice_id.date_invoice") or [False]
+                )
 
                 # if there is only open invoice we are looking for the
                 # oldest one (within the range)
                 earliest_open_invoice_date = min(
-                    [line.invoice_id.date_invoice for
-                     line in contract.invoice_line_ids
-                     if line.state == "open"] or [False])
+                    contract.invoice_line_ids.filter_for_contract_rewind("open")
+                    .mapped("invoice_id.date_invoice") or [False])
 
-                rewind_invoice_date = latest_paid_invoice_date or \
-                        earliest_open_invoice_date
+                rewind_invoice_date = latest_paid_invoice_date + \
+                    contract.group_id.get_relative_delta() \
+                    if latest_paid_invoice_date else earliest_open_invoice_date
 
                 if rewind_invoice_date:
-
                     res |= contract._clean_invoices(rewind_invoice_date)
                     contract.with_context(no_clean_on_write=True).write({
                         "next_invoice_date": rewind_invoice_date
                     })
                 else:
                     # No open/paid invoices, look for cancelled ones
-                    next_invoice_date = min(
-                        [line.invoice_id.date_invoice
-                         for line in contract.invoice_line_ids
-                         if line.state == 'cancel'] or [False])
+                    rewind_invoice_date = min(
+                        contract.invoice_line_ids.filter_for_contract_rewind("cancel")
+                        .mapped("invoice_id.date_invoice") or [False]
+                    )
 
-                    if next_invoice_date:
-                        res |= contract._clean_invoices(next_invoice_date)
+                    if rewind_invoice_date:
+                        res |= contract._clean_invoices(rewind_invoice_date)
                         contract.with_context(no_clean_on_write=True).write({
                             "next_invoice_date": rewind_invoice_date
                         })
@@ -535,10 +531,13 @@ class RecurringContract(models.Model):
     def _on_contract_lines_changed(self):
         """Update related invoices to reflect the changes to the contract.
         """
-        inv_lines = self.env['account.invoice.line'].search(
-            [('contract_id', 'in', self.ids),
-             ('state', 'not in', ('paid', 'cancel'))])
-
+        lock_date = self.mapped("company_id")[:1].period_lock_date
+        invl_search = [
+            ('contract_id', 'in', self.ids),
+            ('state', 'not in', ('paid', 'cancel'))]
+        if lock_date:
+            invl_search.append(("due_date", ">", fields.Date.to_string(lock_date)))
+        inv_lines = self.env['account.invoice.line'].search(invl_search)
         invoices = inv_lines.mapped('invoice_id')
         invoices.action_invoice_cancel()
         invoices.action_invoice_draft()

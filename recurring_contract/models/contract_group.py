@@ -149,7 +149,8 @@ class ContractGroup(models.Model):
             delay = datetime.today()
             if jobs:
                 delay += relativedelta(minutes=1)
-            self.with_delay(eta=delay)._generate_invoices(invoicer, cancelled_invoices=cancelled_invoices)
+            self.with_delay(eta=delay)._generate_invoices(
+                invoicer, cancelled_invoices=cancelled_invoices)
         else:
             self._generate_invoices(invoicer, cancelled_invoices=cancelled_invoices)
         return invoicer

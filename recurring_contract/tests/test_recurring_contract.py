@@ -444,8 +444,8 @@ class TestContractCompassion(BaseContractCompassionTest):
     def test_change_contract_group(self):
         """
             Test correct behavior on contract_group change.
-            when change method is set to clean invoices changing the advance billing month
-            should regenerate the invoices for this contract.
+            when change method is set to clean invoices changing the advance billing
+            month should regenerate the invoices for this contract.
         """
         contract_group = self.create_group(
             {
@@ -496,8 +496,8 @@ class TestContractCompassion(BaseContractCompassionTest):
         self.assertEqual(len(invoices), 4)
 
         # ensure we pay the most earliest invoice
-        invoice_to_pay = self.env["account.invoice"].search([("id", "in", invoices.ids)], order="date_invoice asc",
-                                                            limit=1)
+        invoice_to_pay = self.env["account.invoice"].search([
+            ("id", "in", invoices.ids)], order="date_invoice asc", limit=1)
         self._pay_invoice(invoice_to_pay)
         self.assertEqual(invoice_to_pay.state, "paid")
 
@@ -558,10 +558,12 @@ class TestContractCompassion(BaseContractCompassionTest):
         contract2.contract_waiting()
         contract2.button_generate_invoices()
 
-        self.assertEqual(len(contract_group.mapped("contract_ids.invoice_line_ids.invoice_id")), 3)
+        self.assertEqual(
+            len(contract_group.mapped("contract_ids.invoice_line_ids.invoice_id")), 3)
 
     def test_multiple_paid_in_clean_range(self):
-        """assess good behavior if we found multiple paid invoices in the month to come and we do a clean"""
+        """assess good behavior if we found multiple paid invoices in
+        the month to come and we do a clean"""
 
         contract_group = self.create_group(
             {
@@ -590,7 +592,7 @@ class TestContractCompassion(BaseContractCompassionTest):
 
         contract_group.clean_invoices()
 
-        all_contract_invoice = self.env["account.invoice.line"].search([("contract_id", "=", contract.id)]).mapped(
-            "invoice_id")
+        all_contract_invoice = self.env["account.invoice.line"].search([
+            ("contract_id", "=", contract.id)]).mapped("invoice_id")
 
         self.assertEqual(len(all_contract_invoice), 4)
