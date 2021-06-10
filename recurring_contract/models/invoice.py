@@ -8,7 +8,8 @@
 #
 ##############################################################################
 
-from odoo import fields, models, api
+from odoo import fields, models, api, _
+from odoo.exceptions import UserError
 from datetime import date
 
 
@@ -46,6 +47,9 @@ class AccountInvoice(models.Model):
             - amount for reconciling the future invoices
             - leftover amount that will stay in the client balance
         Then the invoices will be reconciled again
+
+        Invoices should be opened or canceled. if they are canceled they will
+        first be reopened
         :return: True
         """
         # At first we open again the cancelled invoices
@@ -72,9 +76,12 @@ class AccountInvoice(models.Model):
             ])
             for payment in open_payments:
                 if not is_past_reconciled and payment.credit == past_amount:
-                    past_invoices.mapped('')
+                    lines = past_invoices.mapped('move_id.line_ids').filtered("debit")
+                    (lines + payment).reconcile()
                     is_past_reconciled = True
-                elif not is_future_reconciled:
+                elif not is_future_reconciled and payment.credit == future_amount:
+                    lines = future_invoices.mapped('move_id.line_ids').filtered("debit")
+                    (lines + payment).reconcile()
                     is_future_reconciled = True
 
             # If no matching payment found, we will group or split.
@@ -108,13 +115,14 @@ class AccountInvoice(models.Model):
             order='date asc', limit=1)
         if payment_greater_than_reconcile:
             # Split the payment move line to isolate reconcile amount
-            (payment_greater_than_reconcile | move_lines) \
+            return (payment_greater_than_reconcile | move_lines)\
                 .split_payment_and_reconcile()
-            return True
         else:
             # Group several payments to match the invoiced amount
             # Limit to 12 move_lines to avoid too many computations
             open_payments = line_obj.search(payment_search, limit=12)
+            if sum(open_payments.mapped("credit")) < reconcile_amount:
+                raise UserError(_("Cannot reconcile invoices, not enough credit."))
 
             # Search for a combination giving the invoiced amount recursively
             # https://stackoverflow.com/questions/4632322/finding-all-possible-
@@ -149,7 +157,7 @@ class AccountInvoice(models.Model):
                     if payment_line.credit > missing_amount:
                         # Split last added line amount to perfectly match
                         # the total amount we are looking for
-                        return (open_payments[:index + 1] | move_lines) \
+                        return (open_payments[:index + 1] | move_lines)\
                             .split_payment_and_reconcile()
                     payment_amount += payment_line.credit
                 return (open_payments | move_lines).reconcile()
@@ -169,3 +177,18 @@ class AccountInvoiceLine(models.Model):
     state = fields.Selection(
         related='invoice_id.state',
         readonly=True, store=True)
+
+    @api.multi
+    def filter_for_contract_rewind(self, filter_state):
+        """
+        Returns a subset of invoice lines that should be used to find after which one
+        we will set the next_invoice_date of a contract.
+        :param filter_state: filter invoice lines that have the desired state
+        :return: account.invoice.line recordset
+        """
+        company = self.mapped("contract_id.company_id")
+        lock_date = company.period_lock_date
+        return self.filtered(
+            lambda l: l.state == filter_state and
+            (not lock_date or l.due_date > lock_date)
+        )
