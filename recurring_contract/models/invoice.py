@@ -190,5 +190,5 @@ class AccountInvoiceLine(models.Model):
         lock_date = company.period_lock_date
         return self.filtered(
             lambda l: l.state == filter_state and
-            (not lock_date or l.due_date > lock_date)
+            (not lock_date or (l.due_date and l.due_date > lock_date))
         )
