@@ -13,8 +13,20 @@ import datetime
 from dateutil.relativedelta import relativedelta
 
 
-class InvoicerWizard(models.TransientModel):
+def memoize(func):
+    """The memoize decorator is used to speed up computation time
+    when a function is called multiple times with the same 'key'"""
+    memory = {}
 
+    def inner(key):
+        if key not in memory:
+            memory[key] = func(key)
+        return memory[key]
+
+    return inner
+
+
+class InvoicerWizard(models.TransientModel):
     ''' This wizard generate invoices from contract groups when launched.
     By default, all contract groups are used.
     '''
@@ -25,12 +37,16 @@ class InvoicerWizard(models.TransientModel):
 
     @api.multi
     def generate(self):
-        date_limit = datetime.date.today() + relativedelta(months=+1)
+
+        @memoize
+        def get_limit_date(advance_months):
+            return datetime.date.today() + relativedelta(months=+advance_months)
 
         recurring_invoicer_obj = self.env['recurring.invoicer']
         contract_groups = self.env['recurring.contract.group'].search([
-            ('next_invoice_date', '<=', date_limit),
             ('next_invoice_date', '!=', False)])
+        contract_groups = contract_groups.filtered(
+            lambda x: x.next_invoice_date <= get_limit_date(x.advance_billing_months))
 
         invoicer = recurring_invoicer_obj.create({})
         # Add a job for all groups and start the job when all jobs are created.
