@@ -30,8 +30,8 @@ class InvoicerWizard(models.TransientModel):
             next_invoice_date IS NOT NULL AND
             next_invoice_date <= now() + interval '1 month' * advance_billing_months;
         """)
-        gids = self.env.cr.fetchall()
-        contract_groups = self.browse(gids)
+        gids = [r[0] for r in self.env.cr.fetchall()]
+        contract_groups = self.env["recurring.contract.group"].browse(gids)
 
         invoicer = recurring_invoicer_obj.create({})
         # Add a job for all groups and start the job when all jobs are created.
