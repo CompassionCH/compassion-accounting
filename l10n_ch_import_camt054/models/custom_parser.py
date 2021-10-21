@@ -84,6 +84,11 @@ class CustomParser(models.AbstractModel):
         else:
             self.add_value_from_node(ns, node, './ns:Refs/ns:AcctSvcrRef',
                                      transaction, 'acct_svcr_ref')
+        # Add transaction note for QR statements
+        self.add_value_from_node(
+            ns, node, [
+                './ns:RmtInf/ns:Strd/ns:AddtlRmtInf',
+            ], transaction, 'note', join_str='\n')
 
     def parse_statement(self, ns, node):
 
