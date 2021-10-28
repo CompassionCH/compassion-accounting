@@ -41,10 +41,6 @@ class ContractGroup(models.Model):
         domain=[('payment_type', '=', 'inbound')],
         track_visibility='onchange', readonly=False
     )
-
-    next_invoice_date = fields.Date(
-        compute='_compute_next_invoice_date',
-        string='Next invoice date', store=True)
     last_paid_invoice_date = fields.Date(
         compute='_compute_last_paid_invoice',
         string='Last paid invoice date')
@@ -69,16 +65,6 @@ class ContractGroup(models.Model):
     ##########################################################################
     #                             FIELDS METHODS                             #
     ##########################################################################
-
-    @api.depends('contract_ids.next_invoice_date', 'contract_ids.state')
-    def _compute_next_invoice_date(self):
-        for group in self:
-            next_inv_date = min(
-                [c.next_invoice_date for c in group.contract_ids
-                 if c.next_invoice_date and
-                 c.state in self._get_gen_states()] or [False])
-            group.next_invoice_date = next_inv_date
-
     def _compute_last_paid_invoice(self):
         for group in self:
             group.last_paid_invoice_date = max(
@@ -100,11 +86,6 @@ class ContractGroup(models.Model):
         """
         res = True
         for group in self:
-            # Check if group has an next_invoice_date
-            if not group.next_invoice_date or 'next_invoice_date' in vals:
-                res = super(ContractGroup, group).write(vals) and res
-                continue
-
             # Get the method to apply changes
             change_method = vals.get('change_method', group.change_method)
             change_method = getattr(group, change_method)
@@ -198,57 +179,58 @@ class ContractGroup(models.Model):
 
         nb_groups = len(self)
         count = 1
-        for contract_group in self.filtered('next_invoice_date'):
+        for contract_group in self:
             # After a ContractGroup is done, we commit all writes in order to
             # avoid doing it again in case of an error or a timeout
             if not test_mode:
                 self.env.cr.commit()    # pylint: disable=invalid-commit
             logger.info(f"Generating invoices for group {count}/{nb_groups}")
             month_delta = contract_group.advance_billing_months or 1
-            limit_date = date.today() + relativedelta(
-                months=+month_delta)
-            current_date = contract_group.next_invoice_date
-            while current_date <= limit_date:
-                contracts = contract_group.contract_ids.filtered(
-                    lambda c: c.next_invoice_date and
-                    c.next_invoice_date <= current_date and
-                    c.state in gen_states and not (
-                        c.end_date and fields.Date.to_date(c.end_date) <=
-                        c.next_invoice_date)
-                )
-                if not contracts:
-                    break
-                try:
-                    inv_to_reopen = cancelled_invoices.filtered(
-                        lambda inv: inv.date_invoice == current_date)
+            limit_date = date.today() + relativedelta(months=+month_delta)
+            invoice_dates = contract_group.mapped("contract_ids").filtered(
+                "next_invoice_date").mapped("next_invoice_date")
+            for next_invoice_date in invoice_dates:
+                current_date = next_invoice_date
+                while current_date <= limit_date:
+                    contracts = contract_group.contract_ids.filtered(
+                        lambda c: c.next_invoice_date == current_date and
+                        c.state in gen_states and not (
+                            c.end_date and fields.Date.to_date(c.end_date) <=
+                            c.next_invoice_date)
+                    )
+                    if not contracts:
+                        break
+                    try:
+                        inv_to_reopen = cancelled_invoices.filtered(
+                            lambda inv: inv.date_invoice == current_date)
 
-                    inv_data = contract_group._setup_inv_data(
-                        journal, invoicer, contracts)
-                    if not inv_to_reopen:
-                        invoice = inv_obj.create(inv_data)
-                    else:
-                        inv_to_reopen.action_invoice_draft()
-                        inv_to_reopen.env.clear()
-                        old_lines = inv_to_reopen.invoice_line_ids.filtered(
-                            lambda line: line.contract_id.id in contracts.ids)
-                        old_lines.unlink()
-                        inv_to_reopen.write(inv_data)
-                        invoice = inv_to_reopen
-                    if invoice.invoice_line_ids:
-                        invoice.action_invoice_open()
-                    else:
-                        invoice.unlink()
-                    if not self.env.context.get('no_next_date_update'):
-                        contracts.update_next_invoice_date()
-                    current_date += contract_group.get_relative_delta()
-                except:
-                    self.env.cr.rollback()
-                    self.env.clear()
-                    logger.error(
-                        f'contract group {contract_group.id} '
-                        f'failed during invoice generation',
-                        exc_info=True)
-                    break
+                        inv_data = contract_group._setup_inv_data(
+                            journal, invoicer, contracts)
+                        if not inv_to_reopen:
+                            invoice = inv_obj.create(inv_data)
+                        else:
+                            inv_to_reopen.action_invoice_draft()
+                            inv_to_reopen.env.clear()
+                            old_lines = inv_to_reopen.invoice_line_ids.filtered(
+                                lambda line: line.contract_id.id in contracts.ids)
+                            old_lines.unlink()
+                            inv_to_reopen.write(inv_data)
+                            invoice = inv_to_reopen
+                        if invoice.invoice_line_ids:
+                            invoice.action_invoice_open()
+                        else:
+                            invoice.unlink()
+                        if not self.env.context.get('no_next_date_update'):
+                            contracts.update_next_invoice_date()
+                        current_date += contract_group.get_relative_delta()
+                    except:
+                        self.env.cr.rollback()
+                        self.env.clear()
+                        logger.error(
+                            f'contract group {contract_group.id} '
+                            f'failed during invoice generation',
+                            exc_info=True)
+                        break
             count += 1
         logger.info("Invoice generation successfully finished.")
         return invoicer
@@ -263,11 +245,12 @@ class ContractGroup(models.Model):
         """
         res = self.env['account.invoice']
         for group in self:
-
             # invoice for current contract might not be up to date.
             # since we are changing the value of next_invoice_date
             # this might cause some issue if we don't first generate the missing one.
-            if group.next_invoice_date and group.next_invoice_date <= date.today():
+            next_invoice_date = min(group.mapped("contract_ids").filtered(
+                "next_invoice_date").mapped("next_invoice_date"))
+            if next_invoice_date and next_invoice_date <= date.today():
                 group._generate_invoices()
 
             res |= group.contract_ids.with_context(
@@ -310,7 +293,7 @@ class ContractGroup(models.Model):
                 'account.account_payment_term_immediate').id,
             'currency_id':
                 partner.property_product_pricelist.currency_id.id,
-            'date_invoice': self.next_invoice_date,
+            'date_invoice': min(contracts.mapped("next_invoice_date")),
             'recurring_invoicer_id': invoicer.id,
             'payment_mode_id': self.payment_mode_id.id,
             'company_id': contracts.mapped('company_id')[:1].id,
