@@ -123,9 +123,11 @@ class RecurringContract(models.Model):
 
     @api.model
     def _default_next_invoice_date(self):
-        # Use 1st of next month as default invoice date
+        # set the next invoice for the current month if we are earlier than the 15th
+        # otherwise set it to the next month
         today = datetime.today()
-        next_invoice = today.replace(day=1) + relativedelta(months=1)
+        month_delta = relativedelta(months=0 if today.day < 15 else 1)
+        next_invoice = today.replace(day=1) + month_delta
         return next_invoice.date()
 
     ##########################################################################
