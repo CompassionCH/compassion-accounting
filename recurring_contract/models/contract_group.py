@@ -187,17 +187,19 @@ class ContractGroup(models.Model):
             logger.info(f"Generating invoices for group {count}/{nb_groups}")
             month_delta = contract_group.advance_billing_months or 1
             limit_date = date.today() + relativedelta(months=+month_delta)
-            invoice_dates = contract_group.mapped("contract_ids").filtered(
-                "next_invoice_date").mapped("next_invoice_date")
-            for next_invoice_date in invoice_dates:
-                current_date = next_invoice_date
+
+            contract_ids = contract_group.mapped("contract_ids").filtered("next_invoice_date")
+            next_invoice_dates = contract_ids.mapped("next_invoice_date")
+
+            def filter_recurring_contract(c):
+                b = c.next_invoice_date == current_date
+                b &= c.state in gen_states
+                b &= not (c.end_date and fields.Date.to_date(c.end_date) <= c.next_invoice_date)
+                return b
+
+            for current_date in next_invoice_dates:
                 while current_date <= limit_date:
-                    contracts = contract_group.contract_ids.filtered(
-                        lambda c: c.next_invoice_date == current_date and
-                        c.state in gen_states and not (
-                            c.end_date and fields.Date.to_date(c.end_date) <=
-                            c.next_invoice_date)
-                    )
+                    contracts = contract_group.contract_ids.filtered(filter_recurring_contract)
                     if not contracts:
                         break
                     try:
