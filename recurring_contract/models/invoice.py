@@ -20,6 +20,18 @@ class AccountInvoice(models.Model):
     recurring_invoicer_id = fields.Many2one(
         'recurring.invoicer', 'Invoicer', readonly=False)
 
+    notes = fields.Text(string="Notes", compute="_compute_notes",
+        help="Bank statement notes related to this Invoice", default=False, readonly=True)
+
+    @api.multi
+    def _compute_notes(self):
+        for invoice in self:
+            invoice.notes = "\n".join(invoice.get_bank_statement_notes())
+
+    def get_bank_statement_notes(self):
+        statement_line_ids = self.mapped("move_id.line_ids.full_reconcile_id.reconciled_line_ids.statement_line_id")
+        return statement_line_ids.filtered("note").mapped("note")
+
     @api.multi
     def action_invoice_paid(self):
         """ Call invoice_paid method on related contracts. """
