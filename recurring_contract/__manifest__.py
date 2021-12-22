@@ -44,7 +44,6 @@
     ],
     'external_dependencies': {},
     'data': [
-        'views/account_invoice_view.xml',
         'views/end_contract_wizard_view.xml',
         'views/activate_contract_view.xml',
         'views/contract_group_view.xml',
