@@ -61,7 +61,7 @@ class RecurringContract(models.Model):
     )
     group_id = fields.Many2one(
         'recurring.contract.group', 'Payment Options',
-        required=True, ondelete='cascade', track_visibility="onchange", readonly=False)
+        required=True, ondelete='set null', track_visibility="onchange", readonly=False)
     invoice_line_ids = fields.One2many(
         'account.invoice.line', 'contract_id',
         'Related invoice lines', readonly=True, copy=False)
