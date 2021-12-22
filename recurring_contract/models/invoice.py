@@ -20,15 +20,29 @@ class AccountInvoice(models.Model):
     recurring_invoicer_id = fields.Many2one(
         'recurring.invoicer', 'Invoicer', readonly=False)
 
-    notes = fields.Text(string="Notes", compute="_compute_notes",
-        help="Bank statement notes related to this Invoice", default=False, readonly=True)
+    @api.multi
+    def register_payment(self, payment_line, writeoff_acc_id=False, writeoff_journal_id=False):
+        """After registering a payment post a message of the bank statement linked"""
+        out = super().register_payment(payment_line, writeoff_acc_id, writeoff_journal_id)
+        self.message_post_bank_statement_notes()
+        return out
 
     @api.multi
-    def _compute_notes(self):
+    def message_post_bank_statement_notes(self):
+        """Post a message in the invoice with the messages
+        of the bank statement related to this invoice"""
         for invoice in self:
-            invoice.notes = "\n".join(invoice.get_bank_statement_notes())
+            invoice._message_post_bank_statement_notes()
 
-    def get_bank_statement_notes(self):
+    def _message_post_bank_statement_notes(self):
+        notes = self._get_bank_statement_notes()
+        print(notes)
+        if not notes:
+            return
+        notes_text = "<br>".join(notes)
+        self.message_post(body="Notes from bank statement : <br>" + notes_text)
+
+    def _get_bank_statement_notes(self):
         statement_line_ids = self.mapped("move_id.line_ids.full_reconcile_id.reconciled_line_ids.statement_line_id")
         return statement_line_ids.filtered("note").mapped("note")
 
