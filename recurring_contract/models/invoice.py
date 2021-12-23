@@ -11,6 +11,7 @@
 from odoo import fields, models, api, _
 from odoo.exceptions import UserError
 from datetime import date
+import html
 
 
 class AccountInvoice(models.Model):
@@ -19,6 +20,24 @@ class AccountInvoice(models.Model):
 
     recurring_invoicer_id = fields.Many2one(
         'recurring.invoicer', 'Invoicer', readonly=False)
+
+    @api.multi
+    def message_post_bank_statement_notes(self):
+        """Post a message in the invoice with the messages
+        of the bank statement related to this invoice"""
+        for invoice in self:
+            invoice._message_post_bank_statement_notes()
+
+    def _message_post_bank_statement_notes(self):
+        notes = self._get_bank_statement_notes()
+        if not notes:
+            return
+        notes_text = "".join(f"<li>{html.escape(note)}</li>" for note in notes)
+        self.message_post(body=_("Notes from bank statement") + f" : <ul>{notes_text}</ul>")
+
+    def _get_bank_statement_notes(self):
+        statement_line_ids = self.mapped("move_id.line_ids.full_reconcile_id.reconciled_line_ids.statement_line_id")
+        return statement_line_ids.filtered("note").mapped("note")
 
     @api.multi
     def action_invoice_paid(self):
