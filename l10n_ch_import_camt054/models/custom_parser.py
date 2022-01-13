@@ -45,7 +45,7 @@ class CustomParser(models.AbstractModel):
         # has a charge and is not included
         if len(node_charge_included) > 0 and node_charge_included[0].text == 'true':
             if len(node_charge_amount) > 0:
-                charge_amount = float(node_charge_amount[0].text)
+                charge_amount = -float(node_charge_amount[0].text)
                 tr = transaction.copy()
                 tr['amount'] = charge_amount
                 tr['name'] += " (bank charge)"
