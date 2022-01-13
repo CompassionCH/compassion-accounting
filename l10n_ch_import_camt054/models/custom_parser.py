@@ -43,7 +43,7 @@ class CustomParser(models.AbstractModel):
         node_charge_included = node.xpath('./ns:Chrgs/ns:Rcrd/ns:ChrgInclInd', namespaces={'ns': ns})
 
         # has a charge and is not included
-        if len(node_charge_included) > 0 and node_charge_included[0].text == 'false':
+        if len(node_charge_included) > 0 and node_charge_included[0].text == 'true':
             if len(node_charge_amount) > 0:
                 charge_amount = float(node_charge_amount[0].text)
                 tr = transaction.copy()
