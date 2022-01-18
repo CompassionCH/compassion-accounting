@@ -11,6 +11,7 @@
 from odoo import fields, models, api, _
 from odoo.exceptions import UserError
 from datetime import date
+import html
 
 
 class AccountInvoice(models.Model):
@@ -36,11 +37,10 @@ class AccountInvoice(models.Model):
 
     def _message_post_bank_statement_notes(self):
         notes = self._get_bank_statement_notes()
-        print(notes)
         if not notes:
             return
-        notes_text = "<br>".join(notes)
-        self.message_post(body="Notes from bank statement : <br>" + notes_text)
+        notes_text = "".join(f"<li>{html.escape(note)}</li>" for note in notes)
+        self.message_post(body=_("Notes from bank statement") + f" : <ul>{notes_text}</ul>")
 
     def _get_bank_statement_notes(self):
         statement_line_ids = self.mapped("move_id.line_ids.full_reconcile_id.reconciled_line_ids.statement_line_id")
@@ -218,3 +218,14 @@ class AccountInvoiceLine(models.Model):
             lambda l: l.state == filter_state and
             (not lock_date or (l.due_date and l.due_date > lock_date))
         )
+
+    @api.onchange('product_id')
+    def _onchange_product_id(self):
+        # workaround an odoo bug :
+        # could be fixed by applying this change here
+        # - self.analytic_tag_ids = rec.analytic_tag_ids.ids
+        # + self.analytic_tag_ids = rec.analytic_tag_ids
+        # https://github.com/odoo/odoo/blame/12.0/addons/account_analytic_default/models/account_analytic_default.py#L100
+        self.analytic_tag_ids = self.env["account.analytic.tag"]
+        res = super()._onchange_product_id()
+        return res

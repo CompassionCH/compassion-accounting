@@ -39,6 +39,19 @@ class CustomParser(models.AbstractModel):
         addtl_ntry_inf = node.xpath(
             './ns:AddtlNtryInf', namespaces={'ns': ns})
 
+        node_charge_amount = node.xpath('./ns:Chrgs/ns:Rcrd/ns:Amt', namespaces={'ns': ns})
+        node_charge_included = node.xpath('./ns:Chrgs/ns:Rcrd/ns:ChrgInclInd', namespaces={'ns': ns})
+
+        # has a charge and is not included
+        if len(node_charge_included) > 0 and node_charge_included[0].text == 'true':
+            if len(node_charge_amount) > 0:
+                charge_amount = -float(node_charge_amount[0].text)
+                tr = transaction.copy()
+                tr['amount'] = charge_amount
+                tr['name'] += " (bank charge)"
+                yield tr
+
+
         # If there is a 'TxDtls' node in the XML we get the value of
         # 'AcctSvcrRef' in it.
         details_nodes = node.xpath(

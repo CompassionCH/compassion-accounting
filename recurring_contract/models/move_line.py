@@ -8,7 +8,7 @@
 #
 ##############################################################################
 
-from odoo import models, exceptions, _
+from odoo import api, models, exceptions, _
 
 
 class MoveLine(models.Model):
@@ -17,6 +17,13 @@ class MoveLine(models.Model):
     partial reconciliation. """
 
     _inherit = "account.move.line"
+
+    @api.multi
+    def reconcile(self, writeoff_acc_id=False, writeoff_journal_id=False):
+        results = super().reconcile(writeoff_acc_id, writeoff_journal_id)
+        for invoice in self.mapped("invoice_id"):
+            invoice.message_post_bank_statement_notes()
+        return results
 
     def split_payment_and_reconcile(self):
         sum_credit = sum(self.mapped("credit"))
