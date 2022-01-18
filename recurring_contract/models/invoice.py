@@ -22,6 +22,13 @@ class AccountInvoice(models.Model):
         'recurring.invoicer', 'Invoicer', readonly=False)
 
     @api.multi
+    def register_payment(self, payment_line, writeoff_acc_id=False, writeoff_journal_id=False):
+        """After registering a payment post a message of the bank statement linked"""
+        out = super().register_payment(payment_line, writeoff_acc_id, writeoff_journal_id)
+        self.message_post_bank_statement_notes()
+        return out
+
+    @api.multi
     def message_post_bank_statement_notes(self):
         """Post a message in the invoice with the messages
         of the bank statement related to this invoice"""
