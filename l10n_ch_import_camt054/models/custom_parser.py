@@ -1,4 +1,5 @@
 import re
+import string
 
 from odoo import models
 
@@ -91,10 +92,23 @@ class CustomParser(models.AbstractModel):
             ], transaction, 'note', join_str='\n')
 
     def parse_statement(self, ns, node):
-
         result = {}
-        entry_nodes = node.xpath('./ns:Ntry', namespaces={'ns': ns})
 
+        iban = node.xpath('./ns:Acct/ns:Id/ns:IBAN', namespaces={'ns': ns})
+        if len(iban) > 0:
+            # find the journal related to this account
+            journals = self.env["account.journal"].search([])
+            trans_table = str.maketrans("", "", string.whitespace)
+            account_number_ = iban[0].text.translate(trans_table)
+            journal = journals.filtered(
+                lambda x:
+                    x.bank_acc_number and
+                    x.bank_acc_number.translate(trans_table) == account_number_
+            )
+            if journal:
+                self = self.with_context(journal_id=journal.id)
+
+        entry_nodes = node.xpath('./ns:Ntry', namespaces={'ns': ns})
         if len(entry_nodes) > 0:
             result = super().parse_statement(ns, node)
 
