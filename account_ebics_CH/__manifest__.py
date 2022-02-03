@@ -8,8 +8,10 @@
     'author': 'Compassion',
     'category': 'Accounting & Finance',
     'depends': [
-        'account_ebics'],
+        'account_ebics',
+    ],
     'data': [
+        "data/auto_ebics_processing_cron.xml",
     ],
     'installable': True,
 }
