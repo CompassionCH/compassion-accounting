@@ -32,7 +32,10 @@
     "author": "Compassion CH",
     "category": "Finance",
     "website": "http://www.compassion.ch",
-    "depends": ['account_bank_statement_import'],  # source/addons
+    "depends": [
+        'account_bank_statement_import',
+        'account_ebics',
+    ],  # source/addons
     "data": ['views/completion_rules_view.xml',
              'data/data.xml',
              'security/ir.model.access.csv'],
