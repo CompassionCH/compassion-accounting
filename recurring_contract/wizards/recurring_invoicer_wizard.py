@@ -25,10 +25,12 @@ class InvoicerWizard(models.TransientModel):
         recurring_invoicer_obj = self.env['recurring.invoicer']
 
         self.env.cr.execute("""
-        SELECT id FROM recurring_contract_group
+        SELECT DISTINCT group_id FROM recurring_contract
         WHERE
             next_invoice_date IS NOT NULL AND
-            next_invoice_date <= now() + interval '1 month' * advance_billing_months;
+            next_invoice_date <= now() + interval '1 month'
+            AND state NOT IN ('terminated', 'cancelled', 'draft')
+            AND total_amount > 0;
         """)
         gids = [r[0] for r in self.env.cr.fetchall()]
         contract_groups = self.env["recurring.contract.group"].browse(gids)
