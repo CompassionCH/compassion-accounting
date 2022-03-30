@@ -291,8 +291,6 @@ class ContractGroup(models.Model):
             'type': 'out_invoice',
             'partner_id': partner.id,
             'journal_id': journal.id,
-            'payment_term_id': self.env.ref(
-                'account.account_payment_term_immediate').id,
             'currency_id':
                 partner.property_product_pricelist.currency_id.id,
             'date_invoice': min(contracts.mapped("next_invoice_date")),
