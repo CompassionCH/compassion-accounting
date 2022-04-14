@@ -112,9 +112,9 @@ class AccountInvoice(models.Model):
 
             # If no matching payment found, we will group or split.
             if not is_past_reconciled:
-                past_invoices._group_or_split_reconcile()
+                past_invoices.with_delay()._group_or_split_reconcile()
             if not is_future_reconciled:
-                future_invoices._group_or_split_reconcile()
+                future_invoices.with_delay()._group_or_split_reconcile()
 
         return True
 
