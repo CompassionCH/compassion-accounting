@@ -14,7 +14,6 @@ from datetime import datetime, date
 
 import odoo.addons.decimal_precision as dp
 from dateutil.relativedelta import relativedelta
-from odoo.addons.queue_job.job import job, related_action
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
@@ -467,8 +466,6 @@ class RecurringContract(models.Model):
     #                             PRIVATE METHODS                            #
     ##########################################################################
     @api.multi
-    @job(default_channel='root.recurring_invoicer')
-    @related_action(action='related_action_contract')
     def _clean_invoices(self, since_date=None, to_date=None, clean_invoices_paid=False,
                         keep_lines=False):
         """ Clean invoices

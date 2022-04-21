@@ -55,6 +55,7 @@
         'data/contract_expire_cron.xml',
         'data/daily_invoicer_cron.xml',
         'data/utm_data.xml',
+        'data/queue_job.xml',
         'security/ir.model.access.csv',
         'security/security.xml',
     ],
