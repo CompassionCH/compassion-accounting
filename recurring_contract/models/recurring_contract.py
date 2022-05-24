@@ -91,6 +91,7 @@ class RecurringContract(models.Model):
         required=True,
         default=lambda self: self.env.user.company_id.id, readonly=False
     )
+    comment = fields.Text()
 
     _sql_constraints = [
         ('unique_ref', "unique(reference)", "Reference must be unique!")
