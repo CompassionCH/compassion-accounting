@@ -70,6 +70,7 @@
                         </group>
                         <group>
                             <field name="last_paid_invoice_date"/>
+                            <field name="comment"/>
                         </group>
                     </group>
                     <notebook>

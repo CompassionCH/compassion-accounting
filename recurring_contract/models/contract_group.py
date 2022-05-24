@@ -210,7 +210,7 @@ class ContractGroup(models.Model):
                         else:
                             inv_to_reopen.action_invoice_draft()
                             inv_to_reopen.env.clear()
-                            old_lines = inv_to_reopen.invoice_line_ids.filtered(
+                            old_lines = inv_to_reopen.mapped("invoice_line_ids").filtered(
                                 lambda line: line.contract_id.id in contracts.ids)
                             old_lines.unlink()
                             inv_to_reopen.write(inv_data)
@@ -295,6 +295,7 @@ class ContractGroup(models.Model):
             'company_id': contracts.mapped('company_id')[:1].id,
             'invoice_line_ids': [
                 (0, 0, invl) for invl in contracts.get_inv_lines_data() if invl
-            ]
+            ],
+            'comment': "\n".join(contracts.mapped(lambda c: c.comment or ""))
         }
         return inv_data
