@@ -2,9 +2,9 @@
    :target: https://www.gnu.org/licenses/lpgl
    :alt: License: AGPL-3
 
-==============================
+=================================
 Download Payment return via EBICS
-==============================
+=================================
 
 This module allows to Download a Payment return to odoo via the EBICS protocol.
 

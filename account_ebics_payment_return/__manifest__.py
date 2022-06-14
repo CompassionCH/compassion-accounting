@@ -10,7 +10,7 @@
     'depends': [
         'account_ebics',
         'account_payment_line_free',
-        'account_payment_return'],
+        'account_payment_return_import'],
     'data': [
 #        'views/account_payment_order.xml',
     ],
