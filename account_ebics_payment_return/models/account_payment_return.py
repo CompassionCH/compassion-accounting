@@ -13,6 +13,7 @@ _logger = logging.getLogger(__name__)
 
 class EbicsFile(models.Model):
     _inherit = 'ebics.file'
+
     def _file_format_methods(self):
         """
         Extend this dictionary in order to add support
@@ -146,10 +147,8 @@ class EbicsFile(models.Model):
                 payment_order.generated2uploaded()
                 self.write({
                     'state': 'done',
-                    'error_message': err_message
+                    'note_process': err_message
                 })
-
-
 
     def _unlink_pain002(self):
         """
