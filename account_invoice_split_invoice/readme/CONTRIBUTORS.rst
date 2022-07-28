@@ -1,3 +1,0 @@
-* Emanuel Cino <ecino@compassion.ch>
-* Steve Ferry <steve_ferry@outlook.com>
-* Quentin Gigon <gigon.quentin@gmail.com>

@@ -10,7 +10,6 @@
 
 import logging
 
-import odoo.addons.decimal_precision as dp
 
 from odoo import api, fields, models
 
@@ -23,7 +22,6 @@ class ContractLine(models.Model):
     _name = "recurring.contract.line"
     _description = "Recurring contract line"
 
-    @api.multi
     def name_get(self):
         res = [(cl.id, cl.product_id.name) for cl in self]
         return res
@@ -36,7 +34,7 @@ class ContractLine(models.Model):
     amount = fields.Float('Price', required=True)
     quantity = fields.Integer(default=1, required=True)
     subtotal = fields.Float(compute='_compute_subtotal', store=True,
-                            digits=dp.get_precision('Account'))
+                            digits='Account')
 
     @api.depends('amount', 'quantity')
     def _compute_subtotal(self):

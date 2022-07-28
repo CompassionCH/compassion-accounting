@@ -1,2 +1,0 @@
-* Marco Monzione
-* Quentin Gigon

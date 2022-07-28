@@ -38,7 +38,7 @@ class ContractGroup(models.Model):
     payment_mode_id = fields.Many2one(
         'account.payment.mode', 'Payment mode',
         domain=[('payment_type', '=', 'inbound')],
-        track_visibility='onchange', readonly=False
+        tracking=True, readonly=False
     )
     last_paid_invoice_date = fields.Date(
         compute='_compute_last_paid_invoice',
@@ -48,7 +48,7 @@ class ContractGroup(models.Model):
         '_get_change_methods', default='do_nothing')
     partner_id = fields.Many2one(
         'res.partner', 'Partner', required=True,
-        ondelete='cascade', track_visibility="onchange", readonly=False)
+        ondelete='cascade', tracking=True, readonly=False)
     ref = fields.Char('Reference', default="/")
     recurring_unit = fields.Selection([
         ('day', _('Day(s)')),
@@ -75,7 +75,6 @@ class ContractGroup(models.Model):
     #                              ORM METHODS                               #
     ##########################################################################
 
-    @api.multi
     def write(self, vals):
         """
             Perform various check at contract modifications
@@ -97,7 +96,6 @@ class ContractGroup(models.Model):
     ##########################################################################
     #                             PUBLIC METHODS                             #
     ##########################################################################
-    @api.multi
     def clean_invoices(self):
         """ By default, launch asynchronous job to perform the task.
             Context value async_mode set to False can force to perform
@@ -113,7 +111,6 @@ class ContractGroup(models.Model):
         """ No changes before generation """
         pass
 
-    @api.multi
     def generate_invoices(self, invoicer=None, cancelled_invoices=None):
         """ By default, launch asynchronous job to perform the task.
             Context value async_mode set to False can force to perform
@@ -135,7 +132,6 @@ class ContractGroup(models.Model):
             self._generate_invoices(invoicer, cancelled_invoices=cancelled_invoices)
         return invoicer
 
-    @api.multi
     def get_relative_delta(self):
         """
         Get a relative delta given the recurring settings
@@ -157,7 +153,6 @@ class ContractGroup(models.Model):
     ##########################################################################
     #                             PRIVATE METHODS                            #
     ##########################################################################
-    @api.multi
     def _generate_invoices(self, invoicer=None, cancelled_invoices=None):
         """ Checks all contracts and generate invoices if needed.
         Create an invoice per contract group per date.
@@ -234,7 +229,6 @@ class ContractGroup(models.Model):
         logger.info("Invoice generation successfully finished.")
         return invoicer
 
-    @api.multi
     def _clean_generate_invoices(self):
         """ Change method which cancels generated invoices and rewinds
         the next_invoice_date of contracts, so that new invoices can be
@@ -259,7 +253,6 @@ class ContractGroup(models.Model):
         ))
         return res
 
-    @api.multi
     def _get_change_methods(self):
         """ Method for applying changes """
         return [

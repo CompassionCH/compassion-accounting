@@ -28,7 +28,6 @@ class RecurringInvoicer(models.Model):
         'account.invoice', 'recurring_invoicer_id',
         'Generated invoices', readonly=False)
 
-    @api.multi
     def cancel_invoices(self):
         """
         Cancel created invoices (set state from open to cancelled)
@@ -39,7 +38,6 @@ class RecurringInvoicer(models.Model):
         invoice_to_cancel.action_invoice_cancel()
         return True
 
-    @api.multi
     def show_invoices(self):
         return {
             'type': 'ir.actions.act_window',

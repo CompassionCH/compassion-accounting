@@ -16,7 +16,6 @@ class ActivateContractWizard(models.TransientModel):
     _name = 'recurring.contract.activate.wizard'
     _description = 'Recurring contract activation wizard'
 
-    @api.multi
     def activate_contract(self):
         contract_obj = self.env['recurring.contract']
         contract_obj.browse(self.env.context.get('active_ids')) \

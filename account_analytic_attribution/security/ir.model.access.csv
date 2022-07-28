@@ -1,3 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_analytic_attribution,Full access on analytic attributions,model_account_analytic_attribution,account.group_account_manager,1,1,1,1
-access_distribution_line,Full access on distribution lines,model_account_analytic_distribution_line,account.group_account_manager,1,1,1,1

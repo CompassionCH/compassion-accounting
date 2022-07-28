@@ -21,14 +21,12 @@ class AccountInvoice(models.Model):
     recurring_invoicer_id = fields.Many2one(
         'recurring.invoicer', 'Invoicer', readonly=False)
 
-    @api.multi
     def register_payment(self, payment_line, writeoff_acc_id=False, writeoff_journal_id=False):
         """After registering a payment post a message of the bank statement linked"""
         out = super().register_payment(payment_line, writeoff_acc_id, writeoff_journal_id)
         self.message_post_bank_statement_notes()
         return out
 
-    @api.multi
     def message_post_bank_statement_notes(self):
         """Post a message in the invoice with the messages
         of the bank statement related to this invoice"""
@@ -46,7 +44,6 @@ class AccountInvoice(models.Model):
         statement_line_ids = self.mapped("move_id.line_ids.full_reconcile_id.reconciled_line_ids.statement_line_id")
         return statement_line_ids.filtered("note").mapped("note")
 
-    @api.multi
     def action_invoice_paid(self):
         """ Call invoice_paid method on related contracts. """
         res = super().action_invoice_paid()
@@ -55,7 +52,6 @@ class AccountInvoice(models.Model):
             contracts.invoice_paid(invoice)
         return res
 
-    @api.multi
     def action_invoice_re_open(self):
         """ Call invoice_unpaid method on related contract. """
         res = super().action_invoice_re_open()
@@ -64,7 +60,6 @@ class AccountInvoice(models.Model):
             contracts.invoice_unpaid(invoice)
         return res
 
-    @api.multi
     def reconcile_after_clean(self):
         """
         Called after clean invoices. If invoices can be reconciled
@@ -118,7 +113,6 @@ class AccountInvoice(models.Model):
 
         return True
 
-    @api.multi
     def _group_or_split_reconcile(self):
         """
         Find payments to reconcile given invoices and perform reconciliation.
@@ -204,7 +198,6 @@ class AccountInvoiceLine(models.Model):
         related='invoice_id.state',
         readonly=True, store=True)
 
-    @api.multi
     def filter_for_contract_rewind(self, filter_state):
         """
         Returns a subset of invoice lines that should be used to find after which one

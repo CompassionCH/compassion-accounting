@@ -24,7 +24,6 @@
         <field name="name">Automatic invoice generation from contracts</field>
         <field name="res_model">recurring.invoicer.wizard</field>
         <field name="type">ir.actions.act_window</field>
-        <field name="view_type">form</field>
         <field name="view_mode">form</field>
         <field name="view_id" ref="recurring_invoicer_wizard_view"/>
         <field name="context">{}</field>

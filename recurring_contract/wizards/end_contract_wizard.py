@@ -24,7 +24,6 @@ class EndContractWizard(models.TransientModel):
     end_date = fields.Datetime(default=fields.Datetime.now, required=True)
     additional_notes = fields.Text()
 
-    @api.multi
     def end_contract(self):
         # Terminate contracts
         self.contract_ids.write({

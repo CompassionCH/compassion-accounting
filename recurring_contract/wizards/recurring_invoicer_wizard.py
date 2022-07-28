@@ -19,7 +19,6 @@ class InvoicerWizard(models.TransientModel):
 
     generation_date = fields.Date(readonly=True)
 
-    @api.multi
     def generate(self):
 
         recurring_invoicer_obj = self.env['recurring.invoicer']
