@@ -39,7 +39,6 @@
         'account',
         'account_payment_partner',  # OCA/bank-payment,
         'queue_job',                # OCA/queue,
-        'account_cancel',
         'utm'
     ],
     'external_dependencies': {},
