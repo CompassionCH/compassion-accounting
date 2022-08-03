@@ -11,5 +11,6 @@
     'data': [
         'security/record_rules.xml',
         'data/l10n_compassion_sub_chart_data.xml',
+        'data/l10n_compassion_norden_chart_data.xml',
     ],
 }
