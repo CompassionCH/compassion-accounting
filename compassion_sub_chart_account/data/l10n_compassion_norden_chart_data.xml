@@ -88,7 +88,7 @@
     <field name="chart_template_id" ref="compassion_se_chart_template"/>
 </record> <record id="compassion_se_sub_15100" model="account.account.template">
     <field name="code">15100</field>
-    <field name="name">(Not in Use) Kundfordringar - Other Receivable</field>
+    <field name="name">Kundfordringar - Other Receivable</field>
     <field name="user_type_id" ref="account.data_account_type_receivable"/>
     <field eval="True" name="reconcile"/>
     <field name="chart_template_id" ref="compassion_se_chart_template"/>
@@ -1143,7 +1143,7 @@
       <field name="cash_account_code_prefix">190</field>
       <field name="bank_account_code_prefix">192</field>
       <field name="transfer_account_code_prefix">195</field>
-      <field name="code_digits">6</field>
+      <field name="code_digits">5</field>
 
         <field name="property_account_receivable_id" ref="compassion_se_sub_15120"/>
         <field name="property_account_payable_id" ref="compassion_se_sub_24020"/>
@@ -1164,7 +1164,7 @@
     <field name="chart_template_id" ref="compassion_no_chart_template"/>
 </record> <record id="compassion_no_sub_15100" model="account.account.template">
     <field name="code">15100</field>
-    <field name="name">(Not in Use) Kundfordringar - Other Receivable</field>
+    <field name="name">Kundfordringar - Other Receivable NO</field>
     <field name="user_type_id" ref="account.data_account_type_receivable"/>
     <field eval="True" name="reconcile"/>
     <field name="chart_template_id" ref="compassion_no_chart_template"/>
@@ -2304,6 +2304,11 @@
     <field name="chart_template_id" ref="compassion_no_chart_template"/>
 </record> 
 <record id="compassion_no_chart_template" model="account.chart.template">
+      <field name="currency_id" ref="base.NOK"/>
+      <field name="cash_account_code_prefix">190</field>
+      <field name="bank_account_code_prefix">192</field>
+      <field name="transfer_account_code_prefix">195</field>
+      <field name="code_digits">5</field>
         <field name="property_account_receivable_id" ref="compassion_no_sub_15100"/>
         <field name="property_account_payable_id" ref="compassion_no_sub_24020"/>
 </record>
@@ -2312,7 +2317,7 @@
     <field name="name">(Not in Use) Kundfordringar - Other Receivable</field>
     <field name="user_type_id" ref="account.data_account_type_receivable"/>
     <field eval="True" name="reconcile"/>
-    <field name="chart_template_id" ref="compassion_no_chart_template"/>
+    <field name="chart_template_id" ref="compassion_dk_chart_template"/>
 </record>
 <record id="compassion_dk_sub_15110" model="account.account.template">
     <field name="code">15110</field>
@@ -2779,6 +2784,11 @@
     <field name="chart_template_id" ref="compassion_dk_chart_template"/>
 </record> 
 <record id="compassion_dk_chart_template" model="account.chart.template">
+      <field name="currency_id" ref="base.DKK"/>
+      <field name="cash_account_code_prefix">190</field>
+      <field name="bank_account_code_prefix">192</field>
+      <field name="transfer_account_code_prefix">195</field>
+      <field name="code_digits">5</field>
         <field name="property_account_receivable_id" ref="compassion_dk_sub_15100"/>
         <field name="property_account_payable_id" ref="compassion_dk_sub_24020"/>
 </record> 
