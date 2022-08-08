@@ -14,9 +14,9 @@ from datetime import date
 import html
 
 
-class AccountInvoice(models.Model):
-    _name = 'account.invoice'
-    _inherit = 'account.invoice'
+class AccountMove(models.Model):
+    _name = 'account.move'
+    _inherit = 'account.move'
 
     recurring_invoicer_id = fields.Many2one(
         'recurring.invoicer', 'Invoicer', readonly=False)
@@ -41,7 +41,7 @@ class AccountInvoice(models.Model):
         self.message_post(body=_("Notes from bank statement") + f" : <ul>{notes_text}</ul>")
 
     def _get_bank_statement_notes(self):
-        statement_line_ids = self.mapped("move_id.line_ids.full_reconcile_id.reconciled_line_ids.statement_line_id")
+        statement_line_ids = self.mapped("line_ids.full_reconcile_id.reconciled_line_ids.statement_line_id")
         return statement_line_ids.filtered("note").mapped("note")
 
     def action_invoice_paid(self):
@@ -183,19 +183,19 @@ class AccountInvoice(models.Model):
                 return (open_payments | move_lines).reconcile()
 
 
-class AccountInvoiceLine(models.Model):
-    _name = 'account.invoice.line'
-    _inherit = 'account.invoice.line'
+class AccountMoveLine(models.Model):
+    _name = 'account.move.line'
+    _inherit = 'account.move.line'
 
     contract_id = fields.Many2one(
         'recurring.contract', 'Source contract', index=True, readonly=False)
 
     due_date = fields.Date(
-        related='invoice_id.date_due',
+        related='move_id.invoice_date_due',
         readonly=True, store=True)
 
     state = fields.Selection(
-        related='invoice_id.state',
+        related='move_id.state',
         readonly=True, store=True)
 
     def filter_for_contract_rewind(self, filter_state):

@@ -27,7 +27,7 @@ class RecurringContract(models.Model):
     _description = "Recurring contract"
     _inherit = ['mail.thread', 'mail.activity.mixin', 'utm.mixin']
     _rec_name = 'reference'
-    _order = "create_date desc"
+    _order = "start_date desc"
 
     ##########################################################################
     #                                 FIELDS                                 #
@@ -59,9 +59,9 @@ class RecurringContract(models.Model):
     )
     group_id = fields.Many2one(
         'recurring.contract.group', 'Payment Options',
-        required=True, ondelete='set null', tracking=True, readonly=False)
+        required=True, ondelete='restrict', tracking=True, readonly=False)
     invoice_line_ids = fields.One2many(
-        'account.invoice.line', 'contract_id',
+        'account.move.line', 'contract_id',
         'Related invoice lines', readonly=True, copy=False)
     contract_line_ids = fields.One2many(
         'recurring.contract.line', 'contract_id',
@@ -110,13 +110,13 @@ class RecurringContract(models.Model):
     def _compute_last_paid_invoice(self):
         for contract in self:
             contract.last_paid_invoice_date = max(
-                [invl.invoice_id.date_invoice for invl in
+                [invl.move_id.invoice_date for invl in
                  contract.invoice_line_ids if invl.state == 'paid'] or [False])
 
     def _compute_invoices(self):
         for contract in self:
             contract.nb_invoices = len(
-                contract.mapped('invoice_line_ids.invoice_id').filtered(
+                contract.mapped('invoice_line_ids.move_id').filtered(
                     lambda i: i.state not in ('cancel', 'draft')
                 ))
 
@@ -207,7 +207,7 @@ class RecurringContract(models.Model):
         open one (starting from today)
         all invoices after rewind date will be cleaned
         """
-        res = self.env["account.invoice"]
+        res = self.env["account.move"]
 
         for contract in self:
             if contract.state not in ["terminated", "cancelled"]:
@@ -215,14 +215,14 @@ class RecurringContract(models.Model):
                 # latest paid invoice
                 latest_paid_invoice_date = max(
                     contract.invoice_line_ids.filter_for_contract_rewind("paid")
-                    .mapped("invoice_id.date_invoice") or [False]
+                    .mapped("move_id.invoice_date") or [False]
                 )
 
                 # if there is only open invoice we are looking for the
                 # oldest one (within the range)
                 earliest_open_invoice_date = min(
                     contract.invoice_line_ids.filter_for_contract_rewind("open")
-                    .mapped("invoice_id.date_invoice") or [False])
+                    .mapped("move_id.invoice_date") or [False])
 
                 rewind_invoice_date = latest_paid_invoice_date + \
                     contract.group_id.get_relative_delta() \
@@ -237,7 +237,7 @@ class RecurringContract(models.Model):
                     # No open/paid invoices, look for cancelled ones
                     rewind_invoice_date = min(
                         contract.invoice_line_ids.filter_for_contract_rewind("cancel")
-                        .mapped("invoice_id.date_invoice") or [False]
+                        .mapped("move_id.invoice_date") or [False]
                     )
 
                     if rewind_invoice_date:
@@ -262,7 +262,7 @@ class RecurringContract(models.Model):
         :return: list of dictionaries
         """
         res = list()
-        default_account = self.env['account.invoice.line']._default_account()
+        default_account = False  # self.env['account.move.line']._default_account()
         for contract_line in self.mapped('contract_line_ids'):
             product = contract_line.product_id
             inv_line_data = {
@@ -301,11 +301,10 @@ class RecurringContract(models.Model):
 
     def open_invoices(self):
         self.ensure_one()
-        invoice_ids = self.mapped('invoice_line_ids.invoice_id').ids
+        invoice_ids = self.mapped('invoice_line_ids.move_id').ids
         return {
             'name': _('Contract invoices'),
             'type': 'ir.actions.act_window',
-            'view_type': 'form',
             'view_mode': 'tree,form',
             'views': [
                 (self.env.ref('account.invoice_tree').id, 'tree'),
@@ -515,11 +514,12 @@ class RecurringContract(models.Model):
         lock_date = self.mapped("company_id")[:1].period_lock_date
         invl_search = [
             ('contract_id', 'in', self.ids),
-            ('state', 'not in', ('paid', 'cancel'))]
+            ('state', '!=', 'cancel'),
+            ('invoice_payment_state', '!=', 'paid')]
         if lock_date:
             invl_search.append(("due_date", ">", fields.Date.to_string(lock_date)))
-        inv_lines = self.env['account.invoice.line'].search(invl_search)
-        invoices = inv_lines.mapped('invoice_id')
+        inv_lines = self.env['account.move.line'].search(invl_search)
+        invoices = inv_lines.mapped('move_id')
         invoices.action_invoice_cancel()
         invoices.action_invoice_draft()
         invoices.env.clear()

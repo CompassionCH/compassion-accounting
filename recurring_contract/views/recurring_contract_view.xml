@@ -13,7 +13,6 @@
             <tree decoration-muted="state in ('terminated','cancelled')" decoration-success="state == 'waiting'" decoration-primary="state == 'draft'">
                 <field name="reference"/>
                 <field name="partner_id"/>
-                <field name="create_date"/>
                 <field name="start_date"/>
                 <field name="activation_date"/>
                 <field name="end_date"/>
@@ -34,11 +33,13 @@
                     <field name="state" widget="statusbar"/>
                     <button name="contract_waiting" class="oe_highlight" string="Validate" states="draft" type="object"/>
                     <button name="action_cancel_draft" type="object" string="Set back to draft" states="cancelled"/>
-                    <button name="%(action_end_contract)d" type="action" string="Terminate" class="oe_highlight" attrs="{'invisible': ['|', ('state', 'in', ['terminated', 'cancelled']), ('end_date', '!=', False)]}"/>
+                    <button name="%(action_end_contract)d" type="action" string="Terminate" class="oe_highlight"
+                            attrs="{'invisible': ['|', ('state', 'in', ['terminated', 'cancelled']), ('end_date', '!=', False)]}"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="button_generate_invoices" type="object" class="oe_inline oe_stat_button" icon="fa-refresh" string="Generate invoices" states="waiting,active"/>
+                        <button name="button_generate_invoices" type="object" class="oe_inline oe_stat_button"
+                                icon="fa-refresh" string="Generate invoices" states="waiting,active"/>
                         <button name="open_invoices" type="object" class="oe_stat_button" icon="fa-pencil-square-o">
                             <field name="nb_invoices" widget="statinfo" string="Invoices"/>
                         </button>
@@ -56,7 +57,6 @@
                             <field name="company_id"/>
                         </group>
                         <group>
-                            <field name="create_date"/>
                             <field name="start_date"/>
                             <field name="activation_date"/>
                             <field name="end_date"/>
@@ -84,7 +84,7 @@
                         <page string="Related invoice lines">
                             <field name="invoice_line_ids">
                                 <tree>
-                                    <field name="invoice_id" />
+                                    <field name="move_id" />
                                     <field name="name" />
                                     <field name="due_date" />
                                     <field name="quantity" />

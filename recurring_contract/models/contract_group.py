@@ -161,8 +161,8 @@ class ContractGroup(models.Model):
         if invoicer is None:
             invoicer = self.env['recurring.invoicer'].create({})
         if cancelled_invoices is None:
-            cancelled_invoices = self.env["account.invoice"]
-        inv_obj = self.env['account.invoice']
+            cancelled_invoices = self.env["account.move"]
+        inv_obj = self.env['account.move']
         gen_states = self._get_gen_states()
         journal = self.env['account.journal'].search([
             ('type', '=', 'sale'),
@@ -202,6 +202,7 @@ class ContractGroup(models.Model):
                             journal, invoicer, contracts)
                         if not inv_to_reopen:
                             invoice = inv_obj.create(inv_data)
+
                         else:
                             inv_to_reopen.action_invoice_draft()
                             inv_to_reopen.env.clear()
@@ -235,7 +236,7 @@ class ContractGroup(models.Model):
         generated taking into consideration the modifications of the
         contract group.
         """
-        res = self.env['account.invoice']
+        res = self.env['account.move']
         for group in self:
             # invoice for current contract might not be up to date.
             # since we are changing the value of next_invoice_date
@@ -282,7 +283,7 @@ class ContractGroup(models.Model):
             'journal_id': journal.id,
             'currency_id':
                 partner.property_product_pricelist.currency_id.id,
-            'date_invoice': min(contracts.mapped("next_invoice_date")),
+            'invoice_date': min(contracts.mapped("next_invoice_date")),
             'recurring_invoicer_id': invoicer.id,
             'payment_mode_id': self.payment_mode_id.id,
             'company_id': contracts.mapped('company_id')[:1].id,

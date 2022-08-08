@@ -27,12 +27,10 @@
         </field>
     </record>
     <record id="action_end_contract" model="ir.actions.act_window">
-        <field name="key2">client_action_multi</field>
         <field name="name">End contract</field>
         <field name="res_model">end.contract.wizard</field>
-        <field name="binding_model">recurring.contract</field>
+<!--        <field name="binding_model_id">recurring.contract</field>-->
         <field name="view_mode">form</field>
         <field name="target">new</field>
-        <field name="view_type">form</field>
     </record>
 </odoo>

@@ -25,7 +25,7 @@ class RecurringInvoicer(models.Model):
 
     generation_date = fields.Datetime(default=fields.Datetime.now)
     invoice_ids = fields.One2many(
-        'account.invoice', 'recurring_invoicer_id',
+        'account.move', 'recurring_invoicer_id',
         'Generated invoices', readonly=False)
 
     def cancel_invoices(self):
@@ -42,13 +42,9 @@ class RecurringInvoicer(models.Model):
         return {
             'type': 'ir.actions.act_window',
             'name': _('Invoices'),
-            'view_type': 'form',
             'view_mode': 'tree,form',
-            'views': [
-                (self.env.ref('account.invoice_tree').id, 'tree'),
-                (self.env.ref('account.invoice_form').id, 'form'),
-            ],
-            'res_model': 'account.invoice',
+            'views': [[False, "tree"], [False, "form"]],
+            'res_model': 'account.move',
             'domain': [('id', 'in', self.invoice_ids.ids)],
             'target': 'current',
             'context': self.env.context,
