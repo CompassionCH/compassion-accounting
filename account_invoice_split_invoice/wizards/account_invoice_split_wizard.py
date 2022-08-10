@@ -17,11 +17,11 @@ class SplitInvoiceWizard(models.TransientModel):
     _name = 'account.invoice.split.wizard'
     _description = 'Split Invoice Wizard'
 
-    invoice_id = fields.Many2one(
-        'account.invoice', default=lambda self: self._get_invoice(), readonly=False)
+    move_id = fields.Many2one(
+        'account.move', default=lambda self: self._get_invoice(), readonly=False)
 
     invoice_line_ids = fields.Many2many(
-        'account.invoice.line', 'account_invoice_line_2_splitwizard',
+        'account.move.line', 'account_invoice_line_2_splitwizard',
         string='Invoice lines', readonly=False)
 
     @api.model
@@ -33,15 +33,15 @@ class SplitInvoiceWizard(models.TransientModel):
         invoice = False
 
         if self.invoice_line_ids:
-            old_invoice = self.invoice_line_ids[0].invoice_id
-            if old_invoice.state in ('draft', 'open'):
+            old_invoice = self.invoice_line_ids[0].move_id
+            if old_invoice.state in ('draft', 'posted'):
                 invoice = self._copy_invoice(old_invoice)
-                was_open = old_invoice.state == 'open'
+                was_open = old_invoice.state == 'posted'
                 if was_open:
                     old_invoice.action_invoice_cancel()
                     old_invoice.action_invoice_draft()
                     old_invoice.env.clear()
-                self.invoice_line_ids.write({'invoice_id': invoice.id})
+                self.invoice_line_ids.write({'move_id': invoice.id})
                 if was_open:
                     old_invoice.action_invoice_open()
                     invoice.action_invoice_open()

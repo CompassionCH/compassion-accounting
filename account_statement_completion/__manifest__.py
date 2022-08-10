@@ -8,7 +8,7 @@
 #                        /_/
 #                            in Jesus' name
 #
-#    Copyright (C) 2015 Compassion CH (http://www.compassion.ch)
+#    Copyright (C) 2014-2017 Compassion CH (http://www.compassion.ch)
 #    @author: Emanuel Cino <ecino@compassion.ch>
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -27,18 +27,22 @@
 ##############################################################################
 # pylint: disable=C8101
 {
-    'name': 'Split invoices',
-    'summary': 'Split invoices into two separate invoices',
-    'version': "14.0.1.0.0",
-    'license': 'AGPL-3',
-    'author': 'Compassion CH',
-    'website': 'http://www.compassion.ch',
-    'category': 'Accounting',
-    'depends': ['account'],
-    'external_dependencies': {},
-    'data': [
-        'views/account_invoice_split_wizard_view.xml',
-    ],
-    'demo': [],
-    'installable': True,
+    "name": "Account Statement Completion Rules",
+    "version": "14.0.1.0.0",
+    "author": "Compassion CH",
+    "category": "Finance",
+    "website": "http://www.compassion.ch",
+    "depends": [
+        'om_account_bank_statement_import',
+        'account_ebics',
+    ],  # source/addons
+    "data": ['views/completion_rules_view.xml',
+             'data/data.xml',
+             'security/ir.model.access.csv'],
+    "demo": [],
+    "test": [],
+    "license": "AGPL-3",
+    "installable": True,
+    "auto_install": False,
+    "application": False,
 }
