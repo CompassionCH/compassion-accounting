@@ -18,12 +18,6 @@ class MoveLine(models.Model):
 
     _inherit = "account.move.line"
 
-    def reconcile(self, writeoff_acc_id=False, writeoff_journal_id=False):
-        results = super().reconcile(writeoff_acc_id, writeoff_journal_id)
-        for invoice in self.mapped("invoice_id"):
-            invoice.message_post_bank_statement_notes()
-        return results
-
     def split_payment_and_reconcile(self):
         sum_credit = sum(self.mapped("credit"))
         sum_debit = sum(self.mapped("debit"))

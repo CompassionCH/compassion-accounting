@@ -262,7 +262,6 @@ class RecurringContract(models.Model):
         :return: list of dictionaries
         """
         res = list()
-        default_account = False  # self.env['account.move.line']._default_account()
         for contract_line in self.mapped('contract_line_ids'):
             product = contract_line.product_id
             inv_line_data = {
@@ -271,8 +270,7 @@ class RecurringContract(models.Model):
                 'quantity': contract_line.quantity,
                 'product_id': product.id,
                 'contract_id': contract_line.contract_id.id,
-                'account_id': product.property_account_income_id.id or
-                default_account
+                'account_id': product.property_account_income_id.id or False
             }
             res.append(inv_line_data)
         return res
@@ -307,10 +305,10 @@ class RecurringContract(models.Model):
             'type': 'ir.actions.act_window',
             'view_mode': 'tree,form',
             'views': [
-                (self.env.ref('account.invoice_tree').id, 'tree'),
-                (self.env.ref('account.invoice_form').id, 'form'),
+                (self.env.ref('account.view_move_tree').id, 'tree'),
+                (self.env.ref('account.view_move_form').id, 'form'),
             ],
-            'res_model': 'account.invoice',
+            'res_model': 'account.move',
             'domain': [('id', 'in', invoice_ids)],
             'context': self.with_context(
                 form_view_ref='account.invoice_form',

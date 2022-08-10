@@ -34,7 +34,7 @@ class ContractGroup(models.Model):
         help='Advance billing allows you to generate invoices in '
              'advance. For example, you can generate the invoices '
              'for each month of the year and send them to the '
-             'customer in january.', default=1, ondelete='no action')
+             'customer in january.', default=1)
     payment_mode_id = fields.Many2one(
         'account.payment.mode', 'Payment mode',
         domain=[('payment_type', '=', 'inbound')],
@@ -204,7 +204,7 @@ class ContractGroup(models.Model):
                             invoice = inv_obj.create(inv_data)
 
                         else:
-                            inv_to_reopen.action_invoice_draft()
+                            inv_to_reopen.action_invoice_draft()  # Check with Ema if all this is necessary
                             inv_to_reopen.env.clear()
                             old_lines = inv_to_reopen.mapped("invoice_line_ids").filtered(
                                 lambda line: line.contract_id.id in contracts.ids)
@@ -277,8 +277,8 @@ class ContractGroup(models.Model):
         contracts = contracts.with_context(journal_id=journal.id,
                                            type='out_invoice')
         inv_data = {
-            'account_id': partner.property_account_receivable_id.id,
-            'type': 'out_invoice',
+            # 'account_id': partner.property_account_receivable_id.id,
+            'move_type': 'out_invoice',
             'partner_id': partner.id,
             'journal_id': journal.id,
             'currency_id':
@@ -290,6 +290,6 @@ class ContractGroup(models.Model):
             'invoice_line_ids': [
                 (0, 0, invl) for invl in contracts.get_inv_lines_data() if invl
             ],
-            'comment': "\n".join(contracts.mapped(lambda c: c.comment or ""))
+            # 'comment': "\n".join(contracts.mapped(lambda c: c.comment or ""))
         }
         return inv_data

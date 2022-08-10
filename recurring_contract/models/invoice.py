@@ -9,6 +9,8 @@
 ##############################################################################
 
 from odoo import fields, models, api, _
+from odoo.tools import email_re, email_split, email_escape_char, float_is_zero, float_compare, \
+    pycompat, date_utils
 from odoo.exceptions import UserError
 from datetime import date
 import html
@@ -192,10 +194,12 @@ class AccountMoveLine(models.Model):
 
     due_date = fields.Date(
         related='move_id.invoice_date_due',
+        string='due date',
         readonly=True, store=True)
 
     state = fields.Selection(
         related='move_id.state',
+        string='state',
         readonly=True, store=True)
 
     def filter_for_contract_rewind(self, filter_state):
