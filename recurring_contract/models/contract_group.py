@@ -204,15 +204,14 @@ class ContractGroup(models.Model):
                             invoice = inv_obj.create(inv_data)
 
                         else:
-                            inv_to_reopen.action_invoice_draft()  # Check with Ema if all this is necessary
-                            inv_to_reopen.env.clear()
+                            inv_to_reopen.button_draft()
                             old_lines = inv_to_reopen.mapped("invoice_line_ids").filtered(
                                 lambda line: line.contract_id.id in contracts.ids)
                             old_lines.unlink()
                             inv_to_reopen.write(inv_data)
                             invoice = inv_to_reopen
                         if invoice.invoice_line_ids:
-                            invoice.action_invoice_open()
+                            invoice.action_post()
                         else:
                             invoice.unlink()
                         if not self.env.context.get('no_next_date_update'):
