@@ -111,7 +111,7 @@ class RecurringContract(models.Model):
         for contract in self:
             contract.last_paid_invoice_date = max(
                 [invl.move_id.invoice_date for invl in
-                 contract.invoice_line_ids if invl.state == 'paid'] or [False])
+                 contract.invoice_line_ids if invl.move_id.payment_state == 'paid'] or [False])
 
     def _compute_invoices(self):
         for contract in self:
@@ -489,16 +489,13 @@ class RecurringContract(models.Model):
                     # The invoice would be empty if we remove the line
                     empty_invoices |= invoice
 
-        invoices.action_invoice_cancel()
+        invoices.button_draft()
+        empty_invoices.button_cancel()
         renew_invs = invoices - empty_invoices
-        renew_invs.action_invoice_draft()
-        invoices.env.clear()
         to_remove_invl.unlink()
 
         # Invoices to set back in open state
-        self.env.clear()
-        renew_invs.action_invoice_open()
-        self.env.clear()
+        renew_invs.action_post()
 
         if clean_invoices_paid:
             paid_invoices.reconcile_after_clean()
@@ -512,17 +509,16 @@ class RecurringContract(models.Model):
         lock_date = self.mapped("company_id")[:1].period_lock_date
         invl_search = [
             ('contract_id', 'in', self.ids),
-            ('state', '!=', 'cancel'),
-            ('invoice_payment_state', '!=', 'paid')]
+            ('move_id.state', '!=', 'cancel'),
+            ('move_id.payment_state', '!=', 'paid')]
         if lock_date:
             invl_search.append(("due_date", ">", fields.Date.to_string(lock_date)))
         inv_lines = self.env['account.move.line'].search(invl_search)
         invoices = inv_lines.mapped('move_id')
-        invoices.action_invoice_cancel()
-        invoices.action_invoice_draft()
-        invoices.env.clear()
+        invoices.button_draft()
+        # TODO v14 bug: cannot remove old lines for regenerating new invoice. In the UI it works, so it's weird.
         if self._update_invoice_lines(invoices):
-            invoices.action_invoice_open()
+            invoices.action_post()
 
     def _compute_next_invoice_date(self):
         """ Compute next_invoice_date for a single contract. """

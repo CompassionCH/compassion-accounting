@@ -90,7 +90,8 @@
                                     <field name="quantity" />
                                     <field name="price_unit" />
                                     <field name="price_subtotal" />
-                                    <field name="state" />
+                                    <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'posted'"/>
+                                    <field name="payment_state" widget="badge" decoration-info="payment_state == 'in_payment'" decoration-success="payment_state == 'paid'"/>
                                 </tree>
                             </field>
                         </page>

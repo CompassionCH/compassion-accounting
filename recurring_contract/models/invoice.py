@@ -77,8 +77,8 @@ class AccountMove(models.Model):
         """
         # At first we open again the cancelled invoices
         cancel_invoices = self.filtered(lambda i: i.state == 'cancel')
-        cancel_invoices.action_invoice_draft()
-        cancel_invoices.action_invoice_open()
+        cancel_invoices.button_draft()
+        cancel_invoices.action_post()
         today = date.today()
         for partner_id in self.mapped('partner_id.id'):
             invoices = self.filtered(lambda i: i.partner_id.id == partner_id)
@@ -186,21 +186,16 @@ class AccountMove(models.Model):
 
 
 class AccountMoveLine(models.Model):
-    _name = 'account.move.line'
     _inherit = 'account.move.line'
 
     contract_id = fields.Many2one(
         'recurring.contract', 'Source contract', index=True, readonly=False)
-
     due_date = fields.Date(
         related='move_id.invoice_date_due',
         string='due date',
         readonly=True, store=True)
-
-    state = fields.Selection(
-        related='move_id.state',
-        string='state',
-        readonly=True, store=True)
+    state = fields.Selection(related="move_id.state")
+    payment_state = fields.Selection(related="move_id.payment_state")
 
     def filter_for_contract_rewind(self, filter_state):
         """
@@ -212,7 +207,7 @@ class AccountMoveLine(models.Model):
         company = self.mapped("contract_id.company_id")
         lock_date = company.period_lock_date
         return self.filtered(
-            lambda l: l.state == filter_state and
+            lambda l: l.move_id.state == filter_state and
             (not lock_date or (l.due_date and l.due_date > lock_date))
         )
 

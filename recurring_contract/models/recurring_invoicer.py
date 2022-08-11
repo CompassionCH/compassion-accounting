@@ -35,7 +35,8 @@ class RecurringInvoicer(models.Model):
         """
         invoice_to_cancel = self.mapped('invoice_ids').filtered(
             lambda invoice: invoice.state != 'cancel')
-        invoice_to_cancel.action_invoice_cancel()
+        invoice_to_cancel.button_draft()
+        invoice_to_cancel.button_cancel()
         return True
 
     def show_invoices(self):
