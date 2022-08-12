@@ -427,13 +427,13 @@ class RecurringContract(models.Model):
                  the ones we are cleaning.
         """
         # Find all paid invoice lines after the given date
-        inv_line_obj = self.env['account.invoice.line']
+        inv_line_obj = self.env['account.move.line']
         invl_search = self._filter_clean_invoices(since_date, to_date)
         inv_lines = inv_line_obj.search(invl_search)
-        move_lines = inv_lines.mapped('invoice_id.move_id.line_ids').filtered(
+        move_lines = inv_lines.mapped('move_id.line_ids').filtered(
             'reconciled')
         reconciles = inv_lines.mapped(
-            'invoice_id.payment_move_line_ids.full_reconcile_id')
+            'move_id.payment_move_line_ids.full_reconcile_id')
 
         # Unreconcile paid invoices
         move_lines |= reconciles.mapped('reconciled_line_ids')
@@ -471,9 +471,9 @@ class RecurringContract(models.Model):
         if clean_invoices_paid:
             paid_invoices = self.clean_invoices_paid(since_date, to_date)
         inv_lines = self._get_invoice_lines_to_clean(since_date, to_date)
-        invoices = inv_lines.mapped('invoice_id')
-        empty_invoices = self.env['account.invoice']
-        to_remove_invl = self.env['account.invoice.line']
+        invoices = inv_lines.mapped('move_id')
+        empty_invoices = self.env['account.move']
+        to_remove_invl = self.env['account.move.line']
 
         for inv_line in inv_lines:
             invoice = inv_line.invoice_id
@@ -516,7 +516,6 @@ class RecurringContract(models.Model):
         inv_lines = self.env['account.move.line'].search(invl_search)
         invoices = inv_lines.mapped('move_id')
         invoices.button_draft()
-        # TODO v14 bug: cannot remove old lines for regenerating new invoice. In the UI it works, so it's weird.
         if self._update_invoice_lines(invoices):
             invoices.action_post()
 
@@ -545,9 +544,7 @@ class RecurringContract(models.Model):
 
             for invoice in invoices:
                 # Generate new invoice_lines
-                old_lines = invoice.invoice_line_ids.filtered(
-                    lambda line: line.contract_id.id == contract.id)
-                old_lines.unlink()
+                invoice.line_ids.unlink()
                 journal = invoice.journal_id
                 invl = [(0, 0, l) for l in
                         contract.with_context(
@@ -577,7 +574,7 @@ class RecurringContract(models.Model):
         if to_date:
             invl_search.append(('due_date', '<=', to_date))
 
-        return self.env['account.invoice.line'].search(invl_search)
+        return self.env['account.move.line'].search(invl_search)
 
     def _filter_clean_invoices(self, since_date, to_date):
         """ Construct filter domain to be passed on method
