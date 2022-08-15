@@ -56,7 +56,6 @@
         'data/utm_data.xml',
         'data/queue_job.xml',
         'security/ir.model.access.csv',
-        'security/security.xml',
     ],
     'installable': True,
 }
