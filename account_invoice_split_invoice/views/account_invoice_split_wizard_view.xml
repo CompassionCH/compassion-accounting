@@ -8,7 +8,7 @@
                 <sheet>
                     <p>Add invoice lines you wish to move in another invoice (click on Add an item...).</p>
                     <field name="move_id" invisible="1"/>
-                    <field name="invoice_line_ids" domain="[('move_id', '=', move_ID)]">
+                    <field name="invoice_line_ids" domain="[('move_id', '=', move_id)]">
                         <tree editable="bottom" delete="false">
                             <field name="product_id" readonly="1"/>
                             <field name="name" readonly="1"/>
@@ -27,7 +27,7 @@
     </record>
     <record id="action_split_invoice_wizard" model="ir.actions.act_window">
         <field name="name">Split invoice</field>
-<!--        <field name="binding_model">account.move</field>-->
+        <field name="binding_model_id" ref="account.model_account_move"/>
         <field name="res_model">account.invoice.split.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>

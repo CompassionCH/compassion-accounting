@@ -304,16 +304,8 @@ class RecurringContract(models.Model):
             'name': _('Contract invoices'),
             'type': 'ir.actions.act_window',
             'view_mode': 'tree,form',
-            'views': [
-                (self.env.ref('account.view_move_tree').id, 'tree'),
-                (self.env.ref('account.view_move_form').id, 'form'),
-            ],
             'res_model': 'account.move',
             'domain': [('id', 'in', invoice_ids)],
-            'context': self.with_context(
-                form_view_ref='account.invoice_form',
-                search_default_invoices=True
-            ).env.context,
             'target': 'current',
         }
 
@@ -433,7 +425,7 @@ class RecurringContract(models.Model):
         move_lines = inv_lines.mapped('move_id.line_ids').filtered(
             'reconciled')
         reconciles = inv_lines.mapped(
-            'move_id.payment_move_line_ids.full_reconcile_id')
+            'move_id.line_ids.full_reconcile_id')
 
         # Unreconcile paid invoices
         move_lines |= reconciles.mapped('reconciled_line_ids')

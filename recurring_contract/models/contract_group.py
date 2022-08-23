@@ -276,7 +276,6 @@ class ContractGroup(models.Model):
         contracts = contracts.with_context(journal_id=journal.id,
                                            type='out_invoice')
         inv_data = {
-            # 'account_id': partner.property_account_receivable_id.id,
             'move_type': 'out_invoice',
             'partner_id': partner.id,
             'journal_id': journal.id,
@@ -289,6 +288,6 @@ class ContractGroup(models.Model):
             'invoice_line_ids': [
                 (0, 0, invl) for invl in contracts.get_inv_lines_data() if invl
             ],
-            # 'comment': "\n".join(contracts.mapped(lambda c: c.comment or ""))
+            'narration': "\n".join(contracts.mapped(lambda c: c.comment or ""))
         }
         return inv_data

@@ -1,5 +1,5 @@
 from . import contract_group
-from . import invoice
+from . import move
 from . import recurring_invoicer
 from . import recurring_contract
 from . import recurring_contract_line
