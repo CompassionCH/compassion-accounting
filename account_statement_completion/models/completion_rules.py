@@ -75,9 +75,9 @@ class StatementCompletionRule(models.Model):
         res = {}
         # We check only for debit entries
         if amount < 0:
-            invoice_obj = self.env['account.invoice']
+            invoice_obj = self.env['account.move']
             invoices = invoice_obj.search(
-                [('type', '=', 'in_invoice'), ('state', '=', 'open'),
+                [('move_type', '=', 'in_invoice'), ('state', '=', 'posted'),
                  ('amount_total', '=', abs(amount))])
             res = {}
             if invoices:

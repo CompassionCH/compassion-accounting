@@ -35,6 +35,7 @@
     "depends": [
         'om_account_bank_statement_import',
         'account_ebics',
+        'account_payment_order',
     ],  # source/addons
     "data": ['views/completion_rules_view.xml',
              'data/data.xml',
