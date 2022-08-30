@@ -262,7 +262,7 @@ class ContractGroup(models.Model):
              'Clean invoices')
         ]
 
-    def _get_gen_states(self):
+    def _get_gen_states(self)
         return ['active', 'waiting']
 
     def _setup_inv_data(self, journal, invoicer, contracts):
