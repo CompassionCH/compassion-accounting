@@ -38,7 +38,7 @@ class TestSplitInvoice(common.TransactionCase):
     def test_open_invoice(self):
         """ Run test for invoice in 'open' state """
         self.assertTrue(self.invoice_id)
-        invoice_obj = self.env['account.invoice']
+        invoice_obj = self.env['account.move']
         invoice = invoice_obj.browse(self.invoice_id)
         self.assertTrue(invoice)
         invoice.action_invoice_open()
@@ -55,7 +55,7 @@ class TestSplitInvoice(common.TransactionCase):
         wizard.write(
             {'invoice_line_ids': [(4, self.invoice_line_id1)]})
         invoice_new = wizard.split_invoice()
-        invoice = invoice_obj.browse(self.invoice_id)
+        invoice = invoice_obj.browse(self.move_id)
         # Test if the lines have been exactly copied
         self.assertEqual(invoice.name, original_name)
         self.assertEqual(
@@ -66,12 +66,12 @@ class TestSplitInvoice(common.TransactionCase):
         self.assertEqual(
             invoice.date_invoice, original_invoice_date)
         self.assertEqual(
-            wizard.invoice_line_ids[0].invoice_id.account_id.id,
+            wizard.invoice_line_ids[0].move_id.account_id.id,
             original_account)
         self.assertEqual(
             invoice.account_id.id, original_account)
         self.assertEqual(
-            wizard.invoice_line_ids[0].invoice_id.journal_id.id,
+            wizard.invoice_line_ids[0].move_id.journal_id.id,
             original_journal)
         self.assertEqual(
             invoice.journal_id.id, original_journal)
@@ -82,13 +82,13 @@ class TestSplitInvoice(common.TransactionCase):
 
     def test_draft_invoice(self):
         """ Run test for invoice in 'draft' state """
-        self.assertTrue(self.invoice_id1)
-        invoice_obj = self.env['account.invoice']
-        invoice = invoice_obj.browse(self.invoice_id1)
+        self.assertTrue(self.move_id1)
+        invoice_obj = self.env['account.move']
+        invoice = invoice_obj.browse(self.move_id1)
         self.assertTrue(invoice)
 
         wizard_obj = self.env['account.invoice.split.wizard'].with_context(
-            {'active_id': self.invoice_id1})
+            {'active_id': self.move_id1})
         wizard = wizard_obj.create({})
 
         original_amount = invoice.amount_total
@@ -100,26 +100,26 @@ class TestSplitInvoice(common.TransactionCase):
         wizard.write({
             'invoice_line_ids': [(4, self.invoice_line_id11)]})
         invoice_new = wizard.split_invoice()
-        invoice = invoice_obj.browse(self.invoice_id1)
+        invoice = invoice_obj.browse(self.move_id1)
         # Test if the lines have been exactly copied
         self.assertEqual(invoice.name, original_name)
         self.assertEqual(
-            wizard.invoice_line_ids[0].invoice_id.partner_id.id,
+            wizard.invoice_line_ids[0].move_id.partner_id.id,
             orginal_partner_id)
         self.assertEqual(
             invoice.partner_id.id, orginal_partner_id)
         self.assertEqual(
-            wizard.invoice_line_ids[0].invoice_id.date_invoice,
+            wizard.invoice_line_ids[0].move_id.date_invoice,
             original_invoice_date)
         self.assertEqual(
             invoice.date_invoice, original_invoice_date)
         self.assertEqual(
-            wizard.invoice_line_ids[0].invoice_id.account_id.id,
+            wizard.invoice_line_ids[0].move_id.account_id.id,
             original_account)
         self.assertEqual(
             invoice.account_id.id, original_account)
         self.assertEqual(
-            wizard.invoice_line_ids[0].invoice_id.journal_id.id,
+            wizard.invoice_line_ids[0].move_id.journal_id.id,
             original_journal)
         self.assertEqual(
             invoice.journal_id.id, original_journal)
@@ -141,25 +141,25 @@ class TestSplitInvoice(common.TransactionCase):
         }).id
         account_id = self.env['account.account'].search(
             [('internal_type', '=', 'receivable')])[0].id
-        invoice_obj = self.env['account.invoice']
-        invoice_id = invoice_obj.create({
+        invoice_obj = self.env['account.move']
+        move_id = invoice_obj.create({
             'name': invoice_name,
             'account_id': account_id,
             'currency_id': 1,
             'journal_id': 1,
             'partner_id': partner_id,
-            'date_invoice': date.today()
+            'invoice_date': date.today()
         }).id
-        return invoice_id
+        return move_id
 
-    def _create_invoice_line(self, description, amount, invoice_id):
+    def _create_invoice_line(self, description, amount, move_id):
         """ Create invoice's lines """
-        invl_obj = self.env['account.invoice.line'].with_context(
+        invl_obj = self.env['account.move.line'].with_context(
             journal_id=1)
         invoice_line_id = invl_obj.create({
             'name': description,
             'price_unit': amount,
-            'invoice_id': invoice_id,
+            'move_id': move_id,
             'account_id': invl_obj._default_account()
         }).id
         return invoice_line_id

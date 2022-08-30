@@ -1,6 +1,6 @@
 ##############################################################################
 #
-#    Copyright (C) 2014-2018 Compassion CH (http://www.compassion.ch)
+#    Copyright (C) 2014-2022 Compassion CH (http://www.compassion.ch)
 #    Releasing children from poverty in Jesus' name
 #    @author: Emanuel Cino <ecino@compassion.ch>
 #
@@ -8,7 +8,7 @@
 #
 ##############################################################################
 
-from odoo import api, models, exceptions, _
+from odoo import api, models, fields, exceptions, _
 
 
 class MoveLine(models.Model):
@@ -17,6 +17,40 @@ class MoveLine(models.Model):
     partial reconciliation. """
 
     _inherit = "account.move.line"
+
+    contract_id = fields.Many2one(
+        'recurring.contract', 'Source contract', index=True, readonly=False)
+    due_date = fields.Date(
+        related='move_id.invoice_date_due',
+        string='due date',
+        readonly=True, store=True)
+    state = fields.Selection(related="move_id.state")
+    payment_state = fields.Selection(related="move_id.payment_state")
+
+    def filter_for_contract_rewind(self, filter_state):
+        """
+        Returns a subset of invoice lines that should be used to find after which one
+        we will set the next_invoice_date of a contract.
+        :param filter_state: filter invoice lines that have the desired state
+        :return: account.invoice.line recordset
+        """
+        company = self.mapped("contract_id.company_id")
+        lock_date = company.period_lock_date
+        return self.filtered(
+            lambda l: l.move_id.state == filter_state and
+                      (not lock_date or (l.due_date and l.due_date > lock_date))
+        )
+
+    @api.onchange('product_id')
+    def _onchange_product_id(self):
+        # workaround an odoo bug :
+        # could be fixed by applying this change here
+        # - self.analytic_tag_ids = rec.analytic_tag_ids.ids
+        # + self.analytic_tag_ids = rec.analytic_tag_ids
+        # https://github.com/odoo/odoo/blame/12.0/addons/account_analytic_default/models/account_analytic_default.py#L100
+        self.analytic_tag_ids = self.env["account.analytic.tag"]
+        res = super()._onchange_product_id()
+        return res
 
     def split_payment_and_reconcile(self):
         sum_credit = sum(self.mapped("credit"))

@@ -196,7 +196,7 @@ class ContractGroup(models.Model):
                         break
                     try:
                         inv_to_reopen = cancelled_invoices.filtered(
-                            lambda inv: inv.date_invoice == current_date)
+                            lambda inv: inv.invoice_date == current_date)
 
                         inv_data = contract_group._setup_inv_data(
                             journal, invoicer, contracts)
