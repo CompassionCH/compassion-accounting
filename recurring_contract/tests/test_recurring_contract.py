@@ -316,7 +316,7 @@ class TestContractCompassion(BaseContractCompassionTest):
         self.assertEqual(contract.state, 'waiting')
 
         invoices = contract.button_generate_invoices().invoice_ids.sorted(
-            'date_invoice', reverse=True)
+            'invoice_date', reverse=True)
         nb_invoices = len(invoices)
         self.assertEqual(nb_invoices, 6)
         self.assertEqual(invoices[3].state, 'open')
@@ -496,10 +496,10 @@ class TestContractCompassion(BaseContractCompassionTest):
         self.assertEqual(len(invoices), 4)
 
         # ensure we pay the most earliest invoice
-        invoice_to_pay = self.env["account.invoice"].search([
-            ("id", "in", invoices.ids)], order="date_invoice asc", limit=1)
+        invoice_to_pay = self.env["account.move"].search([
+            ("id", "in", invoices.ids)], order="invoice_date asc", limit=1)
         self._pay_invoice(invoice_to_pay)
-        self.assertEqual(invoice_to_pay.state, "paid")
+        self.assertEqual(invoice_to_pay.invoice_state, "paid")
 
         # changing advance billing to one month
         # 2 month are now obsolete but one is paid
