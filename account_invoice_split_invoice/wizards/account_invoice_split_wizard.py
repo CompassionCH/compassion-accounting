@@ -50,6 +50,6 @@ class SplitInvoiceWizard(models.TransientModel):
     def _copy_invoice(self, old_invoice):
         # Create new invoice
         new_invoice = old_invoice.copy(
-            default={'date_invoice': old_invoice.date_invoice})
+            default={'invoice_date': old_invoice.date_invoice})
         new_invoice.invoice_line_ids.unlink()
         return new_invoice

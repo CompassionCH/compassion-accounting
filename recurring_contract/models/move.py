@@ -1,8 +1,8 @@
 ##############################################################################
 #
-#    Copyright (C) 2014 Compassion CH (http://www.compassion.ch)
+#    Copyright (C) 2014-2022 Compassion CH (http://www.compassion.ch)
 #    Releasing children from poverty in Jesus' name
-#    @author: Cyril Sester <csester@compassion.ch>
+#    @author: Cyril Sester <csester@compassion.ch>, Emanuel Cino
 #
 #    The licence is in the file __manifest__.py
 #
@@ -80,10 +80,9 @@ class AccountMove(models.Model):
         cancel_invoices.button_draft()
         cancel_invoices.action_post()
         today = date.today()
-        for partner_id in self.mapped('partner_id.id'):
-            invoices = self.filtered(lambda i: i.partner_id.id == partner_id)
-            past_invoices = invoices.filtered(
-                lambda i: i.date_invoice <= today)
+        for partner in self.mapped('partner_id'):
+            invoices = self.filtered(lambda i: i.partner_id == partner)
+            past_invoices = invoices.filtered(lambda i: i.invoice_date <= today)
             future_invoices = invoices - past_invoices
             past_amount = sum(past_invoices.mapped('amount_total'))
             future_amount = sum(future_invoices.mapped('amount_total'))
@@ -99,11 +98,11 @@ class AccountMove(models.Model):
             ])
             for payment in open_payments:
                 if not is_past_reconciled and payment.credit == past_amount:
-                    lines = past_invoices.mapped('move_id.line_ids').filtered("debit")
+                    lines = past_invoices.mapped('line_ids').filtered("debit")
                     (lines + payment).reconcile()
                     is_past_reconciled = True
                 elif not is_future_reconciled and payment.credit == future_amount:
-                    lines = future_invoices.mapped('move_id.line_ids').filtered("debit")
+                    lines = future_invoices.mapped('line_ids').filtered("debit")
                     (lines + payment).reconcile()
                     is_future_reconciled = True
 
@@ -123,7 +122,7 @@ class AccountMove(models.Model):
         partner = self.mapped('partner_id')
         partner.ensure_one()
         reconcile_amount = sum(self.mapped('amount_total'))
-        move_lines = self.mapped('move_id.line_ids').filtered('debit')
+        move_lines = self.mapped('line_ids').filtered('debit')
         payment_search = [
             ('partner_id', '=', partner.id),
             ('account_id.code', '=', '1050'),
@@ -184,40 +183,3 @@ class AccountMove(models.Model):
                     payment_amount += payment_line.credit
                 return (open_payments | move_lines).reconcile()
 
-
-class AccountMoveLine(models.Model):
-    _inherit = 'account.move.line'
-
-    contract_id = fields.Many2one(
-        'recurring.contract', 'Source contract', index=True, readonly=False)
-    due_date = fields.Date(
-        related='move_id.invoice_date_due',
-        string='due date',
-        readonly=True, store=True)
-    state = fields.Selection(related="move_id.state")
-    payment_state = fields.Selection(related="move_id.payment_state")
-
-    def filter_for_contract_rewind(self, filter_state):
-        """
-        Returns a subset of invoice lines that should be used to find after which one
-        we will set the next_invoice_date of a contract.
-        :param filter_state: filter invoice lines that have the desired state
-        :return: account.invoice.line recordset
-        """
-        company = self.mapped("contract_id.company_id")
-        lock_date = company.period_lock_date
-        return self.filtered(
-            lambda l: l.move_id.state == filter_state and
-            (not lock_date or (l.due_date and l.due_date > lock_date))
-        )
-
-    @api.onchange('product_id')
-    def _onchange_product_id(self):
-        # workaround an odoo bug :
-        # could be fixed by applying this change here
-        # - self.analytic_tag_ids = rec.analytic_tag_ids.ids
-        # + self.analytic_tag_ids = rec.analytic_tag_ids
-        # https://github.com/odoo/odoo/blame/12.0/addons/account_analytic_default/models/account_analytic_default.py#L100
-        self.analytic_tag_ids = self.env["account.analytic.tag"]
-        res = super()._onchange_product_id()
-        return res

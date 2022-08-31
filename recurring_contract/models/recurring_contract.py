@@ -270,7 +270,7 @@ class RecurringContract(models.Model):
                 'quantity': contract_line.quantity,
                 'product_id': product.id,
                 'contract_id': contract_line.contract_id.id,
-                'account_id': product.property_account_income_id.id or False
+                'account_id': product.with_company(contract_line.contract_id.company_id.id).property_account_income_id.id or False
             }
             res.append(inv_line_data)
         return res
@@ -294,8 +294,7 @@ class RecurringContract(models.Model):
 
     def button_generate_invoices(self):
         """ Immediately generate invoices of the contract group. """
-        return self.mapped('group_id').with_context(
-            async_mode=False).generate_invoices()
+        return self.mapped('group_id').with_context({"async_mode": False}).generate_invoices()
 
     def open_invoices(self):
         self.ensure_one()
