@@ -38,13 +38,12 @@ class SplitInvoiceWizard(models.TransientModel):
                 invoice = self._copy_invoice(old_invoice)
                 was_open = old_invoice.state == 'posted'
                 if was_open:
-                    old_invoice.action_invoice_cancel()
-                    old_invoice.action_invoice_draft()
+                    old_invoice.button_draft()
                     old_invoice.env.clear()
                 self.invoice_line_ids.write({'move_id': invoice.id})
                 if was_open:
-                    old_invoice.action_invoice_open()
-                    invoice.action_invoice_open()
+                    old_invoice.action_post()
+                    invoice.action_post()
         return invoice
 
     def _copy_invoice(self, old_invoice):

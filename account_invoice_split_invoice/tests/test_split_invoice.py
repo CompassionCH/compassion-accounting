@@ -41,7 +41,7 @@ class TestSplitInvoice(common.TransactionCase):
         invoice_obj = self.env['account.move']
         invoice = invoice_obj.browse(self.invoice_id)
         self.assertTrue(invoice)
-        invoice.action_invoice_open()
+        invoice.action_post()
         wizard_obj = self.env['account.invoice.split.wizard'].with_context(
             {'active_id': self.invoice_id})
         wizard = wizard_obj.create({})
