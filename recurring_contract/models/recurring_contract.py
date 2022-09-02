@@ -294,8 +294,7 @@ class RecurringContract(models.Model):
 
     def button_generate_invoices(self):
         """ Immediately generate invoices of the contract group. """
-        return self.mapped('group_id').with_context(
-            async_mode=False).generate_invoices()
+        return self.mapped('group_id').with_context({"async_mode": False}).generate_invoices()
 
     def open_invoices(self):
         self.ensure_one()
