@@ -99,7 +99,7 @@ class AccountMove(models.Model):
             ])
             for payment in open_payments:
                 if not is_past_reconciled and payment.credit == past_amount:
-                    lines = past_invoices.mapped('move_id.line_ids').filtered("debit")
+                    lines = past_invoices.mapped('line_ids').filtered("debit")
                     (lines + payment).reconcile()
                     is_past_reconciled = True
                 elif not is_future_reconciled and payment.credit == future_amount:
@@ -123,7 +123,7 @@ class AccountMove(models.Model):
         partner = self.mapped('partner_id')
         partner.ensure_one()
         reconcile_amount = sum(self.mapped('amount_total'))
-        move_lines = self.mapped('move_id.line_ids').filtered('debit')
+        move_lines = self.mapped('line_ids').filtered('debit')
         payment_search = [
             ('partner_id', '=', partner.id),
             ('account_id.code', '=', '1050'),

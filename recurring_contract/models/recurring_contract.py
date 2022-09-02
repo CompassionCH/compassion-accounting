@@ -261,7 +261,7 @@ class RecurringContract(models.Model):
         just inherit this method.
         :return: list of dictionaries
         """
-        res = list()
+        res = list()/models
         for contract_line in self.mapped('contract_line_ids'):
             product = contract_line.product_id
             inv_line_data = {
@@ -270,7 +270,7 @@ class RecurringContract(models.Model):
                 'quantity': contract_line.quantity,
                 'product_id': product.id,
                 'contract_id': contract_line.contract_id.id,
-                'account_id': product.property_account_income_id.id or False
+                'account_id': product.with_company(contract_line.contract_id.company_id.id).property_account_income_id.id or False
             }
             res.append(inv_line_data)
         return res
