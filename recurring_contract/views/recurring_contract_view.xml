@@ -70,12 +70,13 @@
                         </group>
                         <group>
                             <field name="last_paid_invoice_date"/>
+                            <field name="months_paid"/>
                             <field name="comment"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="Contract lines">
-                            <field name="contract_line_ids" widget="one2many_list" />
+                            <field name="contract_line_ids"/>
                             <group class="oe_subtotal_footer oe_right">
                                 <field name="total_amount" />
                             </group>
