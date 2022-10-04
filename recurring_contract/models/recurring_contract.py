@@ -491,8 +491,8 @@ class RecurringContract(models.Model):
         move_lines |= reconciles.mapped('reconciled_line_ids')
         move_lines.remove_move_reconcile()
 
-        return move_lines.mapped('invoice_id.invoice_line_ids').filtered(
-            lambda l: l.contract_id not in self).mapped('invoice_id')
+        return move_lines.mapped('move_id.invoice_line_ids').filtered(
+            lambda l: l.contract_id not in self).mapped('move_id')
 
     ##########################################################################
     #                             PRIVATE METHODS                            #
@@ -528,7 +528,7 @@ class RecurringContract(models.Model):
         to_remove_invl = self.env['account.move.line']
 
         for inv_line in inv_lines:
-            invoice = inv_line.invoice_id
+            invoice = inv_line.move_id
             # Check if invoice is empty after removing the invoice_lines
             # of the given contract
             if invoice not in empty_invoices:
