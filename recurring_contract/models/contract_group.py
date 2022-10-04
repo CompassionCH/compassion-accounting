@@ -276,6 +276,7 @@ class ContractGroup(models.Model):
         contracts = contracts.with_context(journal_id=journal.id,
                                            type='out_invoice')
         inv_data = {
+            'payment_reference': self.ref,
             'move_type': 'out_invoice',
             'partner_id': partner.id,
             'journal_id': journal.id,
