@@ -12,7 +12,7 @@ from odoo import api, models
 
 
 class AccountStatementImport(models.TransientModel):
-    _inherit = 'account.bank.statement.import'
+    _inherit = 'account.statement.import'
 
     @api.model
     def _complete_stmts_vals(self, stmts_vals, journal, account_number):
