@@ -276,9 +276,9 @@ class ContractGroup(models.Model):
         contracts = contracts.with_context(journal_id=journal.id,
                                            type='out_invoice')
         # Cannot create contract with different multiple (is it possible ?)
-        res = self.env['product.pricelist']. \
-            _get_partner_pricelist_multi(self.partner_id, company_id=self.contract_ids.company_id)
-        currency_id = res.get(self.partner_id).currency_id.id
+        res = self.env['product.pricelist']._get_partner_pricelist_multi([self.partner_id.id],
+                                                                         company_id=self.contract_ids.company_id)
+        currency_id = res.get(self.partner_id.id).currency_id.id
         inv_data = {
             'payment_reference': self.ref,
             'move_type': 'out_invoice',
