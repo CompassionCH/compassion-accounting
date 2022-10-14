@@ -44,7 +44,7 @@ class AccountMove(models.Model):
 
     def _get_bank_statement_notes(self):
         statement_line_ids = self.mapped("line_ids.full_reconcile_id.reconciled_line_ids.statement_line_id")
-        return statement_line_ids.filtered("note").mapped("note")
+        return statement_line_ids.filtered("narration").mapped("narration")
 
     def action_invoice_paid(self):
         """ Call invoice_paid method on related contracts. """

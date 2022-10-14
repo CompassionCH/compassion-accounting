@@ -91,6 +91,20 @@ class RecurringContract(models.Model):
         default=lambda self: self.env.user.company_id.id, readonly=False
     )
     comment = fields.Text()
+    due_invoice_ids = fields.Many2many(
+        "account.move", string="Late invoices", compute="_compute_due_invoices", store=True
+    )
+    amount_due = fields.Integer(compute="_compute_due_invoices", store=True)
+    months_due = fields.Integer(
+        compute="_compute_due_invoices", store=True,
+        help="Number of unpaid months (in the past)")
+    period_paid = fields.Boolean(
+        compute="_compute_period_paid",
+        help="Tells if the advance billing period is already paid",
+    )
+    months_paid = fields.Integer(
+        compute="_compute_months_paid",
+        help="Number indicating up to which month the contract is paid (<1=prev. year,1=Jan,12=December,>12=next year)")
 
     _sql_constraints = [
         ('unique_ref', "unique(reference)", "Reference must be unique!")
@@ -119,6 +133,53 @@ class RecurringContract(models.Model):
                 contract.mapped('invoice_line_ids.move_id').filtered(
                     lambda i: i.state not in ('cancel', 'draft')
                 ))
+
+    @api.depends("invoice_line_ids", "invoice_line_ids.payment_state")
+    def _compute_due_invoices(self):
+        for contract in self:
+            due_invoices = contract._filter_due_invoices()
+            contract.due_invoice_ids = due_invoices
+            contract.amount_due = int(sum(due_invoices.mapped("amount_total")))
+            months = set()
+            for invoice in due_invoices:
+                idate = invoice.date
+                months.add((idate.month, idate.year))
+            contract.months_due = len(months)
+
+    def _filter_due_invoices(self):
+        this_month = date.today().replace(day=1)
+        return self.mapped("invoice_line_ids.move_id").filtered(
+            lambda m: m.payment_state != "paid" and m.invoice_date_due < this_month)
+
+    def _compute_period_paid(self):
+        for contract in self:
+            advance_billing = contract.group_id.advance_billing_months
+            this_month = date.today().month
+            # Don't consider next year in the period to pay
+            to_pay_period = min(this_month + advance_billing, 12)
+            # Exception for december, we will consider next year
+            if this_month == 12:
+                to_pay_period += advance_billing
+            contract.period_paid = contract.months_paid >= to_pay_period
+
+    def _compute_months_paid(self):
+        """This is a query returning the number of months paid."""
+        self._cr.execute(
+            "SELECT id as contract_id, "
+            "12 * (EXTRACT(year FROM next_invoice_date) - "
+            "      EXTRACT(year FROM current_date))"
+            " + EXTRACT(month FROM next_invoice_date) - 1"
+            " - months_due as paidmonth "
+            "FROM recurring_contract "
+            "WHERE id = ANY (%s)",
+            [self.ids],
+        )
+        res = self._cr.dictfetchall()
+        dict_contract_id_paidmonth = {
+            row["contract_id"]: int(row["paidmonth"] or 0) for row in res
+        }
+        for contract in self:
+            contract.months_paid = dict_contract_id_paidmonth.get(contract.id)
 
     @api.model
     def _default_next_invoice_date(self):
@@ -154,11 +215,16 @@ class RecurringContract(models.Model):
         if "partner_id" in vals:
             self.mapped("group_id").write({"partner_id": vals["partner_id"]})
             clean_is_done = "clean_invoices" in self.mapped("group_id.change_method")
-
+        
         if 'contract_line_ids' in vals and not clean_is_done:
+            context = dict(self.env.context)
+            default_type =context.pop('default_type')
+            self.env.context = context
             self._on_contract_lines_changed()
+            context['default_type'] = default_type
+            self.env.context = context
             clean_is_done = True
-
+        
         if ("group_id" in vals or "partner_id" in vals) and not clean_is_done:
             self.group_id.clean_invoices()
 
@@ -430,8 +496,8 @@ class RecurringContract(models.Model):
         move_lines |= reconciles.mapped('reconciled_line_ids')
         move_lines.remove_move_reconcile()
 
-        return move_lines.mapped('invoice_id.invoice_line_ids').filtered(
-            lambda l: l.contract_id not in self).mapped('invoice_id')
+        return move_lines.mapped('move_id.invoice_line_ids').filtered(
+            lambda l: l.contract_id not in self).mapped('move_id')
 
     ##########################################################################
     #                             PRIVATE METHODS                            #
@@ -467,7 +533,7 @@ class RecurringContract(models.Model):
         to_remove_invl = self.env['account.move.line']
 
         for inv_line in inv_lines:
-            invoice = inv_line.invoice_id
+            invoice = inv_line.move_id
             # Check if invoice is empty after removing the invoice_lines
             # of the given contract
             if invoice not in empty_invoices:

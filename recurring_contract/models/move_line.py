@@ -18,14 +18,10 @@ class MoveLine(models.Model):
 
     _inherit = "account.move.line"
 
-    contract_id = fields.Many2one(
-        'recurring.contract', 'Source contract', index=True, readonly=False)
-    due_date = fields.Date(
-        related='move_id.invoice_date_due',
-        string='due date',
-        readonly=True, store=True)
+    contract_id = fields.Many2one('recurring.contract', 'Source contract', index=True)
+    due_date = fields.Date(related='move_id.invoice_date_due', store=True, readonly=True, index=True)
     state = fields.Selection(related="move_id.state")
-    payment_state = fields.Selection(related="move_id.payment_state")
+    payment_state = fields.Selection(related="move_id.payment_state", store=True, readonly=True, index=True)
 
     def filter_for_contract_rewind(self, filter_state):
         """
