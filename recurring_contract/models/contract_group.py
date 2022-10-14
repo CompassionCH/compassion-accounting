@@ -175,7 +175,7 @@ class ContractGroup(models.Model):
             # After a ContractGroup is done, we commit all writes in order to
             # avoid doing it again in case of an error or a timeout
             if not test_mode:
-                self.env.cr.commit()    # pylint: disable=invalid-commit
+                self.env.cr.commit()  # pylint: disable=invalid-commit
             logger.info(f"Generating invoices for group {count}/{nb_groups}")
             month_delta = contract_group.advance_billing_months or 1
             limit_date = date.today() + relativedelta(months=+month_delta)
@@ -275,13 +275,16 @@ class ContractGroup(models.Model):
         # set context for invoice_line creation
         contracts = contracts.with_context(journal_id=journal.id,
                                            type='out_invoice')
+        # Cannot create contract with different multiple (is it possible ?)
+        res = self.env['product.pricelist']. \
+            _get_partner_pricelist_multi(self.partner_id, company_id=self.contract_ids.company_id)
+        currency_id = res.get(self.partner_id).currency_id.id
         inv_data = {
             'payment_reference': self.ref,
             'move_type': 'out_invoice',
             'partner_id': partner.id,
             'journal_id': journal.id,
-            'currency_id':
-                partner.property_product_pricelist.currency_id.id,
+            'currency_id': currency_id,
             'invoice_date': min(contracts.mapped("next_invoice_date")),
             'recurring_invoicer_id': invoicer.id,
             'payment_mode_id': self.payment_mode_id.id,
