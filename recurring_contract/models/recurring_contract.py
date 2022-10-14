@@ -215,11 +215,16 @@ class RecurringContract(models.Model):
         if "partner_id" in vals:
             self.mapped("group_id").write({"partner_id": vals["partner_id"]})
             clean_is_done = "clean_invoices" in self.mapped("group_id.change_method")
-
+        
         if 'contract_line_ids' in vals and not clean_is_done:
+            context = dict(self.env.context)
+            default_type =context.pop('default_type')
+            self.env.context = context
             self._on_contract_lines_changed()
+            context['default_type'] = default_type
+            self.env.context = context
             clean_is_done = True
-
+        
         if ("group_id" in vals or "partner_id" in vals) and not clean_is_done:
             self.group_id.clean_invoices()
 
