@@ -33,7 +33,7 @@
     "category": "Finance",
     "website": "http://www.compassion.ch",
     "depends": [
-        'bank_statement_import',
+        'account_statement_import',
         'account_payment_order',
     ],  # source/addons
     "data": ['views/completion_rules_view.xml',
