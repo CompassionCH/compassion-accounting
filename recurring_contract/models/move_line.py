@@ -78,7 +78,7 @@ class MoveLine(models.Model):
         if payment:
             payment_lines = payment.move_line_ids
             payment.move_line_ids = False
-        move.button_cancel()
+        move.button_draft()
         move.write(
             {
                 "line_ids": [
@@ -101,7 +101,7 @@ class MoveLine(models.Model):
                 ]
             }
         )
-        move.post()
+        move.action_post()
         if payment:
             payment.move_line_ids = payment_lines
 
