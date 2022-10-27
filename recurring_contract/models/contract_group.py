@@ -49,7 +49,7 @@ class ContractGroup(models.Model):
     partner_id = fields.Many2one(
         'res.partner', 'Partner', required=True,
         ondelete='cascade', tracking=True, readonly=False)
-    ref = fields.Char('Reference', default="/")
+    ref = fields.Char('Reference')
     recurring_unit = fields.Selection([
         ('day', _('Day(s)')),
         ('week', _('Week(s)')),
