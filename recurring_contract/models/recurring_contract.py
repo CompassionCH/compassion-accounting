@@ -391,10 +391,12 @@ class RecurringContract(models.Model):
             raise UserError(_("Active contract cannot be put to waiting"))
         if self.filtered(lambda c: not c.total_amount):
             raise UserError(_("Please configure contract lines"))
-        return self.write({
+        self.write({
             'state': 'waiting',
             'start_date': fields.Datetime.now()
         })
+        self.mapped("group_id").generate_invoices()
+        return True
 
     def contract_active(self):
         if self.filtered(lambda c: c.state != 'waiting'):
