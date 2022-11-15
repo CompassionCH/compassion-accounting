@@ -16,6 +16,7 @@ from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+from odoo.tools import flatten
 
 _logger = logging.getLogger(__name__)
 
@@ -147,9 +148,18 @@ class RecurringContract(models.Model):
             contract.months_due = len(months)
 
     def _filter_due_invoices(self):
+        # Use SQL for better performance
         this_month = date.today().replace(day=1)
-        return self.mapped("invoice_line_ids.move_id").filtered(
-            lambda m: m.payment_state != "paid" and m.invoice_date_due < this_month)
+        self.env.cr.execute("""
+            SELECT move_id
+            FROM account_move_line
+            WHERE contract_id = ANY(%s) AND payment_state != 'paid' AND due_date < %s;
+        """, [self.ids, fields.Date.to_string(this_month)])
+        move_ids = flatten(self.env.cr.fetchall())
+        moves = self.env["account.move"]
+        if move_ids:
+            moves = moves.browse(move_ids)
+        return moves
 
     def _compute_period_paid(self):
         for contract in self:
