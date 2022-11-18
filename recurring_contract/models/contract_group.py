@@ -225,16 +225,16 @@ class ContractGroup(models.Model):
                             f'failed during invoice generation',
                             exc_info=True)
                         break
-                # Update old invoices that hasn't been paid or futur invoices in case the user has updated the frequency to a lower one
-                invoices = self.env['account.move'].search([('payment_state', '=', 'not_paid'),
-                                                            ('partner_id', '=', contract_group.partner_id.id)
-                                                            ])
-                if invoices:
-                    invoices.write({
-                        'payment_reference': contract_group.ref,
-                        'payment_mode_id': contract_group.payment_mode_id
-                    })
             count += 1
+            # Update old invoices that hasn't been paid or futur invoices in case the user has updated the frequency to a lower one
+            invoices = self.env['account.move'].search([('payment_state', '=', 'not_paid'),
+                                                        ('partner_id', '=', contract_group.partner_id.id)
+                                                        ])
+            if invoices:
+                invoices.write({
+                    'payment_reference': contract_group.ref,
+                    'payment_mode_id': contract_group.payment_mode_id
+                })
         logger.info("Invoice generation successfully finished.")
         return invoicer
 
