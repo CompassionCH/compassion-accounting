@@ -300,7 +300,7 @@ class RecurringContract(models.Model):
                 # if there is only open invoice we are looking for the
                 # oldest one (within the range)
                 earliest_open_invoice_date = min(
-                    contract.invoice_line_ids.filter_for_contract_rewind("open")
+                    contract.invoice_line_ids.filter_for_contract_rewind("not_paid")
                     .mapped("move_id.invoice_date") or [False])
 
                 rewind_invoice_date = latest_paid_invoice_date + \
@@ -315,7 +315,7 @@ class RecurringContract(models.Model):
                 else:
                     # No open/paid invoices, look for cancelled ones
                     rewind_invoice_date = min(
-                        contract.invoice_line_ids.filter_for_contract_rewind("cancel")
+                        contract.invoice_line_ids.filter_for_contract_rewind("reversed")
                         .mapped("move_id.invoice_date") or [False]
                     )
 

@@ -27,14 +27,14 @@ class MoveLine(models.Model):
         """
         Returns a subset of invoice lines that should be used to find after which one
         we will set the next_invoice_date of a contract.
-        :param filter_state: filter invoice lines that have the desired state
+        :param filter_state: filter invoice lines that have the desired payment_state
         :return: account.invoice.line recordset
         """
         company = self.mapped("contract_id.company_id")
         lock_date = company.period_lock_date
         return self.filtered(
-            lambda l: l.move_id.state == filter_state and
-                      (not lock_date or (l.due_date and l.due_date > lock_date))
+            lambda l: l.payment_state == filter_state and
+            (not lock_date or (l.due_date and l.due_date > lock_date))
         )
 
     @api.onchange('product_id')
