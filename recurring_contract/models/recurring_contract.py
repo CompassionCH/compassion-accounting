@@ -303,7 +303,10 @@ class RecurringContract(models.Model):
                     contract.invoice_line_ids.filter_for_contract_rewind("not_paid")
                     .mapped("move_id.invoice_date") or [False])
 
-                rewind_invoice_date = earliest_open_invoice_date
+                rewind_invoice_date = latest_paid_invoice_date + \
+                                      contract.group_id.get_relative_delta() \
+                    if latest_paid_invoice_date else earliest_open_invoice_date
+
                 if not rewind_invoice_date:
                     # No open/paid invoices, look for cancelled ones
                     rewind_invoice_date = min(
