@@ -91,6 +91,13 @@ class RecurringContract(models.Model):
         required=True,
         default=lambda self: self.env.user.company_id.id, readonly=False
     )
+    pricelist_id = fields.Many2one(
+        'product.pricelist',
+        'Pricelist',
+        domain="[('company_id', '=', company_id)]",
+        required=True,
+        readonly=False
+    )
     comment = fields.Text()
     due_invoice_ids = fields.Many2many(
         "account.move", string="Late invoices", compute="_compute_due_invoices", store=True
@@ -370,6 +377,20 @@ class RecurringContract(models.Model):
             self.group_id = False
         if self.partner_id.company_id:
             self.company_id = self.partner_id.company_id
+
+    @api.onchange('company_id')
+    def on_change_company_id(self):
+        """ On company change, we update the pricelist_id dropdown list.
+        So that the list offers company currency or EUR as a choice """
+        pricelist = self.env["product.pricelist"].search([('company_id', '=', self.company_id.id)])
+
+        # Set pricelist if there is a result
+        if pricelist:
+            # Take first result
+            self.pricelist_id = pricelist[0]
+        # Unset pricelist_id if the company selected doesn't have one
+        else:
+            self.pricelist_id = False
 
     def button_generate_invoices(self):
         """ Immediately generate invoices of the contract group. """
