@@ -375,8 +375,17 @@ class RecurringContract(models.Model):
             self.group_id = group_ids
         else:
             self.group_id = False
-        if self.partner_id.company_id:
-            self.company_id = self.partner_id.company_id
+
+        # Partners have a country_id set instead of a company_id
+        # To get their company, we need to find a same country_id.currency as a company_id.currency_id
+        if self.partner_id.country_id.currency_id:
+            country_currency_id = self.partner_id.country_id.currency_id
+
+            company_ids = self.env['res.company'].search(
+                [('currency_id', '=', country_currency_id.id)]
+            )
+            # Take first result
+            self.company_id = company_ids[0]
 
     @api.onchange('company_id')
     def on_change_company_id(self):
