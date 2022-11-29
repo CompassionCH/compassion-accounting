@@ -207,7 +207,7 @@ class ContractGroup(models.Model):
                             inv_to_reopen.button_draft()
                             old_lines = inv_to_reopen.mapped("invoice_line_ids").filtered(
                                 lambda line: line.contract_id.id in contracts.ids)
-                            old_lines.unlink()
+                            old_lines.with_context(check_move_validity=False).unlink()
                             inv_to_reopen.write(inv_data)
                             invoice = inv_to_reopen
                         if invoice.invoice_line_ids:

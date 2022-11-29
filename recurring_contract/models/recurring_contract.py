@@ -307,24 +307,19 @@ class RecurringContract(models.Model):
                                       contract.group_id.get_relative_delta() \
                     if latest_paid_invoice_date else earliest_open_invoice_date
 
-                if rewind_invoice_date:
-                    res |= contract._clean_invoices(rewind_invoice_date)
-                    contract.with_context(no_clean_on_write=True).write({
-                        "next_invoice_date": rewind_invoice_date
-                    })
-                else:
+                if not rewind_invoice_date:
                     # No open/paid invoices, look for cancelled ones
                     rewind_invoice_date = min(
                         contract.invoice_line_ids.filter_for_contract_rewind("reversed")
                         .mapped("move_id.invoice_date") or [False]
                     )
 
-                    if rewind_invoice_date:
-                        res |= contract._clean_invoices(rewind_invoice_date)
-                        contract.with_context(no_clean_on_write=True).write({
-                            "next_invoice_date": rewind_invoice_date
-                        })
-
+                # Behaviour common to the two ways of getting the rewind_invoice_date
+                if rewind_invoice_date:
+                    res |= contract._clean_invoices(rewind_invoice_date)
+                    contract.with_context(no_clean_on_write=True).write({
+                        "next_invoice_date": rewind_invoice_date
+                    })
         return res
 
     def update_next_invoice_date(self):
