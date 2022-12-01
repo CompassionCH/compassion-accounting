@@ -152,11 +152,6 @@ msgid "Generate every"
 msgstr "Générer chaque"
 
 #. module: recurring_contract
-#: field:recurring.contract.group,change_method:0
-msgid "Change method"
-msgstr "Application des changements"
-
-#. module: recurring_contract
 #: view:recurring.contract:0
 msgid "Draft Contracts"
 msgstr "Contrat en brouillon"

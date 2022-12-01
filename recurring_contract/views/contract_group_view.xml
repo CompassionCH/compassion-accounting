@@ -15,7 +15,6 @@
                     <h1><field name="ref" /></h1>
                     <group name="info">
                         <group>
-                            <field name="change_method"/>
                             <label for="recurring_value" />
                             <div>
                                 <field name="recurring_value" class="oe_inline" />
