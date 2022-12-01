@@ -9,7 +9,6 @@
 ##############################################################################
 
 import logging
-
 from datetime import datetime, date
 
 from dateutil.relativedelta import relativedelta
@@ -221,25 +220,10 @@ class RecurringContract(models.Model):
 
         res = super().write(vals)
 
-        clean_is_done = False
         if "partner_id" in vals:
             self.mapped("group_id").write({"partner_id": vals["partner_id"]})
-            clean_is_done = "clean_invoices" in self.mapped("group_id.change_method")
 
-        if 'contract_line_ids' in vals and not clean_is_done:
-            context = dict(self.env.context)
-            default_type = None
-            if 'default_type' in context:
-                default_type = context.pop('default_type')
-                self.env.context = context
-            self._on_contract_lines_changed()
-            if default_type is not None:
-                context['default_type'] = default_type
-            self.env.context = context
-            clean_is_done = True
-
-        if ("group_id" in vals or "partner_id" in vals) and not clean_is_done:
-            self.group_id.clean_invoices()
+        self._updt_invoices_rc(vals)
 
         return res
 
@@ -368,9 +352,9 @@ class RecurringContract(models.Model):
 
     def button_generate_invoices(self):
         """ Immediately generate invoices of the contract group. """
-        return self.mapped('group_id')\
-            .with_context({"async_mode": False})\
-            .with_company(self.company_id)\
+        return self.mapped('group_id') \
+            .with_context({"async_mode": False}) \
+            .with_company(self.company_id) \
             .generate_invoices()
 
     def open_invoices(self):
@@ -657,3 +641,33 @@ class RecurringContract(models.Model):
         if to_date:
             invl_search.append(('due_date', '<=', to_date))
         return invl_search
+
+    def _updt_invoices_rc(self, vals):
+        """
+        It updates the invoices of a contract when the contract is updated
+
+        :param vals: the values that are being updated on the contract
+        """
+        self.ensure_one()
+        if "contract_line_ids" in vals or "group_id" in vals:
+            invoices = self.env['account.move'].search([("partner_id", "in", self.mapped("partner_id").ids),
+                                                        ("move_type", "=", "out_invoice"),
+                                                        ("payment_state", "=", "not_paid"),
+                                                        ("invoice_line_ids.product_id.default_code", "in",
+                                                         ["sponsorship", "sponsorship_ldp", "fund_gen"]),
+                                                        ("invoice_line_ids.contract_id", "in", self.ids)
+                                                        ])
+            if invoices:
+                data_invs = dict()
+                for inv in invoices:
+                    line_data = dict()
+                    for line in self.contract_line_ids:
+                        line_data[line.product_id] = {"amt": line.subtotal, "contract": self}
+                    data_invs.update(
+                        inv._build_invoice_data(
+                            inv_lines=line_data,
+                            ref=self.group_id.ref,
+                            pay_mode_id=self.group_id.payment_mode_id
+                        )
+                    )
+                invoices.update_invoices(data_invs)

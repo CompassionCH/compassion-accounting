@@ -8,13 +8,15 @@
 #
 ##############################################################################
 
-from odoo.tools import DEFAULT_SERVER_DATE_FORMAT as DF
-from odoo import fields
-from odoo.tests.common import TransactionCase
 import logging
 import random
 import string
 from datetime import datetime
+
+from odoo import fields
+from odoo.tests.common import TransactionCase
+from odoo.tools import DEFAULT_SERVER_DATE_FORMAT as DF
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,7 +34,6 @@ class BaseContractTest(TransactionCase):
             'account_payment_mode.payment_mode_inbound_ct2')
         self.product = self.env.ref('product.product_product_6')
         # Make all journals cancellable
-        self.env['account.journal'].search([]).write({'update_posted': True})
 
     def ref(self, length):
         return ''.join(random.choice(string.ascii_lowercase)
@@ -42,7 +43,6 @@ class BaseContractTest(TransactionCase):
         base_vals = {
             'advance_billing_months': 1,
             'payment_mode_id': self.payment_mode.id,
-            'change_method': 'do_nothing',
             'recurring_value': 1,
             'recurring_unit': 'month',
         }
@@ -52,7 +52,6 @@ class BaseContractTest(TransactionCase):
     def create_contract(self, vals, line_vals):
         name = self.ref(10)
         base_vals = {
-            'name': name,
             'reference': name,
             'next_invoice_date': fields.Date.today(),
             'state': 'draft',
@@ -168,7 +167,6 @@ class TestRecurringContract(BaseContractTest):
         # Changement of the payment option
         group.write(
             {
-                'change_method': 'clean_invoices',
                 'recurring_value': 2,
                 'recurring_unit': 'week',
                 'advance_billing_months': 2,
@@ -258,12 +256,7 @@ class TestRecurringContract(BaseContractTest):
 
 class BaseContractCompassionTest(BaseContractTest):
     def create_contract(self, vals, line_vals):
-        # Add default values
-        default_values = {
-            'type': 'O'
-        }
-        default_values.update(vals)
-        return super().create_contract(default_values, line_vals)
+        return super().create_contract(vals, line_vals)
 
     def _pay_invoice(self, invoice):
         bank_journal = self.env['account.journal'].search(
@@ -385,7 +378,7 @@ class TestContractCompassion(BaseContractCompassionTest):
             },
             [{'amount': 60.0, 'quantity': 2}])
         contract.contract_waiting()
-        invoices = contract.button_generate_invoices().invoice_ids
+        invoices = self.env['account.move'].search([(1, "=", 1)])
         self.assertEqual(len(invoices), 2)
         self._pay_invoice(invoices[1])
         # Updating of the contract
@@ -450,7 +443,6 @@ class TestContractCompassion(BaseContractCompassionTest):
         contract_group = self.create_group(
             {
                 "partner_id": self.michel.id,
-                "change_method": "clean_invoices"
             }
         )
         contract = self.create_contract(
@@ -478,7 +470,6 @@ class TestContractCompassion(BaseContractCompassionTest):
         contract_group = self.create_group(
             {
                 "partner_id": self.michel.id,
-                "change_method": "clean_invoices",
                 "advance_billing_months": 3
             }
         )
@@ -528,7 +519,6 @@ class TestContractCompassion(BaseContractCompassionTest):
         contract_group = self.create_group(
             {
                 "partner_id": self.michel.id,
-                "change_method": "clean_invoices",
                 "advance_billing_months": 1
             }
         )
@@ -568,7 +558,6 @@ class TestContractCompassion(BaseContractCompassionTest):
         contract_group = self.create_group(
             {
                 "partner_id": self.michel.id,
-                "change_method": "clean_invoices",
                 "advance_billing_months": 3
             }
         )
