@@ -107,8 +107,7 @@ class TestRecurringContract(BaseContractTest):
         # To generate invoices, the contract must be "waiting"
         contract.contract_waiting()
         self.assertEqual(contract.state, 'waiting')
-        invoicer_id = contract.button_generate_invoices()
-        invoices = invoicer_id.invoice_ids
+        invoices = self.env['account.move'].search([(1, "=", 1)])
         nb_invoice = len(invoices)
         # 2 invoices must be generated with our parameters
         self.assertEqual(nb_invoice, 2)
@@ -156,8 +155,7 @@ class TestRecurringContract(BaseContractTest):
         contract2.contract_waiting()
         self.assertEqual(contract2.state, 'waiting')
         invoicer_obj = self.env['recurring.invoicer']
-        invoicer_id = contract2.button_generate_invoices()
-        invoices = invoicer_id.invoice_ids
+        invoices = self.env['account.move'].search([(1, "=", 1)])
         nb_invoice = len(invoices)
         self.assertEqual(nb_invoice, 2)
         invoice_fus = invoices[-1]
@@ -197,8 +195,9 @@ class TestRecurringContract(BaseContractTest):
 
     def test_generated_invoice_third_scenario(self):
         """
-            Creation of several contracts of the same group to test the case
-            if we cancel one of the contracts if invoices are still correct.
+        It creates a group of contracts, then it creates 3 contracts in the group.
+        Then it creates a wizard to generate invoices. Then it cancels the third contract.
+        Then it checks if the invoice is well updated.
         """
         group = self.create_group({'partner_id': self.michel.id})
         contract = self.create_contract(
@@ -234,9 +233,7 @@ class TestRecurringContract(BaseContractTest):
         contract2.contract_waiting()
         contract3.contract_waiting()
         # Creation of a wizard to generate invoices
-        invoicer = group.generate_invoices()
-        invoices = invoicer.invoice_ids
-        invoice = invoices[0]
+        invoice = self.env['account.move'].search([(1, "=", 1)], limit=1)
 
         # We put the third contract in terminate state to see if
         # the invoice is well updated
@@ -264,7 +261,7 @@ class BaseContractCompassionTest(BaseContractTest):
         payment = self.env['account.payment'].create({
             'journal_id': bank_journal.id,
             'amount': invoice.amount_total,
-            'payment_date': invoice.date_due,
+            'payment_date': invoice.date,
             'payment_type': 'inbound',
             'payment_method_id': bank_journal.inbound_payment_method_ids[0].id,
             'partner_type': 'customer',
@@ -308,7 +305,7 @@ class TestContractCompassion(BaseContractCompassionTest):
         contract.contract_waiting()
         self.assertEqual(contract.state, 'waiting')
 
-        invoices = contract.button_generate_invoices().invoice_ids.sorted(
+        invoices = self.env['account.move'].search([(1, "=", 1)]).sorted(
             'invoice_date', reverse=True)
         nb_invoices = len(invoices)
         self.assertEqual(nb_invoices, 6)
@@ -346,7 +343,7 @@ class TestContractCompassion(BaseContractCompassionTest):
 
         # Switch to "waiting for payment" state
         contract.contract_waiting()
-        invoices = contract.button_generate_invoices().invoice_ids
+        invoices = self.env['account.move'].search([(1, "=", 1)])
         self.assertEqual(len(invoices), 2)
         self.assertEqual(invoices[0].state, 'open')
         self.assertEqual(invoices[1].state, 'open')
@@ -455,7 +452,7 @@ class TestContractCompassion(BaseContractCompassionTest):
         total_amount = contract.total_amount
 
         contract.contract_waiting()
-        invoices = contract.button_generate_invoices().invoice_ids
+        invoices = self.env['account.move'].search([(1, "=", 1)])
 
         self.assertEqual(len(invoices), 2)
 
@@ -482,7 +479,7 @@ class TestContractCompassion(BaseContractCompassionTest):
 
         contract.contract_waiting()
 
-        invoices = contract.button_generate_invoices().invoice_ids
+        invoices = self.env['account.move'].search([(1, "=", 1)])
 
         self.assertEqual(len(invoices), 4)
 
@@ -569,7 +566,7 @@ class TestContractCompassion(BaseContractCompassionTest):
             [{"amount": 50.0}])
 
         contract.contract_waiting()
-        invoices = contract.button_generate_invoices().invoice_ids
+        invoices = self.env['account.move'].search([(1, "=", 1)])
 
         sorted_invoices = sorted(invoices, key=lambda e: e.date)
 
