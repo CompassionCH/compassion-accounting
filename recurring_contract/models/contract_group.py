@@ -13,7 +13,7 @@ from datetime import datetime, date
 
 from dateutil.relativedelta import relativedelta
 
-from odoo import api, fields, models, _
+from odoo import fields, models, _
 from odoo.tools import config
 
 logger = logging.getLogger(__name__)
@@ -43,9 +43,6 @@ class ContractGroup(models.Model):
     last_paid_invoice_date = fields.Date(
         compute='_compute_last_paid_invoice',
         string='Last paid invoice date')
-
-    change_method = fields.Selection(
-        '_get_change_methods', default='do_nothing')
     partner_id = fields.Many2one(
         'res.partner', 'Partner', required=True,
         ondelete='cascade', tracking=True, readonly=False)
@@ -80,17 +77,11 @@ class ContractGroup(models.Model):
             Perform various check at contract modifications
             - Advance billing increased or decrease
             - Recurring value or unit changes
-            - Another change method was selected
         """
         res = True
         for group in self:
-            # Get the method to apply changes
-            change_method = vals.get('change_method', group.change_method)
-            change_method = getattr(group, change_method)
-
-            res = super(ContractGroup, group).write(vals) & res
-            change_method()
-
+            super(ContractGroup, group).write(vals)
+            group._updt_invoices_cg(vals)
         return res
 
     ##########################################################################
@@ -262,15 +253,6 @@ class ContractGroup(models.Model):
         ))
         return res
 
-    def _get_change_methods(self):
-        """ Method for applying changes """
-        return [
-            ('do_nothing',
-             'Nothing'),
-            ('clean_invoices',
-             'Clean invoices')
-        ]
-
     def _get_gen_states(self):
         return ['active', 'waiting']
 
@@ -304,3 +286,25 @@ class ContractGroup(models.Model):
             'narration': "\n".join(contracts.mapped(lambda c: c.comment or ""))
         }
         return inv_data
+
+    def _updt_invoices_cg(self, vals):
+        """ method to update invoices on contrat group (cg)
+            :params vals dict of value that has been modified on the cg
+        """
+        self.ensure_one()
+        if "ref" in vals or "payment_mode_id" in vals or "advance_biling_months" in vals:
+            invoices = self.env['account.move'].search([("partner_id", "=", self.partner_id.id),
+                                                        ("move_type", "=", "out_invoice"),
+                                                        ("payment_state", "=", "not_paid"),
+                                                        ("invoice_line_ids.contract_id", "in", self.contract_ids.ids)
+                                                        ])
+            if invoices:
+                data_invs = dict()
+                for inv in invoices:
+                    data_invs.update(
+                        inv._build_invoice_data(
+                            ref=vals.get("ref"),
+                            pay_mode_id=vals.get("payment_mode_id")
+                        )
+                    )
+                invoices.update_invoices(data_invs)

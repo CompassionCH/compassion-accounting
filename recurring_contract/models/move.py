@@ -8,12 +8,11 @@
 #
 ##############################################################################
 
-from odoo import fields, models, api, _
-from odoo.tools import email_re, email_split, email_escape_char, float_is_zero, float_compare, \
-    pycompat, date_utils
-from odoo.exceptions import UserError
-from datetime import date
 import html
+from datetime import date
+
+from odoo import fields, models, _
+from odoo.exceptions import UserError
 
 
 class AccountMove(models.Model):
@@ -136,7 +135,7 @@ class AccountMove(models.Model):
             order='date asc', limit=1)
         if payment_greater_than_reconcile:
             # Split the payment move line to isolate reconcile amount
-            return (payment_greater_than_reconcile | move_lines)\
+            return (payment_greater_than_reconcile | move_lines) \
                 .split_payment_and_reconcile()
         else:
             # Group several payments to match the invoiced amount
@@ -159,7 +158,7 @@ class AccountMove(models.Model):
                     return  # if we reach the number why bother to continue
 
                 for i in range(len(numbers)):
-                    ret = find_sum(numbers[i+1:], target,
+                    ret = find_sum(numbers[i + 1:], target,
                                    partial + [numbers[i]])
                     if ret is not None:
                         return ret
@@ -178,8 +177,100 @@ class AccountMove(models.Model):
                     if payment_line.credit > missing_amount:
                         # Split last added line amount to perfectly match
                         # the total amount we are looking for
-                        return (open_payments[:index + 1] | move_lines)\
+                        return (open_payments[:index + 1] | move_lines) \
                             .split_payment_and_reconcile()
                     payment_amount += payment_line.credit
                 return (open_payments | move_lines).reconcile()
 
+    def update_invoices(self, updt_val):
+        """
+        It updates the invoices in self with the value of updt_val
+
+        :param updt_val: a dictionary of invoices values with the invoice name
+        which refer to another dictionnary of values for that invoice name
+        """
+        for invoice in self:
+            invoice.button_draft()
+            # Retrieve the value for a specific invoice
+            val_to_updt = updt_val.get(invoice.name)
+            # If the invoice is defined to_cancel we update it state
+            if "to_cancel" in val_to_updt["invoice_line_ids"]:
+                invoice._cancel_invoice()
+                continue
+            else:
+                invoice.write(val_to_updt)
+            invoice.action_post()
+
+    def _build_invoice_data(self, inv_lines=False, due_date=False, ref=False, pay_mode_id=False):
+        """
+        It takes a list of invoice lines, a due date, a payment reference, and a payment mode, and returns a dictionary with
+        the invoice lines, the due date, the payment reference, and the payment mode
+
+        :param inv_lines: a list of dictionaries containing the invoice lines to be added to the invoice, defaults to False
+        (optional)
+        :param due_date: The date at which the invoice should be paid, defaults to False (optional)
+        :param ref: The reference of the invoice, defaults to False (optional)
+        :param pay_mode_id: The payment mode to be used for the invoice, defaults to False (optional)
+        :return: A dictionary with the invoice_line_ids, date, payment_reference, and payment_mode_id.
+        """
+        # Ensure that the function receive only one invoice
+        self.ensure_one()
+        # Build the dictionnary
+        inv_val_dict = dict()
+        inv_val_dict[self.name] = {
+            'invoice_line_ids': self._build_invoice_lines(inv_lines) if inv_lines else self.invoice_line_ids.ids,
+            'date': due_date if due_date else self.date,
+            'payment_reference': ref if ref else self.payment_reference,
+            'payment_mode_id': pay_mode_id if pay_mode_id else self.payment_mode_id.id
+        }
+        return inv_val_dict
+
+    def _build_invoice_lines(self, inv_lines):
+        """
+        It creates a list of tuples that will be used to create, modify or delete invoice lines.
+
+        :param inv_lines: a dictionary of the form {product_id: {'amt': amount, 'contract': contract_id}}
+        :return: A list of tuples.
+        """
+        self.ensure_one()
+        res = list()
+        # create or modify existing line
+        for product, dict_data in inv_lines.items():
+            amt = dict_data.get("amt")
+            if amt == 0:
+                res.append("to_cancel")
+            else:
+                line_id = self.invoice_line_ids.filtered(lambda l: l.product_id == product).id
+                if not line_id:
+                    contract = dict_data.get("contract")
+                    contract_line = contract.contract_line_ids.filtered(lambda l: l.product_id == product)
+                    res.append((0, 0,
+                                {
+                                    "price_unit": amt,
+                                    "product_id": product.id,
+                                    'name': product.name,
+                                    'quantity': contract_line.quantity,
+                                    'contract_id': contract_line.contract_id.id,
+                                    'account_id': product.with_company(
+                                        contract_line.contract_id.company_id.id).property_account_income_id.id or False
+                                }
+                                ))
+                else:
+                    res.append((1, line_id, {"price_unit": amt}))
+        # Delete line if the product shouldn't be invoiced anymore
+        if len(inv_lines) < len(self.invoice_line_ids):
+            lines_to_delete = self.invoice_line_ids.ids
+            for line_id in self.invoice_line_ids.ids:
+                for tuple in res:
+                    if tuple[1] == line_id:
+                        lines_to_delete.remove(line_id)
+            for line_id in lines_to_delete:
+                res.append((2, line_id, 0))
+        return res
+
+    def _cancel_invoice(self):
+        """
+        It cancels the invoice
+        """
+        self.ensure_one()
+        self.button_cancel()
