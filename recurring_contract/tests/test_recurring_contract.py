@@ -246,9 +246,8 @@ class TestRecurringContract(BaseContractTest):
         self.assertEqual(contract3.state, 'cancelled')
         self.assertEqual(original_product, invoice.invoice_line_ids[0].name)
         self.assertEqual(original_partner, invoice.partner_id['name'])
-        self.assertEqual(
-            original_price - contract3.total_amount,
-            invoice.amount_total)
+        self.assertEqual(contract3.total_amount, invoice.amount_total)
+        self.assertEqual("cancel", invoice.state)
 
 
 class BaseContractCompassionTest(BaseContractTest):
@@ -261,7 +260,7 @@ class BaseContractCompassionTest(BaseContractTest):
         payment = self.env['account.payment'].create({
             'journal_id': bank_journal.id,
             'amount': invoice.amount_total,
-            'payment_date': invoice.date,
+            'date': invoice.date,
             'payment_type': 'inbound',
             'payment_method_id': bank_journal.inbound_payment_method_ids[0].id,
             'partner_type': 'customer',
@@ -309,7 +308,7 @@ class TestContractCompassion(BaseContractCompassionTest):
             'invoice_date', reverse=True)
         nb_invoices = len(invoices)
         self.assertEqual(nb_invoices, 6)
-        self.assertEqual(invoices[3].state, 'open')
+        self.assertEqual(invoices[3].state, 'posted')
 
         # Payment of the third invoice so the
         # contract will be on the active state and the 2 first invoices should
@@ -345,8 +344,8 @@ class TestContractCompassion(BaseContractCompassionTest):
         contract.contract_waiting()
         invoices = self.env['account.move'].search([(1, "=", 1)])
         self.assertEqual(len(invoices), 2)
-        self.assertEqual(invoices[0].state, 'open')
-        self.assertEqual(invoices[1].state, 'open')
+        self.assertEqual(invoices[0].state, 'posted')
+        self.assertEqual(invoices[1].state, 'posted')
 
         # Cancelling of the contract
         contract.action_contract_terminate()
@@ -459,7 +458,7 @@ class TestContractCompassion(BaseContractCompassionTest):
         contract_group.with_context(async_mode=False).write(
             {"advance_billing_months": 3})
 
-        self.assertEqual(len(contract.invoice_line_ids.mapped("invoice_id")), 4)
+        self.assertEqual(len(contract.invoice_line_ids.mapped("move_id")), 4)
         for inv in contract.invoice_line_ids.mapped("invoice_id"):
             self.assertEqual(total_amount, inv.amount_untaxed)
 
