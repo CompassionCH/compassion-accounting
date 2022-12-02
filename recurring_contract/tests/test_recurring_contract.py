@@ -157,7 +157,7 @@ class TestRecurringContract(BaseContractTest):
         invoicer_obj = self.env['recurring.invoicer']
         invoices = self.env['account.move'].search([(1, "=", 1)])
         nb_invoice = len(invoices)
-        self.assertEqual(nb_invoice, 2)
+        self.assertEqual(nb_invoice, 4)
         invoice_fus = invoices[-1]
         self.assertEqual(
             original_price1 + original_price2, invoice_fus.amount_untaxed)
@@ -266,9 +266,8 @@ class BaseContractCompassionTest(BaseContractTest):
             'partner_type': 'customer',
             'partner_id': invoice.partner_id.id,
             'currency_id': invoice.currency_id.id,
-            'invoice_ids': [(6, 0, invoice.ids)]
+            'invoice_line_ids': [(6, 0, invoice.invoice_line_ids.ids)]
         })
-        payment.post()
 
 
 class TestContractCompassion(BaseContractCompassionTest):
@@ -317,12 +316,12 @@ class TestContractCompassion(BaseContractCompassionTest):
         # For now the test is broken because cancel invoices are done in job.
         # TODO Would be better to launch job synchronously in the test:
         # https://github.com/OCA/queue/issues/89
-        # self.assertEqual(invoices[3].state, 'paid')
-        # self.assertEqual(invoices[0].state, 'open')
-        # self.assertEqual(invoices[1].state, 'open')
-        # self.assertEqual(invoices[2].state, 'open')
-        # self.assertEqual(invoices[4].state, 'cancel')
-        # self.assertEqual(invoices[5].state, 'cancel')
+        self.assertEqual(invoices[3].payment_state, 'paid')
+        self.assertEqual(invoices[0].payment_state, 'open')
+        self.assertEqual(invoices[1].payment_state, 'open')
+        self.assertEqual(invoices[2].payment_state, 'open')
+        self.assertEqual(invoices[4].payment_state, 'cancel')
+        self.assertEqual(invoices[5].payment_state, 'cancel')
         self.assertEqual(contract.state, 'active')
         contract.action_contract_terminate()
         self.assertEqual(contract.state, 'terminated')
@@ -458,8 +457,8 @@ class TestContractCompassion(BaseContractCompassionTest):
         contract_group.with_context(async_mode=False).write(
             {"advance_billing_months": 3})
 
-        self.assertEqual(len(contract.invoice_line_ids.mapped("move_id")), 4)
-        for inv in contract.invoice_line_ids.mapped("invoice_id"):
+        self.assertEqual(len(contract.invoice_line_ids.mapped("move_id")), 2)
+        for inv in contract.invoice_line_ids.mapped("move_id"):
             self.assertEqual(total_amount, inv.amount_untaxed)
 
     def test_keep_paid_invoice_on_group_change(self):
@@ -486,7 +485,7 @@ class TestContractCompassion(BaseContractCompassionTest):
         invoice_to_pay = self.env["account.move"].search([
             ("id", "in", invoices.ids)], order="invoice_date asc", limit=1)
         self._pay_invoice(invoice_to_pay)
-        self.assertEqual(invoice_to_pay.invoice_state, "paid")
+        self.assertEqual(invoice_to_pay.payment_state, "paid")
 
         # changing advance billing to one month
         # 2 month are now obsolete but one is paid
@@ -573,7 +572,7 @@ class TestContractCompassion(BaseContractCompassionTest):
 
         for inv in sorted_invoices[:3]:
             self._pay_invoice(inv)
-            self.assertEqual(inv.state, "paid")
+            self.assertEqual(inv.payment_state, "paid")
 
         contract_group.clean_invoices()
 
