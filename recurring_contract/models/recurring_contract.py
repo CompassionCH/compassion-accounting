@@ -88,6 +88,8 @@ class RecurringContract(models.Model):
     company_id = fields.Many2one(
         'res.company',
         'Company',
+        # Show selection of all companies except Norden (id = 1)
+        domain="[('id', '!=', 1)]",
         required=True,
         default=lambda self: self.env.user.company_id.id, readonly=False
     )
