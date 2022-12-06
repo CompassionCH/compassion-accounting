@@ -80,7 +80,7 @@ class ContractGroup(models.Model):
         """
         res = True
         for group in self:
-            super(ContractGroup, group).write(vals)
+            res = super(ContractGroup, group).write(vals) & res
             group._updt_invoices_cg(vals)
         return res
 
