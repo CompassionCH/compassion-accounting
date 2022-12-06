@@ -232,7 +232,6 @@ class AccountMove(models.Model):
         :param inv_lines: a dictionary of the form {product_id: {'amt': amount, 'contract': contract_id}}
         :return: A list of tuples.
         """
-        self.ensure_one()
         res = list()
         # create or modify existing line
         for product, dict_data in inv_lines.items():
@@ -240,8 +239,8 @@ class AccountMove(models.Model):
             if amt == 0:
                 res.append("to_cancel")
             else:
-                line_id = self.invoice_line_ids.filtered(lambda l: l.product_id == product).id
-                if not line_id:
+                line_ids = self.invoice_line_ids.filtered(lambda l: l.product_id == product).ids
+                if not line_ids:
                     contract = dict_data.get("contract")
                     contract_line = contract.contract_line_ids.filtered(lambda l: l.product_id == product)
                     res.append((0, 0,
@@ -256,7 +255,9 @@ class AccountMove(models.Model):
                                 }
                                 ))
                 else:
-                    res.append((1, line_id, {"price_unit": amt}))
+                    for line_id in line_ids:
+                        res.append((1, line_id, {"price_unit": amt}))
+
         # Delete line if the product shouldn't be invoiced anymore
         if len(inv_lines) < len(self.invoice_line_ids):
             lines_to_delete = self.invoice_line_ids.ids
@@ -264,8 +265,8 @@ class AccountMove(models.Model):
                 for tuple in res:
                     if tuple[1] == line_id:
                         lines_to_delete.remove(line_id)
-            for line_id in lines_to_delete:
-                res.append((2, line_id, 0))
+            for line_id_to_del in lines_to_delete:
+                res.append((2, line_id_to_del, 0))
         return res
 
     def _cancel_invoice(self):
