@@ -370,6 +370,7 @@ class RecurringContract(models.Model):
     def on_change_partner_id(self):
         """ On partner change, we update the group_id. If partner has
         only 1 group, we take it. Else, we take nothing.
+        We also update the company_id when the partner have a country_id
         """
         group_ids = self.env['recurring.contract.group'].search(
             [('partner_id', '=', self.partner_id.id)])
@@ -378,16 +379,9 @@ class RecurringContract(models.Model):
         else:
             self.group_id = False
 
-        # Partners have a country_id set instead of a company_id
-        # To get their company, we need to find a same country_id.currency as a company_id.currency_id
-        if self.partner_id.country_id.currency_id:
-            country_currency_id = self.partner_id.country_id.currency_id
-
-            company_ids = self.env['res.company'].search(
-                [('currency_id', '=', country_currency_id.id)]
-            )
-            # Take first result
-            self.company_id = company_ids[0]
+        # Update the company value based on the partner.country_id as there is no value for partner.company_id
+        company_ids = self.env['res.company'].search([])
+        self.company_id = company_ids.filtered(lambda l: l.country_id == self.partner_id.country_id)
 
     @api.onchange('company_id')
     def on_change_company_id(self):
