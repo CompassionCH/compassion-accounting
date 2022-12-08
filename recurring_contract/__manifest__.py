@@ -38,11 +38,13 @@
     'depends': [
         'account',
         'account_payment_partner',  # OCA/bank-payment,
-        'queue_job',                # OCA/queue,
+        'account_banking_mandate',  # OCA/bank-payment,
+        'queue_job',  # OCA/queue,
         'utm'
     ],
     'external_dependencies': {},
     'data': [
+        'views/account_move_view.xml',
         'views/end_contract_wizard_view.xml',
         'views/activate_contract_view.xml',
         'views/contract_group_view.xml',
