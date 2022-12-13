@@ -648,26 +648,20 @@ class RecurringContract(models.Model):
 
         :param vals: the values that are being updated on the contract
         """
-        self.ensure_one()
         if "contract_line_ids" in vals or "group_id" in vals:
-            invoices = self.env['account.move'].search([("partner_id", "in", self.mapped("partner_id").ids),
-                                                        ("move_type", "=", "out_invoice"),
-                                                        ("payment_state", "=", "not_paid"),
-                                                        ("invoice_line_ids.product_id.default_code", "in",
-                                                         ["sponsorship", "sponsorship_ldp", "fund_gen"]),
-                                                        ("invoice_line_ids.contract_id", "in", self.ids)
-                                                        ])
-            if invoices:
-                data_invs = dict()
-                for inv in invoices:
-                    line_data = dict()
-                    for line in self.contract_line_ids:
-                        line_data[line.product_id] = {"amt": line.subtotal, "contract": self}
+            data_invs = {}
+            for contract in self:
+                line_data = {}
+                for line in self.contract_line_ids:
+                    line_data[line.product_id] = {"amt": line.subtotal, "contract": self}
+                for inv in contract.mapped("invoice_line_ids.move_id").filtered(
+                        lambda m: m.payment_state == "not_paid"):
                     data_invs.update(
                         inv._build_invoice_data(
                             inv_lines=line_data,
-                            ref=self.group_id.ref,
-                            pay_mode_id=self.group_id.payment_mode_id
+                            ref=contract.group_id.ref,
+                            pay_mode_id=contract.group_id.payment_mode_id
                         )
                     )
-                invoices.update_invoices(data_invs)
+            if data_invs:
+                self.mapped("invoice_line_ids.move_id").update_invoices(data_invs)

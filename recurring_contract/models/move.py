@@ -9,6 +9,7 @@
 ##############################################################################
 
 import html
+import logging
 from datetime import date
 
 from odoo import fields, models, _
@@ -189,17 +190,23 @@ class AccountMove(models.Model):
         :param updt_val: a dictionary of invoices values with the invoice name
         which refer to another dictionnary of values for that invoice name
         """
-        for invoice in self:
-            invoice.button_draft()
-            # Retrieve the value for a specific invoice
-            val_to_updt = updt_val.get(invoice.name)
-            # If the invoice is defined to_cancel we update it state
-            if "to_cancel" in val_to_updt["invoice_line_ids"]:
-                invoice._cancel_invoice()
-                continue
-            else:
-                invoice.write(val_to_updt)
-            invoice.action_post()
+        if updt_val:
+            for invoice in self:
+                # Retrieve the value for a specific invoice
+                try:
+                    val_to_updt = updt_val.get(invoice.name)
+                except KeyError:
+                    logging.getLogger(__name__).warning(f"No key in the dictionnary for invoice {invoice.name}")
+                else:
+                    if val_to_updt:
+                        invoice.button_draft()
+                        # If the invoice is defined to_cancel we update it state
+                        if "invoice_line_ids" in val_to_updt:
+                            if "to_cancel" in val_to_updt["invoice_line_ids"]:
+                                invoice.button_cancel()
+                                continue
+                        invoice.write(val_to_updt)
+                        invoice.action_post()
 
     def _build_invoice_data(self, inv_lines=False, due_date=False, ref=False, pay_mode_id=False):
         """
@@ -213,35 +220,45 @@ class AccountMove(models.Model):
         :param pay_mode_id: The payment mode to be used for the invoice, defaults to False (optional)
         :return: A dictionary with the invoice_line_ids, date, payment_reference, and payment_mode_id.
         """
-        # Ensure that the function receive only one invoice
+        # Ensure that the funciton receive one invoice
         self.ensure_one()
         # Build the dictionnary
-        inv_val_dict = dict()
-        inv_val_dict[self.name] = {
-            'invoice_line_ids': self._build_invoice_lines(inv_lines) if inv_lines else self.invoice_line_ids.ids,
-            'date': due_date if due_date else self.date,
-            'payment_reference': ref if ref else self.payment_reference,
-            'payment_mode_id': pay_mode_id if pay_mode_id else self.payment_mode_id.id
-        }
-        return inv_val_dict
+        inv_val_dict = {}
+        if inv_lines:
+            inv_val_dict["invoice_line_ids"] = self._build_invoice_lines(inv_lines)
+        if due_date:
+            inv_val_dict["date"] = due_date
+        if ref:
+            inv_val_dict["payment_reference"] = ref
+        if pay_mode_id:
+            inv_val_dict["payment_mode_id"] = pay_mode_id
+        return {self.name: inv_val_dict}
 
     def _build_invoice_lines(self, inv_lines):
         """
         It creates a list of tuples that will be used to create, modify or delete invoice lines.
 
-        :param inv_lines: a dictionary of the form {product_id: {'amt': amount, 'contract': contract_id}}
+        :param inv_lines: a dictionary of the form {product_id: {'amt': amount, 'contracts': contract_id}}
         :return: A list of tuples.
         """
-        res = list()
+        res = []
         # create or modify existing line
         for product, dict_data in inv_lines.items():
             amt = dict_data.get("amt")
             if amt == 0:
                 res.append("to_cancel")
             else:
-                line_ids = self.invoice_line_ids.filtered(lambda l: l.product_id == product).ids
-                if not line_ids:
-                    contract = dict_data.get("contract")
+                line_ids = self.invoice_line_ids.filtered(lambda l: l.product_id.id == product.id)
+                contract = dict_data.get("contract")
+
+                # Line to delete in the invoice
+                diff_product = [p for p in line_ids.mapped("product_id").ids if
+                                p not in contract.contract_line_ids.product_id.ids]
+                if diff_product:
+                    for product_id in diff_product:
+                        res.append((2, line_ids.filtered(lambda l: l.product_id.id == product_id).id, 0))
+                # Line to create in the invoice
+                if not line_ids.filtered(lambda l: l.product_id == product).ids:
                     contract_line = contract.contract_line_ids.filtered(lambda l: l.product_id == product)
                     res.append((0, 0,
                                 {
@@ -254,24 +271,8 @@ class AccountMove(models.Model):
                                         contract_line.contract_id.company_id.id).property_account_income_id.id or False
                                 }
                                 ))
+                # Line to modify in the invoice
                 else:
                     for line_id in line_ids:
-                        res.append((1, line_id, {"price_unit": amt}))
-
-        # Delete line if the product shouldn't be invoiced anymore
-        if len(inv_lines) < len(self.invoice_line_ids):
-            lines_to_delete = self.invoice_line_ids.ids
-            for line_id in self.invoice_line_ids.ids:
-                for tuple in res:
-                    if tuple[1] == line_id:
-                        lines_to_delete.remove(line_id)
-            for line_id_to_del in lines_to_delete:
-                res.append((2, line_id_to_del, 0))
+                        res.append((1, line_id.id, {"price_unit": amt}))
         return res
-
-    def _cancel_invoice(self):
-        """
-        It cancels the invoice
-        """
-        self.ensure_one()
-        self.button_cancel()

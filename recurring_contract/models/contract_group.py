@@ -79,9 +79,8 @@ class ContractGroup(models.Model):
             - Recurring value or unit changes
         """
         res = True
-        for group in self:
-            res = super(ContractGroup, group).write(vals) & res
-            group._updt_invoices_cg(vals)
+        res = super(ContractGroup, self).write(vals) & res
+        self._updt_invoices_cg(vals)
         return res
 
     ##########################################################################
@@ -291,13 +290,9 @@ class ContractGroup(models.Model):
         """ method to update invoices on contrat group (cg)
             :params vals dict of value that has been modified on the cg
         """
-        self.ensure_one()
-        if "ref" in vals or "payment_mode_id" in vals or "advance_biling_months" in vals:
-            invoices = self.env['account.move'].search([("partner_id", "=", self.partner_id.id),
-                                                        ("move_type", "=", "out_invoice"),
-                                                        ("payment_state", "=", "not_paid"),
-                                                        ("invoice_line_ids.contract_id", "in", self.contract_ids.ids)
-                                                        ])
+        if "ref" in vals or "payment_mode_id" in vals:
+            invoices = self.mapped("contract_ids.invoice_line_ids.move_id").filtered(
+                lambda i: i.payment_state == "not_paid")
             if invoices:
                 data_invs = dict()
                 for inv in invoices:
