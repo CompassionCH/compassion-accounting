@@ -658,7 +658,7 @@ class RecurringContract(models.Model):
                         lambda m: m.payment_state == "not_paid"):
                     data_invs.update(
                         inv._build_invoice_data(
-                            inv_lines=line_data,
+                            contract=contract,
                             ref=contract.group_id.ref,
                             pay_mode_id=contract.group_id.payment_mode_id
                         )

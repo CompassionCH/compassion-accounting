@@ -208,7 +208,7 @@ class AccountMove(models.Model):
                         invoice.write(val_to_updt)
                         invoice.action_post()
 
-    def _build_invoice_data(self, inv_lines=False, due_date=False, ref=False, pay_mode_id=False):
+    def _build_invoice_data(self, contract=False, due_date=False, ref=False, pay_mode_id=False):
         """
         It takes a list of invoice lines, a due date, a payment reference, and a payment mode, and returns a dictionary with
         the invoice lines, the due date, the payment reference, and the payment mode
@@ -224,8 +224,8 @@ class AccountMove(models.Model):
         self.ensure_one()
         # Build the dictionnary
         inv_val_dict = {}
-        if inv_lines:
-            inv_val_dict["invoice_line_ids"] = self._build_invoice_lines(inv_lines)
+        if contract:
+            inv_val_dict["invoice_line_ids"] = self._build_invoice_lines_from_contract(contract)
         if due_date:
             inv_val_dict["date"] = due_date
         if ref:
@@ -234,45 +234,48 @@ class AccountMove(models.Model):
             inv_val_dict["payment_mode_id"] = pay_mode_id
         return {self.name: inv_val_dict}
 
-    def _build_invoice_lines(self, inv_lines):
+    def _build_invoice_lines_from_contract(self, contract):
         """
         It creates a list of tuples that will be used to create, modify or delete invoice lines.
 
-        :param inv_lines: a dictionary of the form {product_id: {'amt': amount, 'contracts': contract_id}}
-        :return: A list of tuples.
+        :param contract recurring_contract that has some modification
         """
         res = []
-        # create or modify existing line
-        for product, dict_data in inv_lines.items():
-            amt = dict_data.get("amt")
-            if amt == 0:
-                res.append("to_cancel")
-            else:
-                line_ids = self.invoice_line_ids.filtered(lambda l: l.product_id.id == product.id)
-                contract = dict_data.get("contract")
-
-                # Line to delete in the invoice
-                diff_product = [p for p in line_ids.mapped("product_id").ids if
-                                p not in contract.contract_line_ids.product_id.ids]
-                if diff_product:
-                    for product_id in diff_product:
-                        res.append((2, line_ids.filtered(lambda l: l.product_id.id == product_id).id, 0))
-                # Line to create in the invoice
-                if not line_ids.filtered(lambda l: l.product_id == product).ids:
-                    contract_line = contract.contract_line_ids.filtered(lambda l: l.product_id == product)
-                    res.append((0, 0,
-                                {
-                                    "price_unit": amt,
-                                    "product_id": product.id,
-                                    'name': product.name,
-                                    'quantity': contract_line.quantity,
-                                    'contract_id': contract_line.contract_id.id,
-                                    'account_id': product.with_company(
-                                        contract_line.contract_id.company_id.id).property_account_income_id.id or False
-                                }
-                                ))
-                # Line to modify in the invoice
-                else:
-                    for line_id in line_ids:
-                        res.append((1, line_id.id, {"price_unit": amt}))
+        line_ids = self.mapped("invoice_line_ids")
+        # Line to delete in the invoice
+        # If the invoice has different product than the contract we should delete the line
+        diff_inv = [p for p in line_ids.mapped("product_id").ids if
+                    p not in contract.contract_line_ids.mapped("product_id").ids]
+        if diff_inv:
+            for product_id in diff_inv:
+                res.append((2, line_ids.filtered(lambda l: l.product_id.id == product_id).id, 0))
+        # Line to create in the invoice
+        # If the contract has different product than the invoice we should create the line
+        diff_contract = [p for p in contract.contract_line_ids.mapped("product_id").ids if
+                         p not in line_ids.mapped("product_id").ids]
+        if diff_contract:
+            for diff_product in diff_inv:
+                contract_line = contract.contract_line_ids.filtered(lambda l: l.product_id == diff_product)
+                res.append((0, 0,
+                            {
+                                "price_unit": contract_line.amount,
+                                "product_id": diff_product,
+                                'name': diff_product.name,
+                                'quantity': contract_line.quantity,
+                                'contract_id': contract_line.contract_id.id,
+                                'account_id': diff_product.with_company(
+                                    contract_line.contract_id.company_id.id).property_account_income_id.id or False
+                            }
+                            ))
+        # Line to modify in the invoice
+        line_ids.filtered(lambda l: l.product_id not in diff_contract or l.product_id not in diff_inv)
+        for line_id in line_ids:
+            cl = contract.mapped("contract_line_ids").filtered(lambda l: l.product_id == line_id.product_id)
+            res.append((1, line_id.id,
+                        {
+                            "price_unit": cl.amount or "to_cancel",
+                            "quantity": cl.quantity
+                        }
+                        )
+                       )
         return res
