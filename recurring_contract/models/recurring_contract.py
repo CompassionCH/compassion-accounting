@@ -91,6 +91,13 @@ class RecurringContract(models.Model):
         required=True,
         default=lambda self: self.env.user.company_id.id, readonly=False
     )
+    pricelist_id = fields.Many2one(
+        'product.pricelist',
+        'Pricelist',
+        domain="[('company_id', '=', company_id)]",
+        required=True,
+        readonly=False
+    )
     comment = fields.Text()
     due_invoice_ids = fields.Many2many(
         "account.move", string="Late invoices", compute="_compute_due_invoices", store=True
@@ -356,6 +363,7 @@ class RecurringContract(models.Model):
     def on_change_partner_id(self):
         """ On partner change, we update the group_id. If partner has
         only 1 group, we take it. Else, we take nothing.
+        We also update the company_id when the partner have a country_id
         """
         group_ids = self.env['recurring.contract.group'].search(
             [('partner_id', '=', self.partner_id.id)])
@@ -363,8 +371,24 @@ class RecurringContract(models.Model):
             self.group_id = group_ids
         else:
             self.group_id = False
-        if self.partner_id.company_id:
-            self.company_id = self.partner_id.company_id
+
+        # Update the company value based on the partner.country_id as there is no value for partner.company_id
+        company_ids = self.env['res.company'].search([])
+        self.company_id = company_ids.filtered(lambda l: l.country_id == self.partner_id.country_id)
+
+    @api.onchange('company_id')
+    def on_change_company_id(self):
+        """ On company change, we update the pricelist_id dropdown list.
+        So that the list offers company currency or EUR as a choice """
+        pricelist = self.env["product.pricelist"].search([('company_id', '=', self.company_id.id)])
+
+        # Set pricelist if there is a result
+        if pricelist:
+            # Take first result
+            self.pricelist_id = pricelist[0]
+        # Unset pricelist_id if the company selected doesn't have one
+        else:
+            self.pricelist_id = False
 
     def button_generate_invoices(self):
         """ Immediately generate invoices of the contract group. """

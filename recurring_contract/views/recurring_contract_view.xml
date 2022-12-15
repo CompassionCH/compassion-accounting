@@ -55,6 +55,7 @@
                             <field name="partner_id" options="{'create': false, 'm2o_dialog': false}"/>
                             <field name="group_id" domain="[('partner_id', '=', partner_id)]" context="{'default_partner_id': partner_id}"/>
                             <field name="company_id"/>
+                            <field name="pricelist_id"/>
                         </group>
                         <group>
                             <field name="start_date"/>
