@@ -51,7 +51,7 @@ class RecurringContract(models.Model):
         selection="_day_selection",
         string="Invoicing Day",
         help="Day for which the invoices of a contract are due. If you choose 31, it will adapt for 30 days months and Febuary.",
-        default=31,
+        default="31",
         required=True,
         states={'draft': [('readonly', False)]}
     )
@@ -279,7 +279,7 @@ class RecurringContract(models.Model):
         @rtype: date
         """
         last_day_of_month = calendar.monthrange(date_to_compute.year, date_to_compute.month)[1]
-        inv_day = self.invoice_day if self.invoice_day <= last_day_of_month else last_day_of_month
+        inv_day = int(self.invoice_day) if int(self.invoice_day) <= last_day_of_month else last_day_of_month
         return date_to_compute.replace(day=inv_day)
 
     def cancel_contract_invoices(self):
