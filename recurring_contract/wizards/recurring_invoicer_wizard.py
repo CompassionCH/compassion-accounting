@@ -26,7 +26,7 @@ class InvoicerWizard(models.TransientModel):
         curr_invoice_day = self._get_current_invoice_day()
         self.env.cr.execute(f"""
         SELECT DISTINCT id FROM recurring_contract
-            WHERE invoice_day = {str(curr_invoice_day)}
+            WHERE invoice_day = '{curr_invoice_day}'
                 AND (invoice_suspended_until IS null 
                     OR invoice_suspended_until <= CURRENT_DATE)
                 AND state IN ('active', 'waiting')
@@ -34,10 +34,12 @@ class InvoicerWizard(models.TransientModel):
                 AND (end_date is null OR end_date >= make_date(cast(date_part('year', CURRENT_DATE) as int), 
                                                                cast(date_part('month', CURRENT_DATE) as int), 
                                                            	   {curr_invoice_day}))
-                AND partner_id NOT IN (SELECT DISTINCT partner_id FROM account_move
-                                            WHERE payment_state = 'not_paid'
-                                            GROUP BY partner_id
-                                            HAVING MAX(date) >= CURRENT_DATE);
+                AND id NOT IN (SELECT DISTINCT contract_id FROM account_move_line
+                                    WHERE recurring_contract.id = contract_id
+                                        AND move_id IN (SELECT DISTINCT id FROM account_move
+                                                           WHERE payment_state = 'not_paid'
+                                                              AND invoice_date >= CURRENT_DATE)
+                                        );
         """)
         contract_ids = [r[0] for r in self.env.cr.fetchall()]
         contracts = self.env["recurring.contract"].browse(contract_ids)
