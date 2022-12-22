@@ -26,7 +26,7 @@ class InvoicerWizard(models.TransientModel):
         curr_invoice_day = self._get_current_invoice_day()
         self.env.cr.execute(f"""
         SELECT DISTINCT id FROM recurring_contract
-            WHERE invoice_day = {curr_invoice_day}
+            WHERE invoice_day = {str(curr_invoice_day)}
                 AND (invoice_suspended_until IS null 
                     OR invoice_suspended_until <= CURRENT_DATE)
                 AND state IN ('active', 'waiting')
