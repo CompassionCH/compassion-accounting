@@ -21,21 +21,8 @@ class MoveLine(models.Model):
     contract_id = fields.Many2one('recurring.contract', 'Source contract', index=True)
     due_date = fields.Date(related='move_id.invoice_date_due', store=True, readonly=True, index=True)
     state = fields.Selection(related="move_id.state")
+    last_payment = fields.Date(related="move_id.last_payment", store=True)
     payment_state = fields.Selection(related="move_id.payment_state", store=True, readonly=True, index=True)
-
-    def filter_for_contract_rewind(self, filter_state):
-        """
-        Returns a subset of invoice lines that should be used to find after which one
-        we will set the next_invoice_date of a contract.
-        :param filter_state: filter invoice lines that have the desired payment_state
-        :return: account.invoice.line recordset
-        """
-        company = self.mapped("contract_id.company_id")
-        lock_date = company.period_lock_date
-        return self.filtered(
-            lambda l: l.payment_state == filter_state and
-            (not lock_date or (l.due_date and l.due_date > lock_date))
-        )
 
     @api.onchange('product_id')
     def _onchange_product_id(self):

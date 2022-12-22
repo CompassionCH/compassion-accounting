@@ -232,15 +232,6 @@ msgid "There is no invoice to validate"
 msgstr "Aucune facture à valider"
 
 #. module: recurring_contract
-#: code:addons/recurring_contract/model/contract_group.py:99
-#: code:addons/recurring_contract/model/recurring_contract.py:147
-#: field:recurring.contract,next_invoice_date:0
-#: field:recurring.contract.group,next_invoice_date:0
-#, python-format
-msgid "Next invoice date"
-msgstr "Prochaine date de facturation"
-
-#. module: recurring_contract
 #: code:addons/recurring_contract/model/contract_group.py:74
 #: selection:recurring.contract.group,recurring_unit:0
 #, python-format

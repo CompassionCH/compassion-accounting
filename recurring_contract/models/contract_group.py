@@ -9,9 +9,6 @@
 ##############################################################################
 
 import logging
-from datetime import datetime, date
-
-from dateutil.relativedelta import relativedelta
 
 from odoo import fields, models, _
 from odoo.tools import config
@@ -79,225 +76,23 @@ class ContractGroup(models.Model):
             - Recurring value or unit changes
         """
         res = True
-        for group in self:
-            super(ContractGroup, group).write(vals)
-            group._updt_invoices_cg(vals)
+        res = super(ContractGroup, self).write(vals) & res
+        self._updt_invoices_cg(vals)
         return res
-
-    ##########################################################################
-    #                             PUBLIC METHODS                             #
-    ##########################################################################
-    def clean_invoices(self):
-        """ By default, launch asynchronous job to perform the task.
-            Context value async_mode set to False can force to perform
-            the task immediately.
-        """
-        if self.env.context.get('async_mode', True):
-            self.with_delay()._clean_generate_invoices()
-        else:
-            self._clean_generate_invoices()
-        return True
-
-    def do_nothing(self):
-        """ No changes before generation """
-        pass
-
-    def generate_invoices(self, invoicer=None, cancelled_invoices=None):
-        """ By default, launch asynchronous job to perform the task.
-            Context value async_mode set to False can force to perform
-            the task immediately.
-        """
-        if invoicer is None:
-            invoicer = self.env['recurring.invoicer'].create({})
-        if self.env.context.get('async_mode', True):
-            # Prevent two generations at the same time
-            jobs = self.env['queue.job'].search([
-                ('channel', '=', 'root.recurring_invoicer'),
-                ('state', '=', 'started')])
-            delay = datetime.today()
-            if jobs:
-                delay += relativedelta(minutes=1)
-            self.with_delay(eta=delay)._generate_invoices(
-                invoicer, cancelled_invoices=cancelled_invoices)
-        else:
-            self._generate_invoices(invoicer, cancelled_invoices=cancelled_invoices)
-        return invoicer
-
-    def get_relative_delta(self):
-        """
-        Get a relative delta given the recurring settings
-        :return: datetime.relativedelta object
-        """
-        self.ensure_one()
-        rec_unit = self.recurring_unit
-        rec_value = self.recurring_value
-        if rec_unit == 'day':
-            r = relativedelta(days=+rec_value)
-        elif rec_unit == 'week':
-            r = relativedelta(weeks=+rec_value)
-        elif rec_unit == 'month':
-            r = relativedelta(months=+rec_value)
-        else:
-            r = relativedelta(years=+rec_value)
-        return r
 
     ##########################################################################
     #                             PRIVATE METHODS                            #
     ##########################################################################
-    def _generate_invoices(self, invoicer=None, cancelled_invoices=None):
-        """ Checks all contracts and generate invoices if needed.
-        Create an invoice per contract group per date.
-        """
-        logger.info("Invoice generation started.")
-        if invoicer is None:
-            invoicer = self.env['recurring.invoicer'].create({})
-        if cancelled_invoices is None:
-            cancelled_invoices = self.env["account.move"]
-        inv_obj = self.env['account.move']
-        gen_states = self._get_gen_states()
-        journal = self.env['account.journal'].search([
-            ('type', '=', 'sale'),
-            ('company_id', 'in', self.mapped('contract_ids.company_id').ids)
-        ], limit=1)
-
-        nb_groups = len(self)
-        count = 1
-        for contract_group in self:
-            # After a ContractGroup is done, we commit all writes in order to
-            # avoid doing it again in case of an error or a timeout
-            if not test_mode:
-                self.env.cr.commit()  # pylint: disable=invalid-commit
-            logger.info(f"Generating invoices for group {count}/{nb_groups}")
-            month_delta = contract_group.advance_billing_months or 1
-            limit_date = date.today() + relativedelta(months=+month_delta)
-
-            contract_ids = contract_group.mapped("contract_ids").filtered("next_invoice_date")
-            next_invoice_dates = contract_ids.mapped("next_invoice_date")
-
-            def filter_recurring_contract(c):
-                b = c.next_invoice_date == current_date
-                b &= c.state in gen_states
-                b &= not (c.end_date and fields.Date.to_date(c.end_date) <= c.next_invoice_date)
-                return b
-
-            for current_date in next_invoice_dates:
-                while current_date <= limit_date:
-                    contracts = contract_group.contract_ids.filtered(filter_recurring_contract)
-                    if not contracts:
-                        break
-                    try:
-                        inv_to_reopen = cancelled_invoices.filtered(
-                            lambda inv: inv.invoice_date == current_date)
-
-                        inv_data = contract_group._setup_inv_data(
-                            journal, invoicer, contracts)
-                        if not inv_to_reopen:
-                            invoice = inv_obj.create(inv_data)
-
-                        else:
-                            inv_to_reopen.button_draft()
-                            old_lines = inv_to_reopen.mapped("invoice_line_ids").filtered(
-                                lambda line: line.contract_id.id in contracts.ids)
-                            old_lines.with_context(check_move_validity=False).unlink()
-                            inv_to_reopen.write(inv_data)
-                            invoice = inv_to_reopen
-                        if invoice.invoice_line_ids:
-                            invoice.action_post()
-                        else:
-                            invoice.unlink()
-                        if not self.env.context.get('no_next_date_update'):
-                            contracts.update_next_invoice_date()
-                        current_date += contract_group.get_relative_delta()
-                    except:
-                        self.env.cr.rollback()
-                        self.env.clear()
-                        logger.error(
-                            f'contract group {contract_group.id} '
-                            f'failed during invoice generation',
-                            exc_info=True)
-                        break
-            count += 1
-            # Update old invoices that hasn't been paid or futur invoices in case the user has updated the frequency to a lower one
-            invoices = self.env['account.move'].search([('payment_state', '=', 'not_paid'),
-                                                        ('partner_id', '=', contract_group.partner_id.id)
-                                                        ])
-            if invoices:
-                invoices.write({
-                    'payment_reference': contract_group.ref,
-                    'payment_mode_id': contract_group.payment_mode_id
-                })
-        logger.info("Invoice generation successfully finished.")
-        return invoicer
-
-    def _clean_generate_invoices(self):
-        """ Change method which cancels generated invoices and rewinds
-        the next_invoice_date of contracts, so that new invoices can be
-        generated taking into consideration the modifications of the
-        contract group.
-        """
-        res = self.env['account.move']
-        for group in self:
-            # invoice for current contract might not be up to date.
-            # since we are changing the value of next_invoice_date
-            # this might cause some issue if we don't first generate the missing one.
-            next_invoice_date = min(group.mapped("contract_ids").filtered(
-                "next_invoice_date").mapped("next_invoice_date"))
-            if next_invoice_date and next_invoice_date <= date.today():
-                group._generate_invoices()
-
-            res |= group.contract_ids.with_context(
-                async_mode=False).rewind_next_invoice_date()
-        # Generate again invoices
-        self._generate_invoices(invoicer=None, cancelled_invoices=res.filtered(
-            lambda inv: inv.state == "cancel"
-        ))
-        return res
-
     def _get_gen_states(self):
         return ['active', 'waiting']
-
-    def _setup_inv_data(self, journal, invoicer, contracts):
-        """ Setup a dict with data passed to invoice.create.
-            If any custom data is wanted in invoice from contract group, just
-            inherit this method.
-        """
-        self.ensure_one()
-        partner = self.partner_id
-        # set context for invoice_line creation
-        contracts = contracts.with_context(journal_id=journal.id,
-                                           type='out_invoice')
-        # Cannot create contract with different multiple (is it possible ?)
-        res = self.env['product.pricelist']._get_partner_pricelist_multi([self.partner_id.id],
-                                                                         company_id=self.contract_ids.company_id)
-        currency_id = res.get(self.partner_id.id).currency_id.id
-        inv_data = {
-            'payment_reference': self.ref,
-            'move_type': 'out_invoice',
-            'partner_id': partner.id,
-            'journal_id': journal.id,
-            'currency_id': currency_id,
-            'invoice_date': min(contracts.mapped("next_invoice_date")),
-            'recurring_invoicer_id': invoicer.id,
-            'payment_mode_id': self.payment_mode_id.id,
-            'company_id': contracts.mapped('company_id')[:1].id,
-            'invoice_line_ids': [
-                (0, 0, invl) for invl in contracts.get_inv_lines_data() if invl
-            ],
-            'narration': "\n".join(contracts.mapped(lambda c: c.comment or ""))
-        }
-        return inv_data
 
     def _updt_invoices_cg(self, vals):
         """ method to update invoices on contrat group (cg)
             :params vals dict of value that has been modified on the cg
         """
-        self.ensure_one()
-        if "ref" in vals or "payment_mode_id" in vals or "advance_biling_months" in vals:
-            invoices = self.env['account.move'].search([("partner_id", "=", self.partner_id.id),
-                                                        ("move_type", "=", "out_invoice"),
-                                                        ("payment_state", "=", "not_paid"),
-                                                        ("invoice_line_ids.contract_id", "in", self.contract_ids.ids)
-                                                        ])
+        if any(key in vals for key in ("payment_mode_id", "ref")):
+            invoices = self.mapped("contract_ids.invoice_line_ids.move_id").filtered(
+                lambda i: i.payment_state == "not_paid")
             if invoices:
                 data_invs = dict()
                 for inv in invoices:
@@ -308,3 +103,7 @@ class ContractGroup(models.Model):
                         )
                     )
                 invoices.update_invoices(data_invs)
+        if "advance_billing_months" in vals:
+            # In case the advance_billing_months is greater than before we should generate more invoices
+            for contract in self.mapped("contract_ids"):
+                contract.button_generate_invoices()
