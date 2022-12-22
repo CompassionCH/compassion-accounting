@@ -20,14 +20,14 @@ class AccountInvoiceTestCase(AccountTestInvoicingCommon):
             "date": due_date
         }
         # Method to be tested
-        dict_to_test = inv._build_invoice_data(inv_lines=inv_line, due_date=due_date)
+        dict_to_test = inv._build_invoice_data(inv_lines=inv_line, invoice_date=due_date)
         self.assertDictEqual(dict_to_except, dict_to_test)
 
         # Second part with an amount that is equal to 0
         inv_line[1]["amt"] = 0
         dict_to_except[inv.name]['invoice_line_ids'] = "to_cancel"
         # Method to test
-        dict_to_test = inv._build_invoice_data(amts=amt, due_date=due_date)
+        dict_to_test = inv._build_invoice_data(amts=amt, invoice_date=due_date)
         self.assertDictEqual(dict_to_except, dict_to_test)
 
     def test_build_invoice_line(self):
