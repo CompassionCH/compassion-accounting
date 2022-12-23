@@ -506,13 +506,13 @@ class RecurringContract(models.Model):
             for inv_no in range(1, contract.group_id.advance_billing_months + 1):
                 # Date must be incremented of the number of months the invoices is generated in advance
                 invoicing_date = datetime.now() + relativedelta(months=inv_no)
-                invoicing_date = self.get_relative_invoice_date(invoicing_date.date())
+                invoicing_date = contract.get_relative_invoice_date(invoicing_date.date())
                 # in case invoice already exist for the current month or the invoices are suspended we do not generate
-                if acc_move_line_curr_contr.filtered(lambda l: l.due_date >= invoicing_date) \
+                if acc_move_line_curr_contr.filtered(lambda l: l.due_date.month >= invoicing_date.month) \
                         or (contract.invoice_suspended_until and contract.invoice_suspended_until > invoicing_date):
                     continue
                 # Building invoices data
-                inv_data = self._build_invoice_gen_data(invoicing_date, invoicer)
+                inv_data = contract._build_invoice_gen_data(invoicing_date, invoicer)
                 _logger.info(f"Generating invoice : {inv_data}")
                 # Creating the actual invoice
                 invoice = inv_obj.create(inv_data)
