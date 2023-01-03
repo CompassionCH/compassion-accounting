@@ -75,8 +75,7 @@ class ContractGroup(models.Model):
             - Advance billing increased or decrease
             - Recurring value or unit changes
         """
-        res = True
-        res = super(ContractGroup, self).write(vals) & res
+        res = super().write(vals)
         self._updt_invoices_cg(vals)
         return res
 
@@ -92,7 +91,8 @@ class ContractGroup(models.Model):
         """
         if any(key in vals for key in ("payment_mode_id", "ref")):
             invoices = self.mapped("contract_ids.invoice_line_ids.move_id").filtered(
-                lambda i: i.payment_state == "not_paid")
+                lambda i: i.payment_state == "not_paid"
+                          and i.state != "cancel")
             if invoices:
                 data_invs = dict()
                 for inv in invoices:
