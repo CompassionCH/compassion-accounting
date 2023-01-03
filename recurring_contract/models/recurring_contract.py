@@ -622,7 +622,8 @@ class RecurringContract(models.Model):
             data_invs = {}
             for contract in self:
                 for inv in contract.mapped("invoice_line_ids.move_id").filtered(
-                        lambda m: m.payment_state == "not_paid"):
+                        lambda m: m.payment_state == "not_paid"
+                                  and m.state != "cancel"):
                     data_invs.update(
                         inv._build_invoice_data(
                             contract=contract,
