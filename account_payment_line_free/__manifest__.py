@@ -38,7 +38,6 @@
     ],
     'data': [
         'views/invoice_view.xml',
-        'views/payment_line_view.xml',
         'views/account_payment_order_view.xml',
         'security/ir.model.access.csv',
     ],
