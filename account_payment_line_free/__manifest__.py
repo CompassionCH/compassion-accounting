@@ -9,7 +9,7 @@
 #                            in Jesus' name
 #
 #    Copyright (C) 2014-2019 Compassion CH (http://www.compassion.ch)
-#    @author: Cyril Sester <csester@compassion.ch>, Emanuel Cino
+#    @author: Simon Gonzalez <simon.gonzalez@bluewin.ch>, Emanuel Cino
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -39,7 +39,6 @@
     'data': [
         'views/invoice_view.xml',
         'views/account_payment_order_view.xml',
-        'security/ir.model.access.csv',
     ],
     'installable': True,
 }

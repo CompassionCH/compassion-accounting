@@ -21,7 +21,7 @@ Or :
 
 #. Go to invoices
 #. Select a few invoices from the tree view
-#. Use the "Free invoices" entry to mark the payment_line as returned and set the move_line_id at Null
+#. Use the "Unlink from payment/debit order" entry to mark the payment_line as returned and set the move_line_id at Null
 
 .. image:: https://odoo-community.org/website/image/ir.attachment/5784_f2813bd/datas
    :alt: Try me on Runbot

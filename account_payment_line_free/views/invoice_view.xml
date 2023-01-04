@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Copyright (C) 2014 Compassion (http://www.compassion.ch)
-  @author: Cyril Sester <cyril.sester@outlook.com>
-  The licence is in the file __openerp__.py
+  @author: Simon Gonzalez <simon.gonzalez@bluewin.ch>
+  The licence is in the file __manifest__.py
 -->
 <odoo>
     <record id="action_server_account_invoice_free" model="ir.actions.server">

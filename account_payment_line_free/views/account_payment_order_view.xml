@@ -1,35 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Copyright (C) 2014 Compassion (http://www.compassion.ch)
-  @author: Cyril Sester <cyril.sester@outlook.com>
-  The licence is in the file __openerp__.py
+  @author: Simon Gonzalez <simon.gonzalez@bluewin.ch>
+  The licence is in the file __manifest__.py
 -->
 <odoo>
-    <record id="payment_order_free_view" model="ir.ui.view">
-        <field name="name">account.move.free.form</field>
-        <field name="model">account.move.free</field>
-        <field name="arch" type="xml">
-            <form string="Free Invoices from payment order">
-                <p class="oe_warning">
-                    This will extract payment lines that hasn't been payed
-                    and put them in a cancelled payment order. This way,
-                    invoices can be added to another payment order.
-                </p>
-                <footer>
-                    <button string="Unlink invoices" name="invoice_free_from_payment_order" type="object" default_focus="1"
-                            class="oe_highlight"/>
-                    or
-                    <button string="Cancel" class="oe_link" special="cancel"/>
-                </footer>
-            </form>
-        </field>
-    </record>
-    <record model="ir.actions.act_window" id="action_account_invoice_free">
-        <field name="name">Unlink unpayed invoice</field>
-        <field name="res_model">account.move.free</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-        <field name="view_id" ref="payment_order_free_view"/>
+    <record id="action_server_payment_order_free_inv" model="ir.actions.server">
+        <field name="name">Unlink unpayed invoices</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="account_payment_order.model_account_payment_order"/>
         <field name="binding_model_id" ref="account_payment_order.model_account_payment_order"/>
+        <field name="state">code</field>
+        <field name="code">
+inv_list = []
+payment_orders = env["account.payment.order"].browse(env.context.get("active_ids"))
+for pay_ord in payment_orders:
+    for line in pay_ord.payment_line_ids:
+        if line.move_line_id.payment_state != 'paid' and line.move_line_id:
+            inv_list.append(line.move_line_id.move_id.id)
+# Unlink the invoices and the payment order
+action = env["account.move"].browse(inv_list).free_payment_lines()
+        </field>
     </record>
 </odoo>
