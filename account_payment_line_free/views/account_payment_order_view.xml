@@ -6,20 +6,13 @@
 -->
 <odoo>
     <record id="action_server_payment_order_free_inv" model="ir.actions.server">
-        <field name="name">Unlink unpayed invoices</field>
+        <field name="name">Unlink unpaid invoices</field>
         <field name="type">ir.actions.server</field>
         <field name="model_id" ref="account_payment_order.model_account_payment_order"/>
         <field name="binding_model_id" ref="account_payment_order.model_account_payment_order"/>
         <field name="state">code</field>
         <field name="code">
-inv_list = []
-payment_orders = env["account.payment.order"].browse(env.context.get("active_ids"))
-for pay_ord in payment_orders:
-    for line in pay_ord.payment_line_ids:
-        if line.move_line_id.payment_state != 'paid' and line.move_line_id:
-            inv_list.append(line.move_line_id.move_id.id)
-# Unlink the invoices and the payment order
-action = env["account.move"].browse(inv_list).free_payment_lines()
+            action = records.mapped("payment_line_ids.move_line_id.move_id").filtered(lambda m: m.payment_state != "paid").free_payment_lines()
         </field>
     </record>
 </odoo>

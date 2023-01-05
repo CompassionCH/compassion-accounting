@@ -39,6 +39,7 @@
     'data': [
         'views/invoice_view.xml',
         'views/account_payment_order_view.xml',
+        'views/account_payment_line_view.xml'
     ],
     'installable': True,
 }

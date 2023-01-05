@@ -11,7 +11,6 @@ from odoo import models, _, exceptions
 
 
 class AccountMove(models.Model):
-
     """ add invoice freeing functionality."""
     _inherit = 'account.move'
 
@@ -28,3 +27,22 @@ class AccountMove(models.Model):
                 raise exceptions.UserError(_('No payment line found !'))
 
             payment_lines.free_line()
+        if self.ids:
+            return {
+                'name': _('Freed invoices'),
+                'type': 'ir.actions.act_window',
+                'view_mode': 'tree,form',
+                'res_model': 'account.move',
+                'domain': [('id', 'in', self.ids)],
+                'target': 'current',
+            }
+        else:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('No invoice(s) unlinked'),
+                    'message': 'No invoices where find to be unlinked from payment order.',
+                    'sticky': False,
+                }
+            }
