@@ -273,7 +273,6 @@ class RecurringContract(models.Model):
 
     def get_relative_invoice_date(self, date_to_compute):
         """ Calculate the date depending on the last day of the month and the invoice_day set in the contract.
-
         @param date: date to make the calcul on
         @type: date
         @return: date with the day edited
