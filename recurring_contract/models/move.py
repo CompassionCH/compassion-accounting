@@ -213,9 +213,13 @@ class AccountMove(models.Model):
                     logging.getLogger(__name__).warning(f"No key in the dictionnary for invoice {invoice.name}")
                 else:
                     if val_to_updt:
-                        invoice.button_draft()
-                        invoice.write(val_to_updt)
-                        invoice.action_post()
+                        tot_amt = sum(inv_line[2]["price_unit"] for inv_line in val_to_updt["invoice_line_ids"])
+                        if tot_amt == 0:
+                            invoice.button_cancel()
+                        else:
+                            invoice.button_draft()
+                            invoice.write(val_to_updt)
+                            invoice.action_post()
 
     def _build_invoice_data(self, contract=False, invoice_date=False, ref=False, pay_mode_id=False,
                             payment_term_id=False, partner_id=False):
