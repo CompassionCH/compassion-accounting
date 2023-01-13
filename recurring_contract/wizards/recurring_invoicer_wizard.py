@@ -23,23 +23,17 @@ class InvoicerWizard(models.TransientModel):
     generation_date = fields.Date(readonly=True)
 
     def generate(self):
-        curr_invoice_day = self._get_current_invoice_day()
         self.env.cr.execute(f"""
-        SELECT DISTINCT id FROM recurring_contract
-            WHERE invoice_day = '{curr_invoice_day}'
-                AND (invoice_suspended_until IS null 
-                    OR invoice_suspended_until <= CURRENT_DATE)
-                AND state IN ('active', 'waiting')
-                AND total_amount > 0
-                AND (end_date is null OR end_date >= make_date(cast(date_part('year', CURRENT_DATE) as int), 
-                                                               cast(date_part('month', CURRENT_DATE) as int), 
-                                                           	   {curr_invoice_day}))
-                AND id NOT IN (SELECT DISTINCT contract_id FROM account_move_line
-                                    WHERE recurring_contract.id = contract_id
-                                        AND move_id IN (SELECT DISTINCT id FROM account_move
-                                                           WHERE payment_state = 'not_paid'
-                                                              AND invoice_date >= CURRENT_DATE)
-                                        );
+        SELECT DISTINCT recurring_contract.id 
+        FROM recurring_contract
+        INNER JOIN account_move_line ON recurring_contract.id = account_move_line.contract_id
+        INNER JOIN account_move ON account_move_line.move_id = account_move.id
+        WHERE (invoice_suspended_until IS NULL OR invoice_suspended_until <= CURRENT_DATE)
+            AND recurring_contract.state IN ('active', 'waiting')
+            AND total_amount > 0
+            AND (end_date IS NULL OR end_date >= CURRENT_DATE + INTERVAL '1 month')
+            AND account_move.payment_state = 'not_paid'
+            AND account_move.invoice_date < CURRENT_DATE + INTERVAL '1 month'
         """)
         contract_ids = [r[0] for r in self.env.cr.fetchall()]
         contracts = self.env["recurring.contract"].browse(contract_ids)
@@ -61,15 +55,3 @@ class InvoicerWizard(models.TransientModel):
     def generate_from_cron(self):
         self.generate()
         return True
-
-    @api.model
-    def _get_current_invoice_day(self):
-        """
-        Method that return the simulated day of the month for the query to retrieve the good data
-        """
-        today = datetime.now()
-        last_day = calendar.monthrange(today.year, today.month)[1]
-        if last_day <= today.day:
-            return 31
-        else:
-            return today.day
