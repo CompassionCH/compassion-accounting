@@ -145,6 +145,7 @@ class RecurringContract(models.Model):
             day_l.append((str(curr_day), str(curr_day)))
             curr_day += 1
         return day_l
+
     @api.depends('contract_line_ids', 'contract_line_ids.amount',
                  'contract_line_ids.quantity')
     def _compute_total_amount(self):
@@ -272,7 +273,6 @@ class RecurringContract(models.Model):
 
     def get_relative_invoice_date(self, date_to_compute):
         """ Calculate the date depending on the last day of the month and the invoice_day set in the contract.
-
         @param date: date to make the calcul on
         @type: date
         @return: date with the day edited
@@ -572,9 +572,8 @@ class RecurringContract(models.Model):
         for contract in self:
             since_date = contract.end_date
             # Cancel invoices paid
-            inv_lines_paid = self.env['account.move.line'].search([('contract_id', 'in', self.ids),
-                                                                   ('state', '=', 'paid'),
-                                                                   ('due_date', '>=', since_date)])
+            inv_lines_paid = contract.invoice_line_ids.filtered([('state', '=', 'paid'),
+                                                                 ('due_date', '>=', since_date)])
             move_lines = inv_lines_paid.mapped('move_id.line_ids').filtered('reconciled')
             reconciles = inv_lines_paid.mapped('move_id.line_ids.full_reconcile_id')
 
@@ -586,18 +585,18 @@ class RecurringContract(models.Model):
             paid_invoices.reconcile_after_clean()
 
             # Cancel open or draft invoices
-            invoices = self.env['account.move.line'].search([('contract_id', 'in', self.ids),
-                                                             ('state', 'not in', ('paid', 'cancel')),
-                                                             ('due_date', '>=', since_date)]).mapped('move_id')
-
+            invoices_lines = contract.invoice_line_ids.filtered([('state', 'not in', ('paid', 'cancel')),
+                                                                 ('due_date', '>=', since_date)])
             # Multi contracts invoices should delete just their lines
-            empty_invoices = self.env['account.invoice']
-            to_remove_invl = self.env['account.invoice.line']
-            for inv_line in invoices:
+            empty_invoices = self.env['account.move']
+            to_remove_invl = self.env['account.move.line']
+            invoices = invoices_lines.mapped("move_id")
+            for inv_line in invoices_lines:
                 invoice = inv_line.move_id
                 # Check if invoice is empty after removing the invoice_lines
                 # of the given contract
-                remaining_lines = invoice.invoice_line_ids.filtered(lambda l: not l.contract_id or l.contract_id not in self)
+                remaining_lines = invoice.invoice_line_ids.filtered(
+                    lambda l: not l.contract_id or l.contract_id not in self)
                 if remaining_lines:
                     # We can move or remove the line
                     to_remove_invl |= inv_line

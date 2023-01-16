@@ -9,7 +9,7 @@
 ##############################################################################
 
 from odoo import api, models, fields, exceptions, _
-
+from .product_names import GIFT_PRODUCTS_REF, PRODUCT_GIFT_CHRISTMAS
 
 class MoveLine(models.Model):
     """ Adds a method to split a payment into several move_lines
@@ -34,6 +34,10 @@ class MoveLine(models.Model):
         self.analytic_tag_ids = self.env["account.analytic.tag"]
         res = super()._onchange_product_id()
         return res
+
+    def unlink(self):
+        self.env['sponsorship.gift'].search([("invoice_line_ids", "in", self.ids)]).unlink()
+        return super().unlink()
 
     def split_payment_and_reconcile(self):
         sum_credit = sum(self.mapped("credit"))
