@@ -22,51 +22,73 @@ logger = logging.getLogger(__name__)
 
 
 class TestRecurringContract(common.TransactionCase):
+    def create_group(self, abm=1, partner_id=False, recurring_unit="month", recurring_value=1, ref="Test Group"):
+        return self.env['recurring.contract.group'].create({
+            'advance_billing_months': abm,
+            'partner_id': partner_id or self.env.ref('base.res_partner_1').id,
+            'recurring_unit': recurring_unit,
+            'recurring_value': recurring_value,
+            'ref': ref
+        })
+
+    def create_contract(self, reference='Test Contract', partner_id=None, group_id=None, pricelist_id=None, product_id=None, amount=10.0, quantity=1, invoice_day='15'):
+        return self.contract_obj.create({
+            'reference': reference,
+            'partner_id': partner_id or self.partner.id,
+            'group_id': group_id or self.group.id,
+            'pricelist_id': pricelist_id or self.env.ref('product.list0').id,
+            'contract_line_ids': [
+                (0, 0, {'product_id': product_id or self.product.id, 'amount': amount, 'quantity': quantity})],
+            'invoice_day': invoice_day,
+        })
+
     def setUp(self):
         super().setUp()
         self.contract_model = self.env['recurring.contract']
         self.invoice_model = self.env['account.move']
         self.partner = self.env.ref('base.res_partner_1')
+        self.partner_2 = self.env.ref('base.res_partner_2')
         self.product = self.env.ref('product.product_product_4')
         self.product_2 = self.env.ref('product.product_product_1')
         self.payment_term = self.env.ref('account.account_payment_term_immediate')
         self.journal = self.env['account.journal'].search([('company_id', '=', self.env.user.company_id.id)],
                                                           limit=1).id
-        self.group = self.env['recurring.contract.group'].create({
-            'advance_billing_months': 1,
-            'partner_id': self.env.ref('base.res_partner_1').id,
-            'recurring_unit': 'month',
-            'recurring_value': 1,
-            'ref': 'Test Group'
-        })
+        self.group = self.create_group(
+            abm=1,
+            partner_id=self.env.ref('base.res_partner_1').id,
+            recurring_unit="month",
+            recurring_value=1,
+            ref="Test Group"
+        )
+        self.group_2 = self.create_group(
+            abm=1,
+            partner_id=self.env.ref('base.res_partner_2').id,
+            recurring_unit="month",
+            recurring_value=1,
+            ref="Test Group"
+        )
         # Create a new contract with a set invoice_day
         self.contract_obj = self.env['recurring.contract']
-        self.contract = self.contract_obj.create({
-            'reference': 'Test Contract',
-            'partner_id': self.partner.id,
-            'group_id': self.group.id,
-            'pricelist_id': self.env.ref('product.list0').id,
-            'contract_line_ids': [(0, 0, {'product_id': self.product.id, 'amount': 10.0, 'quantity': 1})],
-            'invoice_day': '15',
-        })
-        self.contract_2 = self.contract_obj.create({
-            'reference': 'Test Contract 2',
-            'partner_id': self.partner.id,
-            'group_id': self.group.id,
-            'pricelist_id': self.env.ref('product.list0').id,
-            'contract_line_ids': [(0, 0, {'product_id': self.product.id, 'amount': 30.0, 'quantity': 1}),
-                                  (0, 0, {'product_id': self.product_2.id, 'amount': 40.0, 'quantity': 1})],
-            'invoice_day': '15',
-        })
-        self.contract_3 = self.contract_obj.create({
-            'reference': 'Test Contract 3',
-            'partner_id': self.partner.id,
-            'group_id': self.group.id,
-            'pricelist_id': self.env.ref('product.list0').id,
-            'contract_line_ids': [(0, 0, {'product_id': self.product.id, 'amount': 15.0, 'quantity': 1}),
-                                  (0, 0, {'product_id': self.product_2.id, 'amount': 25.0, 'quantity': 1})],
-            'invoice_day': '15',
-        })
+        self.contract = self.create_contract(
+           "Test Contract",
+           self.partner.id,
+           self.group.id,
+           self.env.ref('product.list0').id,
+           self.product.id,
+           10.0,
+           1,
+           '15'
+        )
+        self.contract_2 = self.create_contract(
+            "Test Contract 2",
+            self.partner_2.id,
+            self.group.id,
+            self.env.ref('product.list0').id,
+            self.product.id,
+            10.0,
+            1,
+            '15'
+        )
         # To generate invoices, the contract must be "waiting"
         self.contract.with_context(async_mode=False).contract_waiting()
         self.invoices = self.contract.mapped("invoice_line_ids.move_id")
@@ -78,7 +100,8 @@ class TestRecurringContract(common.TransactionCase):
         right format
         """
         result = self.invoices[0]._build_invoice_data(contract=self.contract)
-        self.assertEqual(result.get(self.invoices[0].name).get('invoice_line_ids')[0][2], {'price_unit': 10.0, 'quantity': 1})
+        self.assertEqual(result.get(self.invoices[0].name).get('invoice_line_ids')[0][2],
+                         {'price_unit': 10.0, 'quantity': 1})
 
     def test_generate_invoices(self):
         """
@@ -167,6 +190,7 @@ class TestRecurringContract(TestRecurringContract):
         original_total = contract.total_amount
         self.assertEqual(original_total, invoice.amount_total)
 
+
 class TestContractCompassion(TestRecurringContract):
     """
         Test Project contract compassion.
@@ -177,6 +201,7 @@ class TestContractCompassion(TestRecurringContract):
          a contract.
          - in the last one, we are testing the _reset_open_invoices method.
     """
+
     def _pay_invoice(self, invoice):
         self.bank_journal = self.env['account.journal'].search(
             [('code', '=', 'BNK1')], limit=1)
