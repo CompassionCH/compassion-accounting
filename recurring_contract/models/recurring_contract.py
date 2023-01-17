@@ -570,10 +570,10 @@ class RecurringContract(models.Model):
         """
         _logger.info("clean invoices called.")
         for contract in self:
-            since_date = contract.end_date
+            since_date = contract.end_date.date()
             # Cancel invoices paid
-            inv_lines_paid = contract.invoice_line_ids.filtered([('state', '=', 'paid'),
-                                                                 ('due_date', '>=', since_date)])
+            inv_lines_paid = contract.invoice_line_ids.filtered(lambda l: l.state == 'paid'
+                                                                          and l.due_date >= since_date)
             move_lines = inv_lines_paid.mapped('move_id.line_ids').filtered('reconciled')
             reconciles = inv_lines_paid.mapped('move_id.line_ids.full_reconcile_id')
 
@@ -585,8 +585,8 @@ class RecurringContract(models.Model):
             paid_invoices.reconcile_after_clean()
 
             # Cancel open or draft invoices
-            invoices_lines = contract.invoice_line_ids.filtered([('state', 'not in', ('paid', 'cancel')),
-                                                                 ('due_date', '>=', since_date)])
+            invoices_lines = contract.invoice_line_ids.filtered(lambda l: l.state not in ['paid', 'cancel']
+                                                                          and l.due_date >= since_date)
             # Multi contracts invoices should delete just their lines
             empty_invoices = self.env['account.move']
             to_remove_invl = self.env['account.move.line']

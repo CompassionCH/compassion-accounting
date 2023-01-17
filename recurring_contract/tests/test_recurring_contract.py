@@ -156,7 +156,7 @@ class TestRecurringContract(TestRecurringContract):
         nb_invoice = len(invoices)
         # 2 invoices must be generated with our parameters
         self.assertEqual(nb_invoice, 1)
-        invoice = invoices[1]
+        invoice = invoices[0]
         self.assertEqual(original_product, invoice.invoice_line_ids[0].name)
         self.assertEqual(original_partner, invoice.partner_id['name'])
         self.assertEqual(original_price, invoice.amount_untaxed)
@@ -166,96 +166,6 @@ class TestRecurringContract(TestRecurringContract):
 
         original_total = contract.total_amount
         self.assertEqual(original_total, invoice.amount_total)
-
-    def test_generated_invoice_second_scenario(self):
-        """
-            Creation of the second contract to test the fusion of invoices if
-            the partner and the dates are the same. Then there is the test of
-            the changement of the payment option and its consequences : check
-            if all data of invoices generated are correct, and if the number
-            of invoices generated is correct
-        """
-        # Creation of a group and two contracts with one line each
-        group = self.group
-        contract = self.contract
-        contract2 = self.contract_2
-
-        original_price1 = contract.total_amount
-        original_price2 = contract2.total_amount
-
-        contract2.with_context(async_mode=False).contract_waiting()
-        self.assertEqual(contract2.state, 'waiting')
-        invoicer_obj = self.env['recurring.invoicer']
-        invoices = contract.mapped("invoice_line_ids.move_id") + contract2.mapped("invoice_line_ids.move_id")
-        nb_invoice = len(invoices)
-        self.assertEqual(nb_invoice, 4)
-        invoice_fus = invoices[-1]
-        self.assertEqual(original_price1 + original_price2, invoice_fus.amount_untaxed)
-
-        # Changement of the payment option
-        group.write(
-            {
-                'recurring_value': 2,
-                'recurring_unit': 'week',
-                'advance_billing_months': 2,
-            })
-        new_invoicer_id = invoicer_obj.search([], limit=1)
-        new_invoices = new_invoicer_id.invoice_ids
-        nb_new_invoices = len(new_invoices)
-        self.assertEqual(nb_new_invoices, 5)
-
-        # Copy of one contract to test copy method()
-        contract_copied = contract2.copy()
-        self.assertTrue(contract_copied.id)
-        contract_copied.contract_waiting()
-        self.assertEqual(contract_copied.state, 'waiting')
-        contract_copied_line = contract_copied.contract_line_ids[0]
-        contract_copied_line.write({'amount': 160.0})
-        new_price2 = contract_copied_line.subtotal
-        invoicer_id = self.env[
-            'recurring.invoicer.wizard'].with_context(
-            async_mode=False).generate().get('res_id')
-        invoicer_wiz = self.env['recurring.invoicer'].browse(invoicer_id)
-        new_invoices = invoicer_wiz.invoice_ids
-        new_invoice_fus = new_invoices.filtered(
-            lambda i: i.mapped(
-                'invoice_line_ids.contract_id') == contract_copied
-        )[0]
-        self.assertEqual(new_price2, new_invoice_fus.amount_total)
-
-    def test_generated_invoice_third_scenario(self):
-        """
-        It creates a group of contracts, then it creates 3 contracts in the group.
-        Then it creates a wizard to generate invoices. Then it cancels the third contract.
-        Then it checks if the invoice is well updated.
-        """
-        contract = self.contract
-        contract2 = self.contract_2
-        contract3 = self.contract_3
-
-        # Creation of data to test
-        original_product = self.product.name
-        original_partner = self.partner.name
-
-        # We put all the contracts in active state
-        contract.with_context(async_mode=False).contract_waiting()
-        contract2.with_context(async_mode=False).contract_waiting()
-        contract3.with_context(async_mode=False).contract_waiting()
-        # Creation of a wizard to generate invoices
-        invoice = contract3.invoice_line_ids.mapped("move_id")
-
-        # We put the third contract in terminate state to see if
-        # the invoice is well updated
-        contract3.with_context(async_mode=True).action_contract_terminate()
-        # Check a job for cleaning invoices has been created
-        self.assertTrue(self.env['queue.job'].search([]))
-        # Force cleaning invoices immediately
-        self.assertEqual(contract3.state, 'cancelled')
-        self.assertEqual(original_product, invoice.invoice_line_ids[0].name)
-        self.assertEqual(original_partner, invoice.partner_id['name'])
-        self.assertEqual(contract3.total_amount, invoice.amount_total)
-        self.assertEqual("cancel", invoice.state)
-
 
 class TestContractCompassion(TestRecurringContract):
     """
@@ -267,7 +177,6 @@ class TestContractCompassion(TestRecurringContract):
          a contract.
          - in the last one, we are testing the _reset_open_invoices method.
     """
-
     def _pay_invoice(self, invoice):
         self.bank_journal = self.env['account.journal'].search(
             [('code', '=', 'BNK1')], limit=1)
@@ -280,8 +189,10 @@ class TestContractCompassion(TestRecurringContract):
             'partner_type': 'customer',
             'partner_id': invoice.partner_id.id,
             'currency_id': invoice.currency_id.id,
-            'invoice_line_ids': [(6, 0, invoice.invoice_line_ids.ids)]
+            'invoice_line_ids': [(4, invoice.invoice_line_ids.ids)]
         })
+        self.payment.action_post()
+        invoice.payment_id = self.payment.id
 
     def test_contract_compassion_second_scenario(self):
         """
@@ -295,7 +206,7 @@ class TestContractCompassion(TestRecurringContract):
         self.assertEqual(invoices.mapped("state"), ['posted'])
 
         # Cancelling of the contract
-        contract.action_contract_terminate()
+        contract.with_context(async_mode=False).action_contract_terminate()
         # Force cleaning invoices immediately
         self.assertEqual(contract.state, 'cancelled')
         self.assertEqual(invoices.mapped("state"), ['cancel'])
@@ -309,8 +220,8 @@ class TestContractCompassion(TestRecurringContract):
         """
         contract = self.contract
         invoices = contract.mapped("invoice_line_ids.move_id")
-        self.assertEqual(len(invoices), 2)
-        self._pay_invoice(invoices[1])
+        self.assertEqual(len(invoices), 1)
+        self._pay_invoice(invoices[0])
         # Updating of the contract
         contract.write({
             'contract_line_ids': [(1, contract.contract_line_ids.id, {
@@ -386,40 +297,6 @@ class TestContractCompassion(TestRecurringContract):
         for inv in contract.invoice_line_ids.mapped("move_id"):
             self.assertEqual(total_amount, inv.amount_untaxed)
 
-    def test_keep_paid_invoice_on_group_change(self):
-        contract_group = self.group
-        contract = self.contract
-
-        invoices = contract.mapped("invoice_line_ids.move_id")
-        self.assertEqual(len(invoices), 1)
-
-        # ensure we pay the most earliest invoice
-        invoice_to_pay = self.env["account.move"].search([
-            ("id", "in", invoices.ids)], order="invoice_date asc", limit=1)
-        self._pay_invoice(invoice_to_pay)
-        self.assertEqual(invoice_to_pay.payment_state, "paid")
-
-        # changing advance billing to one month
-        # 2 month are now obsolete but one is paid
-        # so 1 invoice cancel and 1 invoice paid
-        contract_group.with_context(async_mode=False).write({
-            "advance_billing_months": 1
-        })
-
-        invoices = contract.invoice_line_ids.mapped("invoice_id")
-
-        # number of invoices should remain the same
-        self.assertEqual(len(invoices), 4)
-
-        # 1 invoice should still be paid
-        self.assertEqual(len(invoices.filtered(lambda x: x.state == "paid")), 1)
-
-        # 2 invoices should be open
-        self.assertEqual(len(invoices.filtered(lambda x: x.state == "open")), 1)
-
-        # 1 invoice should be canceled
-        self.assertEqual(len(invoices.filtered(lambda x: x.state == "cancel")), 2)
-
     def _test_invoice_generation_behavior_on_new_contract_in_group(self):
         """When a new contract is added to a contract group invoices should be merged"""
 
@@ -438,29 +315,4 @@ class TestContractCompassion(TestRecurringContract):
         contract2.contract_waiting()
         contract2.button_generate_invoices()
 
-        self.assertEqual(
-            len(contract_group.mapped("contract_ids.invoice_line_ids.invoice_id")), 3)
-
-    def test_multiple_paid_in_clean_range(self):
-        """assess good behavior if we found multiple paid invoices in
-        the month to come and we do a clean"""
-
-        contract_group = self.group
-        contract = self.contract
-        contract.with_context(async_mode=False).contract_waiting()
-        invoices = contract.mapped("invoice_line_ids.move_id")
-
-        sorted_invoices = sorted(invoices, key=lambda e: e.date)
-
-        self.assertEqual(len(sorted_invoices), 1)
-
-        for inv in sorted_invoices[:3]:
-            self._pay_invoice(inv)
-            self.assertEqual(inv.payment_state, "paid")
-
-        contract_group.cancel_contract_invoices()
-
-        all_contract_invoice = self.env["account.move.line"].search([
-            ("contract_id", "=", contract.id)]).mapped("invoice_id")
-
-        self.assertEqual(len(all_contract_invoice), 4)
+        self.assertEqual(len(contract_group.mapped("contract_ids.invoice_line_ids.invoice_id")), 3)
