@@ -535,7 +535,7 @@ class RecurringContract(models.Model):
         partner_id = self.partner_id.id
         # Cannot create contract with different multiple (is it possible ?)
         partner_product_price_list = self.env['product.pricelist']._get_partner_pricelist_multi([partner_id],
-                                                                                                company_id=self.company_id)
+                                                                                                company_id=self.company_id.id)
         journal = self.env['account.journal'].search([
             ('type', '=', 'sale'),
             ('company_id', '=', self.company_id.id)

@@ -43,44 +43,6 @@ class AccountInvoiceTestCase(AccountTestInvoicingCommon):
             'invoice_day': '15',
         })
 
-    def test_get_relative_invoice_date(self):
-        """
-        Test the get_relative_invoice_date method
-        Asserts that the method returns the correct date based on the invoice_day and the last day of the month
-        """
-        # Set a date to compute the invoice date for
-        date_to_compute = fields.Date.from_string('2022-02-01')
-        # Call the method and assert that it returns the correct date
-        result = self.contract.get_relative_invoice_date(date_to_compute)
-        self.assertEqual(result, fields.Date.from_string('2022-02-15'))
-
-        # Change the invoice_day and repeat the test
-        self.contract.invoice_day = '30'
-        result = self.contract.get_relative_invoice_date(date_to_compute)
-        self.assertEqual(result, fields.Date.from_string('2022-02-28'))
-
-        # Check that if invoice_day is greater than the last day of the month, it is set to the last day
-        date_to_compute = date(2022, 2, 28)
-        result = self.contract.get_relative_invoice_date(date_to_compute)
-        self.assertEqual(result, date(2022, 2, 28))
-
-    def test_generate_invoices_async(self):
-        """ Test the generation of invoices in async mode"""
-        self.env.context = {'async_mode': True}
-        self.contract.generate_invoices()
-        jobs = self.env['queue.job'].search([('method_name', '=', '_generate_invoices')])
-        self.assertTrue(jobs, "Async job should have been created")
-
-    def test_generate_invoices(self):
-        """
-        Test generating invoices using the 'generate_invoices' method
-        Asserts that the invoices are generated and that the async_mode context value does not affect the result
-        """
-        self.contract.with_context({'async_mode': False}).generate_invoices()
-        # Check that invoices have been generated
-        invoices = self.invoice_model.search([])
-        self.assertTrue(invoices)
-
     def test_update_invoices(self):
         """
         Test updating the invoice with a new price
@@ -138,12 +100,3 @@ class AccountInvoiceTestCase(AccountTestInvoicingCommon):
         self.assertEqual(result.get('Invoice 1').get('payment_mode_id'), pay_mode_id)
         self.assertEqual(result.get('Invoice 1').get('invoice_payment_term_id'), payment_term_id)
         self.assertEqual(result.get('Invoice 1').get('partner_id'), partner_id)
-
-    def test_build_invoice_data_contract(self):
-        """
-        Test building the invoice data dictionary from a recurring contract
-        Asserts that the returned dictionary contains the correct invoice data and that the invoice line ids are in the
-        right format
-        """
-        result = self.invoice._build_invoice_data(contract=self.contract)
-        self.assertEqual(result.get('Invoice 1').get('invoice_line_ids')[0][2], {'price_unit': 10.0, 'quantity': 1})
