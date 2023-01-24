@@ -202,24 +202,18 @@ class AccountMove(models.Model):
         It updates the invoices in self with the value of updt_val
 
         :param updt_val: a dictionary of invoices values with the invoice name
-        which refer to another dictionnary of values for that invoice name
+        which refer to another dictionary of values for that invoice name
         """
-        if updt_val:
-            for invoice in self:
-                # Retrieve the value for a specific invoice
-                try:
-                    val_to_updt = updt_val.get(invoice.name)
-                except KeyError:
-                    logging.getLogger(__name__).warning(f"No key in the dictionnary for invoice {invoice.name}")
+        for invoice in self:
+            if invoice.name in updt_val:
+                val_to_updt = updt_val[invoice.name]
+                # In case we modify the amount we want to test if the amount is zero
+                invoice.button_draft()
+                invoice.update(val_to_updt)
+                if invoice.amount_total:
+                    invoice.action_post()
                 else:
-                    if val_to_updt:
-                        tot_amt = sum(inv_line[2]["price_unit"] for inv_line in val_to_updt["invoice_line_ids"])
-                        if tot_amt == 0:
-                            invoice.button_cancel()
-                        else:
-                            invoice.button_draft()
-                            invoice.write(val_to_updt)
-                            invoice.action_post()
+                    invoice.button_cancel()
 
     def _build_invoice_data(self, contract=False, invoice_date=False, ref=False, pay_mode_id=False,
                             payment_term_id=False, partner_id=False):
