@@ -208,14 +208,12 @@ class AccountMove(models.Model):
             if invoice.name in updt_val:
                 val_to_updt = updt_val[invoice.name]
                 # In case we modify the amount we want to test if the amount is zero
-                if "invoice_line_ids" in val_to_updt:
-                    tot_amt = sum(inv_line[2]["price_unit"] for inv_line in val_to_updt["invoice_line_ids"])
-                    if tot_amt == 0:
-                        invoice.button_cancel()
-                        continue
                 invoice.button_draft()
                 invoice.update(val_to_updt)
-                invoice.action_post()
+                if invoice.amount_total:
+                    invoice.action_post()
+                else:
+                    invoice.button_cancel()
 
     def _build_invoice_data(self, contract=False, invoice_date=False, ref=False, pay_mode_id=False,
                             payment_term_id=False, partner_id=False):
