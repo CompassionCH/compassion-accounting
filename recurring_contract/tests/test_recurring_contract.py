@@ -31,7 +31,7 @@ class TestRecurringContract(common.TransactionCase):
             'ref': ref
         })
 
-    def create_contract(self, reference='Test Contract', partner_id=None, group_id=None, pricelist_id=None, product_id=None, amount=10.0, quantity=1, invoice_day='15', birthday_invoice=50):
+    def create_contract(self, reference='Test Contract', partner_id=None, group_id=None, pricelist_id=None, product_id=None, amount=10.0, quantity=1, invoice_day='15'):
         return self.contract_obj.create({
             'reference': reference,
             'partner_id': partner_id or self.partner.id,
