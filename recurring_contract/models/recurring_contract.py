@@ -58,8 +58,7 @@ class RecurringContract(models.Model):
     # Define the next time a partner should rereceive an invoice
     invoice_suspended_until = fields.Date(
         string="Invoice Suspended Until",
-        help="Date at which the sponsor should receive invoices again."
-             "If the invoices are set for the 29 and that date stops on the 28 the sponsors will receive the invoice for the 29 the month before.",
+        help="Date at which the sponsor should receive invoices again.",
         tracking=True,
         states={'draft': [('readonly', False)]}
     )
@@ -487,6 +486,16 @@ class RecurringContract(models.Model):
     ##########################################################################
     #                             PRIVATE METHODS                            #
     ##########################################################################
+    @api.constrains('birthday_invoice', 'christmas_invoice')
+    def _check_gift_invoice_method(self):
+        for contract in self:
+            if contract.birthday_invoice or contract.christmas_invoice:
+                if contract.payment_mode_id not in (self.env['account.payment.mode'].search(
+                        [('payment_method_code', 'like', '%direct_debit')]
+                )):
+                    raise UserError("You can't have an amount for 'Birthday Invoice' "
+                                    "or 'Christmas Invoice' if the payment mode isn't a direct debit.")
+
     def _generate_invoices(self):
         """ Checks all contracts and generate invoices if needed.
             Create an invoice per contract group per date.
