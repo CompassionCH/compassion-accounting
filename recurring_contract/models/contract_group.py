@@ -45,10 +45,8 @@ class ContractGroup(models.Model):
         ondelete='cascade', tracking=True, readonly=False)
     ref = fields.Char('Reference', tracking=True)
     recurring_unit = fields.Selection([
-        ('day', _('Day(s)')),
-        ('week', _('Week(s)')),
         ('month', _('Month(s)')),
-        ('year', _('Year(s)'))], 'Reccurency',
+        ('year', _('Year(s)'))], 'Recurrence',
         default='month', required=True)
     recurring_value = fields.Integer(
         'Generate every', default=1, required=True)
@@ -91,8 +89,7 @@ class ContractGroup(models.Model):
         """
         if any(key in vals for key in ("payment_mode_id", "ref")):
             invoices = self.mapped("contract_ids.invoice_line_ids.move_id").filtered(
-                lambda i: i.payment_state == "not_paid"
-                          and i.state != "cancel")
+                lambda i: i.payment_state == "not_paid" and i.state != "cancel")
             if invoices:
                 data_invs = dict()
                 for inv in invoices:

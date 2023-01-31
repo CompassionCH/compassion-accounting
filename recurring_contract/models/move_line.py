@@ -20,7 +20,6 @@ class MoveLine(models.Model):
 
     contract_id = fields.Many2one('recurring.contract', 'Source contract', index=True)
     due_date = fields.Date(related='move_id.invoice_date_due', store=True, readonly=True, index=True)
-    state = fields.Selection(related="move_id.state")
     last_payment = fields.Date(related="move_id.last_payment", store=True)
     payment_state = fields.Selection(related="move_id.payment_state", store=True, readonly=True, index=True)
 
