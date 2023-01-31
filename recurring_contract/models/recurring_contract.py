@@ -418,6 +418,8 @@ class RecurringContract(models.Model):
         or 'cancelled' state depending if it was active or not.
         :return: True
         """
+        # Cancel invoices
+        self.cancel_contract_invoices()
         active_contracts = self.filtered('activation_date')
         if active_contracts:
             active_contracts.contract_terminated()
@@ -432,7 +434,6 @@ class RecurringContract(models.Model):
             'state': 'terminated',
             'end_date': now
         })
-        self.cancel_contract_invoices()
         return True
 
     def contract_cancelled(self):
@@ -441,7 +442,6 @@ class RecurringContract(models.Model):
             'state': 'cancelled',
             'end_date': today
         })
-        self.cancel_contract_invoices()
         return True
 
     def action_cancel_draft(self):
@@ -569,7 +569,8 @@ class RecurringContract(models.Model):
         """
         _logger.info("clean invoices called.")
         for contract in self:
-            since_date = contract.end_date.date()
+            # We "gift" the last month so we search from the first of that last month
+            since_date = contract.end_date.date().replace(day=1)
             # Cancel invoices paid
             inv_lines_paid = contract.invoice_line_ids.filtered(lambda l: l.state == 'paid'
                                                                           and l.due_date >= since_date)
