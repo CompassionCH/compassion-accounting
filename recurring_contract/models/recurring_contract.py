@@ -229,17 +229,23 @@ class RecurringContract(models.Model):
         query = """
             SELECT COUNT(*)
             FROM account_move_line
-            WHERE contract_id = %s
+            WHERE contract_id = %s AND product_id = ANY(%s)
             AND due_date BETWEEN NOW() AND NOW() + INTERVAL '%s MONTHS'
         """
         for contract in self:
             if contract.state in ("waiting", "active"):
                 group = contract.group_id
-                self.env.cr.execute(query, [contract.id, group.advance_billing_months])
+                self.env.cr.execute(query, [
+                    contract.id,
+                    contract.mapped("contract_line_ids.product_id").ids,
+                    group.advance_billing_months]
+                )
                 number_invoices = self.env.cr.fetchone()[0]
                 if group.recurring_unit == "month":
-                    contract.missing_invoices = number_invoices < (group.advance_billing_months // group.recurring_unit)
+                    contract.missing_invoices = number_invoices < (
+                            group.advance_billing_months // group.recurring_value)
                 else:
+                    # This is the yearly case, there should be at least one invoice per year.
                     contract.missing_invoices = number_invoices == 0
             else:
                 contract.missing_invoices = False
@@ -530,6 +536,7 @@ class RecurringContract(models.Model):
                 ("parent_state", "!=", "cancel")
             ])
             _logger.info(f"Generating invoice for : {contract} {contract.reference}")
+            # Compute the interval of months there should be between each invoice (set in the contract group)
             recurring_unit = contract.group_id.recurring_unit
             month_interval = contract.group_id.recurring_value * (1 if recurring_unit == "month" else 12)
             for inv_no in range(1, contract.group_id.advance_billing_months + 1, month_interval):
