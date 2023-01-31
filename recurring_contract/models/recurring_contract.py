@@ -447,14 +447,13 @@ class RecurringContract(models.Model):
         or 'cancelled' state depending if it was active or not.
         :return: True
         """
-        # Cancel invoices
-        self.cancel_contract_invoices()
         active_contracts = self.filtered('activation_date')
         if active_contracts:
             active_contracts.contract_terminated()
         inactive = self - active_contracts
         if inactive:
             inactive.contract_cancelled()
+        self.cancel_contract_invoices()
         return True
 
     def contract_terminated(self):
