@@ -129,8 +129,6 @@ class RecurringContract(models.Model):
         ('unique_ref', "unique(reference)", "Reference must be unique!"),
         ('invoice_day_of_month', 'check(invoice_day BETWEEN 1 AND 31)',
          'The Invoice Day should be a day of month so a number between 1 to 31'),
-        ('inv_suspend_to_greater_today', 'CHECK (invoice_suspended_until >= CURRENT_DATE)',
-         'The date of Invoices suspended until should be greater than today')
     ]  # TODO TRANSLATION
 
     ##########################################################################
