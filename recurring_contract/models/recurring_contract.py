@@ -58,8 +58,7 @@ class RecurringContract(models.Model):
     # Define the next time a partner should rereceive an invoice
     invoice_suspended_until = fields.Date(
         string="Invoice Suspended Until",
-        help="Date at which the sponsor should receive invoices again."
-             "If the invoices are set for the 29 and that date stops on the 28 the sponsors will receive the invoice for the 29 the month before.",
+        help="Date at which the sponsor should receive invoices again.",
         tracking=True,
         states={'draft': [('readonly', False)]}
     )
