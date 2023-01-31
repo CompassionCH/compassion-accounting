@@ -89,7 +89,6 @@ class RecurringContract(models.Model):
         tracking=True, copy=False, index=True)
     total_amount = fields.Float(
         'Total', compute='_compute_total_amount',
-        digits='Account',
         tracking=True, store=True)
     payment_mode_id = fields.Many2one(
         'account.payment.mode', string='Payment mode',
@@ -124,6 +123,11 @@ class RecurringContract(models.Model):
     months_paid = fields.Integer(
         compute="_compute_months_paid",
         help="Number indicating up to which month the contract is paid (<1=prev. year,1=Jan,12=December,>12=next year)")
+    missing_invoices = fields.Boolean(
+        compute="_compute_missing_invoices",
+        help="Tells if invoices have not been generated yet",
+        store=True
+    )
 
     _sql_constraints = [
         ('unique_ref', "unique(reference)", "Reference must be unique!"),
@@ -218,6 +222,26 @@ class RecurringContract(models.Model):
         for contract in self:
             contract.months_paid = dict_contract_id_paidmonth.get(contract.id)
 
+    @api.depends("invoice_line_ids", "state")
+    def _compute_missing_invoices(self):
+        query = """
+            SELECT COUNT(*)
+            FROM account_move_line
+            WHERE contract_id = %s
+            AND due_date BETWEEN NOW() AND NOW() + INTERVAL '%s MONTHS'
+        """
+        for contract in self:
+            if contract.state in ("waiting", "active"):
+                group = contract.group_id
+                self.env.cr.execute(query, [contract.id, group.advance_billing_months])
+                number_invoices = self.env.cr.fetchone()[0]
+                if group.recurring_unit == "month":
+                    contract.missing_invoices = number_invoices < (group.advance_billing_months // group.recurring_unit)
+                else:
+                    contract.missing_invoices = number_invoices == 0
+            else:
+                contract.missing_invoices = False
+
     ##########################################################################
     #                              ORM METHODS                               #
     ##########################################################################
@@ -243,7 +267,7 @@ class RecurringContract(models.Model):
         return res
 
     def unlink(self):
-        if self.filtered('start_date'):
+        if self.filtered('start_date') and not self.env.context.get("force_delete"):
             raise UserError(
                 _('You cannot delete a validated contract.'))
         return super().unlink()
@@ -347,12 +371,12 @@ class RecurringContract(models.Model):
     def button_generate_invoices(self):
         """ Immediately generate invoices of the contract group. """
         invoicer = self.with_context({"async_mode": False}).with_company(self.company_id).generate_invoices()
-        if invoicer.invoice_ids:
-            type = "success"
-            msg = "The generation was successfully processed."
-        elif self.env.context.get("invoice_err_gen", False):
+        if invoicer.env.context.get("invoice_err_gen", False):
             type = "error"
             msg = "The generation failed for at least one invoice"
+        elif invoicer.invoice_ids:
+            type = "success"
+            msg = "The generation was successfully processed."
         else:
             type = "warning"
             msg = "The generation didn't created any new invoices. This could " \
@@ -378,6 +402,7 @@ class RecurringContract(models.Model):
             'res_model': 'account.move',
             'domain': [('id', 'in', invoice_ids)],
             'target': 'current',
+            "context": {"search_default_unpaid": 1}
         }
 
     ##########################################################################
@@ -490,17 +515,22 @@ class RecurringContract(models.Model):
         """
         test_mode = config.get('test_enable')
         _logger.info(f"Starting generation of invoices for contracts : {self.ids}")
-        if not test_mode:
-            self.env.cr.commit()  # pylint: disable=invalid-commit
         invoicer = self.env['recurring.invoicer'].create({})
-
         inv_obj = self.env['account.move']
         for contract in self:
+            if not test_mode:
+                self.env.cr.commit()  # pylint: disable=invalid-commit
             # Retrieve account_move_line already existing for this contract
-            acc_move_line_curr_contr = self.env["account.move.line"].search([("contract_id", "=", contract.id),
-                                                                             ("due_date", ">=", datetime.today())])
+            acc_move_line_curr_contr = self.env["account.move.line"].search([
+                ("contract_id", "=", contract.id),
+                ("due_date", ">=", datetime.today()),
+                ("product_id", "in", contract.contract_line_ids.mapped("product_id").ids),
+                ("parent_state", "!=", "cancel")
+            ])
             _logger.info(f"Generating invoice for : {contract} {contract.reference}")
-            for inv_no in range(1, contract.group_id.advance_billing_months + 1):
+            recurring_unit = contract.group_id.recurring_unit
+            month_interval = contract.group_id.recurring_value * (1 if recurring_unit == "month" else 12)
+            for inv_no in range(1, contract.group_id.advance_billing_months + 1, month_interval):
                 # Date must be incremented of the number of months the invoices is generated in advance
                 invoicing_date = datetime.now() + relativedelta(months=inv_no)
                 invoicing_date = contract.get_relative_invoice_date(invoicing_date.date())
@@ -510,16 +540,22 @@ class RecurringContract(models.Model):
                     continue
                 # Building invoices data
                 inv_data = contract._build_invoice_gen_data(invoicing_date, invoicer)
-                _logger.info(f"Generating invoice : {inv_data}")
                 # Creating the actual invoice
-                invoice = inv_obj.create(inv_data)
-                # If the invoice has something to be paid we post it to activate it
-                if invoice.invoice_line_ids:
-                    invoice.action_post()
-                else:
-                    _logger.warning(
-                        f"Invoice tried to generate a 0 amount invoice {invoice} for contract:{contract}, invoice no: {inv_no}")
-                    invoice.unlink()
+                try:
+                    _logger.info(f"Generating invoice : {inv_data}")
+                    invoice = inv_obj.create(inv_data)
+                    # If the invoice has something to be paid we post it to activate it
+                    if invoice.invoice_line_ids:
+                        invoice.action_post()
+                    else:
+                        _logger.warning(f"Invoice tried to generate a 0 amount invoice for contract {contract.id}")
+                        invoice.unlink()
+                except:
+                    _logger.error(f"Error during invoice generation for contract {contract.id}", exc_info=True)
+                    if not test_mode:
+                        self.env.cr.rollback()
+        # Refresh state to check whether invoices are missing in some contracts
+        self._compute_missing_invoices()
         _logger.info("Proccess successfully generated invoices")
         return invoicer
 
@@ -570,8 +606,8 @@ class RecurringContract(models.Model):
             # We "gift" the last month so we search from the first of that last month
             since_date = contract.end_date.date().replace(day=1)
             # Cancel invoices paid
-            inv_lines_paid = contract.invoice_line_ids.filtered(lambda l: l.state == 'paid'
-                                                                          and l.due_date >= since_date)
+            inv_lines_paid = contract.invoice_line_ids.filtered(
+                lambda l: l.payment_state == 'paid' and l.due_date >= since_date)
             move_lines = inv_lines_paid.mapped('move_id.line_ids').filtered('reconciled')
             reconciles = inv_lines_paid.mapped('move_id.line_ids.full_reconcile_id')
 
@@ -582,9 +618,9 @@ class RecurringContract(models.Model):
                 lambda l: l.contract_id not in self).mapped('move_id')
             paid_invoices.reconcile_after_clean()
 
-            # Cancel open or draft invoices
-            invoices_lines = contract.invoice_line_ids.filtered(lambda l: l.state not in ['paid', 'cancel']
-                                                                          and l.due_date >= since_date)
+            # Cancel open invoices
+            invoices_lines = contract.invoice_line_ids.filtered(
+                lambda l: l.payment_state != 'paid' and l.due_date >= since_date)
             # Multi contracts invoices should delete just their lines
             empty_invoices = self.env['account.move']
             to_remove_invl = self.env['account.move.line']
@@ -619,8 +655,7 @@ class RecurringContract(models.Model):
             data_invs = {}
             for contract in self:
                 for inv in contract.mapped("invoice_line_ids.move_id").filtered(
-                        lambda m: m.payment_state == "not_paid"
-                                  and m.state != "cancel"):
+                        lambda m: m.payment_state == "not_paid" and m.state != "cancel"):
                     data_invs.update(
                         inv._build_invoice_data(
                             contract=contract,
