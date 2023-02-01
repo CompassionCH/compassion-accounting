@@ -9,6 +9,7 @@
 ##############################################################################
 import calendar
 import logging
+import os
 from datetime import datetime, date
 
 from dateutil.relativedelta import relativedelta
@@ -327,12 +328,11 @@ class RecurringContract(models.Model):
 
         :return: a dictionary
         """
-        if not contract_line or not (product and quantity):
+        if not contract_line and not (product and quantity):
             raise Exception(f"This method should get a contract_line or a product and quantity passt \n{os.path.basename(__file__)}")
         product = product or contract_line.product_id
         qty = quantity or contract_line.quantity
-        price = self.env["product.pricelist"].search([("company_id", "=", self.company_id.id)]) \
-            .get_product_price(self, product, qty, self.partner_id, date=invoicing_date)
+        price = self.pricelist_id.get_product_price(product, qty, self.partner_id, invoicing_date)
 
         return {
             'name': product.name,
@@ -590,6 +590,7 @@ class RecurringContract(models.Model):
             'invoice_date': invoicing_date,  # Accountant date
             'date': datetime.now(),  # Date of generation of the invoice
             'recurring_invoicer_id': invoicer.id,
+            'pricelist_id': self.pricelist_id.id,
             'payment_mode_id': self.group_id.payment_mode_id.id,
             'company_id': self.company_id.id,
             # Field for the invoice_due_date to be automatically calculated
