@@ -50,12 +50,4 @@ class ContractLine(models.Model):
 
     def build_inv_line_data(self):
         self.ensure_one()
-        return {
-                    "price_unit": self.amount,
-                    "product_id": self.product_id.id,
-                    'name': self.product_id.name,
-                    'quantity': self.quantity,
-                    'contract_id': self.contract_id.id,
-                    'account_id': self.product_id.with_company(
-                        self.contract_id.company_id.id).property_account_income_id.id or False
-                }
+        return self.contract_id.build_inv_line_data(contract_line=self)

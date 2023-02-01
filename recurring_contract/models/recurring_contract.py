@@ -237,7 +237,7 @@ class RecurringContract(models.Model):
                     contract.id,
                     contract.mapped("contract_line_ids.product_id").ids,
                     group.advance_billing_months]
-                )
+                                    )
                 number_invoices = self.env.cr.fetchone()[0]
                 if group.recurring_unit == "month":
                     contract.missing_invoices = number_invoices < (
@@ -319,26 +319,30 @@ class RecurringContract(models.Model):
         else:
             self._cancel_invoices()
 
-    def build_inv_lines_data(self):
-        """ Setup a dict with data passed to invoice_line.create.
-        If any custom data is wanted in invoice line from contract,
-        just inherit this method.
-        :return: list of dictionaries
+    def build_inv_line_data(self, invoicing_date=False, product=False, quantity=False, contract_line=False):
         """
-        res = list()
-        for contract_line in self.contract_line_ids:
-            product = contract_line.product_id
-            inv_line_data = {
-                'name': product.name,
-                'price_unit': contract_line.amount,
-                'quantity': contract_line.quantity,
-                'product_id': product.id,
-                'contract_id': contract_line.contract_id.id,
-                'account_id': product.with_company(
-                    contract_line.contract_id.company_id.id).property_account_income_id.id or False
-            }
-            res.append(inv_line_data)
-        return res
+        Set up a dictionary with data passed to `self.env['account.move.line'].create({})`.
+        If a `product` and `quantity` are not provided, `contract_line` must be provided.
+        If any custom data is wanted in the invoice line from the contract, just inherit this method.
+
+        :return: a dictionary
+        """
+        if not contract_line or not (product and quantity):
+            raise Exception(f"This method should get a contract_line or a product and quantity passt \n{os.path.basename(__file__)}")
+        product = product or contract_line.product_id
+        qty = quantity or contract_line.quantity
+        price = self.env["product.pricelist"].search([("company_id", "=", self.company_id.id)]) \
+            .get_product_price(self, product, qty, self.partner_id, date=invoicing_date)
+
+        return {
+            'name': product.name,
+            'price_unit': price,
+            'quantity': qty,
+            'product_id': product.id,
+            'contract_id': self.id,
+            'account_id': product.with_company(
+                self.company_id.id).property_account_income_id.id or False
+        }
 
     ##########################################################################
     #                             VIEW CALLBACKS                             #
@@ -565,16 +569,13 @@ class RecurringContract(models.Model):
         _logger.info("Proccess successfully generated invoices")
         return invoicer
 
-    def _build_invoice_gen_data(self, invoicing_date, invoicer):
+    def _build_invoice_gen_data(self, invoicing_date, invoicer, gift_wizard=False):
         """ Setup a dict with data passed to invoice.create.
             If any custom data is wanted in invoice from contract group, just
             inherit this method.
         """
         self.ensure_one()
         partner_id = self.partner_id.id
-        # Cannot create contract with different multiple (is it possible ?)
-        partner_product_price_list = self.env['product.pricelist']._get_partner_pricelist_multi([partner_id],
-                                                                                                company_id=self.company_id.id)
         journal = self.env['account.journal'].search([
             ('type', '=', 'sale'),
             ('company_id', '=', self.company_id.id)
@@ -585,7 +586,7 @@ class RecurringContract(models.Model):
             'move_type': 'out_invoice',
             'partner_id': partner_id,
             'journal_id': journal.id,
-            'currency_id': partner_product_price_list.get(partner_id).currency_id.id,
+            'currency_id': self.pricelist_id.currency_id.id,
             'invoice_date': invoicing_date,  # Accountant date
             'date': datetime.now(),  # Date of generation of the invoice
             'recurring_invoicer_id': invoicer.id,
@@ -594,8 +595,11 @@ class RecurringContract(models.Model):
             # Field for the invoice_due_date to be automatically calculated
             'invoice_payment_term_id': self.partner_id.property_payment_term_id.id or self.env.ref(
                 "account.account_payment_term_immediate").id,
-            'invoice_line_ids': [
-                (0, 0, invl) for invl in self.build_inv_lines_data() if invl
+            'invoice_line_ids': [(0, 0, self.build_inv_line_data(invoicing_date=invoicing_date,
+                                                                 product=gift_wizard.product,
+                                                                 quantity=1))] if gift_wizard else [
+                (0, 0, self.build_inv_line_data(invoicing_date=invoicing_date, contract_line=cl)) for cl in
+                self.contract_line_ids if cl
             ],
             'narration': "\n".join(self.comment or "")
         }
