@@ -116,8 +116,10 @@
         <field name="arch" type="xml">
             <tree string="Contract Lines" editable="bottom">
                 <field name="product_id"/>
-                <field name="amount" />
-                <field name="quantity" />
+                <field name="pricelist_item_count" invisible="1"/>
+                <field name="amount"
+                       attrs="{'readonly': [('pricelist_item_count', '>', 0)]}" />
+               <field name="quantity" />
                 <field name="subtotal" />
             </tree>
         </field>

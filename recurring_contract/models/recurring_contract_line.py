@@ -10,6 +10,7 @@
 
 import logging
 
+from dateutil.utils import today
 
 from odoo import api, fields, models
 
@@ -35,18 +36,22 @@ class ContractLine(models.Model):
     quantity = fields.Integer(default=1, required=True)
     subtotal = fields.Float(compute='_compute_subtotal', store=True,
                             digits='Account')
+    pricelist_item_count = fields.Integer(related="product_id.pricelist_item_count", readonly=1)
 
     @api.depends('amount', 'quantity')
     def _compute_subtotal(self):
-        for contract in self:
-            contract.subtotal = contract.amount * contract.quantity
+        for contract_line in self:
+            contract_line.subtotal = contract_line.amount * contract_line.quantity
 
     @api.onchange('product_id')
     def on_change_product_id(self):
         if not self.product_id:
             self.amount = 0.0
         else:
-            self.amount = self.product_id.list_price
+            self.amount = self.contract_id.pricelist_id.get_product_price(self.product_id,
+                                                                          self.quantity,
+                                                                          self.contract_id.partner_id,
+                                                                          today())
 
     def build_inv_line_data(self):
         self.ensure_one()
