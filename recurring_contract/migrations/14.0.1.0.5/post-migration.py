@@ -8,20 +8,6 @@ _logger = logging.getLogger(__name__)
 
 @openupgrade.migrate()
 def migrate(env, version):
-    # Correct pricelist for finnish partners
-    fin_partner_contracts = env['res.partner'].search([("country_id.code", "=", env.ref("base.fi").code),
-                                                       ("state", "in", ["waiting", "active"])]).mapped("contracts_fully_managed")
-    _logger.info(f"total finish contract found: {len(fin_partner_contracts.ids)}")
-    apropriate_price_list = env['product.pricelist'].search([("name", "=", "Finish Pricelist")])
-    if len(apropriate_price_list.ids) != 1:
-        _logger.warning("price list finnish is not unique")
-        return 1
-    for fin_contract in fin_partner_contracts:
-        if fin_contract.pricelist_id != apropriate_price_list:
-            _logger.info(f"Associate correct price list to contract {fin_contract}")
-            fin_contract.pricelist_id = apropriate_price_list
-    _logger.info("Finish contracts corrected")
-
     # Retrieve balance product
     balance_product = env["product.product"].search([("name", "=", "Balance")])
     if len(balance_product.ids) != 1:
