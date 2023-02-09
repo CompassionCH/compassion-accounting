@@ -50,6 +50,7 @@
         'views/recurring_invoicer_view.xml',
         'views/recurring_invoicer_wizard_view.xml',
         'views/utm_medium_view.xml',
+        'data/balance_product_for_migr.xml',
         'data/recurring_contract_sequence.xml',
         'data/contract_expire_cron.xml',
         'data/pricelist_item_base_automation.xml',
