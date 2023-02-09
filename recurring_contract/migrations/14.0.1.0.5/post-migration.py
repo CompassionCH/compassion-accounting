@@ -33,7 +33,6 @@ def migrate(env, version):
                 _logger.info(
                     f"Balance contract line found old amount: {balance_line.amount}, for contract {contract_line.contract_id}")
                 balance_line.write({"amount": balance_line.amount + balance_price})
-                contract_line.write({"amount": expected_price})
                 _logger.info(
                     f"Balance contract line populated new amount: {balance_line.amount}, for contract {contract_line.contract_id}")
             else:
@@ -44,4 +43,5 @@ def migrate(env, version):
                     "contract_id": contract_line.contract_id.id
                 })
                 _logger.info(f"Balance contract line created {balance_line} for contract {contract_line.contract_id}")
+            contract_line.write({"amount": expected_price})
     _logger.info("Migration done!")

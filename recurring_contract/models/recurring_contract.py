@@ -256,6 +256,9 @@ class RecurringContract(models.Model):
     ##########################################################################
     #                             PUBLIC METHODS                             #
     ##########################################################################
+    def button_generate_invoices(self):
+        return self.mapped("group_id").button_generate_invoices()
+
     def generate_invoices(self):
         """ By default, launch asynchronous job to perform the task.
             Context value async_mode set to False can force to perform
