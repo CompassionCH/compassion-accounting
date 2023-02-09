@@ -52,6 +52,7 @@
         'views/utm_medium_view.xml',
         'data/recurring_contract_sequence.xml',
         'data/contract_expire_cron.xml',
+        'data/pricelist_item_base_automation.xml',
         'data/daily_invoicer_cron.xml',
         'data/utm_data.xml',
         'data/queue_job.xml',

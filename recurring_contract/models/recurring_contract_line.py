@@ -55,4 +55,4 @@ class ContractLine(models.Model):
 
     def build_inv_line_data(self):
         self.ensure_one()
-        return self.contract_id.build_inv_line_data(contract_line=self)
+        return self.contract_id.group_id.build_inv_line_data(contract_line=self)

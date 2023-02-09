@@ -47,22 +47,6 @@ class RecurringContract(models.Model):
         'recurring.contract.end.reason', 'End reason', copy=False,
         ondelete='restrict', readonly=False
     )
-    # Field to determine the due date of an invoice TODO TRANSLATION
-    invoice_day = fields.Selection(
-        selection="_day_selection",
-        string="Invoicing Day",
-        help="Day for which the invoices of a contract are due. If you choose 31, it will adapt for 30 days months and Febuary.",
-        default="31",
-        required=True,
-        states={'draft': [('readonly', False)]}
-    )
-    # Define the next time a partner should rereceive an invoice
-    invoice_suspended_until = fields.Date(
-        string="Invoice Suspended Until",
-        help="Date at which the sponsor should receive invoices again.",
-        tracking=True,
-        states={'draft': [('readonly', False)]}
-    )
     last_paid_invoice_date = fields.Date(
         compute='_compute_last_paid_invoice')
     partner_id = fields.Many2one(
@@ -94,7 +78,7 @@ class RecurringContract(models.Model):
     payment_mode_id = fields.Many2one(
         'account.payment.mode', string='Payment mode',
         related='group_id.payment_mode_id', readonly=True, store=True)
-    nb_invoices = fields.Integer(compute='_compute_invoices')
+    nb_invoices = fields.Integer(compute="_compute_invoices")
     activation_date = fields.Datetime(readonly=True, copy=False)
     company_id = fields.Many2one(
         'res.company',
@@ -132,21 +116,18 @@ class RecurringContract(models.Model):
 
     _sql_constraints = [
         ('unique_ref', "unique(reference)", "Reference must be unique!"),
-        ('invoice_day_of_month', 'check(invoice_day BETWEEN 1 AND 31)',
-         'The Invoice Day should be a day of month so a number between 1 to 31'),
-    ]  # TODO TRANSLATION
+    ]
 
     ##########################################################################
     #                             FIELDS METHODS                             #
     ##########################################################################
-    @api.model
-    def _day_selection(self):
-        curr_day = 1
-        day_l = []
-        while curr_day < 32:
-            day_l.append((str(curr_day), str(curr_day)))
-            curr_day += 1
-        return day_l
+    def _compute_invoices(self):
+        for contract in self:
+            contract.nb_invoices = len(
+                contract.mapped('invoice_line_ids.move_id').filtered(
+                    lambda i: i.state not in ('cancel', 'draft')
+                              and i.payment_state != 'paid'
+                ))
 
     @api.depends('contract_line_ids', 'contract_line_ids.amount',
                  'contract_line_ids.quantity')
@@ -161,13 +142,6 @@ class RecurringContract(models.Model):
             contract.last_paid_invoice_date = max(
                 [invl.move_id.invoice_date for invl in
                  contract.invoice_line_ids if invl.move_id.payment_state == 'paid'] or [False])
-
-    def _compute_invoices(self):
-        for contract in self:
-            contract.nb_invoices = len(
-                contract.mapped('invoice_line_ids.move_id').filtered(
-                    lambda i: i.state not in ('cancel', 'draft')
-                ))
 
     @api.depends("invoice_line_ids", "invoice_line_ids.payment_state")
     def _compute_due_invoices(self):
@@ -287,28 +261,7 @@ class RecurringContract(models.Model):
             Context value async_mode set to False can force to perform
             the task immediately.
         """
-        if self.env.context.get('async_mode', True):
-            # Prevent two generations at the same time
-            jobs = self.env['queue.job'].search([
-                ('channel', '=', 'root.recurring_invoicer'),
-                ('state', '=', 'started')])
-            delay = datetime.today()
-            if jobs:
-                delay += relativedelta(minutes=1)
-            self.with_delay(eta=delay)._generate_invoices()
-        else:
-            return self._generate_invoices()
-
-    def get_relative_invoice_date(self, date_to_compute):
-        """ Calculate the date depending on the last day of the month and the invoice_day set in the contract.
-        @param date: date to make the calcul on
-        @type: date
-        @return: date with the day edited
-        @rtype: date
-        """
-        last_day_of_month = calendar.monthrange(date_to_compute.year, date_to_compute.month)[1]
-        inv_day = int(self.invoice_day) if int(self.invoice_day) <= last_day_of_month else last_day_of_month
-        return date_to_compute.replace(day=inv_day)
+        self.mapped("group_id").generate_invoices()
 
     def cancel_contract_invoices(self):
         """ By default, launch asynchronous job to perform the task.
@@ -319,30 +272,6 @@ class RecurringContract(models.Model):
             self.with_delay()._cancel_invoices()
         else:
             self._cancel_invoices()
-
-    def build_inv_line_data(self, invoicing_date=False, product=False, quantity=False, contract_line=False):
-        """
-        Set up a dictionary with data passed to `self.env['account.move.line'].create({})`.
-        If a `product` and `quantity` are not provided, `contract_line` must be provided.
-        If any custom data is wanted in the invoice line from the contract, just inherit this method.
-
-        :return: a dictionary
-        """
-        if not contract_line and not (product and quantity):
-            raise Exception(f"This method should get a contract_line or a product and quantity passt \n{os.path.basename(__file__)}")
-        product = product or contract_line.product_id
-        qty = quantity or contract_line.quantity
-        price = self.pricelist_id.get_product_price(product, qty, self.partner_id, invoicing_date)
-
-        return {
-            'name': product.name,
-            'price_unit': price,
-            'quantity': qty,
-            'product_id': product.id,
-            'contract_id': self.id,
-            'account_id': product.with_company(
-                self.company_id.id).property_account_income_id.id or False
-        }
 
     ##########################################################################
     #                             VIEW CALLBACKS                             #
@@ -377,30 +306,6 @@ class RecurringContract(models.Model):
         # Unset pricelist_id if the company selected doesn't have one
         else:
             self.pricelist_id = False
-
-    def button_generate_invoices(self):
-        """ Immediately generate invoices of the contract group. """
-        invoicer = self.with_context({"async_mode": False}).with_company(self.company_id).generate_invoices()
-        if invoicer.env.context.get("invoice_err_gen", False):
-            type = "error"
-            msg = "The generation failed for at least one invoice"
-        elif invoicer.invoice_ids:
-            type = "success"
-            msg = "The generation was successfully processed."
-        else:
-            type = "warning"
-            msg = "The generation didn't created any new invoices. This could " \
-                  "be because the sponsorship already have the correct invoices open."
-        notification = {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': ('Generation of Invoices'),
-                'message': msg,
-                'type': f"{type}",
-            },
-        }
-        return notification
 
     def open_invoices(self):
         self.ensure_one()
@@ -518,94 +423,6 @@ class RecurringContract(models.Model):
     ##########################################################################
     #                             PRIVATE METHODS                            #
     ##########################################################################
-    def _generate_invoices(self):
-        """ Checks all contracts and generate invoices if needed.
-            Create an invoice per contract group per date.
-        """
-        test_mode = config.get('test_enable')
-        _logger.info(f"Starting generation of invoices for contracts : {self.ids}")
-        invoicer = self.env['recurring.invoicer'].create({})
-        inv_obj = self.env['account.move']
-        for contract in self:
-            if not test_mode:
-                self.env.cr.commit()  # pylint: disable=invalid-commit
-            # Retrieve account_move_line already existing for this contract
-            acc_move_line_curr_contr = self.env["account.move.line"].search([
-                ("contract_id", "=", contract.id),
-                ("due_date", ">=", datetime.today()),
-                ("product_id", "in", contract.contract_line_ids.mapped("product_id").ids),
-                ("parent_state", "!=", "cancel")
-            ])
-            _logger.info(f"Generating invoice for : {contract} {contract.reference}")
-            # Compute the interval of months there should be between each invoice (set in the contract group)
-            recurring_unit = contract.group_id.recurring_unit
-            month_interval = contract.group_id.recurring_value * (1 if recurring_unit == "month" else 12)
-            for inv_no in range(1, contract.group_id.advance_billing_months + 1, month_interval):
-                # Date must be incremented of the number of months the invoices is generated in advance
-                invoicing_date = datetime.now() + relativedelta(months=inv_no)
-                invoicing_date = contract.get_relative_invoice_date(invoicing_date.date())
-                # in case invoice already exist for the current month or the invoices are suspended we do not generate
-                if acc_move_line_curr_contr.filtered(lambda l: l.due_date.month >= invoicing_date.month) \
-                        or (contract.invoice_suspended_until and contract.invoice_suspended_until > invoicing_date):
-                    continue
-                # Building invoices data
-                inv_data = contract._build_invoice_gen_data(invoicing_date, invoicer)
-                # Creating the actual invoice
-                try:
-                    _logger.info(f"Generating invoice : {inv_data}")
-                    invoice = inv_obj.create(inv_data)
-                    # If the invoice has something to be paid we post it to activate it
-                    if invoice.invoice_line_ids:
-                        invoice.action_post()
-                    else:
-                        _logger.warning(f"Invoice tried to generate a 0 amount invoice for contract {contract.id}")
-                        invoice.unlink()
-                except:
-                    _logger.error(f"Error during invoice generation for contract {contract.id}", exc_info=True)
-                    if not test_mode:
-                        self.env.cr.rollback()
-        # Refresh state to check whether invoices are missing in some contracts
-        self._compute_missing_invoices()
-        _logger.info("Proccess successfully generated invoices")
-        return invoicer
-
-    def _build_invoice_gen_data(self, invoicing_date, invoicer, gift_wizard=False):
-        """ Setup a dict with data passed to invoice.create.
-            If any custom data is wanted in invoice from contract group, just
-            inherit this method.
-        """
-        self.ensure_one()
-        partner_id = self.partner_id.id
-        journal = self.env['account.journal'].search([
-            ('type', '=', 'sale'),
-            ('company_id', '=', self.company_id.id)
-        ], limit=1)
-        inv_data = {
-            'payment_reference': self.group_id.ref,  # Accountant reference
-            'ref': self.group_id.ref,  # Internal reference
-            'move_type': 'out_invoice',
-            'partner_id': partner_id,
-            'journal_id': journal.id,
-            'currency_id': self.pricelist_id.currency_id.id,
-            'invoice_date': invoicing_date,  # Accountant date
-            'date': datetime.now(),  # Date of generation of the invoice
-            'recurring_invoicer_id': invoicer.id,
-            'pricelist_id': self.pricelist_id.id,
-            'payment_mode_id': self.group_id.payment_mode_id.id,
-            'company_id': self.company_id.id,
-            # Field for the invoice_due_date to be automatically calculated
-            'invoice_payment_term_id': self.partner_id.property_payment_term_id.id or self.env.ref(
-                "account.account_payment_term_immediate").id,
-            'invoice_line_ids': [(0, 0, self.build_inv_line_data(invoicing_date=invoicing_date,
-                                                                 product=gift_wizard.product,
-                                                                 quantity=1))] if gift_wizard else [
-                (0, 0, self.build_inv_line_data(invoicing_date=invoicing_date, contract_line=cl)) for cl in
-                self.contract_line_ids if cl
-            ],
-            'narration': "\n".join(self.comment or "")
-        }
-        return inv_data
-
     def _cancel_invoices(self):
         """ Cancel invoices
             This method cancel invoices that are due in the future
