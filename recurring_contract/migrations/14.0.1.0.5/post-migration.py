@@ -14,7 +14,7 @@ def migrate(env, version):
         _logger.warning("balance product is not unique")
         return 1
     # retrieve all contract line
-    contract_lines = env["recurring.contract"].search([("state", "in", ["waiting", "active"])]).mapped(
+    contract_lines = env["recurring.contract"].search([("state", "not in", ["cancelled", "terminated"])]).mapped(
         "contract_line_ids")
     for contract_line in contract_lines:
         # Calculated the correct price of a line
