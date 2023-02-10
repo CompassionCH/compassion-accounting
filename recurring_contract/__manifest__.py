@@ -49,6 +49,7 @@
         'views/recurring_contract_view.xml',
         'views/recurring_invoicer_view.xml',
         'views/recurring_invoicer_wizard_view.xml',
+        'views/res_config_settings_view.xml',
         'views/utm_medium_view.xml',
         'data/balance_product_for_migr.xml',
         'data/recurring_contract_sequence.xml',

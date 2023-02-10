@@ -57,7 +57,7 @@ class ContractGroup(models.Model):
     )
     nb_invoices = fields.Integer(compute='_compute_invoices')
     invoice_day = fields.Selection(
-        selection="_day_selection",
+        selection="day_selection",
         string="Invoicing Day",
         help="Day for which the invoices of a contract are due. If you choose 31, it will adapt for 30 days months and February.",
         default="1",
@@ -128,8 +128,8 @@ class ContractGroup(models.Model):
                     if contract.company_id != pricelist_to_match:
                         raise UserError(ERROR_MESSAGE.format("pricelists"))
 
-    @api.model
-    def _day_selection(self):
+    @staticmethod
+    def day_selection():
         curr_day = 1
         day_l = []
         while curr_day < 32:
@@ -240,7 +240,8 @@ class ContractGroup(models.Model):
             # Compute the interval of months there should be between each invoice (set in the contract group)
             recurring_unit = pay_opt.recurring_unit
             month_interval = pay_opt.recurring_value * (1 if recurring_unit == "month" else 12)
-            for inv_no in range(1, pay_opt.advance_billing_months + 1, month_interval):
+            curr_month = self.env["ir.config_parameter"].sudo().get_param(f"compassion_nordic_accounting.do_generate_curr_month_{self.env.company.id}", 0)
+            for inv_no in range(0 if curr_month else 1, pay_opt.advance_billing_months + 1, month_interval):
                 # Date must be incremented of the number of months the invoices is generated in advance
                 invoicing_date = datetime.now() + relativedelta(months=inv_no)
                 invoicing_date = pay_opt.get_relative_invoice_date(invoicing_date.date())
