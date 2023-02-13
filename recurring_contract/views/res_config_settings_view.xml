@@ -17,6 +17,7 @@
                     </div>
                     <div class="o_setting_right_pane">
                         <label for="do_generate_curr_month" class="o_form_label"/>
+                        <span class="fa fa-lg fa-building-o" title="Values set here are company-specific."/>
                         <div class="text-muted">
                             Define if we start generating invoices from current month or next month only
                         </div>
@@ -26,6 +27,7 @@
                     <div class="o_setting_left_pane"/>
                     <div class="o_setting_right_pane">
                         <label for="inv_block_day" class="o_form_label"/>
+                        <span class="fa fa-lg fa-building-o" title="Values set here are company-specific."/>
                         <div class="text-muted">
                             Define the day that we want to suspend contract invoices on creation
                         </div>

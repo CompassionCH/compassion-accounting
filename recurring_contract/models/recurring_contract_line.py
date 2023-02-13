@@ -49,11 +49,9 @@ class ContractLine(models.Model):
 
     @api.onchange('product_id')
     def on_change_product_id(self):
-        for line in self:
-            line.amount = line.contract_id.pricelist_id.get_product_price(line.product_id,
-                                                                          line.quantity,
-                                                                          line.contract_id.partner_id,
-                                                                          today())
+        for line in self.filtered("product_id"):
+            line.amount = line.contract_id.pricelist_id.get_product_price(
+                line.product_id, line.quantity, line.contract_id.partner_id, today())
 
     def build_inv_line_data(self):
         self.ensure_one()
