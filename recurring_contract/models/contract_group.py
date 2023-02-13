@@ -103,7 +103,6 @@ class ContractGroup(models.Model):
     #                             FIELDS METHODS                             #
     ##########################################################################
     @api.depends('contract_ids')
-    @ormcache("self")
     def _compute_active_contracts(self):
         for pay_opt in self:
             pay_opt.active_contract_ids = pay_opt.contract_ids.filtered(lambda c: c.state in ('active', 'waiting'))

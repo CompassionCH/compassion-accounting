@@ -125,10 +125,11 @@ class RecurringContract(models.Model):
     def on_change_block_inv(self):
         # Define if the invoices should temporarily be suspended
         today = fields.Date.today()
-        param_string = f"recurring_contract.inv_block_day_{self.company_id.id}"
-        day_block_inv = self.env["ir.config_parameter"].sudo().get_param(param_string, 31)
+        param_string = f"recurring_contract.invoice_block_day_{self.company_id.id}"
+        day_block_inv = int(self.env["ir.config_parameter"].sudo().get_param(param_string, 31))
         if today.day > day_block_inv:
-            self.group_id.write({"invoice_suspended_until": str(today + relativedelta(months=1))})
+            new_date = (today + relativedelta(months=1)).replace(day=day_block_inv)
+            self.group_id.write({"invoice_suspended_until": fields.Date.to_string(new_date)})
 
     def _compute_invoices(self):
         for contract in self:
