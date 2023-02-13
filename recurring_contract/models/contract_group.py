@@ -17,7 +17,7 @@ from dateutil import parser
 
 from odoo import fields, models, _, api
 from odoo.exceptions import UserError
-from odoo.tools import config
+from odoo.tools import config, ormcache
 
 logger = logging.getLogger(__name__)
 test_mode = config.get('test_enable')
@@ -96,13 +96,18 @@ class ContractGroup(models.Model):
         'recurring.contract',
         'group_id',
         'Active contracts',
-        related='contract_ids',
-        domain=[('state', 'in', ['active', 'waiting'])]
+        compute='_compute_active_contracts',
     )
 
     ##########################################################################
     #                             FIELDS METHODS                             #
     ##########################################################################
+    @api.depends('contract_ids')
+    @ormcache("self")
+    def _compute_active_contracts(self):
+        for pay_opt in self:
+            pay_opt.active_contract_ids = pay_opt.contract_ids.filtered(lambda c: c.state in ('active', 'waiting'))
+
     def _compute_last_paid_invoice(self):
         for group in self:
             group.last_paid_invoice_date = max(
