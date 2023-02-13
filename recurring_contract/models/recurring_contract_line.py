@@ -10,6 +10,7 @@
 
 import logging
 
+from dateutil.utils import today
 
 from odoo import api, fields, models
 
@@ -31,31 +32,29 @@ class ContractLine(models.Model):
         ondelete='cascade', readonly=True)
     product_id = fields.Many2one('product.product', 'Product',
                                  required=True, readonly=False)
-    amount = fields.Float('Price', required=True)
+    amount = fields.Float('Price',
+                          required=True,
+                          compute='on_change_product_id',
+                          stored=True,
+                          default=0.0)
     quantity = fields.Integer(default=1, required=True)
     subtotal = fields.Float(compute='_compute_subtotal', store=True,
                             digits='Account')
+    pricelist_item_count = fields.Integer(related="product_id.pricelist_item_count", readonly=1)
 
     @api.depends('amount', 'quantity')
     def _compute_subtotal(self):
-        for contract in self:
-            contract.subtotal = contract.amount * contract.quantity
+        for contract_line in self:
+            contract_line.subtotal = contract_line.amount * contract_line.quantity
 
     @api.onchange('product_id')
     def on_change_product_id(self):
-        if not self.product_id:
-            self.amount = 0.0
-        else:
-            self.amount = self.product_id.list_price
+        for line in self:
+            line.amount = line.contract_id.pricelist_id.get_product_price(line.product_id,
+                                                                          line.quantity,
+                                                                          line.contract_id.partner_id,
+                                                                          today())
 
     def build_inv_line_data(self):
         self.ensure_one()
-        return {
-                    "price_unit": self.amount,
-                    "product_id": self.product_id.id,
-                    'name': self.product_id.name,
-                    'quantity': self.quantity,
-                    'contract_id': self.contract_id.id,
-                    'account_id': self.product_id.with_company(
-                        self.contract_id.company_id.id).property_account_income_id.id or False
-                }
+        return self.contract_id.group_id.build_inv_line_data(contract_line=self)

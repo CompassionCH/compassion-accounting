@@ -23,7 +23,12 @@ class AccountMove(models.Model):
 
     last_payment = fields.Date(compute="_compute_last_payment", store=True)
     recurring_invoicer_id = fields.Many2one(
-        'recurring.invoicer', 'Invoicer', readonly=False)
+        'recurring.invoicer', 'Invoicer', readonly=False
+    )
+    group_id = fields.Many2one(
+        'recurring.contract.group', 'Payment Option', readonly=True
+    )
+
 
     @api.depends("payment_state")
     def _compute_last_payment(self):
@@ -257,36 +262,43 @@ class AccountMove(models.Model):
         """
         res = []
         line_ids = self.mapped("invoice_line_ids")
+        if contract.start_date.date() < self.invoice_date_due:
+            # When the invoice isn't a gift we see if a product has been added / deleted
+            if any(key not in [GIFT_PRODUCTS_REF[0], PRODUCT_GIFT_CHRISTMAS] for key in line_ids.mapped("product_id.default_code")):
+                # Line to delete in the invoice
+                # If the invoice has different product than the contract we should delete the line
+                contract_products = contract.contract_line_ids.mapped("product_id")
+                diff_product_lines = line_ids.filtered(lambda l: l.product_id not in contract_products)
+                res.extend([(2, line.id, 0) for line in diff_product_lines])
+                # Line to create in the invoice
+                # If the contract has different product than the invoice we should create the line
+                missing_lines = contract.contract_line_ids.filtered(lambda l: l.product_id not in line_ids.mapped("product_id"))
+                res.extend([(0, 0, line_vals.build_inv_line_data()) for line_vals in missing_lines])
+                # Line to modify in the invoice
+                line_ids = line_ids.filtered(lambda l: l.product_id.id not in missing_lines.mapped("product_id").ids
+                                                       and l.id not in diff_product_lines.ids)
 
-        # When the invoice isn't a gift we see if a product has been added / deleted
-        if any(key not in [GIFT_PRODUCTS_REF[0], PRODUCT_GIFT_CHRISTMAS] for key in line_ids.mapped("product_id.default_code")):
-            # Line to delete in the invoice
-            # If the invoice has different product than the contract we should delete the line
-            contract_products = contract.contract_line_ids.mapped("product_id")
-            diff_product_lines = line_ids.filtered(lambda l: l.product_id not in contract_products)
-            res.extend([(2, line.id, 0) for line in diff_product_lines])
-            # Line to create in the invoice
-            # If the contract has different product than the invoice we should create the line
-            missing_lines = contract.contract_line_ids.filtered(lambda l: l.product_id not in line_ids.mapped("product_id"))
-            res.extend([(0, 0, line_vals.build_inv_line_data()) for line_vals in missing_lines])
-            # Line to modify in the invoice
-            line_ids = line_ids.filtered(lambda l: l.product_id.id not in missing_lines.mapped("product_id").ids
-                                                   and l.id not in diff_product_lines.ids)
-
-        # Modification on invoices
-        for line_id in line_ids:
-            cl = contract.mapped("contract_line_ids").filtered(lambda l: l.product_id == line_id.product_id)
-            data_dict = {}
-            # Process specific cases for gift
-            if line_id.product_id.default_code == PRODUCT_GIFT_CHRISTMAS:
-                data_dict["price_unit"] = contract.christmas_invoice
-            elif line_id.product_id.default_code == GIFT_PRODUCTS_REF[0]:
-                data_dict["price_unit"] = contract.birthday_invoice
-            elif cl:
-                data_dict["price_unit"] = cl.amount
-                data_dict["quantity"] = cl.quantity
-            else:
-                raise UserError("Case not supposed to happen :) contact admin.")
-            # Add the modification on the line
-            res.append((1, line_id.id, data_dict))
+            # Modification on invoices
+            for line_id in line_ids:
+                cl = contract.contract_line_ids.filtered(lambda l: l.product_id == line_id.product_id)
+                data_dict = {}
+                # Process specific cases for gift
+                if line_id.product_id.default_code == PRODUCT_GIFT_CHRISTMAS:
+                    data_dict["price_unit"] = contract.christmas_invoice
+                elif line_id.product_id.default_code == GIFT_PRODUCTS_REF[0]:
+                    data_dict["price_unit"] = contract.birthday_invoice
+                elif cl.product_id.pricelist_item_count > 0:
+                    price = contract.pricelist_id.get_product_price(cl.product_id,
+                                                                    cl.quantity,
+                                                                    self.partner_id,
+                                                                    self.invoice_date_due)
+                    data_dict["price_unit"] = price
+                    data_dict["quantity"] = cl.quantity
+                elif cl:
+                    data_dict["price_unit"] = cl.amount
+                    data_dict["quantity"] = cl.quantity
+                else:
+                    raise UserError("Case not supposed to happen :) contact admin.")
+                # Add the modification on the line
+                res.append((1, line_id.id, data_dict))
         return res

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (C) 2014 Compassion (http://www.compassion.ch)
+    @author Simon Gonzalez <simon.gonzalez@bluewin.ch>
+    The licence is in the file __manifest__.py
+-->
+<odoo>
+    <data noupdate="1">
+        <!-- PRODUCT FOR THE MIGRATION 14.0.1.0.5 -->
+        <record id="product_balance_migr" model="product.product">
+            <field name="name">Balance</field>
+            <field name="type">consu</field>
+            <field name="default_code">TODO MODIFY</field>
+            <field name="categ_id">1</field>
+        </record>
+    </data>
+</odoo>

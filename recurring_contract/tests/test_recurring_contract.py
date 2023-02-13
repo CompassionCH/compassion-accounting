@@ -31,7 +31,7 @@ class TestRecurringContract(common.TransactionCase):
             'ref': ref
         })
 
-    def create_contract(self, reference='Test Contract', partner_id=None, group_id=None, pricelist_id=None, product_id=None, amount=10.0, quantity=1, invoice_day='15'):
+    def create_contract(self, reference='Test Contract', partner_id=None, group_id=None, pricelist_id=None, product_id=None, amount=10.0, quantity=1):
         return self.contract_obj.create({
             'reference': reference,
             'partner_id': partner_id or self.partner.id,
@@ -39,7 +39,6 @@ class TestRecurringContract(common.TransactionCase):
             'pricelist_id': pricelist_id or self.env.ref('product.list0').id,
             'contract_line_ids': [
                 (0, 0, {'product_id': product_id or self.product.id, 'amount': amount, 'quantity': quantity})],
-            'invoice_day': invoice_day,
         })
 
     def setUp(self):
@@ -67,7 +66,6 @@ class TestRecurringContract(common.TransactionCase):
             recurring_value=1,
             ref="Test Group"
         )
-        # Create a new contract with a set invoice_day
         self.contract_obj = self.env['recurring.contract']
         self.contract = self.create_contract(
            "Test Contract",
@@ -77,7 +75,6 @@ class TestRecurringContract(common.TransactionCase):
            self.product.id,
            10.0,
            1,
-           '15'
         )
         self.contract_2 = self.create_contract(
             "Test Contract 2",
@@ -87,7 +84,6 @@ class TestRecurringContract(common.TransactionCase):
             self.product.id,
             10.0,
             1,
-            '15'
         )
         # To generate invoices, the contract must be "waiting"
         self.contract.with_context(async_mode=False).contract_waiting()
@@ -132,7 +128,7 @@ class TestRecurringContract(common.TransactionCase):
         self.assertEqual(result, fields.Date.from_string('2022-02-15'))
 
         # Change the invoice_day and repeat the test
-        self.contract.invoice_day = '30'
+        self.contract.group_id.invoice_day = '30'
         result = self.contract.get_relative_invoice_date(date_to_compute)
         self.assertEqual(result, fields.Date.from_string('2022-02-28'))
 

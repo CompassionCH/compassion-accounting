@@ -10,7 +10,8 @@
         <field name="name">recurring.contract.tree</field>
         <field name="model">recurring.contract</field>
         <field name="arch" type="xml">
-            <tree decoration-muted="state in ('terminated','cancelled')" decoration-success="state == 'waiting'" decoration-primary="state == 'draft'">
+            <tree decoration-muted="state in ('terminated','cancelled')" decoration-success="state == 'waiting'"
+                  decoration-primary="state == 'draft'">
                 <field name="reference"/>
                 <field name="partner_id"/>
                 <field name="start_date"/>
@@ -31,7 +32,8 @@
             <form>
                 <header>
                     <field name="state" widget="statusbar"/>
-                    <button name="contract_waiting" class="oe_highlight" string="Validate" states="draft" type="object"/>
+                    <button name="contract_waiting" class="oe_highlight" string="Validate" states="draft"
+                            type="object"/>
                     <button name="action_cancel_draft" type="object" string="Set back to draft" states="cancelled"/>
                     <button name="%(action_end_contract)d" type="action" string="Terminate" class="oe_highlight"
                             attrs="{'invisible': ['|', ('state', 'in', ['terminated', 'cancelled']), ('end_date', '!=', False)]}"/>
@@ -47,22 +49,21 @@
 
                     <div class="oe_title">
                         <h1>
-                            <field name="reference" default_focus="1" />
+                            <field name="reference" default_focus="1"/>
                         </h1>
                     </div>
                     <group>
                         <group>
                             <field name="partner_id" options="{'create': false, 'm2o_dialog': false}"/>
-                            <field name="group_id" domain="[('partner_id', '=', partner_id)]" context="{'default_partner_id': partner_id}"/>
                             <field name="company_id"/>
                             <field name="pricelist_id"/>
+                            <field name="group_id" domain="[('partner_id', '=', partner_id), ('contract_ids.company_id', '=', company_id), ('contract_ids.pricelist_id', '=', pricelist_id)]"
+                                   context="{'default_partner_id': partner_id}"/>
                         </group>
                         <group>
                             <field name="start_date"/>
                             <field name="activation_date"/>
                             <field name="end_date"/>
-                            <field name="invoice_day" states="draft,waiting,active"/>
-                            <field name="invoice_suspended_until" states="draft,waiting,active"/>
                             <field name="end_reason_id" states="terminated,cancelled"/>
                         </group>
                         <group>
@@ -80,21 +81,24 @@
                         <page string="Contract lines">
                             <field name="contract_line_ids"/>
                             <group class="oe_subtotal_footer oe_right">
-                                <field name="total_amount" />
+                                <field name="total_amount"/>
                             </group>
-                            <group class="oe_inline" />
+                            <group class="oe_inline"/>
                         </page>
                         <page string="Related invoice lines">
                             <field name="invoice_line_ids">
                                 <tree>
-                                    <field name="move_id" />
-                                    <field name="name" />
-                                    <field name="due_date" />
-                                    <field name="quantity" />
-                                    <field name="price_unit" />
-                                    <field name="price_subtotal" />
-                                    <field name="parent_state" widget="badge" decoration-info="parent_state == 'draft'" decoration-success="parent_state == 'posted'"/>
-                                    <field name="payment_state" widget="badge" decoration-info="payment_state == 'in_payment'" decoration-success="payment_state == 'paid'"/>
+                                    <field name="move_id"/>
+                                    <field name="name"/>
+                                    <field name="due_date"/>
+                                    <field name="quantity"/>
+                                    <field name="price_unit"/>
+                                    <field name="price_subtotal"/>
+                                    <field name="parent_state" widget="badge" decoration-info="parent_state == 'draft'"
+                                           decoration-success="parent_state == 'posted'"/>
+                                    <field name="payment_state" widget="badge"
+                                           decoration-info="payment_state == 'in_payment'"
+                                           decoration-success="payment_state == 'paid'"/>
                                 </tree>
                             </field>
                         </page>
@@ -116,9 +120,10 @@
         <field name="arch" type="xml">
             <tree string="Contract Lines" editable="bottom">
                 <field name="product_id"/>
-                <field name="amount" />
-                <field name="quantity" />
-                <field name="subtotal" />
+                <field name="pricelist_item_count" invisible="1"/>
+                <field name="amount" attrs="{'readonly': [('pricelist_item_count', '>', 0)]}"/>
+                <field name="quantity"/>
+                <field name="subtotal"/>
             </tree>
         </field>
     </record>
@@ -128,20 +133,24 @@
         <field name="model">recurring.contract</field>
         <field name="arch" type="xml">
             <search string="Search contract">
-                <field name="reference" string="Contract" filter_domain="['|','|', ('reference','ilike',self), ('partner_id','child_of',self), ('payment_mode_id', 'ilike', self)]"/>
+                <field name="reference" string="Contract"
+                       filter_domain="['|','|', ('reference','ilike',self), ('partner_id','child_of',self), ('payment_mode_id', 'ilike', self)]"/>
                 <filter name="draft" string="Draft" domain="[('state','=', 'draft')]"/>
                 <filter name="waiting" string="Waiting" domain="[('state','in', ('waiting','mandate'))]"/>
-                <filter name="active" string="Active" domain="[('activation_date', '!=', False), ('state', 'not in', ('cancelled','terminated'))]" help="Active Contracts"/>
+                <filter name="active" string="Active"
+                        domain="[('activation_date', '!=', False), ('state', 'not in', ('cancelled','terminated'))]"
+                        help="Active Contracts"/>
                 <filter name="finished" string="Finished" domain="[('state','=', 'terminated')]"/>
                 <field name="partner_id" operator="child_of"/>
                 <field name="payment_mode_id" string="Payment term"/>
                 <group expand="0" string="Group By...">
                     <filter string="Partner" name="partner" domain="[]" context="{'group_by':'partner_id'}"/>
-                    <filter string="Start date" name="start_date" domain="[]"  context="{'group_by':'start_date'}"/>
+                    <filter string="Start date" name="start_date" domain="[]" context="{'group_by':'start_date'}"/>
                     <filter string="End date" name="end_date" domain="[]" context="{'group_by':'end_date'}"/>
-                    <filter string="Payment mode" name="payment_mode" domain="[]"  context="{'group_by':'payment_mode_id'}"/>
+                    <filter string="Payment mode" name="payment_mode" domain="[]"
+                            context="{'group_by':'payment_mode_id'}"/>
                     <filter string="Total" name="total" domain="[]" context="{'group_by':'total_amount'}"/>
-                    <filter string="Status" name="state" domain="[]"  context="{'group_by':'state'}"/>
+                    <filter string="Status" name="state" domain="[]" context="{'group_by':'state'}"/>
                 </group>
             </search>
         </field>
@@ -156,12 +165,14 @@
         <field name="help" type="html">
             <p class="oe_view_nocontent_create">
                 Click to add a contract.
-            </p><p>
-            OpenERP helps you to generate recurrent invoices.
-        </p>
+            </p>
+            <p>
+                OpenERP helps you to generate recurrent invoices.
+            </p>
         </field>
     </record>
 
     <menuitem id="menu_contracts_section" parent="account.menu_finance" name="Contracts" sequence="2"/>
-    <menuitem id="menu_recurring_contract_form" parent="menu_contracts_section" action="action_recurring_contract_form" sequence="5"/>
+    <menuitem id="menu_recurring_contract_form" parent="menu_contracts_section" action="action_recurring_contract_form"
+              sequence="5"/>
 </odoo>
