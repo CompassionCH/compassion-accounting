@@ -121,6 +121,15 @@ class RecurringContract(models.Model):
     ##########################################################################
     #                             FIELDS METHODS                             #
     ##########################################################################
+    @api.onchange("group_id")
+    def on_change_block_inv(self):
+        # Define if the invoices should temporarily be suspended
+        today = fields.Date.today()
+        param_string = f"recurring_contract.inv_block_day_{self.company_id.id}"
+        day_block_inv = self.env["ir.config_parameter"].sudo().get_param(param_string, 31)
+        if today.day > day_block_inv:
+            self.group_id.write({"invoice_suspended_until": str(today + relativedelta(months=1))})
+
     def _compute_invoices(self):
         for contract in self:
             contract.nb_invoices = len(
@@ -224,7 +233,6 @@ class RecurringContract(models.Model):
     ##########################################################################
     #                              ORM METHODS                               #
     ##########################################################################
-
     @api.model
     def create(self, vals):
         """ Add a sequence generated ref if none is given """
@@ -232,12 +240,6 @@ class RecurringContract(models.Model):
             vals['reference'] = self.env['ir.sequence'].next_by_code(
                 'recurring.contract.ref')
         res = super().create(vals)
-        # Define if the invoices should temporarily be suspended
-        today = fields.Date.today()
-        day_block_inv = self.env["ir.config_parameter"].sudo().get_param(
-            f"compassion_nordic_accounting.inv_block_day_{self.env.company.id}", 31)
-        if today.day > day_block_inv:
-            self.mapped("group_id").write({"invoice_suspended_until": today + relativedelta(months=1)})
         return res
 
     def write(self, vals):

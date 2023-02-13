@@ -26,18 +26,13 @@
                     </div>
                 </div>
                 <div class="col-xs-12 col-md-6 o_setting_box">
-                    <div class="o_setting_left_pane">
-                        <div class="custom-control custom-checkbox o_field_boolean o_field_widget"
-                             name="group_cash_rounding">
-                            <field name="inv_block_day"/>
-                        </div>
-                    </div>
                     <div class="o_setting_right_pane">
                         <label for="inv_block_day" class="o_form_label"/>
                         <div class="text-muted">
                             Define the day that we want to suspend contract invoices on creation
                         </div>
                     </div>
+                    <field name="inv_block_day"/>
                 </div>
             </xpath>
         </field>

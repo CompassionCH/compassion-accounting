@@ -57,7 +57,7 @@
                             <field name="partner_id" options="{'create': false, 'm2o_dialog': false}"/>
                             <field name="company_id"/>
                             <field name="pricelist_id"/>
-                            <field name="group_id" domain="[('partner_id', '=', partner_id), ('contract_ids.company_id', '=', company_id), ('contract_ids.pricelist_id', '=', pricelist_id)]"
+                            <field name="group_id" domain="[('partner_id', '=', partner_id), ('active_contract_ids.company_id', '=', company_id), ('active_contract_ids.pricelist_id', '=', pricelist_id)]"
                                    context="{'default_partner_id': partner_id}"/>
                         </group>
                         <group>
@@ -121,8 +121,7 @@
             <tree string="Contract Lines" editable="bottom">
                 <field name="product_id"/>
                 <field name="pricelist_item_count" invisible="1"/>
-                <field name="amount"
-                       attrs="{'readonly': [('pricelist_item_count', '>', 0)]}"/>
+                <field name="amount" attrs="{'readonly': [('pricelist_item_count', '>', 0)]}"/>
                 <field name="quantity"/>
                 <field name="subtotal"/>
             </tree>

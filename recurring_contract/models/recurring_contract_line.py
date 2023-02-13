@@ -32,7 +32,11 @@ class ContractLine(models.Model):
         ondelete='cascade', readonly=True)
     product_id = fields.Many2one('product.product', 'Product',
                                  required=True, readonly=False)
-    amount = fields.Float('Price', required=True)
+    amount = fields.Float('Price',
+                          required=True,
+                          compute='on_change_product_id',
+                          stored=True,
+                          default=0.0)
     quantity = fields.Integer(default=1, required=True)
     subtotal = fields.Float(compute='_compute_subtotal', store=True,
                             digits='Account')
@@ -45,12 +49,10 @@ class ContractLine(models.Model):
 
     @api.onchange('product_id')
     def on_change_product_id(self):
-        if not self.product_id:
-            self.amount = 0.0
-        else:
-            self.amount = self.contract_id.pricelist_id.get_product_price(self.product_id,
-                                                                          self.quantity,
-                                                                          self.contract_id.partner_id,
+        for line in self:
+            line.amount = line.contract_id.pricelist_id.get_product_price(line.product_id,
+                                                                          line.quantity,
+                                                                          line.contract_id.partner_id,
                                                                           today())
 
     def build_inv_line_data(self):

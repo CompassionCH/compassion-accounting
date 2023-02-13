@@ -49,7 +49,7 @@ class ContractGroup(models.Model):
         'account.payment.mode', 'Payment mode',
         domain=[('payment_type', '=', 'inbound')],
         tracking=True,
-        readonly=False
+        readonly=False,
     )
     last_paid_invoice_date = fields.Date(
         compute='_compute_last_paid_invoice',
@@ -90,8 +90,14 @@ class ContractGroup(models.Model):
         'recurring.contract',
         'group_id',
         'Contracts',
-        readonly=True,
-        domain=[('state', '=', 'active')]
+        readonly=True
+    )
+    active_contract_ids = fields.One2many(
+        'recurring.contract',
+        'group_id',
+        'Active contracts',
+        related='contract_ids',
+        domain=[('state', 'in', ['active', 'waiting'])]
     )
 
     ##########################################################################
@@ -100,14 +106,14 @@ class ContractGroup(models.Model):
     def _compute_last_paid_invoice(self):
         for group in self:
             group.last_paid_invoice_date = max(
-                [c.last_paid_invoice_date for c in group.contract_ids
+                [c.last_paid_invoice_date for c in group.active_contract_ids
                  if c.last_paid_invoice_date] or
                 [False])
 
     def _compute_invoices(self):
         for pay_opt in self:
             pay_opt.nb_invoices = len(
-                pay_opt.mapped('contract_ids.invoice_line_ids.move_id').filtered(
+                pay_opt.mapped('active_contract_ids.invoice_line_ids.move_id').filtered(
                     lambda i: i.state not in ('cancel', 'draft')
                               and i.payment_state != 'paid'
                 ))
@@ -119,10 +125,11 @@ class ContractGroup(models.Model):
         and only one pricelist possible.
         """
         for pay_opt in self:
-            if pay_opt.contract_ids:
-                company_to_match = pay_opt.contract_ids[0].company_id
-                pricelist_to_match = pay_opt.contract_ids[0].pricelist_id
-                for contract in pay_opt.contract_ids:
+            active_contracts = pay_opt.active_contract_ids
+            if active_contracts:
+                company_to_match = active_contracts[0].company_id
+                pricelist_to_match = active_contracts[0].pricelist_id
+                for contract in active_contracts:
                     if contract.company_id != company_to_match:
                         raise UserError(ERROR_MESSAGE.format("companies"))
                     if contract.company_id != pricelist_to_match:
@@ -158,7 +165,7 @@ class ContractGroup(models.Model):
     ##########################################################################
     def open_invoices(self):
         self.ensure_one()
-        invoice_ids = self.mapped('contract_ids.invoice_line_ids.move_id').ids
+        invoice_ids = self.mapped('active_contract_ids.invoice_line_ids.move_id').ids
         return {
             'name': _('Contract invoices'),
             'type': 'ir.actions.act_window',
@@ -172,7 +179,7 @@ class ContractGroup(models.Model):
     def button_generate_invoices(self):
         """ Immediately generate invoices of the contract group. """
         invoicer = self.with_context({"async_mode": False}).with_company(
-            self.contract_ids[0].company_id).generate_invoices()
+            self.active_contract_ids[0].company_id).generate_invoices()
         if invoicer.env.context.get("invoice_err_gen", False):
             type = "error"
             msg = "The generation failed for at least one invoice"
@@ -197,12 +204,6 @@ class ContractGroup(models.Model):
     ##########################################################################
     #                             PRIVATE METHODS                            #
     ##########################################################################
-    def _generatable_contract(self):
-        return self.contract_ids.filtered(lambda c: c.state in self._get_invoices_generation_states())
-
-    def _get_invoices_generation_states(self):
-        return ['active', 'waiting']
-
     def generate_invoices(self):
         """ By default, launch asynchronous job to perform the task.
             Context value async_mode set to False can force to perform
@@ -226,7 +227,7 @@ class ContractGroup(models.Model):
         """
         test_mode = config.get('test_enable')
         invoice_err_gen = False
-        _logger.info(f"Starting generation of invoices for contracts : {self.mapped('contract_ids').ids} "
+        _logger.info(f"Starting generation of invoices for contracts : {self.active_contract_ids.ids} "
                      f"with payment option {self.ids}")
         invoicer = self.env['recurring.invoicer'].create({})
         inv_obj = self.env['account.move']
@@ -240,7 +241,8 @@ class ContractGroup(models.Model):
             # Compute the interval of months there should be between each invoice (set in the contract group)
             recurring_unit = pay_opt.recurring_unit
             month_interval = pay_opt.recurring_value * (1 if recurring_unit == "month" else 12)
-            curr_month = self.env["ir.config_parameter"].sudo().get_param(f"compassion_nordic_accounting.do_generate_curr_month_{self.env.company.id}", 0)
+            param_string = f"recurring_contract.do_generate_curr_month_{pay_opt.active_contract_ids[0].company_id.id}"
+            curr_month = self.env["ir.config_parameter"].sudo().default_get([param_string]).get(param_string, False)
             for inv_no in range(0 if curr_month else 1, pay_opt.advance_billing_months + 1, month_interval):
                 # Date must be incremented of the number of months the invoices is generated in advance
                 invoicing_date = datetime.now() + relativedelta(months=inv_no)
@@ -255,14 +257,14 @@ class ContractGroup(models.Model):
                 if open_invoice:
                     # Retrieve account_move_line already existing for this contract
                     acc_move_line_curr_contr = self.env["account.move.line"].search([
-                        ("contract_id", "in", pay_opt.contract_ids.ids),
+                        ("contract_id", "in", pay_opt.active_contract_ids.ids),
                         ("due_date", ">=", datetime.today()),
-                        ("product_id", "in", pay_opt.mapped("contract_ids.contract_line_ids.product_id").ids),
+                        ("product_id", "in", pay_opt.active_contract_ids.mapped("contract_line_ids.product_id").ids),
                         ("parent_state", "!=", "cancel")
                     ])
                     move_line_contract_ids = acc_move_line_curr_contr.mapped("contract_id")
                     move_line_product_ids = acc_move_line_curr_contr.mapped("product_id")
-                    all_contract_lines = self._generatable_contract().mapped("contract_line_ids")
+                    all_contract_lines = self.mapped("active_contract_ids.contract_line_ids")
                     contract_lines_to_inv = all_contract_lines - all_contract_lines.filtered(
                         lambda l: l.contract_id in move_line_contract_ids
                                   and l.product_id in move_line_product_ids)
@@ -293,7 +295,7 @@ class ContractGroup(models.Model):
                             self.env.cr.rollback()
 
             # Refresh state to check whether invoices are missing in some contracts
-            self.contract_ids._compute_missing_invoices()
+            self.active_contract_ids._compute_missing_invoices()
             _logger.info("Proccess successfully generated invoices")
             return invoicer.with_context({'invoice_err_gen': invoice_err_gen})
 
@@ -316,7 +318,7 @@ class ContractGroup(models.Model):
         self.ensure_one()
         # we use the first contract because the informations we retrieve has to be shared
         # between all the contracts of the list
-        contract = self.contract_ids[0]
+        contract = self.active_contract_ids[0]
         company_id = contract.company_id.id
         partner_id = self.partner_id.id
         journal = self.env['account.journal'].search([
@@ -344,10 +346,10 @@ class ContractGroup(models.Model):
                                                                  gift_wizard=gift_wizard,
                                                                  ))] if gift_wizard else [
                 (0, 0, self.build_inv_line_data(invoicing_date=invoicing_date, contract_line=cl)) for cl in
-                self.mapped("contract_ids.contract_line_ids") if cl
+                self.mapped("active_contract_ids.contract_line_ids") if cl
             ],
             'narration': "\n".join(
-                ["" if not comment else comment for comment in self.mapped("contract_ids.comment")] or "")
+                ["" if not comment else comment for comment in self.mapped("active_contract_ids.comment")] or "")
         }
         return inv_data
 
@@ -390,7 +392,7 @@ class ContractGroup(models.Model):
             :params vals dict of value that has been modified on the cg
         """
         if any(key in vals for key in ("payment_mode_id", "ref")):
-            invoices = self._generatable_contract().mapped("invoice_line_ids.move_id").filtered(
+            invoices = self.mapped("active_contract_ids.invoice_line_ids.move_id").filtered(
                 lambda i: i.payment_state == "not_paid" and i.state != "cancel")
             if invoices:
                 data_invs = dict()
@@ -404,4 +406,4 @@ class ContractGroup(models.Model):
                 invoices.update_invoices(data_invs)
         if "advance_billing_months" in vals:
             # In case the advance_billing_months is greater than before we should generate more invoices
-            self._generatable_contract().button_generate_invoices()
+            self.active_contract_ids.button_generate_invoices()

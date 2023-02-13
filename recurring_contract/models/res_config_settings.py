@@ -37,17 +37,18 @@ class MandateStaffNotifSettings(models.TransientModel):
     @api.model
     def get_values(self):
         res = super().get_values()
-        res["inv_block_day"] = self.get_param_multi_company("compassion_nordic_accounting.inv_block_day")
-        res["do_generate_curr_month"] = self.get_param_multi_company("compassion_nordic_accounting.do_generate_curr_month")
+        res["inv_block_day"] = self.get_param_multi_company("recurring_contract.inv_block_day")
+        res["do_generate_curr_month"] = self.get_param_multi_company("recurring_contract.do_generate_curr_month")
         return res
 
     def set_values(self):
-        self._set_param_multi_company("compassion_nordic_accounting.invoice_block_day", self.inv_block_day)
-        self._set_param_multi_company("compassion_nordic_accounting.do_generate_curr_month", str(self.do_generate_curr_month))
+        self._set_param_multi_company("recurring_contract.invoice_block_day", self.inv_block_day)
+        self._set_param_multi_company("recurring_contract.do_generate_curr_month", str(self.do_generate_curr_month))
         super().set_values()
 
     def get_param_multi_company(self, par_name):
-        return self.env["ir.config_parameter"].sudo().get_param(f"{par_name}_{self.env.company.id}", 0)
+        param_string = f"{par_name}_{self.env.company.id}"
+        return self.env["ir.config_parameter"].sudo().get_param(param_string, False)
 
     def _set_param_multi_company(self, par_name, par_val):
         self.env["ir.config_parameter"].set_param(
