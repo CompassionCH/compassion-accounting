@@ -59,7 +59,8 @@ class ContractGroup(models.Model):
     invoice_day = fields.Selection(
         selection="day_selection",
         string="Invoicing Day",
-        help="Day for which the invoices of a contract are due. If you choose 31, it will adapt for 30 days months and February.",
+        help="Day for which the invoices of a contract are due. "
+             "If you choose 31, it will adapt for 30 days months and February.",
         default="1",
         required=True,
         states={'draft': [('readonly', False)]}
