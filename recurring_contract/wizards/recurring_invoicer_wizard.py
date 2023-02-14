@@ -28,8 +28,7 @@ class InvoicerWizard(models.TransientModel):
         FROM recurring_contract
         INNER JOIN account_move_line ON recurring_contract.id = account_move_line.contract_id
         INNER JOIN account_move ON account_move_line.move_id = account_move.id
-        WHERE (invoice_suspended_until IS NULL OR invoice_suspended_until <= CURRENT_DATE)
-            AND recurring_contract.state IN ('active', 'waiting')
+        WHERE recurring_contract.state IN ('active', 'waiting')
             AND total_amount > 0
             AND (end_date IS NULL OR end_date >= CURRENT_DATE + INTERVAL '1 month')
             AND account_move.payment_state = 'not_paid'
