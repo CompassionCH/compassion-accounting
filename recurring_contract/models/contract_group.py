@@ -239,7 +239,7 @@ class ContractGroup(models.Model):
         for pay_opt in self:
             # retrieve the open invoices in the future
             open_invoices = self.env["account.move"].search([
-                ("group_id", "=", pay_opt.id),
+                ("payment_reference", "=", pay_opt.ref),
                 ("invoice_date_due", ">=", datetime.today()),
                 ("state", "!=", "cancel")
             ])
@@ -333,7 +333,6 @@ class ContractGroup(models.Model):
         inv_data = {
             'payment_reference': self.ref,  # Accountant reference
             'ref': self.ref,  # Internal reference
-            'group_id': self.id,
             'move_type': 'out_invoice',
             'partner_id': partner_id,
             'journal_id': journal.id,
