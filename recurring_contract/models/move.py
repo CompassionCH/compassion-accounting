@@ -25,10 +25,6 @@ class AccountMove(models.Model):
     recurring_invoicer_id = fields.Many2one(
         'recurring.invoicer', 'Invoicer', readonly=False
     )
-    group_id = fields.Many2one(
-        'recurring.contract.group', 'Payment Option', readonly=True
-    )
-
 
     @api.depends("payment_state")
     def _compute_last_payment(self):
