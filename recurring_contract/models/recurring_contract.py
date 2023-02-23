@@ -457,7 +457,7 @@ class RecurringContract(models.Model):
         for inv in paid_invoices:
             inv.write({"invoice_line_ids": [(2, invl.id) for invl in inv_lines_paid.exists() if invl.move_id == inv]})
         paid_invoices.action_post()
-        paid_invoices.with_company(self.mapped("company_id").id).reconcile_after_clean()
+        paid_invoices.with_company(self[0].company_id.id).reconcile_after_clean()
 
         # Cancel all open invoices
         invoices_lines = self._filter_open_invoices_to_cancel()

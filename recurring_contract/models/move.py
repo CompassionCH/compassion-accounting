@@ -92,7 +92,7 @@ class AccountMove(models.Model):
         mvl_obj = self.env['account.move.line']
         for partner in self.mapped('partner_id'):
             invoices = self.filtered(lambda i: i.partner_id == partner)
-            past_invoices = invoices.filtered(lambda i: i.date <= today)
+            past_invoices = invoices.filtered(lambda i: i.invoice_date_due <= today)
             past_lines = past_invoices.mapped('line_ids').filtered("debit")
             past_amount = sum(past_invoices.mapped('amount_total'))
             future_invoices = invoices - past_invoices
