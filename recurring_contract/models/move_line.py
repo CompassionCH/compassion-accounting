@@ -11,6 +11,7 @@
 from odoo import api, models, fields, exceptions, _
 from .product_names import GIFT_PRODUCTS_REF, PRODUCT_GIFT_CHRISTMAS
 
+
 class MoveLine(models.Model):
     """ Adds a method to split a payment into several move_lines
     in order to reconcile only a partial amount, avoiding doing
@@ -34,62 +35,23 @@ class MoveLine(models.Model):
         res = super()._onchange_product_id()
         return res
 
-    def split_payment_and_reconcile(self):
-        sum_credit = sum(self.mapped("credit"))
-        sum_debit = sum(self.mapped("debit"))
-        if sum_credit == sum_debit:
-            # Nothing to do here
-            return self.reconcile()
-
-        # Check in which direction we are reconciling
-        split_column = "credit" if sum_credit > sum_debit else "debit"
-        difference = abs(sum_credit - sum_debit)
-
-        for line in self:
-            if getattr(line, split_column) > difference:
-                # We will split this line
-                move = line.move_id
-                move_line = line
+    def group_reconcile(self, matched_lines, credit_or_debit="debit"):
+        """
+        Will reconcile the current recordset with any required lines taken from the
+        matched_lines recordset. If the sum is not enough, the operation will be aborted.
+        :param credit_or_debit: string indicating which amount will be reconciled
+        :param matched_lines: <account.move.line> recordset
+        :return: True
+        """
+        to_reconcile = sum(self.mapped(credit_or_debit))
+        selected_lines = self.env[self._name]
+        reconciled_amount = 0
+        inverse_field = "credit" if credit_or_debit == "debit" else "debit"
+        for line in matched_lines:
+            selected_lines += line
+            reconciled_amount += getattr(line, inverse_field)
+            if reconciled_amount >= to_reconcile:
                 break
         else:
-            raise exceptions.UserError(
-                _(
-                    "This can only be done if one move line can be split "
-                    "to cover the reconcile difference"
-                )
-            )
-
-        # Edit move in order to split payment into two move lines
-        payment = move_line.payment_id
-        if payment:
-            payment_lines = payment.move_line_ids
-            payment.move_line_ids = False
-        move.button_draft()
-        move.write(
-            {
-                "line_ids": [
-                    (1, move_line.id, {split_column: move_line.credit - difference}),
-                    (
-                        0,
-                        0,
-                        {
-                            split_column: difference,
-                            "name": self.env.context.get(
-                                "residual_comment", move_line.name
-                            ),
-                            "account_id": move_line.account_id.id,
-                            "date": move_line.date,
-                            "date_maturity": move_line.date_maturity,
-                            "journal_id": move_line.journal_id.id,
-                            "partner_id": move_line.partner_id.id,
-                        },
-                    ),
-                ]
-            }
-        )
-        move.action_post()
-        if payment:
-            payment.move_line_ids = payment_lines
-
-        # Perform the reconciliation
-        return self.reconcile()
+            return False
+        return (self | selected_lines).reconcile()

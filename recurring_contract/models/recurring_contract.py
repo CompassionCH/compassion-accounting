@@ -360,36 +360,40 @@ class RecurringContract(models.Model):
         })
         return True
 
-    def action_contract_terminate(self):
+    def action_contract_terminate(self, optional_vals=None):
         """
         Action for finishing a contract. It will go in either 'terminated'
-        or 'cancelled' state depending if it was active or not.
-        :return: True
+        or 'cancelled' state depending on if it was active or not.
+        :param optional_vals: values to write on the contracts.
+        :return:True
         """
-        active_contracts = self.filtered('activation_date')
-        if active_contracts:
-            active_contracts.contract_terminated()
-        inactive = self - active_contracts
-        if inactive:
-            inactive.contract_cancelled()
+        if optional_vals is None:
+            optional_vals = {}
+        active_contracts = self.filtered(lambda c: c.state not in ["terminated", "cancelled"])
+        paid_contracts = active_contracts.filtered('activation_date')
+        if paid_contracts:
+            paid_contracts._contract_terminated(optional_vals)
+        unpaid_contracts = active_contracts - paid_contracts
+        if unpaid_contracts:
+            unpaid_contracts._contract_cancelled(optional_vals)
         self.cancel_contract_invoices()
         return True
 
-    def contract_terminated(self):
+    def _contract_terminated(self, vals):
         now = fields.Datetime.now()
-        self.write({
+        vals.update({
             'state': 'terminated',
             'end_date': now
         })
-        return True
+        return self.write(vals)
 
-    def contract_cancelled(self):
-        today = fields.Datetime.now()
-        self.write({
+    def _contract_cancelled(self, vals):
+        now = fields.Datetime.now()
+        vals.update({
             'state': 'cancelled',
-            'end_date': today
+            'end_date': now
         })
-        return True
+        return self.write(vals)
 
     def action_cancel_draft(self):
         """ Set back a cancelled contract to draft state. """
@@ -440,48 +444,68 @@ class RecurringContract(models.Model):
             invoices and let the user decide what to do with the payment.
         """
         _logger.info("clean invoices called.")
+        # Cancel invoices paid
+        inv_lines_paid = self._filter_paid_invoices_to_cancel()
+        move_lines = inv_lines_paid.mapped('move_id.line_ids').filtered('reconciled')
+        reconciles = inv_lines_paid.mapped('move_id.line_ids.full_reconcile_id')
+
+        # Unreconcile paid invoices
+        move_lines |= reconciles.mapped('reconciled_line_ids')
+        move_lines.remove_move_reconcile()
+        paid_invoices = inv_lines_paid.mapped("move_id")
+        paid_invoices.button_draft()
+        for inv in paid_invoices:
+            inv.write({"invoice_line_ids": [(2, invl.id) for invl in inv_lines_paid.exists() if invl.move_id == inv]})
+        paid_invoices.action_post()
+        paid_invoices.with_company(self.mapped("company_id").id).reconcile_after_clean()
+
+        # Cancel all open invoices
+        invoices_lines = self._filter_open_invoices_to_cancel()
+        # Multi contracts invoices should delete just their lines
+        empty_invoices = self.env['account.move']
+        invoices = invoices_lines.mapped("move_id")
+        invoices.button_draft()
+        for inv_line in invoices_lines:
+            invoice = inv_line.move_id
+            # Check if invoice is empty after removing the invoice_lines
+            # of the given contract
+            remaining_lines = invoice.invoice_line_ids.filtered(
+                lambda l: not l.contract_id or l.contract_id not in self)
+            if remaining_lines:
+                # We can move or remove the line
+                invoice.write({"invoice_line_ids": [(2, inv_line.id)]})
+            else:
+                # The invoice would be empty if we remove the line
+                empty_invoices |= invoice
+        empty_invoices.button_cancel()
+        renew_invs = invoices - empty_invoices
+        if renew_invs:
+            # Invoices to set back in open state
+            renew_invs.action_post()
+        _logger.info(str(len(invoices)) + " invoices cleaned.")
+
+    def _filter_paid_invoices_to_cancel(self):
+        """
+        Returns the paid invoices of the contract that needs to be cancelled, when the contract is finished.
+        By default, we offer the last invoice, taking into consideration the 'blocking day parameter'.
+        :return: <account.move.line> recordset
+        """
+        res = self.env["account.move.line"]
+        inv_block_day = self.env["res.config.settings"].get_param_multi_company("recurring_contract.invoice_block_day")
         for contract in self:
-            # We "gift" the last month so we search from the first of that last month
             since_date = contract.end_date.date().replace(day=1)
-            # Cancel invoices paid
-            inv_lines_paid = contract.invoice_line_ids.filtered(
+            if inv_block_day and contract.end_date.day >= int(inv_block_day):
+                since_date += relativedelta(months=1)
+            res |= contract.invoice_line_ids.filtered(
                 lambda l: l.payment_state == 'paid' and l.due_date >= since_date)
-            move_lines = inv_lines_paid.mapped('move_id.line_ids').filtered('reconciled')
-            reconciles = inv_lines_paid.mapped('move_id.line_ids.full_reconcile_id')
+        return res
 
-            # Unreconcile paid invoices
-            move_lines |= reconciles.mapped('reconciled_line_ids')
-            move_lines.remove_move_reconcile()
-            paid_invoices = move_lines.mapped('move_id.invoice_line_ids').filtered(
-                lambda l: l.contract_id not in self).mapped('move_id')
-            paid_invoices.reconcile_after_clean()
-
-            # Cancel open invoices
-            invoices_lines = contract.invoice_line_ids.filtered(
-                lambda l: l.payment_state != 'paid' and l.due_date >= since_date)
-            # Multi contracts invoices should delete just their lines
-            empty_invoices = self.env['account.move']
-            to_remove_invl = self.env['account.move.line']
-            invoices = invoices_lines.mapped("move_id")
-            for inv_line in invoices_lines:
-                invoice = inv_line.move_id
-                # Check if invoice is empty after removing the invoice_lines
-                # of the given contract
-                remaining_lines = invoice.invoice_line_ids.filtered(
-                    lambda l: not l.contract_id or l.contract_id not in self)
-                if remaining_lines:
-                    # We can move or remove the line
-                    to_remove_invl |= inv_line
-                else:
-                    # The invoice would be empty if we remove the line
-                    empty_invoices |= invoice
-            empty_invoices.button_cancel()
-            renew_invs = invoices - empty_invoices
-            to_remove_invl.unlink()
-            if renew_invs:
-                # Invoices to set back in open state
-                renew_invs.action_post()
-            _logger.info(str(len(invoices)) + " invoices cleaned.")
+    def _filter_open_invoices_to_cancel(self):
+        """
+        Returns the open invoices of the contract that needs to be cancelled, when the contract is finished.
+        :return: <account.move.line> recordset
+        """
+        return self.mapped("invoice_line_ids").filtered(lambda l: l.payment_state != 'paid')
 
     def _updt_invoices_rc(self, vals):
         """
