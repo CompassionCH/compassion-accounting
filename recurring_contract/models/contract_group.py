@@ -321,7 +321,7 @@ class ContractGroup(models.Model):
             inherit this method.
         """
         self.ensure_one()
-        # we use the first contract because the informations we retrieve has to be shared
+        # we use the first contract because the information we retrieve has to be shared
         # between all the contracts of the list
         contract = self.active_contract_ids[0]
         company_id = contract.company_id.id

@@ -20,14 +20,16 @@ class MandateStaffNotifSettings(models.TransientModel):
     # offset to know if we should generate current month or not
     do_generate_curr_month = fields.Boolean(
         string="Generate current month ?",
-        help="Define if the invoices should generate the current month by default or the next month. Ticked means we generate the current month and next month by default",
+        help="Define if the invoices should generate the current month by default or the next month."
+             "Ticked means we generate the current month and next month by default",
         default=True,
     )
     # Day to know when we should stop generating invoices for a specific contract group on a contract creation
     inv_block_day = fields.Selection(
         selection="_day_selection",
         string="Invoices Blocked Day",
-        help="Day at which we will suspend the invoices generation until the first of next month",
+        help="If set, contracts created after this day will set their first invoice one month after. "
+             "Contracts terminated after this day will cancel paid invoices one month after.",
         default="15",
     )
 
