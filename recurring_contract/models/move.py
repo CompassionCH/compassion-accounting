@@ -130,7 +130,7 @@ class AccountMove(models.Model):
         :param updt_val: a dictionary of invoices values with the invoice name
         which refer to another dictionary of values for that invoice name
         """
-        for invoice in self:
+        for invoice in self.filtered(lambda i: i.invoice_date_due <= date.today()):
             if invoice.name in updt_val:
                 val_to_updt = updt_val[invoice.name]
                 # In case we modify the amount we want to test if the amount is zero
