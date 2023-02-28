@@ -411,7 +411,7 @@ class ContractGroup(models.Model):
                             pay_mode_id=vals.get("payment_mode_id")
                         )
                     )
-                invoices.update_invoices(data_invs)
+                invoices.update_open_invoices(data_invs)
         if "advance_billing_months" in vals:
             # In case the advance_billing_months is greater than before we should generate more invoices
             self.active_contract_ids.button_generate_invoices()

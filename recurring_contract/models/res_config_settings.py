@@ -29,7 +29,8 @@ class MandateStaffNotifSettings(models.TransientModel):
         selection="_day_selection",
         string="Invoices Blocked Day",
         help="If set, contracts created after this day will set their first invoice one month after. "
-             "Contracts terminated after this day will cancel paid invoices one month after.",
+             "Contracts terminated after this day will cancel paid invoices one month after. "
+             "Changes made to a contract after this day will apply only on the next month.",
         default="15",
     )
 

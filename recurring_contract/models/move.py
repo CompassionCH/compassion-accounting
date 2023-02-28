@@ -9,8 +9,9 @@
 ##############################################################################
 
 import html
-import logging
 from datetime import date
+
+from dateutil.relativedelta import relativedelta
 
 from odoo import fields, models, _, api
 from odoo.exceptions import UserError
@@ -123,15 +124,24 @@ class AccountMove(models.Model):
                 future_lines.group_reconcile(mvl_obj.search(criterias))
         return True
 
-    def update_invoices(self, updt_val):
+    def update_open_invoices(self, updt_val):
         """
-        It updates the invoices in self with the value of updt_val
+        It updates the invoices in self with the value of updt_val.
+        The function acts as a filter to make sure we perform valid updates on open invoices
+        in the present or future.
 
         :param updt_val: a dictionary of invoices values with the invoice name
         which refer to another dictionary of values for that invoice name
         """
-        for invoice in self.filtered(lambda i: i.invoice_date_due >= date.today()):
-            if invoice.name in updt_val:
+        inv_block_day = self.env["res.config.settings"].get_param_multi_company("recurring_contract.invoice_block_day")
+        # Filter out past invoices.
+        date_selection = date.today()
+        if inv_block_day and date_selection.day >= int(inv_block_day):
+            date_selection += relativedelta(months=1)
+        date_selection = date_selection.replace(day=1)
+        for invoice in self.filtered(lambda i: i.state != "cancel" and i.payment_state != "paid"
+                                     and i.invoice_date_due >= date_selection):
+            if updt_val.get(invoice.name):
                 val_to_updt = updt_val[invoice.name]
                 # In case we modify the amount we want to test if the amount is zero
                 invoice.button_draft()

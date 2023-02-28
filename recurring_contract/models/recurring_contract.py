@@ -526,4 +526,4 @@ class RecurringContract(models.Model):
                         )
                     )
             if data_invs:
-                self.mapped("invoice_line_ids.move_id").update_invoices(data_invs)
+                self.mapped("invoice_line_ids.move_id").update_open_invoices(data_invs)
