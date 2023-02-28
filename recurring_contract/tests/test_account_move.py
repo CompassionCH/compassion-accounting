@@ -53,7 +53,7 @@ class AccountInvoiceTestCase(AccountTestInvoicingCommon):
                 'invoice_line_ids': [(1, self.invoice.invoice_line_ids[0].id, {'price_unit': 20.0})]
             }
         }
-        self.invoice.update_invoices(updt_val)
+        self.invoice.update_open_invoices(updt_val)
         self.assertEqual(self.invoice.amount_total, 20.0)
 
     def test_update_invoices_cancel_invoice(self):
@@ -66,7 +66,7 @@ class AccountInvoiceTestCase(AccountTestInvoicingCommon):
                 'invoice_line_ids': [(1, self.invoice.invoice_line_ids[0].id, {'price_unit': 0.0})]
             }
         }
-        self.invoice.update_invoices(updt_val)
+        self.invoice.update_open_invoices(updt_val)
         self.assertEqual(self.invoice.state, 'cancel')
 
     def test_update_invoices_post_invoice(self):
@@ -79,7 +79,7 @@ class AccountInvoiceTestCase(AccountTestInvoicingCommon):
                 'invoice_line_ids': [(1, self.invoice.invoice_line_ids[0].id, {'price_unit': 100.0})]
             }
         }
-        self.invoice.update_invoices(updt_val)
+        self.invoice.update_open_invoices(updt_val)
         self.assertEqual(self.invoice.amount_total, 100.0)
         self.assertEqual(self.invoice.state, 'posted')
 
