@@ -369,7 +369,11 @@ class ContractGroup(models.Model):
             product = contract_line.product_id
             qty = contract_line.quantity
             contract = contract_line.contract_id
-            price = contract_line.amount
+            if contract_line.pricelist_item_count:
+                price = contract.pricelist_id.get_product_price(
+                    product, qty, contract.partner_id, invoicing_date)
+            else:
+                price = contract_line.amount
             if product.pricelist_item_count > 0:
                 price = contract.pricelist_id.get_product_price(product, qty, self.partner_id, invoicing_date)
         elif gift_wizard:

@@ -8,7 +8,7 @@ class ProductPricelistItem(models.Model):
         for item in self:
             contract_lines = self.env['recurring.contract.line'].search([
                 ('contract_id.pricelist_id', '=', item.pricelist_id.id),
-                ('product_id', '=', item.product_id.id),
+                ('product_id', 'in', item.product_tmpl_id.product_variant_ids.ids),
                 ('contract_id.state', 'not in', ['cancelled', 'terminated'])
             ])
             for cl in contract_lines:
