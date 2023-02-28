@@ -209,17 +209,15 @@ class AccountMove(models.Model):
                 elif line_id.product_id.default_code == GIFT_PRODUCTS_REF[0]:
                     data_dict["price_unit"] = contract.birthday_invoice
                 elif cl.product_id.pricelist_item_count > 0:
-                    price = contract.pricelist_id.get_product_price(cl.product_id,
-                                                                    cl.quantity,
-                                                                    self.partner_id,
-                                                                    self.invoice_date_due)
+                    price = contract.pricelist_id.get_product_price(
+                        cl.product_id, cl.quantity, self.partner_id, self.invoice_date_due)
                     data_dict["price_unit"] = price
                     data_dict["quantity"] = cl.quantity
                 elif cl:
                     data_dict["price_unit"] = cl.amount
                     data_dict["quantity"] = cl.quantity
                 else:
-                    raise UserError("Case not supposed to happen :) contact admin.")
+                    raise UserError("Unexpected error while updating contract invoices. Please contact admin.")
                 # Add the modification on the line
                 res.append((1, line_id.id, data_dict))
         return res

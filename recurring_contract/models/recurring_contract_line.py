@@ -10,7 +10,7 @@
 
 import logging
 
-from dateutil.utils import today
+from datetime import datetime
 
 from odoo import api, fields, models
 
@@ -30,13 +30,10 @@ class ContractLine(models.Model):
     contract_id = fields.Many2one(
         'recurring.contract', 'Contract', required=True,
         ondelete='cascade', readonly=True)
-    product_id = fields.Many2one('product.product', 'Product',
-                                 required=True, readonly=False)
-    amount = fields.Float('Price',
-                          required=True)
+    product_id = fields.Many2one('product.product', 'Product', required=True, readonly=False)
+    amount = fields.Float('Price', required=True)
     quantity = fields.Integer(default=1, required=True)
-    subtotal = fields.Float(compute='_compute_subtotal', store=True,
-                            digits='Account')
+    subtotal = fields.Float(compute='_compute_subtotal', store=True)
     pricelist_item_count = fields.Integer(related="product_id.pricelist_item_count", readonly=1)
 
     @api.depends('amount', 'quantity')
@@ -48,7 +45,7 @@ class ContractLine(models.Model):
     def on_change_product_id(self):
         for line in self.filtered("product_id"):
             line.amount = line.contract_id.pricelist_id.get_product_price(
-                line.product_id, line.quantity, line.contract_id.partner_id, today())
+                line.product_id, line.quantity, line.contract_id.partner_id, datetime.now())
 
     def build_inv_line_data(self):
         self.ensure_one()
