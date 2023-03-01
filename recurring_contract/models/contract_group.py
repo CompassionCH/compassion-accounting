@@ -11,13 +11,15 @@ import calendar
 import logging
 import os
 
+from ..tools import chunks
+
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from dateutil import parser
 
 from odoo import fields, models, _, api
 from odoo.exceptions import UserError
-from odoo.tools import config, ormcache
+from odoo.tools import config
 
 logger = logging.getLogger(__name__)
 test_mode = config.get('test_enable')
@@ -212,17 +214,11 @@ class ContractGroup(models.Model):
     def generate_invoices(self):
         """ By default, launch asynchronous job to perform the task.
             Context value async_mode set to False can force to perform
-            the task immediately.
+            the task immediately. Limit to 100 groups at once for a job.
         """
         if self.env.context.get('async_mode', True):
-            # Prevent two generations at the same time
-            jobs = self.env['queue.job'].search([
-                ('channel', '=', 'root.recurring_invoicer'),
-                ('state', '=', 'started')])
-            delay = datetime.today()
-            if jobs:
-                delay += relativedelta(minutes=1)
-            self.with_delay(eta=delay)._generate_invoices()
+            for chunk in chunks(self, 100):
+                chunk.with_delay()._generate_invoices()
         else:
             return self._generate_invoices()
 
@@ -240,7 +236,7 @@ class ContractGroup(models.Model):
             # retrieve the open invoices in the future
             open_invoices = self.env["account.move"].search([
                 ("payment_reference", "=", pay_opt.ref),
-                ("invoice_date_due", ">=", datetime.today()),
+                ("invoice_date_due", ">", datetime.today()),
                 ("state", "!=", "cancel")
             ])
             # Compute the interval of months there should be between each invoice (set in the contract group)
@@ -269,14 +265,15 @@ class ContractGroup(models.Model):
                     ])
                     move_line_contract_ids = acc_move_line_curr_contr.mapped("contract_id")
                     move_line_product_ids = acc_move_line_curr_contr.mapped("product_id")
-                    all_contract_lines = self.mapped("active_contract_ids.contract_line_ids")
+                    all_contract_lines = pay_opt.mapped("active_contract_ids.contract_line_ids")
                     contract_lines_to_inv = all_contract_lines - all_contract_lines.filtered(
                         lambda l: l.contract_id in move_line_contract_ids
                                   and l.product_id in move_line_product_ids)
                     open_invoice.write({
-                        'invoice_line_ids': [(0, 0, self.build_inv_line_data(invoicing_date=invoicing_date,
-                                                                             contract_line=cl)
-                                              ) for cl in contract_lines_to_inv]
+                        'invoice_line_ids': [
+                            (0, 0, pay_opt.build_inv_line_data(invoicing_date=invoicing_date, contract_line=cl))
+                            for cl in contract_lines_to_inv
+                        ]
                     })
 
                 else:
@@ -300,7 +297,7 @@ class ContractGroup(models.Model):
                             self.env.cr.rollback()
 
             # Refresh state to check whether invoices are missing in some contracts
-            self.active_contract_ids._compute_missing_invoices()
+            self.mapped("active_contract_ids")._compute_missing_invoices()
             _logger.info("Proccess successfully generated invoices")
             return invoicer.with_context({'invoice_err_gen': invoice_err_gen})
 
