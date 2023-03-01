@@ -39,7 +39,7 @@ class InvoicerWizard(models.TransientModel):
         )
         """)
         group_ids = [r[0] for r in self.env.cr.fetchall()]
-        groups = self.env["recurring.contract"].browse(group_ids)
+        groups = self.env["recurring.contract.group"].browse(group_ids)
 
         # Add a job for all groups and start the job when all jobs are created.
         invoicer = groups.generate_invoices()
