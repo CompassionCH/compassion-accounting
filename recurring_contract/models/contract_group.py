@@ -295,11 +295,10 @@ class ContractGroup(models.Model):
                         invoice_err_gen = True
                         if not test_mode:
                             self.env.cr.rollback()
-
-            # Refresh state to check whether invoices are missing in some contracts
-            self.mapped("active_contract_ids")._compute_missing_invoices()
-            _logger.info("Proccess successfully generated invoices")
-            return invoicer.with_context({'invoice_err_gen': invoice_err_gen})
+        # Refresh state to check whether invoices are missing in some contracts
+        self.mapped("active_contract_ids")._compute_missing_invoices()
+        _logger.info("Proccess successfully generated invoices")
+        return invoicer.with_context({'invoice_err_gen': invoice_err_gen})
 
     def get_relative_invoice_date(self, date_to_compute):
         """ Calculate the date depending on the last day of the month and the invoice_day set in the contract.
