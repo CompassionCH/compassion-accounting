@@ -24,7 +24,7 @@ class InvoicerWizard(models.TransientModel):
 
     def generate(self):
         self.env.cr.execute(f"""
-        SELECT DISTINCT rc.id 
+        SELECT DISTINCT gr.id 
         FROM recurring_contract rc
         JOIN recurring_contract_group gr ON rc.group_id = gr.id
         WHERE rc.state IN ('active', 'waiting')
@@ -38,11 +38,11 @@ class InvoicerWizard(models.TransientModel):
             AND date_maturity >= CURRENT_DATE + (INTERVAL '1 month' * gr.advance_billing_months)
         )
         """)
-        contract_ids = [r[0] for r in self.env.cr.fetchall()]
-        contracts = self.env["recurring.contract"].browse(contract_ids)
+        group_ids = [r[0] for r in self.env.cr.fetchall()]
+        groups = self.env["recurring.contract"].browse(group_ids)
 
         # Add a job for all groups and start the job when all jobs are created.
-        invoicer = contracts.generate_invoices()
+        invoicer = groups.generate_invoices()
         res_id = False
         if invoicer:
             res_id = invoicer.id
