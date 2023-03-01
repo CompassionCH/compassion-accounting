@@ -295,6 +295,7 @@ class ContractGroup(models.Model):
                         invoice_err_gen = True
                         if not test_mode:
                             self.env.cr.rollback()
+                            invoicer = self.env['recurring.invoicer'].create({})
         # Refresh state to check whether invoices are missing in some contracts
         self.mapped("active_contract_ids")._compute_missing_invoices()
         _logger.info("Proccess successfully generated invoices")
