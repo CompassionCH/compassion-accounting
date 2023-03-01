@@ -24,15 +24,19 @@ class InvoicerWizard(models.TransientModel):
 
     def generate(self):
         self.env.cr.execute(f"""
-        SELECT DISTINCT recurring_contract.id 
-        FROM recurring_contract
-        INNER JOIN account_move_line ON recurring_contract.id = account_move_line.contract_id
-        INNER JOIN account_move ON account_move_line.move_id = account_move.id
-        WHERE recurring_contract.state IN ('active', 'waiting')
-            AND total_amount > 0
-            AND (end_date IS NULL OR end_date >= CURRENT_DATE + INTERVAL '1 month')
-            AND account_move.payment_state = 'not_paid'
-            AND account_move.invoice_date < CURRENT_DATE + INTERVAL '1 month'
+        SELECT DISTINCT rc.id 
+        FROM recurring_contract rc
+        JOIN recurring_contract_group gr ON rc.group_id = gr.id
+        WHERE rc.state IN ('active', 'waiting')
+        AND rc.total_amount > 0
+        AND (rc.end_date IS NULL OR rc.end_date >= CURRENT_DATE + INTERVAL '1 month')
+        AND NOT EXISTS(
+            SELECT id
+            FROM account_move_line aml
+            WHERE contract_id = rc.id
+            AND payment_state = 'not_paid'
+            AND date_maturity >= CURRENT_DATE + (INTERVAL '1 month' * gr.advance_billing_months)
+        )
         """)
         contract_ids = [r[0] for r in self.env.cr.fetchall()]
         contracts = self.env["recurring.contract"].browse(contract_ids)
