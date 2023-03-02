@@ -160,7 +160,7 @@ class ContractGroup(models.Model):
             - Advance billing increased or decrease
             - Recurring value or unit changes
         """
-        if "invoice_suspended_until" in vals:
+        if vals.get("invoice_suspended_until"):
             if parser.parse(vals["invoice_suspended_until"]).date() < datetime.today().date():
                 raise UserError("The suspension of invoices has to be in the future ! (Invoice Suspended Until field)")
         res = super().write(vals)

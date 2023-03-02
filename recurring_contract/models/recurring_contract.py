@@ -205,13 +205,13 @@ class RecurringContract(models.Model):
         for contract in self:
             contract.months_paid = dict_contract_id_paidmonth.get(contract.id)
 
-    @api.depends("invoice_line_ids", "state")
+    @api.depends("invoice_line_ids", "state", "group_id.invoice_suspended_until")
     def _compute_missing_invoices(self):
         query = """
             SELECT COUNT(*)
             FROM account_move_line
             WHERE contract_id = %s AND product_id = ANY(%s)
-            AND due_date BETWEEN NOW() AND NOW() + INTERVAL '%s MONTHS'
+            AND due_date BETWEEN COALESCE(%s, NOW()) AND NOW() + INTERVAL '%s MONTHS'
         """
         for contract in self:
             if contract.state in ("waiting", "active"):
@@ -219,6 +219,7 @@ class RecurringContract(models.Model):
                 self.env.cr.execute(query, [
                     contract.id,
                     contract.mapped("contract_line_ids.product_id").ids,
+                    group.invoice_suspended_until or None,
                     group.advance_billing_months]
                                     )
                 number_invoices = self.env.cr.fetchone()[0]
