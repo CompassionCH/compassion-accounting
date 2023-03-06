@@ -11,8 +11,6 @@ import calendar
 import logging
 import os
 
-from ..tools import chunks
-
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from dateutil import parser
@@ -187,10 +185,7 @@ class ContractGroup(models.Model):
         """ Immediately generate invoices of the contract group. """
         invoicer = self.with_context({"async_mode": False}).with_company(
             self.active_contract_ids[0].company_id).generate_invoices()
-        if invoicer.env.context.get("invoice_err_gen", False):
-            type = "error"
-            msg = "The generation failed for at least one invoice"
-        elif invoicer.invoice_ids:
+        if invoicer.invoice_ids:
             type = "success"
             msg = "The generation was successfully processed."
         else:
@@ -214,23 +209,22 @@ class ContractGroup(models.Model):
     def generate_invoices(self):
         """ By default, launch asynchronous job to perform the task.
             Context value async_mode set to False can force to perform
-            the task immediately. Limit to 100 groups at once for a job.
+            the task immediately.
         """
+        invoicer = self.env['recurring.invoicer'].create({})
         if self.env.context.get('async_mode', True):
-            for chunk in chunks(self, 100):
-                chunk.with_delay()._generate_invoices()
+            for group in self:
+                group.with_delay()._generate_invoices(invoicer)
         else:
-            return self._generate_invoices()
+            self._generate_invoices(invoicer)
+        return invoicer
 
-    def _generate_invoices(self):
+    def _generate_invoices(self, invoicer):
         """ Checks all contracts and generate invoices if needed.
             Create an invoice per contract group per date.
         """
-        test_mode = config.get('test_enable')
-        invoice_err_gen = False
         _logger.info(f"Starting generation of invoices for contracts : {self.active_contract_ids.ids} "
                      f"with payment option {self.ids}")
-        invoicer = self.env['recurring.invoicer'].create({})
         inv_obj = self.env['account.move']
         for pay_opt in self:
             # retrieve the open invoices in the future
@@ -251,7 +245,7 @@ class ContractGroup(models.Model):
                 # in case the invoices are suspended we do not generate
                 if pay_opt.invoice_suspended_until and pay_opt.invoice_suspended_until > invoicing_date:
                     continue
-                # invoive already open we complete the move lines
+                # invoice already open we complete the move lines
                 current_rec_unit_date = eval(f"invoicing_date.{recurring_unit}")
                 open_invoice = open_invoices.filtered(
                     lambda m: eval(f"m.invoice_date_due.{recurring_unit}") == current_rec_unit_date)
@@ -280,26 +274,19 @@ class ContractGroup(models.Model):
                     # Building invoices data
                     inv_data = pay_opt._build_invoice_gen_data(invoicing_date, invoicer)
                     # Creating the actual invoice
-                    try:
-                        _logger.info(f"Generating invoice : {inv_data}")
-                        invoice = inv_obj.create(inv_data)
-                        # If the invoice has something to be paid we post it to activate it
-                        if invoice.invoice_line_ids:
-                            invoice.action_post()
-                        else:
-                            _logger.warning(
-                                f"Invoice tried to generate a 0 amount invoice for payment option {pay_opt.id}")
-                            invoice.unlink()
-                    except:
-                        _logger.error(f"Error during invoice generation for payment option {pay_opt.id}", exc_info=True)
-                        invoice_err_gen = True
-                        if not test_mode:
-                            self.env.cr.rollback()
-                            invoicer = self.env['recurring.invoicer'].create({})
+                    _logger.info(f"Generating invoice : {inv_data}")
+                    invoice = inv_obj.create(inv_data)
+                    # If the invoice has something to be paid we post it to activate it
+                    if invoice.invoice_line_ids:
+                        invoice.action_post()
+                    else:
+                        _logger.warning(
+                            f"Invoice tried to generate a 0 amount invoice for payment option {pay_opt.id}")
+                        invoice.unlink()
         # Refresh state to check whether invoices are missing in some contracts
         self.mapped("active_contract_ids")._compute_missing_invoices()
         _logger.info("Proccess successfully generated invoices")
-        return invoicer.with_context({'invoice_err_gen': invoice_err_gen})
+        return True
 
     def get_relative_invoice_date(self, date_to_compute):
         """ Calculate the date depending on the last day of the month and the invoice_day set in the contract.
