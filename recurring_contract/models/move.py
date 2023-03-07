@@ -14,9 +14,7 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 
 from odoo import fields, models, _, api
-from odoo.exceptions import UserError
 
-from .product_names import GIFT_PRODUCTS_REF, PRODUCT_GIFT_CHRISTMAS
 
 class AccountMove(models.Model):
     _name = 'account.move'
@@ -151,13 +149,13 @@ class AccountMove(models.Model):
                 else:
                     invoice.button_cancel()
 
-    def _build_invoice_data(self, contract=False, invoice_date=False, ref=False, pay_mode_id=False,
+    def _build_invoice_data(self, contracts=False, invoice_date=False, ref=False, pay_mode_id=False,
                             payment_term_id=False, partner_id=False):
         """
-        It takes a list of invoice lines, a due date, a payment reference, and a payment mode, and returns a dictionary with
-        the invoice lines, the due date, the payment reference, and the payment mode
+        It takes a list of invoice lines, a due date, a payment reference, and a payment mode, and returns a dictionary
+        with the invoice lines, the due date, the payment reference, and the payment mode
 
-        :param contract: recurring_contract for which we generate lines (optional)
+        :param contracts: recurring_contract for which we generate lines (optional)
         :param invoice_date: The date at which the invoice should be accounted, defaults to False (optional)
         :param ref: The reference of the invoice, defaults to False (optional)
         :param pay_mode_id: The payment mode to be used for the invoice, defaults to False (optional)
@@ -165,69 +163,51 @@ class AccountMove(models.Model):
         :param partner_id: id of a partner in case the partner would have changed (optional)
         :return: A dictionary with the invoice_line_ids, date, payment_reference, and payment_mode_id.
         """
-        # Ensure that the funciton receive one invoice
+        res = {}
+        for invoice in self:
+            inv_val_dict = {}
+            if contracts:
+                inv_val_dict["invoice_line_ids"] = invoice._build_invoice_lines_from_contracts(contracts)
+                # Special case for payment_mode: it needs always to be there, otherwise a compute method overrides it.
+                if not pay_mode_id:
+                    pay_mode_id = contracts.mapped("group_id.payment_mode_id")[:1].id
+            if invoice_date:
+                inv_val_dict["date"] = invoice_date
+            if payment_term_id:
+                inv_val_dict["invoice_payment_term_id"] = payment_term_id
+            if partner_id:
+                inv_val_dict["partner_id"] = partner_id
+            if ref:
+                inv_val_dict["payment_reference"] = ref
+                inv_val_dict["ref"] = ref
+            if pay_mode_id:
+                inv_val_dict["payment_mode_id"] = pay_mode_id
+            if inv_val_dict:
+                res[invoice.name] = inv_val_dict
+        return res
+
+    def _build_invoice_lines_from_contracts(self, modified_contracts):
+        """
+        It creates a list of tuples that will be used to create, modify or delete invoice lines, given information
+        from contracts.
+
+        :param modified_contracts: <recurring.contract> recordset that have been modified.
+        """
         self.ensure_one()
-        # Build the dictionnary
-        inv_val_dict = {}
-        if contract:
-            inv_val_dict["invoice_line_ids"] = self._build_invoice_lines_from_contract(contract)
-        if invoice_date:
-            inv_val_dict["date"] = invoice_date
-        if payment_term_id:
-            inv_val_dict["invoice_payment_term_id"] = payment_term_id
-        if partner_id:
-            inv_val_dict["partner_id"] = partner_id
-        if ref:
-            inv_val_dict["payment_reference"] = ref
-            inv_val_dict["ref"] = ref
-        if pay_mode_id:
-            inv_val_dict["payment_mode_id"] = pay_mode_id
-
-        return {self.name: inv_val_dict}
-
-    def _build_invoice_lines_from_contract(self, contract):
-        """
-        It creates a list of tuples that will be used to create, modify or delete invoice lines.
-
-        :param contract recurring_contract that has some modification
-        """
         res = []
-        line_ids = self.mapped("invoice_line_ids")
-        if contract.start_date.date() < self.invoice_date_due:
-            # When the invoice isn't a gift we see if a product has been added / deleted
-            if any(key not in [GIFT_PRODUCTS_REF[0], PRODUCT_GIFT_CHRISTMAS] for key in line_ids.mapped("product_id.default_code")):
-                # Line to delete in the invoice
-                # If the invoice has different product than the contract we should delete the line
-                contract_products = contract.contract_line_ids.mapped("product_id")
-                diff_product_lines = line_ids.filtered(lambda l: l.product_id not in contract_products)
-                res.extend([(2, line.id, 0) for line in diff_product_lines])
-                # Line to create in the invoice
-                # If the contract has different product than the invoice we should create the line
-                missing_lines = contract.contract_line_ids.filtered(lambda l: l.product_id not in line_ids.mapped("product_id"))
-                res.extend([(0, 0, line_vals.build_inv_line_data()) for line_vals in missing_lines])
-                # Line to modify in the invoice
-                line_ids = line_ids.filtered(lambda l: l.product_id.id not in missing_lines.mapped("product_id").ids
-                                                       and l.id not in diff_product_lines.ids)
+        for contract in modified_contracts.filtered(lambda c: c.start_date.date() < self.invoice_date_due):
+            invoice_lines = self.invoice_line_ids.filtered(lambda l: l.contract_id == contract)
+            contract_products = contract.product_ids
+            invoice_products = invoice_lines.mapped("product_id")
+            missing_contract_lines = contract.contract_line_ids.filtered(
+                lambda l: l.product_id in contract_products and l.product_id not in invoice_products)
+            obsolete_lines = invoice_lines.filtered(lambda l: l.product_id not in contract_products)
+            lines_to_update = invoice_lines - obsolete_lines
 
-            # Modification on invoices
-            for line_id in line_ids:
-                cl = contract.contract_line_ids.filtered(lambda l: l.product_id == line_id.product_id)
-                data_dict = {}
-                # Process specific cases for gift
-                if line_id.product_id.default_code == PRODUCT_GIFT_CHRISTMAS:
-                    data_dict["price_unit"] = contract.christmas_invoice
-                elif line_id.product_id.default_code == GIFT_PRODUCTS_REF[0]:
-                    data_dict["price_unit"] = contract.birthday_invoice
-                elif cl.product_id.pricelist_item_count > 0:
-                    price = contract.pricelist_id.get_product_price(
-                        cl.product_id, cl.quantity, self.partner_id, self.invoice_date_due)
-                    data_dict["price_unit"] = price
-                    data_dict["quantity"] = cl.quantity
-                elif cl:
-                    data_dict["price_unit"] = cl.amount
-                    data_dict["quantity"] = cl.quantity
-                else:
-                    raise UserError("Unexpected error while updating contract invoices. Please contact admin.")
-                # Add the modification on the line
-                res.append((1, line_id.id, data_dict))
+            # Add new contract lines in invoices
+            res.extend([(0, 0, contract_line.build_inv_line_data()) for contract_line in missing_contract_lines])
+            # Remove old contract lines
+            res.extend([(2, line.id, 0) for line in obsolete_lines])
+            # Update other lines
+            res.extend(lines_to_update._update_invoice_lines_from_contract(contract))
         return res

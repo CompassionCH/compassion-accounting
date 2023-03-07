@@ -384,17 +384,9 @@ class ContractGroup(models.Model):
             :params vals dict of value that has been modified on the cg
         """
         if any(key in vals for key in ("payment_mode_id", "ref")):
-            invoices = self.mapped("active_contract_ids.invoice_line_ids.move_id").filtered(
-                lambda i: i.payment_state == "not_paid" and i.state != "cancel")
-            if invoices:
-                data_invs = dict()
-                for inv in invoices:
-                    data_invs.update(
-                        inv._build_invoice_data(
-                            ref=vals.get("ref"),
-                            pay_mode_id=vals.get("payment_mode_id")
-                        )
-                    )
+            invoices = self.mapped("active_contract_ids.open_invoice_ids")
+            data_invs = invoices._build_invoice_data(ref=vals.get("ref"), pay_mode_id=vals.get("payment_mode_id"))
+            if data_invs:
                 invoices.update_open_invoices(data_invs)
         if "advance_billing_months" in vals:
             # In case the advance_billing_months is greater than before we should generate more invoices
