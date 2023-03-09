@@ -523,11 +523,11 @@ class RecurringContract(models.Model):
         """
         data_invs = {}
         if "contract_line_ids" in vals:
-            data_invs = self.mapped("open_invoice_ids")._build_invoice_data(contracts=self)
+            data_invs = self.mapped("open_invoice_ids")._build_invoices_data(contracts=self)
         if "group_id" in vals:
             group = self.mapped("group_id")
             group.ensure_one()
-            group_data = self.mapped("open_invoice_ids")._build_invoice_data(
+            group_data = self.mapped("open_invoice_ids")._build_invoices_data(
                 ref=group.ref, pay_mode_id=group.payment_mode_id)
             for inv_name, inv_data in group_data.items():
                 if inv_name in data_invs:

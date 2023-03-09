@@ -62,6 +62,7 @@ class MoveLine(models.Model):
         :param modified_contract: <recurring.contract> record
         :return: list of tuples for ORM write
         """
+        modified_contract.ensure_one()
         res = []
         for invoice_line in self:
             invoice = self.move_id

@@ -149,8 +149,8 @@ class AccountMove(models.Model):
                 else:
                     invoice.button_cancel()
 
-    def _build_invoice_data(self, contracts=False, invoice_date=False, ref=False, pay_mode_id=False,
-                            payment_term_id=False, partner_id=False):
+    def _build_invoices_data(self, contracts=False, invoice_date=False, ref=False, pay_mode_id=False,
+                             payment_term_id=False, partner_id=False):
         """
         It takes a list of invoice lines, a due date, a payment reference, and a payment mode, and returns a dictionary
         with the invoice lines, the due date, the payment reference, and the payment mode

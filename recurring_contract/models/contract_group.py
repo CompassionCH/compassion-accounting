@@ -227,16 +227,14 @@ class ContractGroup(models.Model):
                      f"with payment option {self.ids}")
         inv_obj = self.env['account.move']
         for pay_opt in self:
-            # retrieve the open invoices in the future
-            open_invoices = self.env["account.move"].search([
-                ("payment_reference", "=", pay_opt.ref),
-                ("invoice_date_due", ">", datetime.today()),
-                ("state", "!=", "cancel")
-            ])
+            # retrieve the open invoices in the future and adapt them if needed, instead of generating a new one.
+            active_contracts = pay_opt.active_contract_ids
+            open_invoices = active_contracts.mapped("open_invoice_ids").filtered(
+                lambda i: i.invoice_date_due > datetime.today().date())
             # Compute the interval of months there should be between each invoice (set in the contract group)
             recurring_unit = pay_opt.recurring_unit
             month_interval = pay_opt.recurring_value * (1 if recurring_unit == "month" else 12)
-            param_string = f"recurring_contract.do_generate_curr_month_{pay_opt.active_contract_ids[0].company_id.id}"
+            param_string = f"recurring_contract.do_generate_curr_month_{active_contracts[0].company_id.id}"
             curr_month = self.env["ir.config_parameter"].sudo().default_get([param_string]).get(param_string, False)
             for inv_no in range(0 if curr_month else 1, pay_opt.advance_billing_months + 1, month_interval):
                 # Date must be incremented of the number of months the invoices is generated in advance
@@ -247,22 +245,20 @@ class ContractGroup(models.Model):
                     continue
                 # invoice already open we complete the move lines
                 current_rec_unit_date = eval(f"invoicing_date.{recurring_unit}")
+                # Keep invoice from the same month or year (depending on the recurring unit)
                 open_invoice = open_invoices.filtered(
                     lambda m: eval(f"m.invoice_date_due.{recurring_unit}") == current_rec_unit_date)
                 if open_invoice:
                     # Retrieve account_move_line already existing for this contract
-                    acc_move_line_curr_contr = self.env["account.move.line"].search([
-                        ("contract_id", "in", pay_opt.active_contract_ids.ids),
-                        ("due_date", ">=", datetime.today()),
-                        ("product_id", "in", pay_opt.active_contract_ids.mapped("contract_line_ids.product_id").ids),
-                        ("parent_state", "!=", "cancel")
-                    ])
+                    acc_move_line_curr_contr = open_invoice.mapped("invoice_line_ids").filtered(
+                        lambda l: l.contract_id in active_contracts
+                        and l.product_id in active_contracts.mapped("contract_line_ids.product_id")
+                    )
                     move_line_contract_ids = acc_move_line_curr_contr.mapped("contract_id")
                     move_line_product_ids = acc_move_line_curr_contr.mapped("product_id")
-                    all_contract_lines = pay_opt.mapped("active_contract_ids.contract_line_ids")
-                    contract_lines_to_inv = all_contract_lines - all_contract_lines.filtered(
-                        lambda l: l.contract_id in move_line_contract_ids
-                                  and l.product_id in move_line_product_ids)
+                    contract_lines_to_inv = active_contracts.mapped("contract_line_ids").filtered(
+                        lambda l: l.contract_id not in move_line_contract_ids
+                        or l.product_id not in move_line_product_ids)
                     open_invoice.write({
                         'invoice_line_ids': [
                             (0, 0, pay_opt.build_inv_line_data(invoicing_date=invoicing_date, contract_line=cl))
@@ -330,9 +326,9 @@ class ContractGroup(models.Model):
             # Field for the invoice_due_date to be automatically calculated
             'invoice_payment_term_id': self.partner_id.property_payment_term_id.id or self.env.ref(
                 "account.account_payment_term_immediate").id,
-            'invoice_line_ids': [(0, 0, self.build_inv_line_data(invoicing_date=invoicing_date,
-                                                                 gift_wizard=gift_wizard,
-                                                                 ))] if gift_wizard else [
+            'invoice_line_ids': [
+                (0, 0, self.build_inv_line_data(invoicing_date=invoicing_date, gift_wizard=gift_wizard,))
+            ] if gift_wizard else [
                 (0, 0, self.build_inv_line_data(invoicing_date=invoicing_date, contract_line=cl)) for cl in
                 self.mapped("active_contract_ids.contract_line_ids") if cl
             ],
@@ -367,7 +363,7 @@ class ContractGroup(models.Model):
             price = gift_wizard.amount
         else:
             raise Exception(
-                f"This method should get a contract_line or a product and quantity passt \n{os.path.basename(__file__)}")
+                f"This method should get a contract_line or a product and quantity \n{os.path.basename(__file__)}")
 
         return {
             'name': product.name,
@@ -385,7 +381,7 @@ class ContractGroup(models.Model):
         """
         if any(key in vals for key in ("payment_mode_id", "ref")):
             invoices = self.mapped("active_contract_ids.open_invoice_ids")
-            data_invs = invoices._build_invoice_data(ref=vals.get("ref"), pay_mode_id=vals.get("payment_mode_id"))
+            data_invs = invoices._build_invoices_data(ref=vals.get("ref"), pay_mode_id=vals.get("payment_mode_id"))
             if data_invs:
                 invoices.update_open_invoices(data_invs)
         if "advance_billing_months" in vals:
