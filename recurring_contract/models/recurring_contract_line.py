@@ -36,6 +36,12 @@ class ContractLine(models.Model):
     subtotal = fields.Float(compute='_compute_subtotal', store=True)
     pricelist_item_count = fields.Integer(related="product_id.pricelist_item_count", readonly=1)
 
+    _sql_constraints = [
+        ("unique_product_per_contract",
+         "UNIQUE(contract_id,product_id)",
+         "You cannot set two lines with the same product.")
+    ]
+
     @api.depends('amount', 'quantity')
     def _compute_subtotal(self):
         for contract_line in self:
