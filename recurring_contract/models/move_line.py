@@ -8,8 +8,8 @@
 #
 ##############################################################################
 
-from odoo import api, models, fields, exceptions, _
-from .product_names import GIFT_PRODUCTS_REF, PRODUCT_GIFT_CHRISTMAS
+from odoo import api, models, fields, _
+from odoo.exceptions import UserError
 
 
 class MoveLine(models.Model):
@@ -55,3 +55,29 @@ class MoveLine(models.Model):
         else:
             return False
         return (self | selected_lines).reconcile()
+
+    def _update_invoice_lines_from_contract(self, modified_contract):
+        """
+        Takes the contract as the source to generate a write command for updating the invoice line
+        :param modified_contract: <recurring.contract> record
+        :return: list of tuples for ORM write
+        """
+        modified_contract.ensure_one()
+        res = []
+        for invoice_line in self:
+            invoice = self.move_id
+            cl = modified_contract.contract_line_ids.filtered(lambda l: l.product_id == invoice_line.product_id)
+            data_dict = {}
+            if cl.product_id.pricelist_item_count > 0:
+                price = modified_contract.pricelist_id.get_product_price(
+                    cl.product_id, cl.quantity, invoice.partner_id, invoice.invoice_date_due)
+                data_dict["price_unit"] = price
+                data_dict["quantity"] = cl.quantity
+            elif cl:
+                data_dict["price_unit"] = cl.amount
+                data_dict["quantity"] = cl.quantity
+            else:
+                raise UserError(_("Unexpected error while updating contract invoices. Please contact admin."))
+            # Add the modification on the line
+            res.append((1, invoice_line.id, data_dict))
+        return res

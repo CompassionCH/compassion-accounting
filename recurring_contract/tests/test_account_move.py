@@ -93,8 +93,8 @@ class AccountInvoiceTestCase(AccountTestInvoicingCommon):
         pay_mode_id = self.payment_mode.id
         payment_term_id = self.env['account.payment.term'].search([], limit=1).id
         partner_id = self.env['res.partner'].search([], limit=1).id
-        result = self.invoice._build_invoice_data(invoice_date=invoice_date, ref=ref, pay_mode_id=pay_mode_id,
-                                                  payment_term_id=payment_term_id, partner_id=partner_id)
+        result = self.invoice._build_invoices_data(invoice_date=invoice_date, ref=ref, pay_mode_id=pay_mode_id,
+                                                   payment_term_id=payment_term_id, partner_id=partner_id)
         self.assertEqual(result.get('Invoice 1').get('date'), invoice_date)
         self.assertEqual(result.get('Invoice 1').get('payment_reference'), ref)
         self.assertEqual(result.get('Invoice 1').get('payment_mode_id'), pay_mode_id)

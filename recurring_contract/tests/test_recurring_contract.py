@@ -95,7 +95,7 @@ class TestRecurringContract(common.TransactionCase):
         Asserts that the returned dictionary contains the correct invoice data and that the invoice line ids are in the
         right format
         """
-        result = self.invoices[0]._build_invoice_data(contract=self.contract)
+        result = self.invoices[0]._build_invoices_data(contracts=self.contract)
         self.assertEqual(result.get(self.invoices[0].name).get('invoice_line_ids')[0][2],
                          {'price_unit': 10.0, 'quantity': 1})
 

@@ -1,22 +1,20 @@
 ##############################################################################
 #
-#    Copyright (C) 2014 Compassion CH (http://www.compassion.ch)
+#    Copyright (C) 2014-2023 Compassion CH (http://www.compassion.ch)
 #    Releasing children from poverty in Jesus' name
-#    @author: Cyril Sester <csester@compassion.ch>
+#    @author: Emanuel Cino <ecino@compassion.ch>
 #
 #    The licence is in the file __manifest__.py
 #
 ##############################################################################
-import calendar
 import logging
-import os
-from datetime import datetime, date
+from datetime import date
 
 from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
-from odoo.tools import flatten, config
+from odoo.tools import flatten
 
 _logger = logging.getLogger(__name__)
 
@@ -60,9 +58,15 @@ class RecurringContract(models.Model):
     invoice_line_ids = fields.One2many(
         'account.move.line', 'contract_id',
         'Related invoice lines', readonly=True, copy=False)
+    open_invoice_ids = fields.Many2many(
+        "account.move", string="Open invoices", compute="_compute_invoices"
+    )
     contract_line_ids = fields.One2many(
         'recurring.contract.line', 'contract_id',
         'Contract lines', tracking=True, copy=True, readonly=False)
+    product_ids = fields.Many2many(
+        "product.product", "Contract products", compute="_compute_contract_products"
+    )
     state = fields.Selection(
         [
             ('draft', _('Draft')),
@@ -133,11 +137,10 @@ class RecurringContract(models.Model):
 
     def _compute_invoices(self):
         for contract in self:
-            contract.nb_invoices = len(
-                contract.mapped('invoice_line_ids.move_id').filtered(
-                    lambda i: i.state not in ('cancel', 'draft')
-                              and i.payment_state != 'paid'
-                ))
+            contract.open_invoice_ids = contract.mapped("invoice_line_ids.move_id").filtered(
+                lambda i: i.payment_state == "not_paid" and i.state != "cancel"
+            )
+            contract.nb_invoices = len(contract.open_invoice_ids)
 
     @api.depends('contract_line_ids', 'contract_line_ids.amount',
                  'contract_line_ids.quantity')
@@ -231,6 +234,10 @@ class RecurringContract(models.Model):
                     contract.missing_invoices = number_invoices == 0
             else:
                 contract.missing_invoices = False
+
+    def _compute_contract_products(self):
+        for contract in self:
+            contract.product_ids = self.mapped("contract_line_ids.product_id")
 
     ##########################################################################
     #                              ORM METHODS                               #
@@ -514,17 +521,18 @@ class RecurringContract(models.Model):
 
         :param vals: the values that are being updated on the contract
         """
-        if any(key in vals for key in ("group_id", "contract_line_ids", "birthday_invoice", "christmas_invoice")):
-            data_invs = {}
-            for contract in self:
-                for inv in contract.mapped("invoice_line_ids.move_id").filtered(
-                        lambda m: m.payment_state == "not_paid" and m.state != "cancel"):
-                    data_invs.update(
-                        inv._build_invoice_data(
-                            contract=contract,
-                            ref=contract.group_id.ref,
-                            pay_mode_id=contract.group_id.payment_mode_id
-                        )
-                    )
-            if data_invs:
-                self.mapped("invoice_line_ids.move_id").update_open_invoices(data_invs)
+        data_invs = {}
+        if "contract_line_ids" in vals:
+            data_invs = self.mapped("open_invoice_ids")._build_invoices_data(contracts=self)
+        if "group_id" in vals:
+            group = self.mapped("group_id")
+            group.ensure_one()
+            group_data = self.mapped("open_invoice_ids")._build_invoices_data(
+                ref=group.ref, pay_mode_id=group.payment_mode_id)
+            for inv_name, inv_data in group_data.items():
+                if inv_name in data_invs:
+                    data_invs[inv_name].update(inv_data)
+                else:
+                    data_invs[inv_name] = inv_data
+        if data_invs:
+            self.mapped("open_invoice_ids").update_open_invoices(data_invs)
