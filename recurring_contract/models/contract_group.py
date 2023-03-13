@@ -142,12 +142,7 @@ class ContractGroup(models.Model):
 
     @staticmethod
     def day_selection():
-        curr_day = 1
-        day_l = []
-        while curr_day < 32:
-            day_l.append((str(curr_day), str(curr_day)))
-            curr_day += 1
-        return day_l
+        return [(str(day), str(day)) for day in range(1, 32)]
 
     ##########################################################################
     #                              ORM METHODS                               #
