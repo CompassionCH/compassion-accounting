@@ -10,8 +10,13 @@ def migrate(cr, version):
         cr.execute("""
         update recurring_contract_group
         set invoice_suspended_until = (
-            select min(next_invoice_date) from recurring_contract
-            where group_id = recurring_contract_group.id and state = 'active'
+            select date_trunc('month', min(next_invoice_date)) from recurring_contract
+            where group_id = recurring_contract_group.id
+            and state in ('waiting','active')
+            and child_id is not null
+            and next_invoice_date > (
+                CURRENT_DATE + INTERVAL '1 month' * recurring_contract_group.advance_billing_months + INTERVAL '1 month'
+            )
             group by group_id
             having count(*) = 1)
         """)
