@@ -226,6 +226,8 @@ class ContractGroup(models.Model):
             active_contracts = pay_opt.active_contract_ids
             open_invoices = active_contracts.mapped("open_invoice_ids").filtered(
                 lambda i: i.invoice_date_due > datetime.today().date())
+            already_done_dates = (active_contracts.mapped("invoice_line_ids.move_id") - open_invoices).filtered(
+                lambda i: i.invoice_date_due > datetime.today().date()).mapped("invoice_date")
             # Compute the interval of months there should be between each invoice (set in the contract group)
             recurring_unit = pay_opt.recurring_unit
             month_interval = pay_opt.recurring_value * (1 if recurring_unit == "month" else 12)
@@ -235,8 +237,9 @@ class ContractGroup(models.Model):
                 # Date must be incremented of the number of months the invoices is generated in advance
                 invoicing_date = datetime.now() + relativedelta(months=inv_no)
                 invoicing_date = pay_opt.get_relative_invoice_date(invoicing_date.date())
-                # in case the invoices are suspended we do not generate
-                if pay_opt.invoice_suspended_until and pay_opt.invoice_suspended_until > invoicing_date:
+                # in case the invoice was already done or invoices are suspended we do not generate
+                if invoicing_date in already_done_dates or (
+                        pay_opt.invoice_suspended_until and pay_opt.invoice_suspended_until > invoicing_date):
                     continue
                 # invoice already open we complete the move lines
                 current_rec_unit_date = eval(f"invoicing_date.{recurring_unit}")
@@ -255,10 +258,11 @@ class ContractGroup(models.Model):
                         lambda l: l.contract_id not in move_line_contract_ids
                         or l.product_id not in move_line_product_ids)
                     open_invoice.write({
-                        'invoice_line_ids': [
+                        "invoice_line_ids": [
                             (0, 0, pay_opt.build_inv_line_data(invoicing_date=invoicing_date, contract_line=cl))
                             for cl in contract_lines_to_inv
-                        ]
+                        ],
+                        "payment_mode_id": pay_opt.payment_mode_id.id
                     })
 
                 else:
