@@ -513,7 +513,8 @@ class RecurringContract(models.Model):
         Returns the open invoices of the contract that needs to be cancelled, when the contract is finished.
         :return: <account.move.line> recordset
         """
-        return self.mapped("invoice_line_ids").filtered(lambda l: l.payment_state != 'paid')
+        return self.mapped("invoice_line_ids").filtered(
+            lambda l: l.payment_state != 'paid' and l.parent_state == "posted")
 
     def _updt_invoices_rc(self, vals):
         """
