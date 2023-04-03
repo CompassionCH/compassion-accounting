@@ -37,6 +37,7 @@
     'category': 'Accounting',
     'depends': [
         'account',
+        'base_automation',
         'account_payment_partner',  # OCA/bank-payment,
         'queue_job',                # OCA/queue,
         'utm'
