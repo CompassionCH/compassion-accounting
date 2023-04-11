@@ -137,8 +137,10 @@ class AccountMove(models.Model):
         if inv_block_day and date_selection.day >= int(inv_block_day):
             date_selection += relativedelta(months=1)
         date_selection = date_selection.replace(day=1)
-        for invoice in self.filtered(lambda i: i.state != "cancel" and i.payment_state != "paid"
-                                     and i.invoice_date_due >= date_selection):
+        for invoice in self.filtered(lambda i: i.state != "cancel"
+                                     and i.payment_state != "paid"
+                                     and i.invoice_date_due >= date_selection
+                                     and i.payment_order_id.state in ["draft", "open"]):
             if updt_val.get(invoice.name):
                 val_to_updt = updt_val[invoice.name]
                 # In case we modify the amount we want to test if the amount is zero

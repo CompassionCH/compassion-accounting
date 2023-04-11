@@ -8,8 +8,8 @@
 #                        /_/
 #                            in Jesus' name
 #
-#    Copyright (C) 2014-2019 Compassion CH (http://www.compassion.ch)
-#    @author: Cyril Sester <csester@compassion.ch>, Emanuel Cino
+#    Copyright (C) 2014-2023 Compassion CH (http://www.compassion.ch)
+#    @author: Emanuel Cino
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -25,9 +25,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-# pylint: disable=C8101
 {
-    'name': 'Recurring contract',
+    'name': 'Restrictions on invoices',
     'summary': 'Contract for recurring invoicing',
     'version': "14.0.1.0.5",
     'license': 'AGPL-3',
@@ -35,31 +34,9 @@
     'development_status': 'Production/Stable',
     'website': 'http://www.compassion.ch',
     'category': 'Accounting',
-    'depends': [
-        'account',
-        'base_automation',
-        'account_payment_partner',  # OCA/bank-payment,
-        'queue_job',                # OCA/queue,
-        'utm'
-    ],
+    'depends': ['account_payment_order'],  #OCA/bank-payment
     'external_dependencies': {},
-    'data': [
-        'views/end_contract_wizard_view.xml',
-        'views/activate_contract_view.xml',
-        'views/contract_group_view.xml',
-        'views/recurring_contract_view.xml',
-        'views/recurring_invoicer_view.xml',
-        'views/recurring_invoicer_wizard_view.xml',
-        'views/res_config_settings_view.xml',
-        'views/utm_medium_view.xml',
-        'data/balance_product_for_migr.xml',
-        'data/recurring_contract_sequence.xml',
-        'data/contract_expire_cron.xml',
-        'data/pricelist_item_base_automation.xml',
-        'data/daily_invoicer_cron.xml',
-        'data/utm_data.xml',
-        'data/queue_job.xml',
-        'security/ir.model.access.csv',
-    ],
+    'data': [],
     'installable': True,
 }
+
