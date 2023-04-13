@@ -344,6 +344,7 @@ class ContractGroup(models.Model):
 
         :return: a dictionary
         """
+        self.ensure_one()
         if contract_line:
             product = contract_line.product_id
             qty = contract_line.quantity

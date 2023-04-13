@@ -88,7 +88,7 @@ class RecurringContract(models.Model):
         'res.company',
         'Company',
         required=True,
-        default=lambda self: self.env.user.company_id.id, readonly=False
+        default=lambda self: self.env.company, readonly=False
     )
     pricelist_id = fields.Many2one(
         'product.pricelist',
@@ -308,8 +308,9 @@ class RecurringContract(models.Model):
             self.group_id = False
 
         # Update the company value based on the partner.country_id as there is no value for partner.company_id
-        company_ids = self.env['res.company'].search([])
-        self.company_id = company_ids.filtered(lambda l: l.country_id == self.partner_id.country_id)
+        if self.partner_id.country_id:
+            company_ids = self.env['res.company'].search([("country_id", "=", self.partner_id.country_id.id)], limit=1)
+            self.company_id = company_ids.filtered(lambda l: l.country_id == self.partner_id.country_id)
 
     @api.onchange('company_id')
     def on_change_company_id(self):

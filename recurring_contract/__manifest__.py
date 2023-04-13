@@ -36,7 +36,7 @@
     'website': 'http://www.compassion.ch',
     'category': 'Accounting',
     'depends': [
-        'account',
+        'account_invoice_pricelist',  # OCA/account-invoicing
         'base_automation',
         'account_payment_partner',  # OCA/bank-payment,
         'queue_job',                # OCA/queue,
