@@ -33,7 +33,7 @@
     'license': 'AGPL-3',
     'author': 'Compassion CH',
     'development_status': 'Production/Stable',
-    'website': 'http://www.compassion.ch',
+    'website': 'https://www.compassion.ch',
     'category': 'Accounting',
     'depends': [
         'account_invoice_pricelist',  # OCA/account-invoicing

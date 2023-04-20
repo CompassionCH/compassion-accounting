@@ -32,7 +32,7 @@
     'version': "14.0.1.0.0",
     'license': 'AGPL-3',
     'author': 'Compassion CH',
-    'website': 'http://www.compassion.ch',
+    'website': 'https://www.compassion.ch',
     'category': 'Accounting',
     'depends': [
         'analytic',

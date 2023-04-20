@@ -32,7 +32,7 @@
     'license': 'AGPL-3',
     'author': 'Compassion CH',
     'development_status': 'Production/Stable',
-    'website': 'http://www.compassion.ch',
+    'website': 'https://www.compassion.ch',
     'category': 'Accounting',
     'depends': ['account_payment_order'],  #OCA/bank-payment
     'external_dependencies': {},

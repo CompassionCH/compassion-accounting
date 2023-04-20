@@ -31,7 +31,7 @@
     "version": "14.0.1.0.0",
     "author": "Compassion CH",
     "category": "Finance",
-    "website": "http://www.compassion.ch",
+    "website": "https://www.compassion.ch",
     "depends": [
         'account_statement_import',
         'account_payment_order',
