@@ -15,9 +15,7 @@ class AccountMove(models.Model):
     _inherit = 'account.move'
 
     def write(self, vals):
-        is_write_paystate = False
-        if vals.get("payment_state"):
-          is_write_paystate = True
+        is_write_paystate = vals.get("payment_state")
 
         # We don't want to take the move out of the payment order in case it's getting paid
         if not is_write_paystate:
