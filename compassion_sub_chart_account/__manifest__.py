@@ -5,7 +5,7 @@
     'version': '14.0.1.0.0',
     'license': 'AGPL-3',
     'author': 'CompassionCH',
-    'website': 'http://www.compassion.ch',
+    'website': 'https://www.compassion.ch',
     'category': 'Localization',
     'depends': ['product', 'account'],
     'data': [

@@ -31,7 +31,7 @@
     'version': '14.0.1.0.1',
     'license': 'AGPL-3',
     'author': 'Compassion Suisse',
-    'website': 'https://github.com/OCA/bank-payment',
+    'website': 'https://github.com/compassionCH/compassion-accounting',
     'category': 'Banking addons',
     'depends': [
         'account_payment_order'
