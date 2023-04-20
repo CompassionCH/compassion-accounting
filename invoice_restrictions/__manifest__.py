@@ -34,7 +34,10 @@
     'development_status': 'Production/Stable',
     'website': 'https://www.compassion.ch',
     'category': 'Accounting',
-    'depends': ['account_payment_order'],  #OCA/bank-payment
+    'depends': [
+        'account_payment_order', #OCA/bank-payment
+        'account_payment_line_free'
+    ],
     'external_dependencies': {},
     'data': [],
     'installable': True,
