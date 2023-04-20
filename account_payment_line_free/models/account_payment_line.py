@@ -22,7 +22,7 @@ class AccountPaymentLine(models.Model):
         for rec in self:
             if not rec.move_line_id.full_reconcile_id:
                 rec._post_free_message(str(rsn))
-                rec.move_line_id = False
+                rec.unlink()
             else:
                 raise exceptions.UserError(
                     "Payment is reconciled and cannot be cancelled.")
