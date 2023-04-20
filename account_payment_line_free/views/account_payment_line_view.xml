@@ -6,8 +6,13 @@
         <field name="inherit_id" ref="account_payment_order.account_payment_line_tree"/>
         <field name="arch" type="xml">
             <field name="payment_type" position="after">
-                <button name="free_line" type="object" title="This button unlink the invoice with the payment line" icon="fa-unlink"
-                        context="{'cancel_line_from_payment_order': 1}" attrs="{'invisible': [('move_line_id', '=', False)]}"/>
+                <field name="returned"/>
+                <button name="free_line"
+                        type="object"
+                        title="This button unlink the invoice with the payment line"
+                        icon="fa-unlink"
+                        attrs="{'invisible': [('move_line_id', '=', False)]}"
+                />
             </field>
         </field>
     </record>

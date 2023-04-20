@@ -23,11 +23,12 @@ class AccountMove(models.Model):
         if not is_write_paystate:
             move_to_modify = self.filtered('line_ids.payment_line_ids')
             if move_to_modify:
-                move_to_modify.free_payment_lines()
+                move_to_modify.with_context("unlink_line").free_payment_lines()
         res = super().write(vals)
         # Refresh the browser to be sure the user see the message posted
         if move_to_modify:
-            if is_write_paystate:
+            # We read the payment to the order
+            if not is_write_paystate:
                 move_to_modify.create_account_payment_line()
             return {
                 'type': 'ir.actions.client',

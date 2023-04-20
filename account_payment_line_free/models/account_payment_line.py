@@ -13,6 +13,13 @@ from odoo import models, fields, exceptions, api
 class AccountPaymentLine(models.Model):
     _inherit = 'account.payment.line'
 
+    returned = fields.Boolean(
+        string="Move unlinked",
+        readonly=True,
+        default=False,
+        help="This field indicates if the invoice is still linked with the payment line"
+    )
+
     def free_line(self, rsn=''):
         """
         Set move_line_id to Null in order to cancel the related invoice
@@ -22,7 +29,11 @@ class AccountPaymentLine(models.Model):
         for rec in self:
             if not rec.move_line_id.full_reconcile_id:
                 rec._post_free_message(str(rsn))
-                rec.unlink()
+                if self.env.context.get("unlink_line", False):
+                    rec.unlink()
+                else:
+                    rec.move_line_id = False
+                    rec.returned = True
             else:
                 raise exceptions.UserError(
                     "Payment is reconciled and cannot be cancelled.")
@@ -39,16 +50,16 @@ class AccountPaymentLine(models.Model):
             if additional_msg != '':
                 additional_msg = '\n' + additional_msg
             invoice_url = u'<a href="web#id={}&view_type=form&model=' \
-                u'account.move">{}</a>'.format(invoice.id,
-                                                  invoice.name)
+                          u'account.move">{}</a>'.format(invoice.id,
+                                                         invoice.name)
             payment_order_url = u'<a href="web#id={}&view_type=form&model=' \
-                u'account.payment.order">{}</a>'.format(order.id, order.name)
+                                u'account.payment.order">{}</a>'.format(order.id, order.name)
             # Add a message to the invoice
             invoice.message_post(
                 body="The invoice has been marked as returned and freed from "
-                + payment_order_url + additional_msg
+                     + payment_order_url + additional_msg
             )
             # Add a message to the payment order
             payment_line.order_id.message_post(
                 body=invoice_url + " has been unlinked from the line: "
-                + payment_line.name + additional_msg)
+                     + payment_line.name + additional_msg)
