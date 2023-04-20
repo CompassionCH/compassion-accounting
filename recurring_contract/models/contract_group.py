@@ -317,7 +317,6 @@ class ContractGroup(models.Model):
             'journal_id': journal.id,
             'currency_id': contract.pricelist_id.currency_id.id,
             'invoice_date': invoicing_date,  # Accountant date
-            'date': datetime.now(),  # Date of generation of the invoice
             'recurring_invoicer_id': invoicer.id,
             'pricelist_id': contract.pricelist_id.id,
             'payment_mode_id': self.payment_mode_id.id,
