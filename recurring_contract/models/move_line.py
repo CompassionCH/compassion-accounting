@@ -19,7 +19,13 @@ class MoveLine(models.Model):
 
     _inherit = "account.move.line"
 
-    contract_id = fields.Many2one('recurring.contract', 'Source contract', index=True)
+    contract_id = fields.Many2one(
+        'recurring.contract',
+        'Source contract',
+        index=True,
+        domain="[('partner_id', '=', parent.partner_id), "
+               "('state', 'in', ['draft', 'active'])]"
+    )
     due_date = fields.Date(related='move_id.invoice_date_due', store=True, readonly=True, index=True)
     last_payment = fields.Date(related="move_id.last_payment", store=True)
     payment_state = fields.Selection(related="move_id.payment_state", store=True, readonly=True, index=True)
