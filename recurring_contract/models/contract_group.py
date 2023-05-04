@@ -232,7 +232,7 @@ class ContractGroup(models.Model):
             recurring_unit = pay_opt.recurring_unit
             month_interval = pay_opt.recurring_value * (1 if recurring_unit == "month" else 12)
             param_string = f"recurring_contract.do_generate_curr_month_{active_contracts[0].company_id.id}"
-            curr_month = self.env["ir.config_parameter"].sudo().default_get([param_string]).get(param_string, False)
+            curr_month = self.env["ir.config_parameter"].sudo().get_param(param_string)
             for inv_no in range(0 if curr_month else 1, pay_opt.advance_billing_months + 1, month_interval):
                 # Date must be incremented of the number of months the invoices is generated in advance
                 invoicing_date = datetime.now() + relativedelta(months=inv_no)
