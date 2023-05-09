@@ -224,15 +224,17 @@ class ContractGroup(models.Model):
         for pay_opt in self:
             # retrieve the open invoices in the future and adapt them if needed, instead of generating a new one.
             active_contracts = pay_opt.active_contract_ids
+            param_string = f"recurring_contract.do_generate_curr_month_{active_contracts[0].company_id.id}"
+            curr_month = self.env["ir.config_parameter"].sudo().get_param(param_string)
+            today = datetime.today().date()
+            today = today.replace(day=1) if curr_month else today
             open_invoices = active_contracts.mapped("open_invoice_ids").filtered(
-                lambda i: i.invoice_date_due > datetime.today().date())
+                lambda i: i.invoice_date_due >= today)
             already_done_dates = (active_contracts.mapped("invoice_line_ids.move_id") - open_invoices).filtered(
-                lambda i: i.invoice_date_due > datetime.today().date()).mapped("invoice_date")
+                lambda i: i.invoice_date_due >= today).mapped("invoice_date")
             # Compute the interval of months there should be between each invoice (set in the contract group)
             recurring_unit = pay_opt.recurring_unit
             month_interval = pay_opt.recurring_value * (1 if recurring_unit == "month" else 12)
-            param_string = f"recurring_contract.do_generate_curr_month_{active_contracts[0].company_id.id}"
-            curr_month = self.env["ir.config_parameter"].sudo().get_param(param_string)
             for inv_no in range(0 if curr_month else 1, pay_opt.advance_billing_months + 1, month_interval):
                 # Date must be incremented of the number of months the invoices is generated in advance
                 invoicing_date = datetime.now() + relativedelta(months=inv_no)
