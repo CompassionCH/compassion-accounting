@@ -174,7 +174,7 @@ class RecurringContract(models.Model):
         self.env.cr.execute("""
             SELECT move_id
             FROM account_move_line
-            WHERE contract_id = ANY(%s) AND payment_state != 'paid' and state = 'posted' AND due_date < %s;
+            WHERE contract_id = ANY(%s) AND payment_state != 'paid' and move_id.state = 'posted' AND due_date < %s;
         """, [self.ids, fields.Date.to_string(this_month)])
         move_ids = flatten(self.env.cr.fetchall())
         moves = self.env["account.move"]
