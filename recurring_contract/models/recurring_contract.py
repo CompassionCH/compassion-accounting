@@ -161,7 +161,9 @@ class RecurringContract(models.Model):
         for contract in self:
             due_invoices = contract._filter_due_invoices()
             contract.due_invoice_ids = due_invoices
-            contract.amount_due = int(sum(due_invoices.mapped("amount_total")))
+            contract.amount_due = int(sum(due_invoices.mapped("line_ids").filtered(
+                lambda l: l.contract_id.id == contract.id
+            ).mapped("price_total")))
             months = set()
             for invoice in due_invoices:
                 idate = invoice.date
