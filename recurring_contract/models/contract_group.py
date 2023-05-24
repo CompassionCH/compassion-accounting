@@ -231,7 +231,10 @@ class ContractGroup(models.Model):
             open_invoices = active_contracts.mapped("open_invoice_ids").filtered(
                 lambda i: i.invoice_date_due >= today
                           and i.invoice_category == 'sponsorship')
-            already_done_dates = open_invoices.mapped("invoice_date_due")
+            already_done_dates = (open_invoices + active_contracts.mapped('invoice_line_ids.move_id').filtered(
+                lambda m: m.invoice_date_due >= today
+                          and m.invoice_category == 'sponsorship'
+                          and m.payment_state == 'paid')).mapped("invoice_date_due")
             # Compute the interval of months there should be between each invoice (set in the contract group)
             recurring_unit = pay_opt.recurring_unit
             month_interval = pay_opt.recurring_value * (1 if recurring_unit == "month" else 12)
