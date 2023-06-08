@@ -301,7 +301,6 @@ class ContractGroup(models.Model):
         self.ensure_one()
         # Filter the contract line already paid
         already_paid_cl = self.env['account.move'].search([
-            ("payment_state", "=", "paid"),
             ("invoice_line_ids.contract_id", "in", self.active_contract_ids.ids),
             ("invoice_date", "=", invoicing_date)
         ]).mapped("invoice_line_ids.contract_id.contract_line_ids")
