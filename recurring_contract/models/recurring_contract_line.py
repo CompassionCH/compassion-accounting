@@ -34,7 +34,7 @@ class ContractLine(models.Model):
     product_id = fields.Many2one('product.product', 'Product',
                                  required=True, readonly=False)
     amount = fields.Float('Price', required=True)
-    quantity = fields.Integer(default=1, required=True)
+    quantity = fields.Float(default=1, required=True)
     subtotal = fields.Float(compute='_compute_subtotal', store=True,
                             digits=dp.get_precision('Account'))
 
