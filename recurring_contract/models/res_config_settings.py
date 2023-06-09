@@ -41,7 +41,7 @@ class MandateStaffNotifSettings(models.TransientModel):
     def get_values(self):
         res = super().get_values()
         res["inv_block_day"] = self.get_param_multi_company("recurring_contract.invoice_block_day")
-        res["do_generate_curr_month"] = eval(self.get_param_multi_company("recurring_contract.do_generate_curr_month"))
+        res["do_generate_curr_month"] = bool(self.get_param_multi_company("recurring_contract.do_generate_curr_month"))
         return res
 
     def set_values(self):
