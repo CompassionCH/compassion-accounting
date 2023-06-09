@@ -26,16 +26,20 @@ class ResCompany(models.Model):
         if lock_date:
             for company in self:
                 if company.move_bills_date:
-                    open_invoices = self.env['account.invoice'].search([
-                        ('state', '=', 'open'),
-                        ('type', '=', 'out_invoice'),
-                        ('date_invoice', '<=', lock_date)
+                    open_invoices = self.env['account.move'].search([
+                        ('state', '=', 'posted'),
+                        ('payment_state', '=', 'not_paid'),
+                        ('move_type', '=', 'out_invoice'),
+                        ('date', '<=', lock_date),
+                        ('company_id', '=', self.env.company.id)
                     ])
                     first_day_in_next_fy = lock_date + timedelta(days=1)
-                    moves = open_invoices.mapped('move_id').sudo()
-                    moves.write({
-                        'date': first_day_in_next_fy
-
-                    })
-                    analytic_lines = moves.mapped('line_ids.analytic_line_ids')
-                    analytic_lines.write({'date': first_day_in_next_fy})
+                    moves = open_invoices.sudo()
+                    for move in moves:
+                        move.button_draft()
+                        move.write({
+                            'date': first_day_in_next_fy
+                        })
+                        move.action_post()
+                        analytic_lines = move.mapped('line_ids.analytic_line_ids')
+                        analytic_lines.write({'date': first_day_in_next_fy})
