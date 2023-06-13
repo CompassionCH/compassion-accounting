@@ -154,7 +154,7 @@ class ContractGroup(models.Model):
             - Recurring value or unit changes
         """
         if vals.get("invoice_suspended_until"):
-            if parser.parse(vals["invoice_suspended_until"]).date() < datetime.today().date():
+            if vals["invoice_suspended_until"].date() < datetime.today().date():
                 raise UserError("The suspension of invoices has to be in the future ! (Invoice Suspended Until field)")
         res = super().write(vals)
         self._updt_invoices_cg(vals)
@@ -253,9 +253,14 @@ class ContractGroup(models.Model):
                     )
                     move_line_contract_ids = acc_move_line_curr_contr.mapped("contract_id")
                     move_line_product_ids = acc_move_line_curr_contr.mapped("product_id")
+                    already_paid_cl = self.env['account.move'].search([
+                        ("invoice_line_ids.contract_id", "in", self.active_contract_ids.ids),
+                        ("invoice_date", "=", invoicing_date)
+                    ]).mapped("invoice_line_ids.contract_id.contract_line_ids")
                     contract_lines_to_inv = active_contracts.mapped("contract_line_ids").filtered(
-                        lambda l: l.contract_id not in move_line_contract_ids
-                                  or l.product_id not in move_line_product_ids)
+                        lambda l: (l.contract_id not in move_line_contract_ids
+                                   or l.product_id not in move_line_product_ids
+                                   ) and l not in already_paid_cl)
                     open_invoice.write({
                         "invoice_line_ids": [
                             (0, 0, pay_opt.build_inv_line_data(invoicing_date=invoicing_date, contract_line=cl))

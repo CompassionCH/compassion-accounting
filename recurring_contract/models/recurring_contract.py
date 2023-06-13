@@ -137,6 +137,7 @@ class RecurringContract(models.Model):
             new_date = (today + relativedelta(months=1)).replace(day=1 if do_gen_curr_month else day_block_inv)
             self.group_id.write({"invoice_suspended_until": fields.Date.to_string(new_date)})
 
+    @api.depends('invoice_line_ids')
     def _compute_invoices(self):
         for contract in self:
             contract.open_invoice_ids = contract.mapped("invoice_line_ids.move_id").filtered(
@@ -469,6 +470,9 @@ class RecurringContract(models.Model):
         paid_invoices.button_draft()
         for inv in paid_invoices:
             inv.write({"invoice_line_ids": [(2, invl.id) for invl in inv_lines_paid.exists() if invl.move_id == inv]})
+            if len(inv.line_ids) == 0:
+                inv.button_cancel()
+                paid_invoices -= inv
         paid_invoices.action_post()
         paid_invoices.with_company(self[0].company_id.id).reconcile_after_clean()
 
@@ -528,6 +532,8 @@ class RecurringContract(models.Model):
         :param vals: the values that are being updated on the contract
         """
         data_invs = {}
+        if "partner_id" in vals:
+            data_invs = self.mapped("open_invoice_ids")._build_invoices_data(partner_id=vals["partner_id"])
         if "contract_line_ids" in vals:
             data_invs = self.mapped("open_invoice_ids")._build_invoices_data(contracts=self)
         if "group_id" in vals:

@@ -1,7 +1,3 @@
-import logging
-from datetime import date
-from unittest.mock import MagicMock
-
 from odoo import fields
 from odoo.tests import tagged
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
@@ -9,6 +5,7 @@ from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 
 @tagged('post_install', '-at_install', 'only_this')
 class AccountInvoiceTestCase(AccountTestInvoicingCommon):
+    """Unit tests of the methods implemented on the object account move"""
     def setUp(self):
         super(AccountInvoiceTestCase, self).setUp()
         self.invoice_model = self.env['account.move']
@@ -17,30 +14,6 @@ class AccountInvoiceTestCase(AccountTestInvoicingCommon):
             'name': 'Invoice 1',
             'move_type': 'out_invoice',
             'invoice_line_ids': [(0, 0, {'product_id': self.product_a.id, 'quantity': 1, 'price_unit': 10.0})]
-        })
-        self.group = self.env['recurring.contract.group'].create({
-            'advance_billing_months': 1,
-            'partner_id': self.env.ref('base.res_partner_1').id,
-            'recurring_unit': 'month',
-            'recurring_value': 1,
-            'ref': 'Test Group'
-        })
-        self.payment_mode = self.env['account.payment.mode'].create({
-            'name': 'Test Payment Mode',
-            'payment_type': 'inbound',
-            'bank_account_link': 'fixed',
-            'payment_method_id': self.env['account.payment.method'].search([], limit=1).id,
-            'fixed_journal_id': self.env['account.journal'].search([('company_id', '=', self.env.user.company_id.id)],
-                                                                   limit=1).id
-        })
-        # Create a new contract with a set invoice_day
-        self.contract = self.env['recurring.contract'].create({
-            'reference': 'Test Contract',
-            'partner_id': self.partner_a.id,
-            'group_id': self.group.id,
-            'pricelist_id': self.env.ref('product.list0').id,
-            'contract_line_ids': [(0, 0, {'product_id': self.product_a.id, 'amount': 10.0, 'quantity': 1})],
-            'invoice_day': '15',
         })
 
     def test_update_invoices(self):
