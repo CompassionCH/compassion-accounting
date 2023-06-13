@@ -41,5 +41,3 @@ class ResCompany(models.Model):
                             'date': first_day_in_next_fy
                         })
                         move.action_post()
-                        analytic_lines = move.mapped('line_ids.analytic_line_ids')
-                        analytic_lines.write({'date': first_day_in_next_fy})
