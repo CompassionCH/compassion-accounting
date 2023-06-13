@@ -23,6 +23,10 @@ class ContractLine(models.Model):
     _name = "recurring.contract.line"
     _description = "Recurring contract line"
 
+    def write(self, vals):
+        super().write(vals)
+        self._updt_invoices_rcl(vals)
+
     def name_get(self):
         res = [(cl.id, cl.product_id.name) for cl in self]
         return res
@@ -56,3 +60,14 @@ class ContractLine(models.Model):
     def build_inv_line_data(self):
         self.ensure_one()
         return self.contract_id.group_id.build_inv_line_data(contract_line=self)
+
+    def _updt_invoices_rcl(self, vals):
+        """
+        It updates the invoices of a contract when the contract is updated
+
+        :param vals: the values that are being updated on the contract
+        """
+        data_invs = {}
+        if "product" in vals or "amount" in vals or "quantity" in vals or "contract_id" in vals:
+            data_invs = self.mapped("contract_id.open_invoice_ids")._build_invoices_data(contracts=self.mapped("contract_id"))
+            self.mapped("contract_id.open_invoice_ids").update_open_invoices(data_invs)

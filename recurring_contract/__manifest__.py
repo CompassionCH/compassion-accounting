@@ -37,6 +37,7 @@
     'category': 'Accounting',
     'depends': [
         'account_invoice_pricelist',  # OCA/account-invoicing
+        'account_payment_order',
         'base_automation',
         'account_payment_partner',  # OCA/bank-payment,
         'queue_job',                # OCA/queue,
