@@ -19,7 +19,6 @@ class EbicsFileFormat(models.Model):
         for record in self:
             record.display_name = record.name + " (" + record.order_type + ")"
 
-    @api.multi
     def name_get(self):
         result = []
         for record in self:

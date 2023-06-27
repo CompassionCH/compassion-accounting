@@ -3,7 +3,7 @@
 
 {
     "name": "Download Payment Order return via EBICS",
-    "version": "12.0.1.0.0",
+    "version": "14.0.1.0.0",
     "license": "LGPL-3",
     "author": "Compassion",
     "category": "Accounting & Finance",
