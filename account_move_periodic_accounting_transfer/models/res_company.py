@@ -38,6 +38,7 @@ class ResCompany(models.Model):
                     for move in moves:
                         move.button_draft()
                         move.write({
-                            'date': first_day_in_next_fy
+                            'date': first_day_in_next_fy,
+                            'name': False
                         })
                         move.action_post()
