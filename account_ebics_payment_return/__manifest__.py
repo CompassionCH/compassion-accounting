@@ -11,6 +11,7 @@
         "account_ebics",
         "account_payment_line_free",
         "account_payment_return_import",
+        "account_payment_return_import_pain_ch"  # l10n-switzerland
     ],
     "data": [
         #        'views/account_payment_order.xml',

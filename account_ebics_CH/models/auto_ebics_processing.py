@@ -20,14 +20,11 @@ class AutoEBICSProcessing(models.AbstractModel):
         instead of the new ones
         """
         _logger.info(f"Starting")
-
         d = {}
         if n_days_ago is not None:
             n_days_ago = datetime.date.today() - datetime.timedelta(days=n_days_ago)
             d.update({"date_from": n_days_ago, "date_to": n_days_ago})
-
         xfer = self.env["ebics.xfer"].create(d)
-
         try:
             output = xfer.ebics_download()
             ebics_retrieved = self.env["ebics.file"].browse(
@@ -47,7 +44,6 @@ class AutoEBICSProcessing(models.AbstractModel):
                     f"EBICS file {ebics.display_name} could not be processed",
                     traceback.format_exc(),
                 )
-
         xfer.unlink()
         _logger.info(f"Finished")
         return True

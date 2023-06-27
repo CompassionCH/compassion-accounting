@@ -37,7 +37,7 @@ class EbicsFile(models.Model):
         """convert the file to a record of model payment return."""
         _logger.info("Start import '%s'", self.name)
         try:
-            values = {"data_file": self.data, "filename": self.name}
+            values = {"data_file": self.data, "display_name": self.name}
             pr_import_obj = self.env["payment.return.import"]
             pr_wiz_imp = pr_import_obj.create(values)
             _logger.info("LOG import1 '%s'", pr_wiz_imp)
@@ -76,12 +76,12 @@ class EbicsFile(models.Model):
             self.invalidate_cache()
             # Write the error in the postfinance file
             if self.state != "error":
-                self.write({"state": "draft", "error_message": e.args and e.args[0]})
+                self.write({"state": "draft", "note": e.args and e.args[0]})
                 # Here we must commit the error message otherwise it
                 # can be unset by a next file producing an error
                 # pylint: disable=invalid-commit
                 self.env.cr.commit()
-            self._on_error_parse_xml_and_cancel(e.name)
+            self._on_error_parse_xml_and_cancel(str(e))
 
     def _on_error_parse_xml_and_cancel(self, err_message):
         _logger.info("Parsing file with err: %s", err_message)
