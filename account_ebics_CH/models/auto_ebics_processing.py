@@ -24,26 +24,31 @@ class AutoEBICSProcessing(models.AbstractModel):
         if n_days_ago is not None:
             n_days_ago = datetime.date.today() - datetime.timedelta(days=n_days_ago)
             d.update({"date_from": n_days_ago, "date_to": n_days_ago})
-        xfer = self.env["ebics.xfer"].create(d)
-        try:
-            output = xfer.ebics_download()
-            ebics_retrieved = self.env["ebics.file"].browse(
-                output["context"]["ebics_file_ids"]
-            )
-        except Exception:
-            _logger.error(f"Failed", traceback.format_exc())
-            return False
-
-        for ebics in ebics_retrieved:
+        for conf in self.env["ebics.config"].search([("state", "=", "confirm")]):
+            d.update({
+                'ebics_config_id': conf.id,
+                'ebics_userid_id': conf.ebics_userid_ids[0].id
+            })
+            xfer = self.env["ebics.xfer"].create(d)
             try:
-                res = ebics.process()
-                if res is None:
-                    raise Exception
-            except Exception:
-                _logger.warning(
-                    f"EBICS file {ebics.display_name} could not be processed",
-                    traceback.format_exc(),
+                output = xfer.ebics_download()
+                ebics_retrieved = self.env["ebics.file"].browse(
+                    output["context"]["ebics_file_ids"]
                 )
-        xfer.unlink()
+            except Exception:
+                _logger.error(f"Failed", traceback.format_exc())
+                return False
+
+            for ebics in ebics_retrieved:
+                try:
+                    res = ebics.process()
+                    if res is None:
+                        raise Exception
+                except Exception:
+                    _logger.warning(
+                        f"EBICS file {ebics.display_name} could not be processed",
+                        traceback.format_exc(),
+                    )
+            xfer.unlink()
         _logger.info(f"Finished")
         return True
