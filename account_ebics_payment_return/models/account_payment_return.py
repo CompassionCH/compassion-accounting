@@ -1,11 +1,7 @@
 # Copyright 2009-2019 Noviat.
 # License LGPL-3 or later (http://www.gnu.org/licenses/lpgl).
 
-from odoo import api, models, _
-from odoo.addons.l10n_ch_payment_return_sepa.models.errors import (
-    NoTransactionsError,
-    FileAlreadyImported,
-)
+from odoo import models
 from odoo.exceptions import UserError
 import xml.etree.cElementTree as ET
 import logging
@@ -41,8 +37,6 @@ class EbicsFile(models.Model):
         """convert the file to a record of model payment return."""
         _logger.info("Start import '%s'", self.name)
         try:
-            import_module = "l10n_ch_payment_return_sepa"
-            self._check_import_module(import_module)
             values = {"data_file": self.data, "filename": self.name}
             pr_import_obj = self.env["payment.return.import"]
             pr_wiz_imp = pr_import_obj.create(values)
@@ -66,28 +60,6 @@ class EbicsFile(models.Model):
             _logger.info("LOG import '%s'", 4)
             payment_return.action_confirm()
             _logger.info("[OK] import file '%s'", self.filename)
-        except NoTransactionsError as e:
-            _logger.info("Exception: NO TRANSACTION_______________")
-
-            if e.object[0]["payment_order_id"] and not e.object[0]["transactions"]:
-                po = self.env["account.payment.order"].browse(
-                    e.object[0]["payment_order_id"]
-                )
-                po.generated2uploaded()
-            self.write({"state": "done", "error_message": e.name})
-        except FileAlreadyImported as e:
-            _logger.info(e.name + "with file %s", self.name)
-            references = [x["reference"] for x in e.object[0]["transactions"]]
-            payment_return = self.env["payment.return"].search(
-                [("line_ids.reference", "in", references)]
-            )
-            self.write(
-                {
-                    "state": "done",
-                    "payment_return_id": payment_return.id,
-                    "error_message": e.name,
-                }
-            )
         except UserError as e:
             # wrong parser used, raise the error to the parent so it's not
             # catch by the following except Exception

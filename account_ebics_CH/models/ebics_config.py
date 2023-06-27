@@ -1,7 +1,7 @@
 # Copyright 2020 Compassion.
 # License LGPL-3 or later (http://www.gnu.org/licenses/lpgl).
 
-from odoo import models
+from odoo import models, fields
 
 
 class EbicsConfig(models.Model):
