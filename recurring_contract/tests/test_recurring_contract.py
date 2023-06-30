@@ -169,7 +169,7 @@ class TestRecurringContract(BaseContractTest):
         contract = self.contract
         # don't generate the two first s invoices
         contract.group_id.write({
-            'invoice_suspended_until': today() + relativedelta(months=1),
+            'invoice_suspended_until': (today() + relativedelta(months=1)).date(),
         })
         self.assertEqual(len(contract.contract_line_ids), 1)
         contract.contract_waiting()

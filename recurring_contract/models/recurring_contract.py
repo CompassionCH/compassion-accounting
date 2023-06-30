@@ -135,7 +135,7 @@ class RecurringContract(models.Model):
         do_gen_curr_month = bool(self.env["ir.config_parameter"].sudo().get_param(param_string_gen, False))
         if today.day > day_block_inv:
             new_date = (today + relativedelta(months=1)).replace(day=1 if do_gen_curr_month else day_block_inv)
-            self.group_id.write({"invoice_suspended_until": fields.Date.to_string(new_date)})
+            self.group_id.write({"invoice_suspended_until": new_date})
 
     @api.depends('invoice_line_ids')
     def _compute_invoices(self):

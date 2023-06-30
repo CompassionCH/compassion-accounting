@@ -154,7 +154,7 @@ class ContractGroup(models.Model):
             - Recurring value or unit changes
         """
         if vals.get("invoice_suspended_until"):
-            if vals["invoice_suspended_until"].date() < datetime.today().date():
+            if vals["invoice_suspended_until"] < datetime.today().date():
                 raise UserError("The suspension of invoices has to be in the future ! (Invoice Suspended Until field)")
         res = super().write(vals)
         self._updt_invoices_cg(vals)
