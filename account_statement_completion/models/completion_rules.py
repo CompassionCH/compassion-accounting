@@ -38,6 +38,7 @@ class StatementCompletionRule(models.Model):
                     # ref: stmt_line reference
                     # AccMove: Odoo model "account.move"
                     # AccMoveLine: Odoo model "account.move.line"
+                    # Partner: Odoo model "res.partner".
                     # Payment: Odoo model "account.payment"
                     # PaymentLine: Odoo model "account.payment.line"
 
@@ -106,6 +107,7 @@ class StatementCompletionRule(models.Model):
             "ref": stmt_line.get('ref', False),
             "AccMove": self.env["account.move"],
             "AccMoveLine": self.env["account.move.line"],
+            "Partner": self.env["res.partner"],
             "Payment": self.env["account.payment"],
             "PaymentLine": self.env["account.payment.line"]
         }
