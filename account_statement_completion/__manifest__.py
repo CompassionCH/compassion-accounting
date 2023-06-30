@@ -28,7 +28,7 @@
 # pylint: disable=C8101
 {
     "name": "Account Statement Completion Rules",
-    "version": "14.0.1.0.0",
+    "version": "14.0.1.0.1",
     "author": "Compassion CH",
     "category": "Finance",
     "website": "https://www.compassion.ch",
