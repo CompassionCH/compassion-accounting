@@ -11,6 +11,7 @@
 import logging
 
 from odoo import api, models, fields
+from odoo.tools import safe_eval
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,28 @@ class StatementCompletionRule(models.Model):
     _name = "account.statement.completion.rule"
     _description = 'Account Statement Completion Rule'
 
+    DEFAULT_VAL = """
+                    # Available variables:
+                    #-------------------------------
+                    # stmts_vals: Values of the statements as a list of dict
+                    # stmt_line: Values of the statement line as a dict
+                    # line_amount: stmt_line amount
+                    # ref: stmt_line reference
+                    # AccMove: Odoo model "account.move"
+                    # AccMoveLine: Odoo model "account.move.line"
+                    # Payment: Odoo model "account.payment"
+                    # PaymentLine: Odoo model "account.payment.line"
+
+                    # Available compute variables:
+                    #-------------------------------
+                    # result: returned value have to be set in the variable 'result'
+
+                    # Example:
+                    #-------------------------------
+                    # result = stmt_vals[0].partner_id
+
+                    """
+
     ##########################################################################
     #                                 FIELDS                                 #
     ##########################################################################
@@ -38,13 +61,12 @@ class StatementCompletionRule(models.Model):
     journal_ids = fields.Many2many(
         'account.journal',
         string='Related statement journal', readonly=False)
-    function_to_call = fields.Selection([
-        ('get_from_amount', 'Compassion: From line amount '
-         '(based on the amount of the supplier invoice)'),
-        ('get_from_move_line_ref', 'Compassion: From line reference '
-         '(based on previous move_line references)'),
-        ('get_from_payment_line', 'From payment line reference')
-        ], 'Method')
+
+    python_completion_rule = fields.Text(
+        string="Python Code",
+        default=DEFAULT_VAL,
+        help=DEFAULT_VAL
+    )
 
     ##########################################################################
     #                             PUBLIC METHODS                             #
@@ -62,71 +84,28 @@ class StatementCompletionRule(models.Model):
             ...}
         """
         for rule in self.sorted(key=lambda r: r.sequence):
-            method = getattr(self, rule.function_to_call)
-            result = method(stmts_vals, stmt_line)
+            eval_dict = rule._get_base_dict(stmts_vals, stmt_line)
+            safe_eval.safe_eval(
+                rule.python_completion_rule,
+                eval_dict,
+                mode="exec",
+                nocopy=True
+            )
+            result = eval_dict.get("result", {})
             if result:
                 return result
         return dict()
 
-    def get_from_amount(self, stmts_vals, st_line):
-        """ If line amount match an open supplier invoice,
-            update partner and account. """
-        amount = st_line['amount']
-        res = {}
-        # We check only for debit entries
-        if amount < 0:
-            invoice_obj = self.env['account.move']
-            invoices = invoice_obj.search(
-                [('move_type', '=', 'in_invoice'), ('state', '=', 'posted'),
-                 ('amount_total', '=', abs(amount))])
-            res = {}
-            if invoices:
-                if len(invoices) == 1:
-                    partner = invoices.partner_id
-                    res['partner_id'] = partner.commercial_partner_id.id
-                else:
-                    partner = invoices[0].partner_id
-                    for invoice in invoices:
-                        if invoice.partner_id.id != partner.id:
-                            logger.warning(
-                                f"Line named {st_line['name']} (Ref:{st_line['ref']})"
-                                f" was matched by "
-                                'more than one invoice while looking on open'
-                                ' supplier invoices')
-                    res['partner_id'] = partner.commercial_partner_id.id
-        return res
-
-    def get_from_move_line_ref(self, stmts_vals, st_line):
-        ''' Update partner if same reference is found '''
-        ref = st_line.get('ref')
-        res = dict()
-        if not ref:
-            return res
-        partner = None
-
-        # Search move lines
-        move_line_obj = self.env['account.move.line']
-        move_lines = move_line_obj.search(
-            [('ref', '=', ref), ('partner_id', '!=', None)])
-        if move_lines:
-            partner = move_lines[0].partner_id
-
-        if partner:
-            res['partner_id'] = partner.commercial_partner_id.id
-
-        return res
-
-    def get_from_payment_line(self, stmt_vals, st_line):
-        """ Search in account.payment.line """
-        ref = st_line.get('ref')
-        res = dict()
-        if not ref:
-            return res
-
-        payment_line = self.env['bank.payment.line'].search([
-            ('name', '=', ref)
-        ], limit=1, order='date desc')
-        if payment_line:
-            res['partner_id'] = payment_line.partner_id.\
-                commercial_partner_id.id
-        return res
+    def _get_base_dict(self, stmts_vals, stmt_line):
+        """ Return the values usable in the code template """
+        return {
+            "result": {},
+            "stmts_vals": stmts_vals,
+            "stmt_line": stmt_line,
+            "line_amount": stmt_line["amount"],
+            "ref": stmt_line.get('ref', False),
+            "AccMove": self.env["account.move"],
+            "AccMoveLine": self.env["account.move.line"],
+            "Payment": self.env["account.payment"],
+            "PaymentLine": self.env["account.payment.line"]
+        }

@@ -1,22 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo>
-
+<odoo noupdate="1">
     <record id="bank_statement_completion_rule_supplier_amount" model="account.statement.completion.rule">
         <field name="name">Match from line amount (based on supplier invoice amount)</field>
         <field name="sequence">60</field>
-        <field name="function_to_call">get_from_amount</field>
+        <field name="python_completion_rule">
+        """ If line amount match an open supplier invoice,
+        update partner and account. """
+        # We check only for debit entries
+        if amount &lt; 0:
+            invoices = AccMove.search(
+                [('move_type', '=', 'in_invoice'), ('state', '=', 'posted'),
+                 ('amount_total', '=', abs(amount))])
+            result = {}
+            if invoices:
+                if len(invoices) == 1:
+                    partner = invoices.partner_id
+                    result['partner_id'] = partner.commercial_partner_id.id
+                else:
+                    partner = invoices[0].partner_id
+                    for invoice in invoices:
+                        if invoice.partner_id.id != partner.id:
+                            logger.warning(
+                                f"Line named {st_line['name']} (Ref:{st_line['ref']})"
+                                f" was matched by "
+                                'more than one invoice while looking on open'
+                                ' supplier invoices')
+                    result['partner_id'] = partner.commercial_partner_id.id
+        </field>
     </record>
 
     <record id="bank_statement_completion_rule_move_line_ref" model="account.statement.completion.rule">
         <field name="name">From line reference (based on previous move_line references)</field>
         <field name="sequence">70</field>
-        <field name="function_to_call">get_from_move_line_ref</field>
+        <field name="python_completion_rule">
+        ''' Update partner if same reference is found '''
+        if ref:
+            partner = None
+
+            # Search move lines
+            move_lines = AccMoveLine.search(
+                [('ref', '=', ref), ('partner_id', '!=', None)])
+            if move_lines:
+                partner = move_lines[0].partner_id
+
+            if partner:
+                result['partner_id'] = partner.commercial_partner_id.id
+        </field>
     </record>
 
     <record id="bank_statement_completion_rule_payment_line" model="account.statement.completion.rule">
         <field name="name">From line reference (based on payment line reference)</field>
         <field name="sequence">10</field>
-        <field name="function_to_call">get_from_payment_line</field>
+        <field name="python_completion_rule">
+        """ Search in account.payment.line """
+        if ref:
+            payment_line = PaymentLine.search([
+                ('name', '=', ref)
+            ], limit=1, order='date desc')
+            if payment_line:
+                result['partner_id'] = payment_line.partner_id.\
+                    commercial_partner_id.id
+        </field>
     </record>
 
 </odoo>
