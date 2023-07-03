@@ -58,7 +58,7 @@
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="pricelist_id"/>
                             <field name="group_id" domain="[('partner_id', '=', partner_id), ('contract_ids.company_id', '=', company_id), ('contract_ids.pricelist_id', '=', pricelist_id)]"
-                                   context="{'default_partner_id': partner_id}"/>
+                                   context="{'default_partner_id': partner_id, 'contract_id': id}"/>
                         </group>
                         <group>
                             <field name="start_date"/>
