@@ -36,6 +36,7 @@ class StatementCompletionRule(models.Model):
                     # stmt_line: Values of the statement line as a dict
                     # line_amount: stmt_line amount
                     # ref: stmt_line reference
+                    # env: environment
                     # AccMove: Odoo model "account.move"
                     # AccMoveLine: Odoo model "account.move.line"
                     # Partner: Odoo model "res.partner".
@@ -44,12 +45,11 @@ class StatementCompletionRule(models.Model):
 
                     # Available compute variables:
                     #-------------------------------
-                    # result: returned value have to be set in the variable 'result'
+                    # result: True if the reconcilation rule found any relevant data
 
                     # Example:
                     #-------------------------------
-                    # result = stmt_vals[0].partner_id
-
+                    # result = True
                     """
 
     ##########################################################################
@@ -61,7 +61,8 @@ class StatementCompletionRule(models.Model):
     name = fields.Char('Name', size=128)
     journal_ids = fields.Many2many(
         'account.journal',
-        string='Related statement journal', readonly=False)
+        string='Related statement journal', readonly=False
+    )
 
     python_completion_rule = fields.Text(
         string="Python Code",
@@ -73,28 +74,28 @@ class StatementCompletionRule(models.Model):
     #                             PUBLIC METHODS                             #
     ##########################################################################
 
-    def auto_complete(self, stmts_vals, stmt_line):
+    def auto_complete(self, stmt_vals):
         """This method will execute all related rules, in their sequence order,
         to retrieve all the values returned by the first rules that will match.
-        :param stmts_vals: dict with bank statement values
-        :param dict stmt_line: dict with statement line values
-        :return:
+        :param stmt_vals: dict with bank statement values
+        return:
             A dict of values for the bank statement line or {}
            {'partner_id': value,
             'account_id': value,
             ...}
         """
-        for rule in self.sorted(key=lambda r: r.sequence):
-            eval_dict = rule._get_base_dict(stmts_vals, stmt_line)
-            safe_eval.safe_eval(
-                rule.python_completion_rule,
-                eval_dict,
-                mode="exec",
-                nocopy=True
-            )
-            result = eval_dict.get("result", {})
-            if result:
-                return result
+        stmt_lines_vals = stmt_vals.get("transactions", list())
+        for stmt_line_vals in stmt_lines_vals:
+            for rule in self.sorted(key=lambda r: r.sequence):
+                eval_dict = rule._get_base_dict(stmt_vals, stmt_line_vals)
+                safe_eval.safe_eval(
+                    rule.python_completion_rule,
+                    eval_dict,
+                    mode="exec",
+                    nocopy=True
+                )
+                if eval_dict.get("result"):
+                    break
         return dict()
 
     def _get_base_dict(self, stmts_vals, stmt_line):
@@ -103,8 +104,9 @@ class StatementCompletionRule(models.Model):
             "result": {},
             "stmts_vals": stmts_vals,
             "stmt_line": stmt_line,
-            "line_amount": stmt_line["amount"],
-            "ref": stmt_line.get('ref', False),
+            "line_amount": int(stmt_line["amount"]),
+            "ref": stmt_line.get('ref'),
+            "env": self.env,
             "AccMove": self.env["account.move"],
             "AccMoveLine": self.env["account.move.line"],
             "Partner": self.env["res.partner"],

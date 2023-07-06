@@ -15,7 +15,7 @@
             if invoices:
                 if len(invoices) == 1:
                     partner = invoices.partner_id
-                    result['partner_id'] = partner.commercial_partner_id.id
+                    stmt_line['partner_id'] = partner.commercial_partner_id.id
                 else:
                     partner = invoices[0].partner_id
                     for invoice in invoices:
@@ -25,7 +25,7 @@
                                 f" was matched by "
                                 'more than one invoice while looking on open'
                                 ' supplier invoices')
-                    result['partner_id'] = partner.commercial_partner_id.id
+                    stmt_line['partner_id'] = partner.commercial_partner_id.id
         </field>
     </record>
 
@@ -44,7 +44,7 @@
                 partner = move_lines[0].partner_id
 
             if partner:
-                result['partner_id'] = partner.commercial_partner_id.id
+                stmt_line['partner_id'] = partner.commercial_partner_id.id
         </field>
     </record>
 
@@ -58,7 +58,7 @@
                 ('name', '=', ref)
             ], limit=1, order='date desc')
             if payment_line:
-                result['partner_id'] = payment_line.partner_id.\
+                stmt_line['partner_id'] = payment_line.partner_id.\
                     commercial_partner_id.id
         </field>
     </record>
