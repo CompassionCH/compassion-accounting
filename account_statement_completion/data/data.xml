@@ -26,6 +26,7 @@
                                 'more than one invoice while looking on open'
                                 ' supplier invoices')
                     stmt_line['partner_id'] = partner.commercial_partner_id.id
+                    result = True
         </field>
     </record>
 
@@ -45,6 +46,7 @@
 
             if partner:
                 stmt_line['partner_id'] = partner.commercial_partner_id.id
+                result = True
         </field>
     </record>
 
@@ -58,8 +60,8 @@
                 ('name', '=', ref)
             ], limit=1, order='date desc')
             if payment_line:
-                stmt_line['partner_id'] = payment_line.partner_id.\
-                    commercial_partner_id.id
+                stmt_line['partner_id'] = partner.commercial_partner_id.id
+                result = True
         </field>
     </record>
 

@@ -45,8 +45,9 @@ class StatementCompletionRule(models.Model):
 
                     # Available compute variables:
                     #-------------------------------
-                    # result: True if the reconcilation rule found any relevant data
-
+                    # result: True if the reconcilation rule found any relevant data.
+                    #         This will prevent any subsequent rule to be executed on the same line.
+                    
                     # Example:
                     #-------------------------------
                     # result = True
@@ -101,7 +102,7 @@ class StatementCompletionRule(models.Model):
     def _get_base_dict(self, stmts_vals, stmt_line):
         """ Return the values usable in the code template """
         return {
-            "result": {},
+            "result": False,
             "stmts_vals": stmts_vals,
             "stmt_line": stmt_line,
             "line_amount": int(stmt_line["amount"]),
