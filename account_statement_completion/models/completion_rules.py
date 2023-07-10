@@ -34,14 +34,7 @@ class StatementCompletionRule(models.Model):
                     #-------------------------------
                     # stmts_vals: Values of the statements as a list of dict
                     # stmt_line: Values of the statement line as a dict
-                    # line_amount: stmt_line amount
-                    # ref: stmt_line reference
                     # env: environment
-                    # AccMove: Odoo model "account.move"
-                    # AccMoveLine: Odoo model "account.move.line"
-                    # Partner: Odoo model "res.partner".
-                    # Payment: Odoo model "account.payment"
-                    # PaymentLine: Odoo model "account.payment.line"
 
                     # Available compute variables:
                     #-------------------------------
@@ -105,12 +98,5 @@ class StatementCompletionRule(models.Model):
             "result": False,
             "stmts_vals": stmts_vals,
             "stmt_line": stmt_line,
-            "line_amount": int(stmt_line["amount"]),
-            "ref": stmt_line.get('ref'),
-            "env": self.env,
-            "AccMove": self.env["account.move"],
-            "AccMoveLine": self.env["account.move.line"],
-            "Partner": self.env["res.partner"],
-            "Payment": self.env["account.payment"],
-            "PaymentLine": self.env["account.payment.line"]
+            "env": self.env
         }

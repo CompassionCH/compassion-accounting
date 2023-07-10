@@ -7,8 +7,9 @@
         """ If line amount match an open supplier invoice,
         update partner and account. """
         # We check only for debit entries
+        amount = int(stmt_line["amount"])
         if amount &lt; 0:
-            invoices = AccMove.search(
+            invoices = self.env["account.move"].search(
                 [('move_type', '=', 'in_invoice'), ('state', '=', 'posted'),
                  ('amount_total', '=', abs(amount))])
             result = {}
@@ -35,11 +36,12 @@
         <field name="sequence">70</field>
         <field name="python_completion_rule">
         ''' Update partner if same reference is found '''
+        ref = stmt_line.get('ref')
         if ref:
             partner = None
 
             # Search move lines
-            move_lines = AccMoveLine.search(
+            move_lines = self.env["account.move.line"].search(
                 [('ref', '=', ref), ('partner_id', '!=', None)])
             if move_lines:
                 partner = move_lines[0].partner_id
@@ -55,8 +57,9 @@
         <field name="sequence">10</field>
         <field name="python_completion_rule">
         """ Search in account.payment.line """
+        ref = stmt_line.get('ref')
         if ref:
-            payment_line = PaymentLine.search([
+            payment_line = self.env["account.payment.line"].search([
                 ('name', '=', ref)
             ], limit=1, order='date desc')
             if payment_line:
