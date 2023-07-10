@@ -60,7 +60,7 @@
         """ Search in account.payment.line """
         ref = stmt_line.get('ref')
         if ref:
-            payment_line = self.env["account.payment.line"].search([
+            payment_line = env["account.payment.line"].search([
                 ('name', '=', ref)
             ], limit=1, order='date desc')
             if payment_line:
