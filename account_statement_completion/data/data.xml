@@ -17,6 +17,7 @@
                 if len(invoices) == 1:
                     partner = invoices.partner_id
                     stmt_line['partner_id'] = partner.commercial_partner_id.id
+                    result = True
                 else:
                     partner = invoices[0].partner_id
                     for invoice in invoices:
