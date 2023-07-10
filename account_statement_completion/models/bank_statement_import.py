@@ -23,10 +23,5 @@ class AccountStatementImport(models.TransientModel):
             stmts_vals, journal, account_number)
         if journal.completion_rules:
             for st_vals in stmts_vals:
-                for line_vals in st_vals.get('transactions', list()):
-                    # Try to find more data using completion rules
-                    line_vals.update(
-                        journal.completion_rules.auto_complete(
-                            st_vals, line_vals)
-                    )
+                journal.completion_rules.auto_complete(st_vals)
         return stmts_vals
