@@ -288,14 +288,16 @@ class ContractGroup(models.Model):
         return True
 
     def get_relative_invoice_date(self, date_to_compute):
-        """ Calculate the date depending on the last day of the month and the invoice_day set in the contract.
-        @param date: date to make the calcul on
-        @type: date
+        """ Calculate the date depending on the last day of the month and the
+        invoice_day set in the contract.
+        @param date_to_compute: date to make the calcul on
         @return: date with the day edited
         @rtype: date
         """
-        last_day_of_month = calendar.monthrange(date_to_compute.year, date_to_compute.month)[1]
-        inv_day = int(self.invoice_day) if int(self.invoice_day) <= last_day_of_month else last_day_of_month
+        last_day_of_month = calendar.monthrange(
+            date_to_compute.year, date_to_compute.month)[1]
+        inv_day = int(self.invoice_day) if int(self.invoice_day) \
+            <= last_day_of_month else last_day_of_month
         return date_to_compute.replace(day=inv_day)
 
     def _build_invoice_gen_data(self, invoicing_date, invoicer, gift_wizard=False):

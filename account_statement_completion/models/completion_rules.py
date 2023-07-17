@@ -30,20 +30,20 @@ class StatementCompletionRule(models.Model):
     _description = 'Account Statement Completion Rule'
 
     DEFAULT_VAL = """
-                    # Available variables:
-                    #-------------------------------
-                    # stmts_vals: Values of the statements as a list of dict
-                    # stmt_line: Values of the statement line as a dict
-                    # env: environment
+# Available variables:
+#-------------------------------
+# stmts_vals: Values of the statements as a list of dict
+# stmt_line: Values of the statement line as a dict
+# env: environment
 
-                    # Available compute variables:
-                    #-------------------------------
-                    # result: True if the reconcilation rule found any relevant data.
-                    #         This will prevent any subsequent rule to be executed on the same line.
-                    
-                    # Example:
-                    #-------------------------------
-                    # result = True
+# Available compute variables:
+#-------------------------------
+# result: True if the reconcilation rule found any relevant data.
+#         This will prevent any subsequent rule to be executed on the same line.
+
+# Example:
+#-------------------------------
+# result = True
                     """
 
     ##########################################################################
