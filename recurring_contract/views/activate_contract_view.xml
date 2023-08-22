@@ -18,7 +18,7 @@
     <record id="action_activate_contract" model="ir.actions.act_window">
         <field name="name">Force activation</field>
         <field name="res_model">recurring.contract.activate.wizard</field>
-<!--        <field name="binding_model">recurring.contract</field>-->
+        <field name="binding_model_id" ref="model_recurring_contract"/>
         <field name="view_mode">form</field>
         <field name="target">new</field>
     </record>
