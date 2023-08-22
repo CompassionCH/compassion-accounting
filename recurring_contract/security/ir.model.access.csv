@@ -8,5 +8,5 @@ access_recurring_contract_group,Full access on recurring.contract.group,model_re
 read_access_end_reason,Read access on recurring.contract.end.reason,model_recurring_contract_end_reason,account.group_account_invoice,1,0,0,0
 full_access_end_reason,Full access on recurring.contract.end.reason,model_recurring_contract_end_reason,account.group_account_manager,1,1,1,1
 access_recurring_invoicer_wizard,access_recurring_invoicer_wizard,model_recurring_invoicer_wizard,base.group_user,1,0,0,0
-access_recurring_contract_activate_wizard,access_recurring_contract_activate_wizard,model_recurring_contract_activate_wizard,base.group_user,1,0,0,0
+access_recurring_contract_activate_wizard,access_recurring_contract_activate_wizard,model_recurring_contract_activate_wizard,base.group_user,1,1,1,1
 access_end_contract_wizard,access_end_contract_wizard,model_end_contract_wizard,base.group_user,1,0,1,0
