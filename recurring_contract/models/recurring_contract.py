@@ -136,10 +136,8 @@ class RecurringContract(models.Model):
 
     @api.model
     def create(self, vals):
-        """ Add a sequence generated ref if none is given """
-        if vals.get('reference', '/') == '/':
-            vals['reference'] = self.env['ir.sequence'].next_by_code(
-                'recurring.contract.ref')
+        """ Add a sequence generated ref """
+        vals['reference'] = self.env['ir.sequence'].next_by_code('recurring.contract.ref')
 
         return super().create(vals)
 
