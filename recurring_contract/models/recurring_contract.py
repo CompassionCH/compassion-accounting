@@ -432,7 +432,7 @@ class RecurringContract(models.Model):
     def end_date_reached(self):
         now = fields.Datetime.now()
         expired = self.search([
-            ('end_date', '>=', now),
+            ('end_date', '<', now),
             ('state', 'not in', ['cancelled', 'terminated'])
         ])
         return expired.action_contract_terminate()
