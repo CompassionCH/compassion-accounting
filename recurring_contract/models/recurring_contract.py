@@ -314,7 +314,7 @@ class RecurringContract(models.Model):
 
         # Update the company value based on the partner.country_id as there is no value for partner.company_id
         if self.partner_id.country_id:
-            company_ids = self.env['res.company'].search([("country_id", "=", self.partner_id.country_id.id)], limit=1)
+            company_ids = self.env['res.company'].search([("partner_id.country_id", "=", self.partner_id.country_id.id)], limit=1)
             self.company_id = company_ids.filtered(lambda l: l.country_id == self.partner_id.country_id)
 
     @api.onchange('company_id')
