@@ -28,9 +28,9 @@ class AccountMove(models.Model):
     @api.depends("payment_state")
     def _compute_last_payment(self):
         for invoice in self:
-            if invoice.line_ids.full_reconcile_id:
+            if invoice.line_ids.filtered("full_reconcile_id"):
                 mv_filter = "credit" if invoice.move_type == "out_invoice" else "debit"
-                payment_dates = invoice.line_ids.filtered(mv_filter).mapped(
+                payment_dates = invoice.line_ids.mapped("full_reconcile_id.reconciled_line_ids").filtered(mv_filter).mapped(
                     "date"
                 )
                 invoice.last_payment = max(payment_dates or [False])
