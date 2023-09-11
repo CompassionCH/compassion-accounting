@@ -9,9 +9,11 @@
 ##############################################################################
 
 import logging
+import re
 
-from odoo import api, models, fields
+from odoo import models, fields
 from odoo.tools import safe_eval
+from odoo.tools.safe_eval import wrap_module
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +37,7 @@ class StatementCompletionRule(models.Model):
 # stmts_vals: Values of the statements as a list of dict
 # stmt_line: Values of the statement line as a dict
 # env: environment
+# re.search, re.findall: regex functions for finding values in strings 
 
 # Available compute variables:
 #-------------------------------
@@ -98,5 +101,6 @@ class StatementCompletionRule(models.Model):
             "result": False,
             "stmts_vals": stmts_vals,
             "stmt_line": stmt_line,
-            "env": self.env
+            "env": self.env,
+            "re": wrap_module(re, ["search", "findall"]),
         }
