@@ -274,23 +274,21 @@ class ContractGroup(models.Model):
                     })
 
                 else:
-                    # Building invoices data
-                    inv_data = group._build_invoice_gen_data(invoicing_date, invoicer)
-                    # Creating the actual invoice
-                    _logger.info(f"Generating invoice : {inv_data}")
-                    invoice = inv_obj.create(inv_data)
-
-                    # check if there is already an invoice for this contract group and due date
+                    # check if there is already an invoice for this partner and due date which has been cancelled
                     all_invoices = self.env["account.move"].search([
-                        ("invoice_date_due", "=", invoice.invoice_date_due),
+                        ("invoice_date_due", "=", invoicing_date),
                         ("partner_id", "=", group.partner_id.id),
                         ("state", "=", "cancel"),
                         ("move_type", "=", "out_invoice")
                     ])
                     if all_invoices:
-                        _logger.info(f"Deleting invoice {invoice.id} because there is already one for this date")
-                        invoice.unlink()
+                        continue
 
+                    # Building invoices data
+                    inv_data = group._build_invoice_gen_data(invoicing_date, invoicer)
+                    # Creating the actual invoice
+                    _logger.info(f"Generating invoice : {inv_data}")
+                    invoice = inv_obj.create(inv_data)
                     # If the invoice has something to be paid we post it to activate it
                     if invoice.invoice_line_ids:
                         invoice.action_post()
