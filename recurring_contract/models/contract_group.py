@@ -225,7 +225,7 @@ class ContractGroup(models.Model):
             # retrieve the open invoices in the future and adapt them if needed, instead of generating a new one.
             active_contracts = group.active_contract_ids
             param_string = f"recurring_contract.do_generate_curr_month_{active_contracts[0].company_id.id}"
-            curr_month = bool(self.env["ir.config_parameter"].sudo().get_param(param_string))
+            curr_month = self.env["ir.config_parameter"].sudo().get_param(param_string) == "True"
             today = datetime.today().date()
             today = today.replace(day=1) if curr_month else today
             open_invoices = active_contracts.mapped("open_invoice_ids").filtered(
