@@ -12,8 +12,7 @@ import logging
 import os
 
 from dateutil.relativedelta import relativedelta
-from datetime import datetime
-from dateutil import parser
+from datetime import datetime, date
 
 from odoo import fields, models, _, api
 from odoo.exceptions import UserError
@@ -88,6 +87,7 @@ class ContractGroup(models.Model):
         required=True,
     )
     recurring_value = fields.Integer("Generate every", default=1, required=True)
+    month_interval = fields.Integer(compute="_compute_month_interval")
     contract_ids = fields.One2many(
         "recurring.contract", "group_id", "Contracts", readonly=True
     )
@@ -149,6 +149,12 @@ class ContractGroup(models.Model):
     def day_selection():
         return [(str(day), str(day)) for day in range(1, 32)]
 
+    def _compute_month_interval(self):
+        for group in self:
+            group.month_interval = group.recurring_value * (
+                1 if group.recurring_unit == "month" else 12
+            )
+
     ##########################################################################
     #                              ORM METHODS                               #
     ##########################################################################
@@ -189,7 +195,7 @@ class ContractGroup(models.Model):
         }
 
     def button_generate_invoices(self):
-        """Immediately generate invoices of the contract group."""
+        """Immediately generate invoices for the contract group."""
         invoicer = (
             self.with_context({"async_mode": False})
             .with_company(self.active_contract_ids[0].company_id)
@@ -236,140 +242,130 @@ class ContractGroup(models.Model):
         Create an invoice per contract group per date.
         """
         _logger.info(
-            f"Starting generation of invoices for contracts : {self.active_contract_ids.ids} "
-            f"with payment option {self.ids}"
+            f"Starting generation of invoices for contract groups : {self.ids}"
         )
-        inv_obj = self.env["account.move"]
         for group in self:
-            # retrieve the open invoices in the future and adapt them if needed,
-            # instead of generating a new one.
-            active_contracts = group.active_contract_ids
-            param_string = f"recurring_contract.do_generate_curr_month_{active_contracts[0].company_id.id}"
-            curr_month = self.env["ir.config_parameter"].sudo().get_param(param_string)
-            today = datetime.today().date()
-            today = today.replace(day=1) if curr_month == "True" else today
-            open_invoices = active_contracts.mapped("open_invoice_ids").filtered(
-                lambda i: i.invoice_date_due >= today
-            )
-            # Compute the interval of months there should be between each invoice
-            # (set in the contract group)
-            recurring_unit = group.recurring_unit
-            month_interval = group.recurring_value * (
-                1 if recurring_unit == "month" else 12
-            )
-            for inv_no in range(
-                0 if curr_month else 1, group.advance_billing_months + 1, month_interval
+            invoicing_date, starting_offset = group._calculate_start_date_and_offset()
+            for invoice_offset in range(
+                starting_offset, group.advance_billing_months + 1, group.month_interval
             ):
-                # Date must be incremented by the number of months the invoices
-                # are generated in advance
-                invoicing_date = datetime.now() + relativedelta(months=inv_no)
-                invoicing_date = group.get_relative_invoice_date(invoicing_date.date())
-
-                # Check if there is already an invoice for this partner
-                # and due date which has been cancelled or edited.
-                # Check also for contract group suspension.
-                # Prevent any change in such cases.
-                dangling_invoices = self.env["account.move"].search(
-                    [
-                        ("invoice_date_due", "=", invoicing_date),
-                        ("partner_id", "=", group.partner_id.id),
-                        "|",
-                        ("state", "=", "cancel"),
-                        ("payment_state", "not in", ["paid", "not_paid"]),
-                        ("move_type", "=", "out_invoice"),
-                        ("line_ids.contract_id", "in", group.active_contract_ids.ids),
-                    ]
-                )
-                if (
-                    dangling_invoices or
-                    group.invoice_suspended_until
-                    and group.invoice_suspended_until > invoicing_date
-                ):
+                invoicing_date += relativedelta(months=invoice_offset)
+                if group._should_skip_invoice_generation(invoicing_date):
                     continue
-
-                # invoice already open we complete the move lines
-                current_rec_unit_date = eval(f"invoicing_date.{recurring_unit}")
-                # Keep invoice from the same month or year
-                # (depending on the recurring unit)
-                open_invoice = open_invoices.filtered(
-                    lambda m: eval(f"m.invoice_date_due.{recurring_unit}")
-                    == current_rec_unit_date
-                )
-                if open_invoice:
-                    # Retrieve account_move_line already existing for this contract
-                    acc_move_line_curr_contr = open_invoice.mapped(
-                        "invoice_line_ids"
-                    ).filtered(
-                        lambda line: line.contract_id in active_contracts
-                        and line.product_id
-                        in active_contracts.mapped("contract_line_ids.product_id")
-                    )
-                    move_line_contract_ids = acc_move_line_curr_contr.mapped(
-                        "contract_id"
-                    )
-                    move_line_product_ids = acc_move_line_curr_contr.mapped(
-                        "product_id"
-                    )
-
-                    already_paid_cl = (
-                        self.env["account.move.line"]
-                        .search(
-                            [
-                                ("date", "=", invoicing_date),
-                                ("contract_id", "in", self.active_contract_ids.ids),
-                                (
-                                    "product_id",
-                                    "in",
-                                    self.active_contract_ids.mapped("product_ids").ids,
-                                ),
-                                ("payment_state", "=", "paid"),
-                            ]
-                        )
-                        .mapped("contract_id.contract_line_ids")
-                    )
-                    contract_lines_to_inv = active_contracts.mapped(
-                        "contract_line_ids"
-                    ).filtered(
-                        lambda l: (
-                            l.contract_id not in move_line_contract_ids
-                            or l.product_id not in move_line_product_ids
-                        )
-                        and l not in already_paid_cl
-                    )
-                    open_invoice.write(
-                        {
-                            "invoice_line_ids": [
-                                (
-                                    0,
-                                    0,
-                                    group.build_inv_line_data(
-                                        invoicing_date=invoicing_date, contract_line=cl
-                                    ),
-                                )
-                                for cl in contract_lines_to_inv
-                            ],
-                            "payment_mode_id": group.payment_mode_id.id,
-                        }
-                    )
-
-                else:
-                    # Building invoices data
-                    inv_data = group._build_invoice_gen_data(invoicing_date, invoicer)
-                    # Creating the actual invoice
-                    _logger.info(f"Generating invoice : {inv_data}")
-                    invoice = inv_obj.create(inv_data)
-                    # If the invoice has something to be paid we post it to activate it
-                    if invoice.invoice_line_ids:
-                        invoice.action_post()
-                    else:
-                        _logger.warning(
-                            f"Invoice tried to generate a 0 amount invoice for payment option {group.id}"
-                        )
-                        invoice.unlink()
+                group._process_invoice_generation(invoicer, invoicing_date)
         # Refresh state to check whether invoices are missing in some contracts
         self.mapped("active_contract_ids")._compute_missing_invoices()
-        _logger.info("Proccess successfully generated invoices")
+        _logger.info("Process successfully generated invoices")
         return True
+
+    def _calculate_start_date_and_offset(self):
+        self.ensure_one()
+        company = self.mapped("active_contract_ids.company_id")
+        param_string = f"recurring_contract.do_generate_curr_month_{company.id}"
+        curr_month = self.env["ir.config_parameter"].sudo().get_param(param_string)
+        start_date = self.get_relative_invoice_date(date.today())
+        return start_date, 0 if curr_month == "True" else 1
+
+    def _should_skip_invoice_generation(self, invoicing_date):
+        """In such cases, we should skip the invoice generation:
+        - There is already an invoice for this due date which has been cancelled or
+          edited.
+        - Contract group suspension.
+        """
+        self.ensure_one()
+        dangling_invoices = self.env["account.move"].search(
+            [
+                ("invoice_date_due", "=", invoicing_date),
+                ("partner_id", "=", self.partner_id.id),
+                "|",
+                ("state", "=", "cancel"),
+                ("payment_state", "not in", ["paid", "not_paid"]),
+                ("move_type", "=", "out_invoice"),
+                ("line_ids.contract_id", "in", self.active_contract_ids.ids),
+            ]
+        )
+        return (
+            dangling_invoices
+            or self.invoice_suspended_until
+            and self.invoice_suspended_until > invoicing_date
+        )
+
+    def _process_invoice_generation(self, invoicer, invoicing_date):
+        self.ensure_one()
+        active_contracts = self.active_contract_ids
+        open_invoices = active_contracts.mapped("open_invoice_ids").filtered(
+            lambda i: i.invoice_date_due >= invoicing_date
+        )
+
+        # invoice already open we complete the move lines
+        current_rec_unit_date = eval(f"invoicing_date.{self.recurring_unit}")
+        # Keep invoice from the same month or year
+        # (depending on the recurring unit)
+        open_invoice = open_invoices.filtered(
+            lambda m: eval(f"m.invoice_date_due.{self.recurring_unit}") ==
+                      current_rec_unit_date
+        )
+        if open_invoice:
+            # Retrieve account_move_line already existing for this contract
+            acc_move_line_curr_contr = open_invoice.mapped("invoice_line_ids").filtered(
+                lambda line: line.contract_id in active_contracts and line.product_id
+                in active_contracts.mapped("contract_line_ids.product_id")
+            )
+            move_line_contract_ids = acc_move_line_curr_contr.mapped("contract_id")
+            move_line_product_ids = acc_move_line_curr_contr.mapped("product_id")
+            already_paid_cl = (
+                self.env["account.move.line"]
+                .search(
+                    [
+                        ("date", "=", invoicing_date),
+                        ("contract_id", "in", self.active_contract_ids.ids),
+                        (
+                            "product_id",
+                            "in",
+                            self.active_contract_ids.mapped("product_ids").ids,
+                        ),
+                        ("payment_state", "=", "paid"),
+                    ]
+                )
+                .mapped("contract_id.contract_line_ids")
+            )
+            contract_lines_to_inv = active_contracts.mapped("contract_line_ids").filtered(
+                lambda l: (
+                    l.contract_id not in move_line_contract_ids
+                    or l.product_id not in move_line_product_ids
+                )
+                and l not in already_paid_cl
+            )
+            open_invoice.write(
+                {
+                    "invoice_line_ids": [
+                        (
+                            0,
+                            0,
+                            self.build_inv_line_data(
+                                invoicing_date=invoicing_date, contract_line=cl
+                            ),
+                        )
+                        for cl in contract_lines_to_inv
+                    ],
+                    "payment_mode_id": self.payment_mode_id.id,
+                }
+            )
+        else:
+            # Building invoices data
+            inv_data = self._build_invoice_gen_data(invoicing_date, invoicer)
+            # Creating the actual invoice
+            _logger.info(f"Generating invoice : {inv_data}")
+            invoice = self.env["account.move"].create(inv_data)
+            # If the invoice has something to be paid we post it to activate it
+            if invoice.invoice_line_ids:
+                invoice.action_post()
+            else:
+                _logger.warning(
+                    f"Invoice tried to generate a 0 amount invoice for"
+                    f"payment option {self.id}"
+                )
+                invoice.unlink()
 
     def get_relative_invoice_date(self, date_to_compute):
         """Calculate the date depending on the last day of the month and the
