@@ -5,16 +5,23 @@
     The licence is in the file __manifest__.py
 -->
 <odoo>
-    <data noupdate="1">
-        <record id="recurring_contract_expire_cron" model="ir.cron">
-            <field name="name">Check end of contract</field>
-            <field name="active" eval="True"/>
-            <field name="user_id" ref="base.user_root"/>
-            <field name="interval_number">1</field>
-            <field name="interval_type">days</field>
-            <field name="numbercall">-1</field>
-            <field name="model_id" ref="model_recurring_contract"/>
-            <field name="code">model.end_date_reached()</field>
-        </record>
-    </data>
+    <record id="recurring_contract_expire_cron" model="ir.cron">
+        <field name="name">Check end of contract</field>
+        <field name="active" eval="True"/>
+        <field name="user_id" ref="base.user_root"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="model_id" ref="model_recurring_contract"/>
+        <field name="code">
+now = datetime.datetime.now()
+expired = self.search([
+    ('end_date', '&lt;=', now),
+    ('state', 'not in', ['cancelled', 'terminated'])
+    ])
+if expired:
+    expired.action_contract_terminate()
+log("Number of contracts terminated: %s" % len(expired))
+        </field>
+    </record>
 </odoo>
