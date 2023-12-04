@@ -282,6 +282,8 @@ class ContractGroup(models.Model):
                 ("payment_state", "not in", ["paid", "not_paid"]),
                 ("move_type", "=", "out_invoice"),
                 ("line_ids.contract_id", "in", self.active_contract_ids.ids),
+                ("line_ids.product_id", "in", self.active_contract_ids.mapped(
+                    "product_ids").ids),
             ]
         )
         return (
