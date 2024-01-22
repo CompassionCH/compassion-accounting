@@ -22,7 +22,7 @@ class SplitInvoiceWizard(models.TransientModel):
 
     invoice_line_ids = fields.Many2many(
         'account.move.line', 'account_invoice_line_2_splitwizard',
-        "wizard_id", "account_invoice_line_id",
+        "account_invoice_split_wizard_id", "account_invoice_line_id",
         string='Invoice lines', readonly=False)
 
     @api.model
