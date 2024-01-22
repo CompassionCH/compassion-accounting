@@ -1,4 +1,3 @@
-
 def migrate(cr, version):
     if version:
         cr.execute(
@@ -7,7 +6,8 @@ def migrate(cr, version):
             "from recurring_contract_group c "
             "inner join recurring_contract on group_id = c.id"
         )
-        cr.execute("""
+        cr.execute(
+            """
         update recurring_contract_group
         set invoice_suspended_until = (
             select date_trunc('month', min(next_invoice_date)) from recurring_contract
@@ -19,4 +19,13 @@ def migrate(cr, version):
             )
             group by group_id
             having count(*) = 1)
-        """)
+        """
+        )
+        cr.execute(
+            """INSERT INTO account_move_recurring_contract_rel (recurring_contract_id, account_move_id)
+                 SELECT DISTINCT aml.contract_id, aml.move_id
+                 FROM account_move_line aml
+                 JOIN account_move m ON m.id = aml.move_id
+                 WHERE aml.contract_id IS NOT NULL
+                 AND m.payment_state != 'paid' AND m.state = 'posted' AND aml.due_date < NOW()""",
+        )
