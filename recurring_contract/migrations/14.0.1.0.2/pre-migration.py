@@ -1,16 +1,14 @@
 from openupgradelib import openupgrade
 
 
-def migrate(cr, version):
-    # Precompute last_payment to speed up the migration
-    if not openupgrade.column_exists(cr, "account_move", "last_payment"):
-        cr.execute(
-            """
-            ALTER TABLE account_move
-            ADD COLUMN last_payment date
-            """
-        )
-    cr.execute(
+@openupgrade.migrate()
+def migrate(env, version):
+    # Precompute fields to speed up the migration
+    openupgrade.add_fields(env, [
+        ('last_payment', 'account.move', 'account_move', 'date', False, 'recurring_contract', False),
+        ('missing_invoices', 'recurring.contract', 'recurring_contract', 'boolean', False, 'recurring_contract', False),
+    ])
+    openupgrade.logged_query(env.cr,
         """
         UPDATE account_move m
         SET last_payment = (
