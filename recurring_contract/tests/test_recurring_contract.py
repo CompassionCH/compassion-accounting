@@ -60,7 +60,6 @@ class BaseContractTest(TransactionCase):
             'payment_mode_id': self.payment_mode.id,
             'recurring_value': 1,
             'recurring_unit': 'month',
-            'invoice_day': '1'
         }
         base_vals.update(vals)
         return self.RecurringContractGroup.create(base_vals)

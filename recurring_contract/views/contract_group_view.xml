@@ -30,7 +30,6 @@
                                 <field name="recurring_unit" class="oe_inline"/>
                             </div>
                             <field name="advance_billing_months"/>
-                            <field name="invoice_day"/>
                         </group>
                         <group name="partner_info">
                             <field name="partner_id" domain="[('customer_rank', '>', 0)]" readonly="1"/>

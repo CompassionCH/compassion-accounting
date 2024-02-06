@@ -55,15 +55,6 @@ class ContractGroup(models.Model):
         compute="_compute_last_paid_invoice", string="Last paid invoice date"
     )
     nb_invoices = fields.Integer(compute="_compute_invoices")
-    invoice_day = fields.Selection(
-        selection="day_selection",
-        string="Invoicing Day",
-        help="Day for which the invoices of a contract are due. "
-        "If you choose 31, it will adapt for 30 days months and February.",
-        default="1",
-        required=True,
-        states={"draft": [("readonly", False)]},
-    )
     # Define the next time a partner should rereceive an invoice
     invoice_suspended_until = fields.Date(
         string="Invoice Suspended Until",
@@ -96,6 +87,11 @@ class ContractGroup(models.Model):
         "group_id",
         "Active contracts",
         compute="_compute_active_contracts",
+    )
+    current_invoice_date = fields.Date(
+        compute="_compute_current_invoice_date",
+        help="Gives the current invoice date for the contract group, "
+             "either the current month or the next one depending the settings.",
     )
 
     ##########################################################################
@@ -154,6 +150,11 @@ class ContractGroup(models.Model):
             group.month_interval = group.recurring_value * (
                 1 if group.recurring_unit == "month" else 12
             )
+
+    def _compute_current_invoice_date(self):
+        for group in self:
+            start_date, offset = group._calculate_start_date_and_offset()
+            group.current_invoice_date = start_date + relativedelta(months=offset)
 
     ##########################################################################
     #                              ORM METHODS                               #
@@ -259,12 +260,26 @@ class ContractGroup(models.Model):
         return True
 
     def _calculate_start_date_and_offset(self):
+        """
+        Calculate the start date and the offset
+        to know if we should generate the current month or not.
+        Start date will be the first of the current month and the offset will be 1
+        if the next invoice should be for the next month.
+        @return: date, int
+        """
         self.ensure_one()
         company = self.mapped("active_contract_ids.company_id")
-        param_string = f"recurring_contract.do_generate_curr_month_{company.id}"
-        curr_month = self.env["ir.config_parameter"].sudo().get_param(param_string)
-        start_date = self.get_relative_invoice_date(date.today())
-        return start_date, 0 if curr_month == "True" else 1
+        settings_obj = self.env["res.config.settings"].sudo().with_company(company.id)
+        curr_month = settings_obj.get_param_multi_company(
+            "recurring_contract.do_generate_curr_month")
+        block_day = settings_obj.get_param_multi_company(
+            "recurring_contract.invoice_block_day")
+        today = date.today()
+        start_date = today.replace(day=1)
+        offset = 0
+        if curr_month != "True" or today.day > int(block_day):
+            offset = 1
+        return start_date, offset
 
     def _should_skip_invoice_generation(self, invoicing_date):
         """In such cases, we should skip the invoice generation:
@@ -369,23 +384,6 @@ class ContractGroup(models.Model):
                 )
                 invoice.unlink()
 
-    def get_relative_invoice_date(self, date_to_compute):
-        """Calculate the date depending on the last day of the month and the
-        invoice_day set in the contract.
-        @param date_to_compute: date to make the calcul on
-        @return: date with the day edited
-        @rtype: date
-        """
-        last_day_of_month = calendar.monthrange(
-            date_to_compute.year, date_to_compute.month
-        )[1]
-        inv_day = (
-            int(self.invoice_day)
-            if int(self.invoice_day) <= last_day_of_month
-            else last_day_of_month
-        )
-        return date_to_compute.replace(day=inv_day)
-
     def _build_invoice_gen_data(self, invoicing_date, invoicer, gift_wizard=False):
         """Setup a dict with data passed to invoice.create.
         If any custom data is wanted in invoice from contract group, just
@@ -482,6 +480,7 @@ class ContractGroup(models.Model):
             product = contract_line.product_id
             qty = contract_line.quantity
             contract = contract_line.contract_id
+            line_name = product.name
             if contract_line.pricelist_item_count:
                 price = contract.pricelist_id.get_product_price(
                     product, qty, contract.partner_id, invoicing_date
@@ -497,13 +496,14 @@ class ContractGroup(models.Model):
             qty = gift_wizard.quantity
             contract = gift_wizard.contract_id
             price = gift_wizard.amount
+            line_name = gift_wizard.description or product.name
         else:
             raise Exception(
                 f"This method should get a contract_line or a product and quantity \n{os.path.basename(__file__)}"
             )
 
         return {
-            "name": product.name,
+            "name": line_name,
             "price_unit": price,
             "quantity": qty,
             "product_id": product.id,
