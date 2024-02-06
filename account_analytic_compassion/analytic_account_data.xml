@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!--
+            Resource: account.analytic.tag
+        -->
+        <record id="tag_income" model="account.analytic.tag">
+            <field name="name">Income</field>
+        </record>
+        <record id="tag_ps" model="account.analytic.tag">
+            <field name="name">PS</field>
+        </record>
+        <record id="tag_ss" model="account.analytic.tag">
+            <field name="name">SS</field>
+        </record>
+        <!--
+            Resource: account.analytic.account
+        -->
+        <record id="account_analytic_account_des" model="account.analytic.account">
+            <field name="name">DES</field>
+            <field name="type">normal</field>
+            <field name="code">AA102</field>
+            <field name="tag_ids" eval="[(4, ref('account_analytic_compassion.tag_income'))]"/>
+        </record>
+        <record id="account_analytic_account_undes" model="account.analytic.account">
+            <field name="name">UNDES</field>
+            <field name="type">normal</field>
+            <field name="code">AA110</field>
+            <field name="tag_ids" eval="[(4, ref('account_analytic_compassion.tag_income'))]"/>
+        </record>
+        <record id="account_analytic_account_adv" model="account.analytic.account">
+            <field name="name">ADV</field>
+            <field name="type">normal</field>
+            <field name="code">AA091</field>
+            <field name="tag_ids" eval="[(4, ref('account_analytic_compassion.tag_ps'))]"/>
+        </record>
+        <record id="account_analytic_account_cd" model="account.analytic.account">
+            <field name="name">CD</field>
+            <field name="type">normal</field>
+            <field name="code">AA092</field>
+            <field name="tag_ids" eval="[(4, ref('account_analytic_compassion.tag_ps'))]"/>
+        </record>
+        <record id="account_analytic_account_sdm" model="account.analytic.account">
+            <field name="name">SDM</field>
+            <field name="type">normal</field>
+            <field name="code">AA108</field>
+            <field name="tag_ids" eval="[(4, ref('account_analytic_compassion.tag_ps'))]"/>
+        </record>
+        <record id="account_analytic_account_adm" model="account.analytic.account">
+            <field name="name">ADM</field>
+            <field name="type">normal</field>
+            <field name="code">AA090</field>
+            <field name="tag_ids" eval="[(4, ref('account_analytic_compassion.tag_ss'))]"/>
+        </record>
+    </data>
+</odoo>
