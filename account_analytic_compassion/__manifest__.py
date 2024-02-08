@@ -27,25 +27,25 @@
 ##############################################################################
 # pylint: disable=C8101
 {
-    'name': 'Compassion Analytic Accounts',
-    'version': "14.0.1.0.0",
-    'category': 'Other',
-    'author': 'Compassion CH',
-    'license': 'AGPL-3',
-    'website': 'http://www.compassion.ch',
-    'depends': [
-        'account_analytic_distribution_required',
-        'account_asset_management',
-        'analytic',
-        'account',
-        'product',
+    "name": "Compassion Analytic Accounts",
+    "version": "14.0.1.0.0",
+    "category": "Other",
+    "author": "Compassion CH",
+    "license": "AGPL-3",
+    "website": "https://github.com/CompassionCH/test-repo",
+    "depends": [
+        "account_analytic_distribution_required",
+        "account_asset_management",
+        "analytic",
+        "account",
+        "product",
     ],
-    'data': [
-        'views/product_view.xml',
-        'views/res_config_setting_view.xml',
-        'views/account_asset_view.xml',
+    "data": [
+        "views/product_view.xml",
+        "views/res_config_setting_view.xml",
+        "views/account_asset_view.xml",
     ],
-    'demo': ['analytic_account_data.xml'],
-    'installable': True,
-    'auto_install': False,
+    "demo": ["analytic_account_data.xml"],
+    "installable": True,
+    "auto_install": False,
 }

@@ -8,29 +8,33 @@
 #
 ##############################################################################
 
-from odoo import api, models, fields, _
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 
 class MoveLine(models.Model):
-    """ Adds a method to split a payment into several move_lines
+    """Adds a method to split a payment into several move_lines
     in order to reconcile only a partial amount, avoiding doing
-    partial reconciliation. """
+    partial reconciliation."""
 
     _inherit = "account.move.line"
 
     contract_id = fields.Many2one(
-        'recurring.contract',
-        'Source contract',
+        "recurring.contract",
+        "Source contract",
         index=True,
         domain="[('partner_id', '=', parent.partner_id), "
-               "('state', 'in', ['draft', 'active'])]"
+        "('state', 'in', ['draft', 'active'])]",
     )
-    due_date = fields.Date(related='move_id.invoice_date_due', store=True, readonly=True, index=True)
+    due_date = fields.Date(
+        related="move_id.invoice_date_due", store=True, readonly=True, index=True
+    )
     last_payment = fields.Date(related="move_id.last_payment", store=True)
-    payment_state = fields.Selection(related="move_id.payment_state", store=True, readonly=True, index=True)
+    payment_state = fields.Selection(
+        related="move_id.payment_state", store=True, readonly=True, index=True
+    )
 
-    @api.onchange('product_id')
+    @api.onchange("product_id")
     def _onchange_product_id(self):
         # workaround an odoo bug :
         # could be fixed by applying this change here
@@ -44,7 +48,8 @@ class MoveLine(models.Model):
     def group_reconcile(self, matched_lines, credit_or_debit="debit"):
         """
         Will reconcile the current recordset with any required lines taken from the
-        matched_lines recordset. If the sum is not enough, the operation will be aborted.
+        matched_lines recordset.
+        If the sum is not enough, the operation will be aborted.
         :param credit_or_debit: string indicating which amount will be reconciled
         :param matched_lines: <account.move.line> recordset
         :return: True
@@ -64,7 +69,8 @@ class MoveLine(models.Model):
 
     def _update_invoice_lines_from_contract(self, modified_contract):
         """
-        Takes the contract as the source to generate a write command for updating the invoice line
+        Takes the contract as the source to generate a write command for updating
+        the invoice lines
         :param modified_contract: <recurring.contract> record
         :return: list of tuples for ORM write
         """
@@ -72,18 +78,24 @@ class MoveLine(models.Model):
         res = []
         for invoice_line in self:
             invoice = self.move_id
-            cl = modified_contract.contract_line_ids.filtered(lambda l: l.product_id == invoice_line.product_id)
+            contract_line = modified_contract.contract_line_ids.filtered(
+                lambda cl, invl=invoice_line: cl.product_id == invl.product_id
+            )
             data_dict = {}
-            if cl.product_id.pricelist_item_count > 0:
+            if contract_line.product_id.pricelist_item_count > 0:
                 price = modified_contract.pricelist_id.get_product_price(
-                    cl.product_id, cl.quantity, invoice.partner_id, invoice.invoice_date_due)
+                    contract_line.product_id,
+                    contract_line.quantity,
+                    invoice.partner_id,
+                    invoice.invoice_date_due,
+                )
                 data_dict["price_unit"] = price
-                data_dict["quantity"] = cl.quantity
-            elif cl:
-                data_dict["price_unit"] = cl.amount
-                data_dict["quantity"] = cl.quantity
+                data_dict["quantity"] = contract_line.quantity
+            elif contract_line:
+                data_dict["price_unit"] = contract_line.amount
+                data_dict["quantity"] = contract_line.quantity
             else:
-                raise UserError(_("Unexpected error while updating contract invoices. Please contact admin."))
+                raise UserError(_("Unexpected error while updating contract invoices."))
             # Add the modification on the line
             res.append((1, invoice_line.id, data_dict))
         return res

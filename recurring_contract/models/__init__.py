@@ -9,4 +9,3 @@ from . import product_product
 from . import res_config_settings
 from . import utm
 from . import end_reason
-from . import move_line

@@ -1,49 +1,50 @@
-[![Build Status](https://travis-ci.org/CompassionCH/compassion-accounting.svg)](https://travis-ci.org/CompassionCH/compassion-accounting.svg)
-[![Coverage Status](https://coveralls.io/repos/CompassionCH/compassion-accounting/badge.svg?branch=8.0&service=github)](https://coveralls.io/github/CompassionCH/compassion-accounting?branch=8.0)
 
-Compassion Accounting Modules 
-=============================
+<!-- /!\ Non OCA Context : Set here the badge of your runbot / runboat instance. -->
+[![Pre-commit Status](https://github.com/CompassionCH/test-repo/actions/workflows/pre-commit.yml/badge.svg?branch=14.0)](https://github.com/CompassionCH/test-repo/actions/workflows/pre-commit.yml?query=branch%3A14.0)
+[![Build Status](https://github.com/CompassionCH/test-repo/actions/workflows/test.yml/badge.svg?branch=14.0)](https://github.com/CompassionCH/test-repo/actions/workflows/test.yml?query=branch%3A14.0)
+[![codecov](https://codecov.io/gh/CompassionCH/test-repo/branch/14.0/graph/badge.svg)](https://codecov.io/gh/CompassionCH/test-repo)
+<!-- /!\ Non OCA Context : Set here the badge of your translation instance. -->
 
-It extends Odoo/OpenERP to add needed functionnalites to use Odoo/OpenERP in Switzerland.
+<!-- /!\ do not modify above this line -->
 
-account_analytic_attribution
-----------------------------
+# Compassion Accounting
 
-Set rules to dispatch analytic lines into analytic accounts.
+All accounting extensions needed for supporting Compassion's mission, in particular with the child sponsosrhip program.
 
-account_analytic_compassion
----------------------------
+<!-- /!\ do not modify below this line -->
 
-This module installs the needed analytic accounts for Compassion CH.
+<!-- prettier-ignore-start -->
 
-account_asset_compassion
-------------------------
+[//]: # (addons)
 
-Modifications to fit Compassion needs.
+Available addons
+----------------
+addon | version | maintainers | summary
+--- | --- | --- | ---
+[account_analytic_attribution](account_analytic_attribution/) | 14.0.1.0.0 |  | Set rules to dispatch analytic lines into analytic accounts
+[account_analytic_compassion](account_analytic_compassion/) | 14.0.1.0.0 |  | Compassion Analytic Accounts
+[account_ebics_CH](account_ebics_CH/) | 14.0.1.0.0 |  | add specific EBICS order type and file format for Switzerland
+[account_ebics_payment_return](account_ebics_payment_return/) | 14.0.1.0.0 |  | Download Payment Order return via EBICS
+[account_invoice_split_invoice](account_invoice_split_invoice/) | 14.0.1.0.1 |  | Split invoices into two separate invoices
+[account_move_periodic_accounting_transfer](account_move_periodic_accounting_transfer/) | 14.0.1.0.0 |  | Move from an ending accounting period to an open one
+[account_payment_line_free](account_payment_line_free/) | 14.0.1.0.1 |  | Account payment line free
+[account_statement_completion](account_statement_completion/) | 14.0.1.0.1 |  | Account Statement Completion Rules
+[compassion_sub_chart_account](compassion_sub_chart_account/) | 14.0.1.0.0 |  | Comapssion subsidiary- Accounting
+[donation_report_compassion](donation_report_compassion/) | 14.0.1.0.0 |  | Compassion Donation Report
+[invoice_restrictions](invoice_restrictions/) | 14.0.1.0.5 |  | Contract for recurring invoicing
+[recurring_contract](recurring_contract/) | 14.0.1.0.5 |  | Contract for recurring invoicing
 
-account_invoice_split_invoice
------------------------------
+[//]: # (end addons)
 
-Split invoices into two separate invoices
+<!-- prettier-ignore-end -->
 
-account_reconcile_compassion
-----------------------------
+## Licenses
 
-Reconcile rules with bvr_ref of invoice for Compassion CH.
+This repository is licensed under [AGPL-3.0](LICENSE).
 
-account_statment_completion_compassion
---------------------------------------
+However, each module can have a totally different license, as long as they adhere to Compassion Switzerland
+policy. Consult each module's `__manifest__.py` file, which contains a `license` key
+that explains its license.
 
-Account Statement Additions for Compassion CH.
-
-chart_account_compassion
-------------------------
-
-Chart account Compassion
-
-recurring_contract
-------------------
-
-Contract for recurring invoicing
-
-
+----
+<!-- /!\ Non OCA Context : Set here the full description of your organization. -->

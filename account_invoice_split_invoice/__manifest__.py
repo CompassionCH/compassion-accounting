@@ -27,18 +27,18 @@
 ##############################################################################
 # pylint: disable=C8101
 {
-    'name': 'Split invoices',
-    'summary': 'Split invoices into two separate invoices',
-    'version': "14.0.1.0.1",
-    'license': 'AGPL-3',
-    'author': 'Compassion CH',
-    'website': 'https://www.compassion.ch',
-    'category': 'Accounting',
-    'depends': ['account'],
-    'external_dependencies': {},
-    'data': [
-        'views/account_invoice_split_wizard_view.xml',
+    "name": "Split invoices",
+    "summary": "Split invoices into two separate invoices",
+    "version": "14.0.1.0.1",
+    "license": "AGPL-3",
+    "author": "Compassion CH",
+    "website": "https://github.com/CompassionCH/test-repo",
+    "category": "Accounting",
+    "depends": ["account"],
+    "external_dependencies": {},
+    "data": [
+        "views/account_invoice_split_wizard_view.xml",
     ],
-    'demo': [],
-    'installable': True,
+    "demo": [],
+    "installable": True,
 }

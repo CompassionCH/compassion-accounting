@@ -1,11 +1,12 @@
 # Copyright 2009-2019 Noviat.
 # License LGPL-3 or later (http://www.gnu.org/licenses/lpgl).
 
+import base64
+import logging
+import xml.etree.ElementTree as ET
+
 from odoo import models
 from odoo.exceptions import UserError
-import xml.etree.cElementTree as ET
-import logging
-import base64
 
 _logger = logging.getLogger(__name__)
 
@@ -121,8 +122,8 @@ class EbicsFile(models.Model):
                     if t.find("./ns:TxSts", namespaces={"ns": ns}).text == "RJCT":
                         # search for payment line
                         payment_line_ids = payment_order.bank_line_ids.filtered(
-                            lambda r: r.name
-                            == t.find(
+                            lambda r, transaction=t: r.name
+                            == transaction.find(
                                 "./ns:OrgnlEndToEndId", namespaces={"ns": ns}
                             ).text
                         )[0].payment_line_ids

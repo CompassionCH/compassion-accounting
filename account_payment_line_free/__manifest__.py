@@ -27,19 +27,17 @@
 ##############################################################################
 # pylint: disable=C8101
 {
-    'name': 'Account payment line free',
-    'version': '14.0.1.0.1',
-    'license': 'AGPL-3',
-    'author': 'Compassion Suisse',
-    'website': 'https://github.com/compassionCH/compassion-accounting',
-    'category': 'Banking addons',
-    'depends': [
-        'account_payment_order'
+    "name": "Account payment line free",
+    "version": "14.0.1.0.1",
+    "license": "AGPL-3",
+    "author": "Compassion Suisse",
+    "website": "https://github.com/CompassionCH/test-repo",
+    "category": "Banking addons",
+    "depends": ["account_payment_order"],
+    "data": [
+        "views/invoice_view.xml",
+        "views/account_payment_order_view.xml",
+        "views/account_payment_line_view.xml",
     ],
-    'data': [
-        'views/invoice_view.xml',
-        'views/account_payment_order_view.xml',
-        'views/account_payment_line_view.xml'
-    ],
-    'installable': True,
+    "installable": True,
 }

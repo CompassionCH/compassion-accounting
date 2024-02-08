@@ -5,7 +5,8 @@
     "name": "add specific EBICS order type and file format for Switzerland",
     "version": "14.0.1.0.0",
     "license": "LGPL-3",
-    "author": "Compassion",
+    "author": "Compassion Switzerland",
+    "website": "https://github.com/CompassionCH/test-repo",
     "category": "Accounting & Finance",
     "depends": [
         "account_ebics",

@@ -768,12 +768,6 @@ msgid "Can be Sold"
 msgstr "Can be Sold"
 
 #. module: recurring_contract
-#: view:end.contract.wizard:recurring_contract.end_contract_view
-#: view:recurring.contract.activate.wizard:recurring_contract.view_activate_sponsorship
-msgid "Cancel"
-msgstr "Annuler"
-
-#. module: recurring_contract
 #: field:product.product,loc_case:0
 msgid "Case"
 msgstr "Case"
@@ -851,11 +845,6 @@ msgid ""
 msgstr ""
 "Consumable: Will not imply stock management for this product. \n"
 "Stockable product: Will imply stock management for this product."
-
-#. module: recurring_contract
-#: field:end.contract.wizard,contract_id:0
-msgid "Contract"
-msgstr "Engagement"
 
 #. module: recurring_contract
 #: view:recurring.contract.activate.wizard:recurring_contract.view_activate_sponsorship
@@ -1058,11 +1047,6 @@ msgid "Inventory Location"
 msgstr "Inventory Location"
 
 #. module: recurring_contract
-#: model:ir.model,name:recurring_contract.model_account_invoice
-msgid "Invoice"
-msgstr "Facture"
-
-#. module: recurring_contract
 #: model:product.template,name:recurring_contract.product_template_fund_kgs
 msgid "Kids Games Burkina Faso"
 msgstr "Kids Games Burkina Faso"
@@ -1238,11 +1222,6 @@ msgid "Procurement Location"
 msgstr "Procurement Location"
 
 #. module: recurring_contract
-#: model:ir.model,name:recurring_contract.model_product_product
-msgid "Product"
-msgstr "Produit"
-
-#. module: recurring_contract
 #: field:product.product,attribute_line_ids:0
 msgid "Product Attributes"
 msgstr "Product Attributes"
@@ -1374,11 +1353,6 @@ msgstr ""
 "                    Real Price: The cost price displayed is the price of the last outgoing product (will be use in case of inventory loss for example)."
 
 #. module: recurring_contract
-#: field:product.product,state:0
-msgid "Status"
-msgstr "Status"
-
-#. module: recurring_contract
 #: field:product.product,property_stock_account_input:0
 msgid "Stock Input Account"
 msgstr "Stock Input Account"
@@ -1397,11 +1371,6 @@ msgstr "Supplier"
 #: field:product.product,supplier_taxes_id:0
 msgid "Supplier Taxes"
 msgstr "Supplier Taxes"
-
-#. module: recurring_contract
-#: view:recurring.contract:recurring_contract.view_recurring_contract_form_compassion
-msgid "Terminate"
-msgstr "Terminer"
 
 #. module: recurring_contract
 #: model:product.template,description:recurring_contract.product_template_fund_aid
@@ -1959,11 +1928,6 @@ msgstr "blue:state == 'draft';red:state == 'mandate';green:state == 'waiting';bl
 #: view:recurring.contract:recurring_contract.view_recurring_contract_form_compassion
 msgid "draft,active,waiting,terminated"
 msgstr "draft,active,waiting,terminated"
-
-#. module: recurring_contract
-#: view:recurring.contract.activate.wizard:recurring_contract.view_activate_sponsorship
-msgid "or"
-msgstr "ou"
 
 #. module: recurring_contract
 #: view:recurring.contract:recurring_contract.view_recurring_contract_form_compassion

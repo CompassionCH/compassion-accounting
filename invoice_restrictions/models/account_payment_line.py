@@ -7,7 +7,7 @@
 #    The licence is in the file __manifest__.py
 #
 ##############################################################################
-from odoo import _, api, fields, models
+from odoo import models
 from odoo.exceptions import UserError
 
 
@@ -17,7 +17,13 @@ class AccountPaymentLine(models.Model):
 
     def unlink(self):
         for line in self:
-            if line.order_id.state not in ['draft', 'open'] and not self.env.context.get("force_pay_line_del", False):
-                raise UserError(f"You can't delete the line payment line related to the move line {line.move_line_id} "
-                                f"on the payment order {line.order_id.name}")
+            if line.order_id.state not in [
+                "draft",
+                "open",
+            ] and not self.env.context.get("force_pay_line_del", False):
+                raise UserError(
+                    f"You can't delete the line payment line related to the "
+                    f"move line {line.move_line_id} "
+                    f"on the payment order {line.order_id.name}"
+                )
         super().unlink()

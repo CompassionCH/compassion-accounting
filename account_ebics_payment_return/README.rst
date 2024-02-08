@@ -24,4 +24,3 @@ if the file tells it's accepted, the payment order will be set as successully up
 
 Known issues / Roadmap
 ======================
-

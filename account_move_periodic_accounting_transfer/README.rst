@@ -16,13 +16,14 @@ Periodic Accounting Transfer
 .. |badge2| image:: https://img.shields.io/badge/licence-AGPL--3-blue.png
     :target: http://www.gnu.org/licenses/agpl-3.0-standalone.html
     :alt: License: AGPL-3
-.. |badge3| image:: https://img.shields.io/badge/github-CompassionCH%2Fcompassion--accounting-lightgray.png?logo=github
-    :target: https://github.com/CompassionCH/compassion-accounting/tree/14.0/account_move_periodic_accounting_transfer
-    :alt: CompassionCH/compassion-accounting
+.. |badge3| image:: https://img.shields.io/badge/github-CompassionCH%2Ftest--repo-lightgray.png?logo=github
+    :target: https://github.com/CompassionCH/test-repo/tree/14.0/account_move_periodic_accounting_transfer
+    :alt: CompassionCH/test-repo
 
 |badge1| |badge2| |badge3|
 
-This module adds an option to automatically move open customer invoice moves to the next fiscal year during the fiscal year closing.
+This module adds an option to automatically move open customer invoice
+moves to the next fiscal year during the fiscal year closing.
 
 **Table of contents**
 
@@ -32,15 +33,16 @@ This module adds an option to automatically move open customer invoice moves to 
 Configuration
 =============
 
-In the Accounting Settings menu, in the Fiscal Year section, enable the option "Move unclosed bills to next fiscal year" to enable the feature.
+In the Accounting Settings menu, in the Fiscal Year section, enable the
+option "Move unclosed bills to next fiscal year" to enable the feature.
 
 Bug Tracker
 ===========
 
-Bugs are tracked on `GitHub Issues <https://github.com/CompassionCH/compassion-accounting/issues>`_.
+Bugs are tracked on `GitHub Issues <https://github.com/CompassionCH/test-repo/issues>`_.
 In case of trouble, please check there if your issue has already been reported.
 If you spotted it first, help us to smash it by providing a detailed and welcomed
-`feedback <https://github.com/CompassionCH/compassion-accounting/issues/new?body=module:%20account_move_periodic_accounting_transfer%0Aversion:%2014.0%0A%0A**Steps%20to%20reproduce**%0A-%20...%0A%0A**Current%20behavior**%0A%0A**Expected%20behavior**>`_.
+`feedback <https://github.com/CompassionCH/test-repo/issues/new?body=module:%20account_move_periodic_accounting_transfer%0Aversion:%2014.0%0A%0A**Steps%20to%20reproduce**%0A-%20...%0A%0A**Current%20behavior**%0A%0A**Expected%20behavior**>`_.
 
 Do not contact contributors directly about support or help with technical issues.
 
@@ -48,19 +50,19 @@ Credits
 =======
 
 Authors
-~~~~~~~
+-------
 
 * Compassion CH
 
 Contributors
-~~~~~~~~~~~~
+------------
 
-* Emanuel Cino <ecino@compassion.ch>
-* Simon Gonzalez <sgonzalez@ikmail.com>
+-  Emanuel Cino <ecino@compassion.ch>
+-  Simon Gonzalez <sgonzalez@ikmail.com>
 
 Maintainers
-~~~~~~~~~~~
+-----------
 
-This module is part of the `CompassionCH/compassion-accounting <https://github.com/CompassionCH/compassion-accounting/tree/14.0/account_move_periodic_accounting_transfer>`_ project on GitHub.
+This module is part of the `CompassionCH/test-repo <https://github.com/CompassionCH/test-repo/tree/14.0/account_move_periodic_accounting_transfer>`_ project on GitHub.
 
 You are welcome to contribute.

@@ -26,20 +26,19 @@
 #
 ##############################################################################
 {
-    'name': 'Restrictions on invoices',
-    'summary': 'Contract for recurring invoicing',
-    'version': "14.0.1.0.5",
-    'license': 'AGPL-3',
-    'author': 'Compassion CH',
-    'development_status': 'Production/Stable',
-    'website': 'https://www.compassion.ch',
-    'category': 'Accounting',
-    'depends': [
-        'account_payment_order', #OCA/bank-payment
-        'account_payment_line_free'
+    "name": "Restrictions on invoices",
+    "summary": "Contract for recurring invoicing",
+    "version": "14.0.1.0.5",
+    "license": "AGPL-3",
+    "author": "Compassion Switzerland",
+    "development_status": "Production/Stable",
+    "website": "https://github.com/CompassionCH/test-repo",
+    "category": "Accounting",
+    "depends": [
+        "account_payment_order",  # OCA/bank-payment
+        "account_payment_line_free",
     ],
-    'external_dependencies': {},
-    'data': [],
-    'installable': True,
+    "external_dependencies": {},
+    "data": [],
+    "installable": True,
 }
-
