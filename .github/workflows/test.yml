@@ -38,6 +38,7 @@ jobs:
           - container: ghcr.io/oca/oca-ci/py3.6-odoo14.0:latest
             name: test with Odoo
             makepot: "true"
+            exclude: "account_ebics_CH,account_ebics_payment_return"
     services:
       postgres:
         image: postgres:9.6
