@@ -98,10 +98,11 @@ class AccountInvoiceTestCase(AccountTestInvoicingCommon):
         )
         self.assertEqual(result.get(self.invoice_name).get("date"), invoice_date)
         self.assertEqual(result.get(self.invoice_name).get("payment_reference"), ref)
-        self.assertEqual(result.get(self.invoice_name).get("payment_mode_id"),
-                         pay_mode_id)
+        self.assertEqual(
+            result.get(self.invoice_name).get("payment_mode_id"), pay_mode_id
+        )
         self.assertEqual(
             result.get(self.invoice_name).get("invoice_payment_term_id"),
-            payment_term_id
+            payment_term_id,
         )
         self.assertEqual(result.get(self.invoice_name).get("partner_id"), partner_id)

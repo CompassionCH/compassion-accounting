@@ -1,8 +1,7 @@
 
 <!-- /!\ Non OCA Context : Set here the badge of your runbot / runboat instance. -->
-[![Pre-commit Status](https://github.com/CompassionCH/test-repo/actions/workflows/pre-commit.yml/badge.svg?branch=14.0)](https://github.com/CompassionCH/test-repo/actions/workflows/pre-commit.yml?query=branch%3A14.0)
-[![Build Status](https://github.com/CompassionCH/test-repo/actions/workflows/test.yml/badge.svg?branch=14.0)](https://github.com/CompassionCH/test-repo/actions/workflows/test.yml?query=branch%3A14.0)
-[![codecov](https://codecov.io/gh/CompassionCH/test-repo/branch/14.0/graph/badge.svg)](https://codecov.io/gh/CompassionCH/test-repo)
+[![Pre-commit Status](https://github.com/CompassionCH/compassion-accounting/actions/workflows/pre-commit.yml/badge.svg?branch=14.0)](https://github.com/CompassionCH/compassion-accounting/actions/workflows/pre-commit.yml?query=branch%3A14.0)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=CompassionCH_compassion-accounting&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=CompassionCH_compassion-accounting)
 <!-- /!\ Non OCA Context : Set here the badge of your translation instance. -->
 
 <!-- /!\ do not modify above this line -->

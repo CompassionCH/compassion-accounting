@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='utf-8' ?>
 <!-- oca-hooks:disable=xml-duplicate-record-id -->
+<!-- pylint:disable=duplicate-xml-record-id -->
 <odoo>
   <data>
     <record id="compassion_se_chart_template" model="account.chart.template">
