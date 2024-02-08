@@ -1,20 +1,22 @@
-from odoo import models, fields
+from odoo import fields, models
 
 
 class AccountInvoiceReport(models.AbstractModel):
     """
     Abstract class used in reports to add fiscal year analysis on a date field
     """
+
     _name = "fiscal.year.report"
     _description = "Fiscal Year Report"
 
     fiscal_month_number = fields.Integer(readonly=True)
     valid_month = fields.Boolean(
-        help='Is the fiscal month already passed in current fiscal year?',
-        readonly=True
+        help="Is the fiscal month already passed in current fiscal year?", readonly=True
     )
     fiscal_year = fields.Char(readonly=True)
-    contract_id = fields.Many2one('recurring.contract', string='contract', readonly=True)
+    contract_id = fields.Many2one(
+        "recurring.contract", string="contract", readonly=True
+    )
 
     def _select_fiscal_year(self, date_field):
         """
@@ -56,5 +58,5 @@ class AccountInvoiceReport(models.AbstractModel):
                  EXTRACT(year FROM {date_field})::varchar
             END
             AS fiscal_year,
-            line.contract_id 
+            line.contract_id
         """

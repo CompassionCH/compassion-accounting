@@ -1,14 +1,17 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <odoo>
     <record id="statement_st_completion_rule_view_tree" model="ir.ui.view">
         <field name="name">account.statement.completion.rule.view</field>
         <field name="model">account.statement.completion.rule</field>
         <field name="arch" type="xml">
-            <tree default_order="sequence,name desc" string="Statement Completion Rule">
-                <field name="sequence"/>
-                <field name="name" select="1"/>
-                <field name="journal_ids"/>
-                <field name="python_completion_rule" optional="1"/>
+            <tree
+                default_order="sequence,name desc"
+                string="Statement Completion Rule"
+            >
+                <field name="sequence" />
+                <field name="name" select="1" />
+                <field name="journal_ids" />
+                <field name="python_completion_rule" optional="1" />
             </tree>
         </field>
     </record>
@@ -19,12 +22,14 @@
         <field name="arch" type="xml">
             <form string="Completion rule">
                 <group>
-                    <field name="sequence"/>
-                    <field name="name" select="1"/>
-                    <field name="journal_ids"/>
-                    <field name="python_completion_rule"
-                           widget="ace"
-                           options="{'mode': 'python'}"/>
+                    <field name="sequence" />
+                    <field name="name" select="1" />
+                    <field name="journal_ids" />
+                    <field
+                        name="python_completion_rule"
+                        widget="ace"
+                        options="{'mode': 'python'}"
+                    />
                 </group>
             </form>
         </field>
@@ -36,20 +41,24 @@
         <field name="view_mode">tree,form</field>
     </record>
 
-    <menuitem name="Completion Rules" action="action_st_completion_rule"
-              id="menu_action_st_completion_rule_tree_menu" parent="account.account_account_menu"
-              sequence="30"/>
+    <menuitem
+        name="Completion Rules"
+        action="action_st_completion_rule"
+        id="menu_action_st_completion_rule_tree_menu"
+        parent="account.account_account_menu"
+        sequence="30"
+    />
 
     <record id="view_account_journal_completion_rule_form" model="ir.ui.view">
         <field name="name">completion_rule_form.view_form</field>
         <field name="model">account.journal</field>
-        <field name="inherit_id" ref="account.view_account_journal_form"/>
-        <field eval="20" name="priority"/>
+        <field name="inherit_id" ref="account.view_account_journal_form" />
+        <field eval="20" name="priority" />
         <field name="type">form</field>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet/notebook">
                 <page string="Completion Rules">
-                    <field name="completion_rules" colspan="4" nolabel="1"/>
+                    <field name="completion_rules" colspan="4" nolabel="1" />
                 </page>
             </xpath>
         </field>

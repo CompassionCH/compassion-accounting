@@ -1,13 +1,13 @@
 # Copyright 2020 Compassion.
 # License LGPL-3 or later (http://www.gnu.org/licenses/lpgl).
 
-from odoo import models, fields, api
+from odoo import fields, models
 
 
 class EbicsFileFormat(models.Model):
     _inherit = "ebics.file.format"
 
-    display_name = fields.Char(compute="_display_name")
+    display_name = fields.Char(compute="_compute_display_name")
 
     def _supported_download_order_types(self):
         res = super()._supported_download_order_types()
@@ -15,7 +15,7 @@ class EbicsFileFormat(models.Model):
         res.append("ZZQ")
         return res
 
-    def _display_name(self):
+    def _compute_display_name(self):
         for record in self:
             record.display_name = record.name + " (" + record.order_type + ")"
 

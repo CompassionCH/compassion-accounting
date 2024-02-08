@@ -11,7 +11,7 @@
 import logging
 import re
 
-from odoo import models, fields
+from odoo import fields, models
 from odoo.tools import safe_eval
 from odoo.tools.safe_eval import wrap_module
 
@@ -19,17 +19,20 @@ logger = logging.getLogger(__name__)
 
 
 class Journal(models.Model):
-    """ Add completion rules to journals """
-    _inherit = 'account.journal'
+    """Add completion rules to journals"""
 
-    completion_rules = fields.Many2many('account.statement.completion.rule',
-                                        readonly=False)
+    _inherit = "account.journal"
+
+    completion_rules = fields.Many2many(
+        "account.statement.completion.rule", readonly=False
+    )
 
 
 class StatementCompletionRule(models.Model):
-    """ Rules to complete account bank statements."""
+    """Rules to complete account bank statements."""
+
     _name = "account.statement.completion.rule"
-    _description = 'Account Statement Completion Rule'
+    _description = "Account Statement Completion Rule"
 
     DEFAULT_VAL = """
 # Available variables:
@@ -37,7 +40,7 @@ class StatementCompletionRule(models.Model):
 # stmts_vals: Values of the statements as a list of dict
 # stmt_line: Values of the statement line as a dict
 # env: environment
-# re.search, re.findall: regex functions for finding values in strings 
+# re.search, re.findall: regex functions for finding values in strings
 
 # Available compute variables:
 #-------------------------------
@@ -53,18 +56,14 @@ class StatementCompletionRule(models.Model):
     #                                 FIELDS                                 #
     ##########################################################################
 
-    sequence = fields.Integer('Sequence',
-                              help="Lower means parsed first.")
-    name = fields.Char('Name', size=128)
+    sequence = fields.Integer("Sequence", help="Lower means parsed first.")
+    name = fields.Char("Name", size=128)
     journal_ids = fields.Many2many(
-        'account.journal',
-        string='Related statement journal', readonly=False
+        "account.journal", string="Related statement journal", readonly=False
     )
 
     python_completion_rule = fields.Text(
-        string="Python Code",
-        default=DEFAULT_VAL,
-        help=DEFAULT_VAL
+        string="Python Code", default=DEFAULT_VAL, help=DEFAULT_VAL
     )
 
     ##########################################################################
@@ -86,17 +85,14 @@ class StatementCompletionRule(models.Model):
             for rule in self.sorted(key=lambda r: r.sequence):
                 eval_dict = rule._get_base_dict(stmt_vals, stmt_line_vals)
                 safe_eval.safe_eval(
-                    rule.python_completion_rule,
-                    eval_dict,
-                    mode="exec",
-                    nocopy=True
+                    rule.python_completion_rule, eval_dict, mode="exec", nocopy=True
                 )
                 if eval_dict.get("result"):
                     break
         return dict()
 
     def _get_base_dict(self, stmts_vals, stmt_line):
-        """ Return the values usable in the code template """
+        """Return the values usable in the code template"""
         return {
             "result": False,
             "stmts_vals": stmts_vals,

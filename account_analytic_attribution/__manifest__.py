@@ -27,24 +27,24 @@
 ##############################################################################
 # pylint: disable=C8101
 {
-    'name': 'Analytic attribution',
-    'summary': 'Set rules to dispatch analytic lines into analytic accounts',
-    'version': "14.0.1.0.0",
-    'license': 'AGPL-3',
-    'author': 'Compassion CH',
-    'website': 'https://www.compassion.ch',
-    'category': 'Accounting',
-    'depends': [
-        'analytic',
-        'account_fiscal_month',  # oca/account-financial-tools,oca/server-ux
+    "name": "Analytic attribution",
+    "summary": "Set rules to dispatch analytic lines into analytic accounts",
+    "version": "14.0.1.0.0",
+    "license": "AGPL-3",
+    "author": "Compassion CH",
+    "website": "https://github.com/CompassionCH/test-repo",
+    "category": "Accounting",
+    "depends": [
+        "analytic",
+        "account_fiscal_month",  # oca/account-financial-tools,oca/server-ux
     ],
-    'external_dependencies': {},
-    'data': [
-        'security/ir.model.access.csv',
-        'data/analytic_tag.xml',
-        'views/analytic_attribution_view.xml',
+    "external_dependencies": {},
+    "data": [
+        "security/ir.model.access.csv",
+        "data/analytic_tag.xml",
+        "views/analytic_attribution_view.xml",
     ],
-    'demo': [],
-    'installable': True,
-    'development_status': 'Stable'
+    "demo": [],
+    "installable": True,
+    "development_status": "Production/Stable",
 }

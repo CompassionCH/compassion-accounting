@@ -31,14 +31,16 @@
     "version": "14.0.1.0.1",
     "author": "Compassion CH",
     "category": "Finance",
-    "website": "https://www.compassion.ch",
+    "website": "https://github.com/CompassionCH/test-repo",
     "depends": [
-        'account_statement_import',
-        'account_payment_order',
+        "account_statement_import",
+        "account_payment_order",
     ],  # source/addons
-    "data": ['views/completion_rules_view.xml',
-             'data/data.xml',
-             'security/ir.model.access.csv'],
+    "data": [
+        "views/completion_rules_view.xml",
+        "data/data.xml",
+        "security/ir.model.access.csv",
+    ],
     "demo": [],
     "test": [],
     "license": "AGPL-3",

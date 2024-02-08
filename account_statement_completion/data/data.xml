@@ -1,7 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <odoo noupdate="1">
-    <record id="bank_statement_completion_rule_supplier_amount" model="account.statement.completion.rule">
-        <field name="name">Match from line amount (based on supplier invoice amount)</field>
+    <record
+        id="bank_statement_completion_rule_supplier_amount"
+        model="account.statement.completion.rule"
+    >
+        <field
+            name="name"
+        >Match from line amount (based on supplier invoice amount)</field>
         <field name="sequence">60</field>
         <field name="python_completion_rule">
         """ If line amount match an open supplier invoice,
@@ -32,8 +37,13 @@
         </field>
     </record>
 
-    <record id="bank_statement_completion_rule_move_line_ref" model="account.statement.completion.rule">
-        <field name="name">From line reference (based on previous move_line references)</field>
+    <record
+        id="bank_statement_completion_rule_move_line_ref"
+        model="account.statement.completion.rule"
+    >
+        <field
+            name="name"
+        >From line reference (based on previous move_line references)</field>
         <field name="sequence">70</field>
         <field name="python_completion_rule">
         ''' Update partner if same reference is found '''
@@ -53,8 +63,13 @@
         </field>
     </record>
 
-    <record id="bank_statement_completion_rule_payment_line" model="account.statement.completion.rule">
-        <field name="name">From line reference (based on payment line reference)</field>
+    <record
+        id="bank_statement_completion_rule_payment_line"
+        model="account.statement.completion.rule"
+    >
+        <field
+            name="name"
+        >From line reference (based on payment line reference)</field>
         <field name="sequence">10</field>
         <field name="python_completion_rule">
         """ Search in account.payment.line """

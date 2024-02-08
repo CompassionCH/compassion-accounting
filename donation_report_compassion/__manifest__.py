@@ -31,12 +31,12 @@
     "version": "14.0.1.0.0",
     "author": "Compassion CH",
     "category": "Finance",
-    "website": "http://www.compassion.ch",
+    "website": "https://github.com/CompassionCH/test-repo",
     "depends": [
-        'account_fiscal_year',  # OCA/account-financial-reporting
-        'account_fiscal_month'  # OCA/account-financial-reporting
+        "account_fiscal_year",  # OCA/account-financial-reporting
+        "account_fiscal_month",  # OCA/account-financial-reporting
     ],
-    "data": ['views/account_invoice_report_view.xml'],
+    "data": ["views/account_invoice_report_view.xml"],
     "demo": [],
     "test": [],
     "license": "AGPL-3",

@@ -7,7 +7,7 @@
 #    The licence is in the file __manifest__.py
 #
 ##############################################################################
-from odoo import models, fields
+from odoo import fields, models
 
 
 class AccountDistributionLine(models.Model):
@@ -15,10 +15,13 @@ class AccountDistributionLine(models.Model):
     _description = "Analytic Distribution Line"
 
     attribution_id = fields.Many2one(
-        'account.analytic.attribution', 'Analytic Attribution',
-        required=True, ondelete='cascade', readonly=False
+        "account.analytic.attribution",
+        "Analytic Attribution",
+        required=True,
+        ondelete="cascade",
+        readonly=False,
     )
     rate = fields.Float()
     account_analytic_id = fields.Many2one(
-        'account.analytic.account', 'Analytic Account', required=True, readonly=False
+        "account.analytic.account", "Analytic Account", required=True, readonly=False
     )

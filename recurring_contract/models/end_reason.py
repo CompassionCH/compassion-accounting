@@ -8,11 +8,11 @@
 #
 ##############################################################################
 
-from odoo import models, fields
+from odoo import fields, models
 
 
 class EndReason(models.Model):
-    _name = 'recurring.contract.end.reason'
-    _description = 'Recurring contract end reason'
+    _name = "recurring.contract.end.reason"
+    _description = "Recurring contract end reason"
 
     name = fields.Char(translate=True, required=True)

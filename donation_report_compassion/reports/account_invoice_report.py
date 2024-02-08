@@ -11,5 +11,5 @@ class AccountInvoiceReport(models.Model):
         July is the first month and June is the twelve month
         """
         select_str = super()._select()
-        select_str += ', ' + self._select_fiscal_year('move.invoice_date')
+        select_str += ", " + self._select_fiscal_year("move.invoice_date")
         return select_str

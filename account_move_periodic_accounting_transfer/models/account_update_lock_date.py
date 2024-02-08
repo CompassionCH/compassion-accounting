@@ -6,14 +6,14 @@
 #    The licence is in the file __manifest__.py
 #
 ##############################################################################
-from odoo import models, fields
+from odoo import fields, models
 
 
 class AccountUpdateLockDate(models.TransientModel):
-    _inherit = 'account.update.lock_date'
+    _inherit = "account.update.lock_date"
 
     move_bills_date = fields.Boolean(
-        related='company_id.move_bills_date',
+        related="company_id.move_bills_date",
         string="Move unclosed bills to next fiscal year",
-        readonly=False
+        readonly=False,
     )

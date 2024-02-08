@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <!--
   Copyright (C) 2014 Compassion (http://www.compassion.ch)
   @author: Simon Gonzalez <simon.gonzalez@bluewin.ch>
@@ -8,8 +8,14 @@
     <record id="action_server_payment_order_free_inv" model="ir.actions.server">
         <field name="name">Unlink unpaid invoices</field>
         <field name="type">ir.actions.server</field>
-        <field name="model_id" ref="account_payment_order.model_account_payment_order"/>
-        <field name="binding_model_id" ref="account_payment_order.model_account_payment_order"/>
+        <field
+            name="model_id"
+            ref="account_payment_order.model_account_payment_order"
+        />
+        <field
+            name="binding_model_id"
+            ref="account_payment_order.model_account_payment_order"
+        />
         <field name="state">code</field>
         <field name="code">
             action = records.mapped("payment_line_ids.move_line_id.move_id").filtered(lambda m: m.payment_state != "paid").free_payment_lines()

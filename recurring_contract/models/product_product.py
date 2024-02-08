@@ -1,12 +1,12 @@
-from odoo import models, fields
+from odoo import fields, models
 
 
 class ProductProduct(models.Model):
-    _inherit = 'product.product'
+    _inherit = "product.product"
 
     contract_line_ids = fields.One2many(
-        'recurring.contract.line',
-        inverse_name='product_id',
-        string='Contract Lines',
-        readonly=True
+        "recurring.contract.line",
+        inverse_name="product_id",
+        string="Contract Lines",
+        readonly=True,
     )

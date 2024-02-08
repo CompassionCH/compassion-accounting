@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <odoo>
     <!-- Add analytic attribution Tree views -->
     <record id="view_attribution_tree" model="ir.ui.view">
@@ -6,11 +6,11 @@
         <field name="model">account.analytic.attribution</field>
         <field name="arch" type="xml">
             <tree string="Analytic Attributions">
-                <field name="sequence"/>
-                <field name="analytic_tag_id"/>
-                <field name="account_tag_id"/>
-                <field name="date_start"/>
-                <field name="date_stop"/>
+                <field name="sequence" />
+                <field name="analytic_tag_id" />
+                <field name="account_tag_id" />
+                <field name="date_start" />
+                <field name="date_stop" />
             </tree>
         </field>
     </record>
@@ -23,21 +23,24 @@
             <form string="Analytic Attribution">
                 <sheet>
                     <group>
-                        <field name="sequence"/>
+                        <field name="sequence" />
                     </group>
                     <group colspan="2">
-                        <field name="account_distribution_line_ids" required="1">
+                        <field
+                            name="account_distribution_line_ids"
+                            required="1"
+                        >
                             <tree editable="bottom">
-                                <field name="rate"/>
-                                <field name="account_analytic_id"/>
+                                <field name="rate" />
+                                <field name="account_analytic_id" />
                             </tree>
                         </field>
                     </group>
                     <group string="Conditions">
-                        <field name="account_tag_id"/>
-                        <field name="analytic_tag_id"/>
-                        <field name="date_start"/>
-                        <field name="date_stop"/>
+                        <field name="account_tag_id" />
+                        <field name="analytic_tag_id" />
+                        <field name="date_start" />
+                        <field name="date_stop" />
                     </group>
                 </sheet>
             </form>
@@ -50,21 +53,30 @@
         <field name="model">account.analytic.attribution.wizard</field>
         <field name="arch" type="xml">
             <form string="Launch Analytic Attribution">
-                <p>This will trigger the analytic attribution for the selected fiscal months.</p>
+                <p
+                >This will trigger the analytic attribution for the selected fiscal months.</p>
                 <sheet>
                     <group>
-                       <field name="date_range_ids"/>
+                       <field name="date_range_ids" />
                     </group>
                 </sheet>
                 <footer>
-                    <button name="perform_distribution" string="Launch attribution" type="object" class="oe_highlight"/>
+                    <button
+                        name="perform_distribution"
+                        string="Launch attribution"
+                        type="object"
+                        class="oe_highlight"
+                    />
                 </footer>
             </form>
         </field>
     </record>
 
     <!-- Add new menu entry for analytic attribution wizard -->
-    <record id="action_analytic_attribution_wizard" model="ir.actions.act_window">
+    <record
+        id="action_analytic_attribution_wizard"
+        model="ir.actions.act_window"
+    >
         <field name="name">Launch Attribution</field>
         <field name="res_model">account.analytic.attribution.wizard</field>
         <field name="view_mode">form</field>
@@ -79,14 +91,16 @@
     </record>
 
     <menuitem
-            action="action_attribution_list"
-            id="menu_analytic_attribution_list"
-            parent="account.menu_analytic_accounting"/>
+        action="action_attribution_list"
+        id="menu_analytic_attribution_list"
+        parent="account.menu_analytic_accounting"
+    />
 
     <menuitem
-            action="action_analytic_attribution_wizard"
-            id="menu_analytic_attribution_wizard"
-            parent="account.menu_analytic_accounting"
-            sequence="12"/>
+        action="action_analytic_attribution_wizard"
+        id="menu_analytic_attribution_wizard"
+        parent="account.menu_analytic_accounting"
+        sequence="12"
+    />
 
 </odoo>

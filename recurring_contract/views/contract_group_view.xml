@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <!--
     Copyright (C) 2014 Compassion (http://www.compassion.ch)
     @author Cyril Sester <cyril.sester@outlook.com>
@@ -13,36 +13,60 @@
             <form>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="button_generate_invoices" type="object" class="oe_inline oe_stat_button"
-                                icon="fa-refresh" string="Generate invoices"/>
-                        <button name="open_invoices" type="object" class="oe_stat_button" icon="fa-pencil-square-o">
-                            <field name="nb_invoices" widget="statinfo" string="Invoices"/>
+                        <button
+                            name="button_generate_invoices"
+                            type="object"
+                            class="oe_inline oe_stat_button"
+                            icon="fa-refresh"
+                            string="Generate invoices"
+                        />
+                        <button
+                            name="open_invoices"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-pencil-square-o"
+                        >
+                            <field
+                                name="nb_invoices"
+                                widget="statinfo"
+                                string="Invoices"
+                            />
                         </button>
                     </div>
                     <h1>
-                        <field name="ref"/>
+                        <field name="ref" />
                     </h1>
                     <group name="info">
                         <group>
-                            <label for="recurring_value"/>
+                            <label for="recurring_value" />
                             <div>
-                                <field name="recurring_value" class="oe_inline"/>
-                                <field name="recurring_unit" class="oe_inline"/>
+                                <field
+                                    name="recurring_value"
+                                    class="oe_inline"
+                                />
+                                <field
+                                    name="recurring_unit"
+                                    class="oe_inline"
+                                />
                             </div>
-                            <field name="advance_billing_months"/>
+                            <field name="advance_billing_months" />
                         </group>
                         <group name="partner_info">
-                            <field name="partner_id" domain="[('customer_rank', '>', 0)]" readonly="1"/>
-                            <field name="payment_mode_id"/>
-                            <field name="invoice_suspended_until"/>
+                            <field
+                                name="partner_id"
+                                domain="[('customer_rank', '>', 0)]"
+                                readonly="1"
+                            />
+                            <field name="payment_mode_id" />
+                            <field name="invoice_suspended_until" />
                         </group>
                     </group>
                     <h2>Active Contracts</h2>
-                    <field name="contract_ids"/>
+                    <field name="contract_ids" />
                 </sheet>
                 <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
-                    <field name="message_ids"/>
+                    <field name="message_follower_ids" />
+                    <field name="message_ids" />
                 </div>
             </form>
         </field>

@@ -27,19 +27,19 @@
 ##############################################################################
 # pylint: disable=C8101
 {
-    'name': 'Periodic Accounting Transfer',
-    'summary': 'Move from an ending accounting period to an open one',
-    'version': "14.0.1.0.0",
-    'license': 'AGPL-3',
-    'author': 'Compassion CH',
-    'development_status': 'Production/Stable',
-    'website': 'https://www.compassion.ch',
-    'category': 'Accounting',
-    'depends': [
-        'account',  # source/addons/account
-        'account_lock_date_update'  # oca_addons/account-financial-tools
+    "name": "Periodic Accounting Transfer",
+    "summary": "Move from an ending accounting period to an open one",
+    "version": "14.0.1.0.0",
+    "license": "AGPL-3",
+    "author": "Compassion CH",
+    "development_status": "Production/Stable",
+    "website": "https://github.com/CompassionCH/test-repo",
+    "category": "Accounting",
+    "depends": [
+        "account",  # source/addons/account
+        "account_lock_date_update",  # oca_addons/account-financial-tools
     ],
-    'external_dependencies': {},
-    'data': ['views/account_update_lock_date.xml'],
-    'installable': True,
+    "external_dependencies": {},
+    "data": ["views/account_update_lock_date.xml"],
+    "installable": True,
 }

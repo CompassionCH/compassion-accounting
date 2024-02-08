@@ -7,14 +7,12 @@
 #    The licence is in the file __manifest__.py
 #
 ##############################################################################
-import calendar
 import logging
-import os
+from datetime import date, datetime
 
 from dateutil.relativedelta import relativedelta
-from datetime import datetime, date
 
-from odoo import fields, models, _, api
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools import config
 
@@ -91,7 +89,7 @@ class ContractGroup(models.Model):
     current_invoice_date = fields.Date(
         compute="_compute_current_invoice_date",
         help="Gives the current invoice date for the contract group, "
-             "either the current month or the next one depending the settings.",
+        "either the current month or the next one depending the settings.",
     )
 
     ##########################################################################
@@ -172,7 +170,8 @@ class ContractGroup(models.Model):
             ):
                 raise UserError(
                     _(
-                        "The suspension of invoices has to be in the future ! (Invoice Suspended Until field)"
+                        "The suspension of invoices has to be in the future ! "
+                        "(Invoice Suspended Until field)"
                     )
                 )
         res = super().write(vals)
@@ -203,10 +202,10 @@ class ContractGroup(models.Model):
             .generate_invoices()
         )
         if invoicer.invoice_ids:
-            type = "success"
+            notification_type = "success"
             msg = "The generation was successfully processed."
         else:
-            type = "info"
+            notification_type = "info"
             msg = (
                 "The generation didn't created any new invoices. This could "
                 "be because the sponsorship already have the correct invoices open."
@@ -217,7 +216,7 @@ class ContractGroup(models.Model):
             "params": {
                 "title": ("Generation of Invoices"),
                 "message": msg,
-                "type": f"{type}",
+                "type": f"{notification_type}",
             },
         }
         return notification
@@ -271,9 +270,11 @@ class ContractGroup(models.Model):
         company = self.mapped("active_contract_ids.company_id")
         settings_obj = self.env["res.config.settings"].sudo().with_company(company.id)
         curr_month = settings_obj.get_param_multi_company(
-            "recurring_contract.do_generate_curr_month")
+            "recurring_contract.do_generate_curr_month"
+        )
         block_day = settings_obj.get_param_multi_company(
-            "recurring_contract.invoice_block_day")
+            "recurring_contract.invoice_block_day"
+        )
         today = date.today()
         start_date = today.replace(day=1)
         offset = 0
@@ -297,8 +298,11 @@ class ContractGroup(models.Model):
                 ("payment_state", "not in", ["paid", "not_paid"]),
                 ("move_type", "=", "out_invoice"),
                 ("line_ids.contract_id", "in", self.active_contract_ids.ids),
-                ("line_ids.product_id", "in", self.active_contract_ids.mapped(
-                    "product_ids").ids),
+                (
+                    "line_ids.product_id",
+                    "in",
+                    self.active_contract_ids.mapped("product_ids").ids,
+                ),
             ]
         )
         return (
@@ -315,17 +319,18 @@ class ContractGroup(models.Model):
         )
 
         # invoice already open we complete the move lines
-        current_rec_unit_date = eval(f"invoicing_date.{self.recurring_unit}")
+        current_rec_unit_date = getattr(invoicing_date, self.recurring_unit)
         # Keep invoice from the same month or year
         # (depending on the recurring unit)
         open_invoice = open_invoices.filtered(
-            lambda m: eval(f"m.invoice_date_due.{self.recurring_unit}") ==
-                      current_rec_unit_date
+            lambda m: getattr(m.invoice_date_due, self.recurring_unit)
+            == current_rec_unit_date
         )
         if open_invoice:
             # Retrieve account_move_line already existing for this contract
             acc_move_line_curr_contr = open_invoice.mapped("invoice_line_ids").filtered(
-                lambda line: line.contract_id in active_contracts and line.product_id
+                lambda line: line.contract_id in active_contracts
+                and line.product_id
                 in active_contracts.mapped("contract_line_ids.product_id")
             )
             move_line_contract_ids = acc_move_line_curr_contr.mapped("contract_id")
@@ -346,12 +351,14 @@ class ContractGroup(models.Model):
                 )
                 .mapped("contract_id.contract_line_ids")
             )
-            contract_lines_to_inv = active_contracts.mapped("contract_line_ids").filtered(
-                lambda l: (
-                    l.contract_id not in move_line_contract_ids
-                    or l.product_id not in move_line_product_ids
+            contract_lines_to_inv = active_contracts.mapped(
+                "contract_line_ids"
+            ).filtered(
+                lambda contract_line: (
+                    contract_line.contract_id not in move_line_contract_ids
+                    or contract_line.product_id not in move_line_product_ids
                 )
-                and l not in already_paid_cl
+                and contract_line not in already_paid_cl
             )
             open_invoice.write(
                 {
@@ -469,10 +476,8 @@ class ContractGroup(models.Model):
         self, invoicing_date=False, gift_wizard=False, contract_line=False
     ):
         """
-        Set up a dictionary with data passed to `self.env['account.move.line'].create({})`.
-        If a `product` and `quantity` are not provided, `contract_line` must be provided.
-        If any custom data is wanted in the invoice line from the contract, just inherit this method.
-
+        Set up a dictionary with data passed to
+        `self.env['account.move.line'].create({})`.
         :return: a dictionary
         """
         self.ensure_one()
@@ -498,8 +503,8 @@ class ContractGroup(models.Model):
             price = gift_wizard.amount
             line_name = gift_wizard.description or product.name
         else:
-            raise Exception(
-                f"This method should get a contract_line or a product and quantity \n{os.path.basename(__file__)}"
+            raise ValueError(
+                "This method should get a contract_line or a product and quantity"
             )
 
         return {
@@ -526,5 +531,6 @@ class ContractGroup(models.Model):
             if data_invs:
                 invoices.update_open_invoices(data_invs)
         if "advance_billing_months" in vals:
-            # In case the advance_billing_months is greater than before we should generate more invoices
+            # In case the advance_billing_months is greater than before
+            # we should generate more invoices
             self.active_contract_ids.button_generate_invoices()

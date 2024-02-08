@@ -5,13 +5,14 @@
     "name": "Download Payment Order return via EBICS",
     "version": "14.0.1.0.0",
     "license": "LGPL-3",
-    "author": "Compassion",
+    "author": "Compassion Switzerland",
+    "website": "https://github.com/CompassionCH/test-repo",
     "category": "Accounting & Finance",
     "depends": [
         "account_ebics",
         "account_payment_line_free",
         "account_payment_return_import",
-        "account_payment_return_import_pain_ch"  # l10n-switzerland
+        "account_payment_return_import_pain_ch",  # l10n-switzerland
     ],
     "data": [
         #        'views/account_payment_order.xml',
