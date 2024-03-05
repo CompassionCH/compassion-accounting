@@ -27,3 +27,7 @@ def migrate(cr, version):
                  AND m.payment_state != 'paid' AND m.state = 'posted'
                  AND aml.due_date < NOW()""",
         )
+        cr.execute("""
+            ALTER TABLE account_move_recurring_contract_rel
+            DROP COLUMN account_invoice_id;
+        """)
