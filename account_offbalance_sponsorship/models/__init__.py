@@ -1,4 +1,4 @@
 # -*- coding: utf-8 -*-
 
-from . import bank_statement_line
+from . import account_move
 from . import res_config

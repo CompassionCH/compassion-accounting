@@ -55,7 +55,7 @@
     # any module necessary for this one to work correctly
     'depends': ['base',
                 'sponsorship_compassion',
-                'account_reconcile_compassion',
+                #'account_reconcile_compassion',
                 ],
 
     # always loaded
