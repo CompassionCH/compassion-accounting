@@ -10,9 +10,30 @@
 ##############################################################################
 
 from odoo import _, models
+from odoo.exceptions import  UserError
+from odoo.tools.misc import format_date
+
 
 class AccountMove(models.Model):
     _inherit = "account.move"
+
+    def _check_fiscalyear_lock_date(self):
+        try:
+            super()._check_fiscalyear_lock_date()
+        except UserError:
+            for move in self:
+                if any(not m.startswith("9") for m in move.line_ids.mapped("account_id.code")):
+                    lock_date = move.company_id._get_user_fiscal_lock_date()
+                    if self.user_has_groups('account.group_account_manager'):
+                        message = _("You cannot add/modify entries prior to and inclusive of the lock date %s.",
+                                    format_date(self.env, lock_date))
+                    else:
+                        message = _(
+                            "You cannot add/modify entries prior to and inclusive of the lock date %s. Check the company settings or ask someone with the 'Adviser' role",
+                            format_date(self.env, lock_date))
+                    raise UserError(message)
+        return True
+
     def js_remove_outstanding_partial(self, partial_id):
         ''' Called by the 'payment' widget to remove a reconciled entry to the present invoice.
 

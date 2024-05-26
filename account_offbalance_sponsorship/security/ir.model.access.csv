@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_account_offbalance_sponsorship_account_offbalance_sponsorship,account_offbalance_sponsorship.account_offbalance_sponsorship,model_account_offbalance_sponsorship_account_offbalance_sponsorship,base.group_user,1,1,1,1
