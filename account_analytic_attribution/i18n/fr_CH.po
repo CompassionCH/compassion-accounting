@@ -6,125 +6,218 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenERP Server 7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-06-09 12:47+0000\n"
-"PO-Revision-Date: 2015-06-09 15:19+0100\n"
+"POT-Creation-Date: 2024-05-09 19:14+0000\n"
+"PO-Revision-Date: 2024-05-09 21:14+0200\n"
 "Last-Translator: Emanuel Cino <ecino@compassion.ch>\n"
 "Language-Team: \n"
+"Language: fr_CH\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 1.6.4\n"
-"Language: fr_CH\n"
-
-#. module: account_analytic_attribution
-#: field:account.analytic.default,account_id:0
-#: code:addons/account_analytic_attribution/model/account_analytic_default.py:25
-#, python-format
-msgid "General Account"
-msgstr "Compte général"
-
-#. module: account_analytic_attribution
-#: selection:account.analytic.default,type:0
-#: code:addons/account_analytic_attribution/model/account_analytic_default.py:23
-#, python-format
-msgid "Attribution rule"
-msgstr "Règle d'attribution"
+"X-Generator: Poedit 3.4.2\n"
 
 #. module: account_analytic_attribution
 #: model:ir.model,name:account_analytic_attribution.model_account_analytic_attribution_wizard
-msgid "account.analytic.attribution.wizard"
-msgstr "account.analytic.attribution.wizard"
+#| msgid "account.analytic.attribution.wizard"
+msgid "Account Analytic Attribution Wizard"
+msgstr ""
 
 #. module: account_analytic_attribution
-#: model:ir.model,name:account_analytic_attribution.model_account_analytic_default
-msgid "Analytic Distribution"
-msgstr "Distribution Analytique"
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution__account_tag_id
+msgid "Account Tag"
+msgstr ""
 
 #. module: account_analytic_attribution
-#: model:ir.model,name:account_analytic_attribution.model_account_fiscalyear_close
-msgid "Fiscalyear Close"
-msgstr "Fermeture de l'Année Fiscale"
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_distribution_line__account_analytic_id
+#| msgid "General Account"
+msgid "Analytic Account"
+msgstr ""
 
 #. module: account_analytic_attribution
-#: model:account.analytic.journal,name:account_analytic_attribution.journal_attribution
-#: model:ir.actions.act_window,name:account_analytic_attribution.action_analytic_attribution_wizard
-#: model:ir.ui.menu,name:account_analytic_attribution.menu_analytic_attribution_wizard
+#: model:ir.model,name:account_analytic_attribution.model_account_analytic_attribution
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_distribution_line__attribution_id
+#: model_terms:ir.ui.view,arch_db:account_analytic_attribution.view_attribution_form
 msgid "Analytic Attribution"
 msgstr "Attribution Analytique"
 
 #. module: account_analytic_attribution
-#: model:account.analytic.account,name:account_analytic_attribution.account_analytic_root_to_attribute
-msgid "Attribution Center"
-msgstr "Attribution Center"
-
-#. module: account_analytic_attribution
-#: view:account.analytic.attribution.wizard:0
-msgid "Launch Analytic Attribution"
-msgstr "Effectuer l'Attribution"
-
-#. module: account_analytic_attribution
-#: field:account.analytic.attribution.wizard,period_id:0
-msgid "Period"
-msgstr "Période"
-
-#. module: account_analytic_attribution
-#: model:ir.model,name:account_analytic_attribution.model_account_fiscalyear_close_state
-msgid "Fiscalyear Close state"
-msgstr "Année fiscale fermeture état"
-
-#. module: account_analytic_attribution
-#: selection:account.analytic.default,type:0
-#: code:addons/account_analytic_attribution/model/account_analytic_default.py:22
-#, python-format
-msgid "Default"
-msgstr "Défaut"
-
-#. module: account_analytic_attribution
-#: field:account.analytic.attribution.wizard,fiscalyear_id:0
-msgid "Fiscal year"
-msgstr "Année fiscale"
-
-#. module: account_analytic_attribution
-#: field:account.analytic.default,type:0
-#: code:addons/account_analytic_attribution/model/account_analytic_default.py:23
-#, python-format
-msgid "Type"
-msgstr "Type"
-
-#. module: account_analytic_attribution
-#: view:account.analytic.attribution.wizard:0
-msgid "Launch attribution"
-msgstr "Effectuer l'attribution"
-
-#. module: account_analytic_attribution
-#: view:account.analytic.attribution.wizard:0
-msgid "Select either a Fiscal Year or a Period for the attribution."
-msgstr "Choisissez une Année fiscale ou une période d'attribution."
-
-#. module: account_analytic_attribution
-#: view:account.analytic.attribution.wizard:0
-msgid "Cancel"
-msgstr "Annuler"
-
-#. module: account_analytic_attribution
-#: view:account.analytic.default:0
-msgid "{'invisible':[('type', '=', 'attribution')]}"
-msgstr "{'invisible':[('type', '=', 'attribution')]}"
-
-#. module: account_analytic_attribution
-#: view:account.analytic.default:0
-#: model:ir.actions.act_window,name:account_analytic_attribution.action_analytic_attribution_list
+#: model:ir.actions.act_window,name:account_analytic_attribution.action_attribution_list
 #: model:ir.ui.menu,name:account_analytic_attribution.menu_analytic_attribution_list
+#: model_terms:ir.ui.view,arch_db:account_analytic_attribution.view_attribution_tree
 msgid "Analytic Attributions"
 msgstr "Attributions Analytiques"
 
 #. module: account_analytic_attribution
-#: view:account.analytic.attribution.wizard:0
-msgid "or"
-msgstr "ou"
+#: model:ir.model,name:account_analytic_attribution.model_account_analytic_distribution_line
+#| msgid "Analytic Distribution"
+msgid "Analytic Distribution Line"
+msgstr ""
 
 #. module: account_analytic_attribution
-#: model:ir.model,name:account_analytic_attribution.model_account_period_close
-msgid "period close"
-msgstr "Fermer la période"
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution__analytic_tag_id
+msgid "Analytic Tag"
+msgstr ""
+
+#. module: account_analytic_attribution
+#: model_terms:ir.ui.view,arch_db:account_analytic_attribution.view_attribution_form
+msgid "Conditions"
+msgstr ""
+
+#. module: account_analytic_attribution
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution__create_uid
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution_wizard__create_uid
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_distribution_line__create_uid
+msgid "Created by"
+msgstr ""
+
+#. module: account_analytic_attribution
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution__create_date
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution_wizard__create_date
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_distribution_line__create_date
+msgid "Created on"
+msgstr ""
+
+#. module: account_analytic_attribution
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution__date_start
+msgid "Date Start"
+msgstr ""
+
+#. module: account_analytic_attribution
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution__date_stop
+msgid "Date Stop"
+msgstr ""
+
+#. module: account_analytic_attribution
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution_wizard__date_range_ids
+msgid "Date range"
+msgstr ""
+
+#. module: account_analytic_attribution
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution__display_name
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution_wizard__display_name
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_distribution_line__display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: account_analytic_attribution
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution__account_distribution_line_ids
+#| msgid "Analytic Distribution"
+msgid "Distribution"
+msgstr ""
+
+#. module: account_analytic_attribution
+#: code:addons/account_analytic_attribution/wizards/account_analytic_attribution_wizard.py:0
+#, python-format
+msgid "Generated Analytic Lines"
+msgstr ""
+
+#. module: account_analytic_attribution
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution__id
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution_wizard__id
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_distribution_line__id
+msgid "ID"
+msgstr ""
+
+#. module: account_analytic_attribution
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution____last_update
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution_wizard____last_update
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_distribution_line____last_update
+msgid "Last Modified on"
+msgstr ""
+
+#. module: account_analytic_attribution
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution__write_uid
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution_wizard__write_uid
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_distribution_line__write_uid
+msgid "Last Updated by"
+msgstr ""
+
+#. module: account_analytic_attribution
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution__write_date
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution_wizard__write_date
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_distribution_line__write_date
+msgid "Last Updated on"
+msgstr ""
+
+#. module: account_analytic_attribution
+#: model_terms:ir.ui.view,arch_db:account_analytic_attribution.view_analytic_attribution_form
+msgid "Launch Analytic Attribution"
+msgstr "Effectuer l'Attribution"
+
+#. module: account_analytic_attribution
+#: model:ir.actions.act_window,name:account_analytic_attribution.action_analytic_attribution_wizard
+#: model:ir.ui.menu,name:account_analytic_attribution.menu_analytic_attribution_wizard
+#| msgid "Launch attribution"
+msgid "Launch Attribution"
+msgstr ""
+
+#. module: account_analytic_attribution
+#: model_terms:ir.ui.view,arch_db:account_analytic_attribution.view_analytic_attribution_form
+msgid "Launch attribution"
+msgstr "Effectuer l'attribution"
+
+#. module: account_analytic_attribution
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution__next_fiscal_year
+#| msgid "Fiscal year"
+msgid "Next Fiscal Year"
+msgstr ""
+
+#. module: account_analytic_attribution
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_distribution_line__rate
+msgid "Rate"
+msgstr ""
+
+#. module: account_analytic_attribution
+#: model:ir.model.fields,field_description:account_analytic_attribution.field_account_analytic_attribution__sequence
+msgid "Sequence"
+msgstr ""
+
+#. module: account_analytic_attribution
+#: model:ir.model.fields,help:account_analytic_attribution.field_account_analytic_attribution_wizard__date_range_ids
+msgid "Takes the current year if none is selected."
+msgstr ""
+
+#. module: account_analytic_attribution
+#: model_terms:ir.ui.view,arch_db:account_analytic_attribution.view_analytic_attribution_form
+msgid "This will trigger the analytic attribution for the selected fiscal months."
+msgstr ""
+
+#, python-format
+#~ msgid "Attribution rule"
+#~ msgstr "Règle d'attribution"
+
+#~ msgid "Fiscalyear Close"
+#~ msgstr "Fermeture de l'Année Fiscale"
+
+#~ msgid "Attribution Center"
+#~ msgstr "Attribution Center"
+
+#~ msgid "Period"
+#~ msgstr "Période"
+
+#~ msgid "Fiscalyear Close state"
+#~ msgstr "Année fiscale fermeture état"
+
+#, python-format
+#~ msgid "Default"
+#~ msgstr "Défaut"
+
+#, python-format
+#~ msgid "Type"
+#~ msgstr "Type"
+
+#~ msgid "Select either a Fiscal Year or a Period for the attribution."
+#~ msgstr "Choisissez une Année fiscale ou une période d'attribution."
+
+#~ msgid "Cancel"
+#~ msgstr "Annuler"
+
+#~ msgid "{'invisible':[('type', '=', 'attribution')]}"
+#~ msgstr "{'invisible':[('type', '=', 'attribution')]}"
+
+#~ msgid "or"
+#~ msgstr "ou"
+
+#~ msgid "period close"
+#~ msgstr "Fermer la période"

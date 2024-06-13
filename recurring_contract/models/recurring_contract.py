@@ -26,7 +26,7 @@ class RecurringContract(models.Model):
     _description = "Recurring contract"
     _inherit = ["mail.thread", "mail.activity.mixin", "utm.mixin"]
     _rec_name = "reference"
-    _order = "start_date desc"
+    _order = "create_date desc"
 
     ##########################################################################
     #                                 FIELDS                                 #

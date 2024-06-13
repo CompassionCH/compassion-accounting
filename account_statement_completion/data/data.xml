@@ -9,8 +9,6 @@
         >Match from line amount (based on supplier invoice amount)</field>
         <field name="sequence">60</field>
         <field name="python_completion_rule">
-        """ If line amount match an open supplier invoice,
-        update partner and account. """
         # We check only for debit entries
         amount = int(stmt_line["amount"])
         if amount &lt; 0:
@@ -46,7 +44,6 @@
         >From line reference (based on previous move_line references)</field>
         <field name="sequence">70</field>
         <field name="python_completion_rule">
-        ''' Update partner if same reference is found '''
         ref = stmt_line.get('ref')
         if ref:
             partner = None
@@ -72,7 +69,6 @@
         >From line reference (based on payment line reference)</field>
         <field name="sequence">10</field>
         <field name="python_completion_rule">
-        """ Search in account.payment.line """
         ref = stmt_line.get('ref')
         if ref:
             payment_line = env["account.payment.line"].search([

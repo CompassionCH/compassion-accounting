@@ -8,21 +8,19 @@
 #
 ##############################################################################
 
-from odoo import fields, models,api
+from odoo import api, fields, models
+
 
 class OffBalanceAccountConfigSettings(models.TransientModel):
     """
-    Add the possibility to define an off balance asset account and and off balance receivable account
+    Add the possibility to define an off balance asset account
+    and off balance receivable account
     """
 
     _inherit = "res.config.settings"
 
-    account_offbalance_receivable = fields.Many2one(
-        "account.account", readonly=False
-    )
-    account_offbalance_asset = fields.Many2one(
-        "account.account", readonly=False
-    )
+    account_offbalance_receivable = fields.Many2one("account.account", readonly=False)
+    account_offbalance_asset = fields.Many2one("account.account", readonly=False)
 
     @api.model
     def get_values(self):
@@ -41,7 +39,8 @@ class OffBalanceAccountConfigSettings(models.TransientModel):
     def set_values(self):
         company_id = self.env.company.id
         self.env["ir.config_parameter"].set_param(
-            f"account_offbalance_receivable_{company_id}", self.account_offbalance_receivable.id
+            f"account_offbalance_receivable_{company_id}",
+            self.account_offbalance_receivable.id,
         )
         self.env["ir.config_parameter"].set_param(
             f"account_offbalance_asset_{company_id}", self.account_offbalance_asset.id

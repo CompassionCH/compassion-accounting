@@ -27,44 +27,24 @@
 ##############################################################################
 
 {
-    'name': "account_offbalance_sponsorship",
-
-    'summary': """
+    "name": "account_offbalance_sponsorship",
+    "summary": """
         Off-Balance accounting for sponsorships.
 """,
-
-    'description': """
-        It's not possible to use the stock off-balance feature because
-        it's not possible to have a reconciliable off-balance account. So we use the 9xxx account and a configuration to
-        define:
-        - receivable (off-balance): A
-        - asset (off-balance): B
-        this function adds in the payment move if there is an off-balance (A) receivable account:
-        - the off-balance asset (B)
-        - add the outstanding account again.    """,
-
-    'author': "Compassion CH",
-    'website': "http://www.compassion.ch",
-
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/14.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
-    'category': 'sponsorship and donation',
-    'version': '0.1',
-
+    "author": "Compassion Switzerland, David Wulliamoz",
+    "website": "https://github.com/CompassionCH/test-repo",
+    "category": "sponsorship and donation",
+    "license": "AGPL-3",
+    "version": "14.0.1.0.0",
     # any module necessary for this one to work correctly
-    'depends': ['base',
-                'sponsorship_compassion',
-                #'account_reconcile_compassion',
-                ],
-
-    # always loaded
-    'data': [
-        # 'security/ir.model.access.csv',
-        'views/res_config_view.xml',
+    "depends": [
+        "base",
+        "sponsorship_compassion",
+        #'account_reconcile_compassion',
     ],
-    # only loaded in demonstration mode
-    'demo': [
-        'demo/demo.xml',
+    # always loaded
+    "data": [
+        # 'security/ir.model.access.csv',
+        "views/res_config_view.xml",
     ],
 }

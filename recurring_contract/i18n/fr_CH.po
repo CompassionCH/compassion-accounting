@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenERP Server 7.0-20140602-231022\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-06-08 06:09+0000\n"
-"PO-Revision-Date: 2015-06-08 11:38+0100\n"
+"POT-Creation-Date: 2024-05-09 19:14+0000\n"
+"PO-Revision-Date: 2024-05-09 21:15+0200\n"
 "Last-Translator: Emanuel Cino <ecino@compassion.ch>\n"
 "Language-Team: \n"
 "Language: fr_CH\n"
@@ -15,254 +15,98 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 1.6.4\n"
+"X-Generator: Poedit 3.4.2\n"
 
 #. module: recurring_contract
-#: code:addons/recurring_contract/model/contract_group.py:76
-#: field:recurring.contract.group,recurring_unit:0
+#: model_terms:ir.ui.view,arch_db:recurring_contract.notification_settings
+msgid ""
+"<span class=\"fa fa-lg fa-building-o\" title=\"Values set here are company-"
+"specific.\"/>"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model,name:recurring_contract.model_recurring_contract_group
+msgid "A group of contracts"
+msgstr "Groupe de contrats"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_needaction
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__message_needaction
+msgid "Action Needed"
+msgstr ""
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_activate_sponsorship
+msgid "Activate"
+msgstr "Activer"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activation_date
+#| msgid "Activate"
+msgid "Activation Date"
+msgstr ""
+
+#. module: recurring_contract
+#: code:addons/recurring_contract/models/recurring_contract.py:0
+#: model:ir.model.fields.selection,name:recurring_contract.selection__recurring_contract__state__active
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
 #, python-format
-msgid "Reccurency"
-msgstr "Fréquence"
+msgid "Active"
+msgstr "Actif"
 
 #. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:524
-#, python-format
-msgid "Invoice Cancelled"
-msgstr "Facture Annulée"
-
-#. module: recurring_contract
-#: field:account.invoice.line,contract_id:0
-#: code:addons/recurring_contract/model/invoice.py:53
-#, python-format
-msgid "Source contract"
-msgstr "Contrat d'origine"
-
-#. module: recurring_contract
-#: view:recurring.contract:0
-msgid "Group By..."
-msgstr "Grouper par..."
-
-#. module: recurring_contract
-#: field:recurring.contract,message_unread:0
-#: field:recurring.contract.group,message_unread:0
-msgid "Unread Messages"
-msgstr "Unread Messages"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:444
-#, python-format
-msgid "You cannot rewind the next invoice date."
-msgstr "Vous ne pouvez pas reculer la prochaine facture"
-
-#. module: recurring_contract
-#: view:recurring.contract:0
-msgid "Validate"
-msgstr "Valider"
-
-#. module: recurring_contract
-#: field:recurring.contract.line,subtotal:0
-msgid "Subtotal"
-msgstr "Sous-total"
-
-#. module: recurring_contract
-#: view:recurring.invoicer.wizard:0
-msgid "Generate"
-msgstr "Générer"
-
-#. module: recurring_contract
-#: view:recurring.invoicer:0
-msgid "Recurring invoicers"
-msgstr "Générateurs de facture récurrents"
-
-#. module: recurring_contract
-#: model:ir.model,name:recurring_contract.model_recurring_invoicer_wizard
-msgid "recurring.invoicer.wizard"
-msgstr "recurring.invoicer.wizard"
-
-#. module: recurring_contract
-#: view:recurring.contract:0
-msgid "Payment term"
-msgstr "Conditions de paiement"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/contract_group.py:76
-#: selection:recurring.contract.group,recurring_unit:0
-#, python-format
-msgid "Year(s)"
-msgstr "Année(s)"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:158
-#: field:recurring.contract,group_id:0
-#, python-format
-msgid "Payment Options"
-msgstr "Conditions de paiement"
-
-#. module: recurring_contract
-#: selection:account.invoice.line,state:0 selection:recurring.contract,state:0
-msgid "Cancelled"
-msgstr "Annulé"
-
-#. module: recurring_contract
-#: selection:recurring.contract,state:0
-msgid "Waiting Payment"
-msgstr "En attente de paiement"
-
-#. module: recurring_contract
-#: help:recurring.contract,message_unread:0
-#: help:recurring.contract.group,message_unread:0
-msgid "If checked new messages require your attention."
-msgstr "If checked new messages require your attention."
-
-#. module: recurring_contract
-#: view:recurring.contract.line:0
-msgid "Contract Lines"
-msgstr "Lignes de contrat"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/contract_group.py:71
-#: code:addons/recurring_contract/model/recurring_contract.py:136
-#: field:recurring.contract,reference:0 field:recurring.contract.group,ref:0
-#, python-format
-msgid "Reference"
-msgstr "Référence"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/contract_group.py:75
-#: selection:recurring.contract.group,recurring_unit:0
-#, python-format
-msgid "Month(s)"
-msgstr "Mois"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/contract_group.py:80
-#: code:addons/recurring_contract/model/recurring_contract.py:154
-#: model:ir.model,name:recurring_contract.model_res_partner
-#: view:recurring.contract:0 field:recurring.contract,partner_id:0
-#: field:recurring.contract.group,partner_id:0
-#, python-format
-msgid "Partner"
-msgstr "Partenaire"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/contract_group.py:78
-#: field:recurring.contract.group,recurring_value:0
-#, python-format
-msgid "Generate every"
-msgstr "Générer chaque"
-
-#. module: recurring_contract
-#: view:recurring.contract:0
-msgid "Draft Contracts"
-msgstr "Contrat en brouillon"
-
-#. module: recurring_contract
-#: view:recurring.contract:0
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_group_contract_form
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
 msgid "Active Contracts"
 msgstr "Contrats actifs"
 
 #. module: recurring_contract
-#: field:account.invoice.line,state:0
-#: code:addons/recurring_contract/model/invoice.py:58
+#: code:addons/recurring_contract/models/recurring_contract.py:0
 #, python-format
-msgid "State"
-msgstr "État"
-
-#. module: recurring_contract
-#: field:recurring.contract,message_follower_ids:0
-#: field:recurring.contract.group,message_follower_ids:0
-msgid "Followers"
-msgstr "Followers"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:211
-#: constraint:recurring.contract:0
-#, python-format
-msgid "Error: Reference should be unique"
-msgstr "Erreur: La référence doit être unique"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:139
-#: view:recurring.contract:0 field:recurring.contract,start_date:0
-#, python-format
-msgid "Start date"
-msgstr "Date de création"
-
-#. module: recurring_contract
-#: model:ir.ui.menu,name:recurring_contract.menu_invoice_automatic_generation
-msgid "Launch invoices generation"
-msgstr "Générer les factures"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/contract_group.py:87
-#: field:recurring.contract.group,advance_billing_months:0
-#, python-format
-msgid "Advance billing months"
-msgstr "Facturation à l'avance (mois)"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_invoicer.py:90
-#, python-format
-msgid "There is no invoice to cancel"
-msgstr "Aucune facture à annuler"
-
-#. module: recurring_contract
-#: help:recurring.contract,message_summary:0
-#: help:recurring.contract.group,message_summary:0
-msgid ""
-"Holds the Chatter summary (number of messages, ...). This summary is "
-"directly in html format in order to be inserted in kanban views."
+msgid "Active contract cannot be put to draft"
 msgstr ""
-"Holds the Chatter summary (number of messages, ...). This summary is "
-"directly in html format in order to be inserted in kanban views."
 
 #. module: recurring_contract
-#: code:addons/recurring_contract/model/contract_group.py:107
-#: code:addons/recurring_contract/model/recurring_contract.py:152
-#: field:recurring.contract,last_paid_invoice_date:0
-#: field:recurring.contract.group,last_paid_invoice_date:0
+#: code:addons/recurring_contract/models/recurring_contract.py:0
 #, python-format
-msgid "Last paid invoice date"
-msgstr "Dernière facture payée"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_invoicer.py:60
-#, python-format
-msgid "There is no invoice to validate"
-msgstr "Aucune facture à valider"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/contract_group.py:74
-#: selection:recurring.contract.group,recurring_unit:0
-#, python-format
-msgid "Week(s)"
-msgstr "Semaine(s)"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_invoicer.py:33
-#: field:recurring.invoicer,identifier:0
-#, python-format
-msgid "Identifier"
-msgstr "Identifiant"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:266
-#, python-format
-msgid "You cannot delete a contract that is still active. Terminate it first."
+msgid "Active contract cannot be put to waiting"
 msgstr ""
-"Vous ne pouvez pas supprimer un contrat actif. Commencez par le terminer."
 
 #. module: recurring_contract
-#: field:account.invoice.line,due_date:0
-#: code:addons/recurring_contract/model/invoice.py:55
-#, python-format
-msgid "Due date"
-msgstr "Date d'échéance"
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__active_contract_ids
+#| msgid "Active Contracts"
+msgid "Active contracts"
+msgstr ""
 
 #. module: recurring_contract
-#: code:addons/recurring_contract/model/contract_group.py:88
-#: help:recurring.contract.group,advance_billing_months:0
-#, python-format
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_ids
+#| msgid "Activate"
+msgid "Activities"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_state
+#| msgid "Activate"
+msgid "Activity State"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_type_icon
+msgid "Activity Type Icon"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__additional_notes
+msgid "Additional Notes"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract_group__advance_billing_months
 msgid ""
 "Advance billing allows you to generate invoices in advance. For example, you "
 "can generate the invoices for each month of the year and send them to the "
@@ -273,152 +117,25 @@ msgstr ""
 "l'année et les envoyer au client au mois de janvier."
 
 #. module: recurring_contract
-#: view:recurring.contract:0
-msgid "Terminate"
-msgstr "Terminer"
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__advance_billing_months
+msgid "Advance billing months"
+msgstr "Facturation à l'avance (mois)"
 
 #. module: recurring_contract
-#: model:ir.model,name:recurring_contract.model_account_invoice_line
-msgid "Invoice Line"
-msgstr "Ligne de facture"
-
-#. module: recurring_contract
-#: help:recurring.contract,state:0
-msgid ""
-" * The 'Draft' status is used when a user is encoding a new and unconfirmed "
-"Contract.\n"
-" * The 'Waiting' status is used when the Contract is  confirmed but the "
-"partner has not yet paid.\n"
-" * The 'Active' status is used when the contract is confirmed and until it's "
-"terminated.\n"
-" * The 'Terminated' status is used when a contract is no longer active.\n"
-" * The 'Cancelled' status is used when a contract was never paid."
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__amount_due
+msgid "Amount Due"
 msgstr ""
-" * Le statut 'Brouillon' est utilisé lorsqu'un utilisateur rempli un contrat "
-"non confirmé.\n"
-"* Le statut 'En Création' est utilisé une fois le contrat confirmé et en "
-"attente du premier paiement.\n"
-"* Le statut 'Actif' est utilisé lorsqu'un contrat a été confirmé et jusqu'à "
-"ce qu'il soit terminé.\n"
-"* Le statut 'Terminé' est utilisé quand un contrat n'est plus actif.\n"
-"* Le statut 'Annulé' est utilisé quand le contrat n'a jamais été payé."
 
 #. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:163
-#: view:recurring.contract:0 field:recurring.contract,invoice_line_ids:0
-#, python-format
-msgid "Related invoice lines"
-msgstr "Lignes de facture associées"
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_attachment_count
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__message_attachment_count
+msgid "Attachment Count"
+msgstr ""
 
 #. module: recurring_contract
-#: model:ir.model,name:recurring_contract.model_recurring_contract_group
-msgid "A group of contracts"
-msgstr "Groupe de contrats"
-
-#. module: recurring_contract
-#: view:recurring.invoicer.wizard:0
-msgid "or"
-msgstr "ou"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:170
-#: view:recurring.contract:0 selection:recurring.contract,state:0
-#, python-format
-msgid "Terminated"
-msgstr "Terminé"
-
-#. module: recurring_contract
-#: view:recurring.invoicer.wizard:0
-msgid "Invoice generation"
-msgstr "Génération de factures"
-
-#. module: recurring_contract
-#: selection:account.invoice.line,state:0
-#: code:addons/recurring_contract/model/recurring_contract.py:168
-#: view:recurring.contract:0 selection:recurring.contract,state:0
-#, python-format
-msgid "Draft"
-msgstr "Brouillon"
-
-#. module: recurring_contract
-#: model:ir.ui.menu,name:recurring_contract.menu_recurring_contract_form
-msgid "Other contracts"
-msgstr "Engagements"
-
-#. module: recurring_contract
-#: model:ir.model,name:recurring_contract.model_recurring_invoicer
-msgid "recurring.invoicer"
-msgstr "recurring.invoicer"
-
-#. module: recurring_contract
-#: view:recurring.contract:0
-msgid "Are you sure ?"
-msgstr "Etes-vous sûr ?"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_invoicer.py:34
-#: field:recurring.invoicer,generation_date:0
-#: field:recurring.invoicer.wizard,generation_date:0
-#, python-format
-msgid "Generation date"
-msgstr "Date de génération"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:170
-#: view:recurring.contract:0 field:recurring.contract,state:0
-#, python-format
-msgid "Status"
-msgstr "Statut"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/contract_group.py:83
-#: model:ir.actions.act_window,name:recurring_contract.action_recurring_contract_form
-#: view:recurring.contract:0 view:recurring.contract.group:0
-#: field:recurring.contract.group,contract_ids:0 view:res.partner:0
-#, python-format
-msgid "Contracts"
-msgstr "Contrats"
-
-#. module: recurring_contract
-#: selection:account.invoice.line,state:0
-msgid "Paid"
-msgstr "Payé"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_invoicer.py:37
-#: model:ir.actions.act_window,name:recurring_contract.action_recurring_invoicer_form
-#: model:ir.ui.menu,name:recurring_contract.menu_recurring_invoicer_form
-#: field:recurring.invoicer,invoice_ids:0
-#: field:recurring.invoicer.wizard,invoice_ids:0
-#, python-format
-msgid "Generated invoices"
-msgstr "Factures générées"
-
-#. module: recurring_contract
-#: field:recurring.contract,message_is_follower:0
-#: field:recurring.contract.group,message_is_follower:0
-msgid "Is a Follower"
-msgstr "Is a Follower"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:169
-#: view:recurring.contract:0 selection:recurring.contract,state:0
-#, python-format
-msgid "Active"
-msgstr "Actif"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:78
-#: view:recurring.contract:0 field:recurring.contract.line,contract_id:0
-#, python-format
-msgid "Contract"
-msgstr "Contrat"
-
-#. module: recurring_contract
-#: field:recurring.contract,message_summary:0
-#: field:recurring.contract.group,message_summary:0
-msgid "Summary"
-msgstr "Summary"
+#: model:ir.model.fields.selection,name:recurring_contract.selection__utm_medium__type__automatic
+msgid "Automatic"
+msgstr ""
 
 #. module: recurring_contract
 #: model:ir.actions.act_window,name:recurring_contract.action_invoice_automatic_generation
@@ -426,206 +143,2267 @@ msgid "Automatic invoice generation from contracts"
 msgstr "Génération de facture automatique à partir de contrats"
 
 #. module: recurring_contract
-#: model:ir.model,name:recurring_contract.model_recurring_contract_line
-msgid "A contract line"
-msgstr "A contract line"
+#: model:product.product,name:recurring_contract.product_balance_migr
+#: model:product.template,name:recurring_contract.product_balance_migr_product_template
+#| msgid "Cancel"
+msgid "Balance"
+msgstr ""
 
 #. module: recurring_contract
-#: view:recurring.invoicer:0
-msgid "Recurring invoicer"
-msgstr "Générateur de facture récurrent"
+#: model:ir.cron,cron_name:recurring_contract.recurring_contract_expire_cron
+msgid "Base: Auto-vacuum internal data"
+msgstr ""
 
 #. module: recurring_contract
-#: view:recurring.contract:0
-msgid "Ended Contracts"
-msgstr "Contrats terminés"
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__campaign_id
+msgid "Campaign"
+msgstr ""
 
 #. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:83
-#: field:recurring.contract.line,quantity:0
-#, python-format
-msgid "Quantity"
-msgstr "Quantité"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:143
-#: view:recurring.contract:0 field:recurring.contract,end_date:0
-#, python-format
-msgid "End date"
-msgstr "Date de fin"
-
-#. module: recurring_contract
-#: view:recurring.invoicer.wizard:0
-msgid "Invoice generation from contracts"
-msgstr "Génération de factures à partir de contrats"
-
-#. module: recurring_contract
-#: model:ir.model,name:recurring_contract.model_account_invoice
-msgid "Invoice"
-msgstr "Facture"
-
-#. module: recurring_contract
-#: field:account.invoice,recurring_invoicer_id:0
-#: code:addons/recurring_contract/model/invoice.py:22
-#, python-format
-msgid "Invoicer"
-msgstr "Générateur de facture"
-
-#. module: recurring_contract
-#: view:recurring.invoicer.wizard:0
+#: model_terms:ir.ui.view,arch_db:recurring_contract.end_contract_view
+#: model_terms:ir.ui.view,arch_db:recurring_contract.recurring_invoicer_wizard_view
 msgid "Cancel"
 msgstr "Annuler"
 
 #. module: recurring_contract
-#: selection:account.invoice.line,state:0
-msgid "Pro-forma"
-msgstr "Pro-forma"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:166
-#: view:recurring.contract:0 field:recurring.contract,contract_line_ids:0
-#, python-format
-msgid "Contract lines"
-msgstr "Contract lines"
-
-#. module: recurring_contract
-#: model:ir.model,name:recurring_contract.model_recurring_contract
-msgid "Contract for recurring invoicing"
-msgstr "Contrat à facturation récurrente"
-
-#. module: recurring_contract
-#: view:recurring.invoicer:0
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_invoicer_form
 msgid "Cancel invoices"
 msgstr "Annuler factures"
 
 #. module: recurring_contract
-#: code:addons/recurring_contract/model/contract_group.py:73
-#: selection:recurring.contract.group,recurring_unit:0
+#: code:addons/recurring_contract/models/recurring_contract.py:0
+#: model:ir.model.fields.selection,name:recurring_contract.selection__recurring_contract__state__cancelled
 #, python-format
-msgid "Day(s)"
-msgstr "Jour(s)"
+msgid "Cancelled"
+msgstr "Annulé"
 
 #. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:81
-#: field:recurring.contract.line,product_id:0
-#, python-format
-msgid "Product"
-msgstr "Produit"
+#: model:ir.cron,name:recurring_contract.recurring_contract_expire_cron
+#| msgid "End of contract"
+msgid "Check end of contract"
+msgstr ""
 
 #. module: recurring_contract
+#: model_terms:ir.actions.act_window,help:recurring_contract.action_recurring_contract_form
+msgid "Click to add a contract."
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__comment
+msgid "Comment"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__company_id
+msgid "Company"
+msgstr "Company"
+
+#. module: recurring_contract
+#: model:ir.model,name:recurring_contract.model_res_config_settings
+msgid "Config Settings"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__contract_id
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
+msgid "Contract"
+msgstr "Contrat"
+
+#. module: recurring_contract
+#: code:addons/recurring_contract/models/product_pricelist_item.py:0
+#, python-format
+#| msgid "Contract Lines"
+msgid "Contract Line Prices Updated"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_product_product__contract_line_ids
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_line_tree
+msgid "Contract Lines"
+msgstr "Lignes de contrat"
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_activate_sponsorship
+msgid "Contract activation"
+msgstr "Activation"
+
+#. module: recurring_contract
+#: code:addons/recurring_contract/models/contract_group.py:0
+#: code:addons/recurring_contract/models/recurring_contract.py:0
+#, python-format
+#| msgid "Contract Lines"
+msgid "Contract invoices"
+msgstr ""
+
+#. module: recurring_contract
+#: model:base.automation,name:recurring_contract.automated_action
+#: model:ir.actions.server,name:recurring_contract.automated_action_ir_actions_server
+msgid "Contract line update on pricelist item end date"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__contract_line_ids
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
+msgid "Contract lines"
+msgstr "Contract lines"
+
+#. module: recurring_contract
+#: model:ir.actions.act_window,name:recurring_contract.action_recurring_contract_form
+#: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__contract_ids
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__contract_ids
 #: model:ir.ui.menu,name:recurring_contract.menu_contracts_section
-msgid "Invoicing"
-msgstr "Facturation"
+#: model:ir.ui.menu,name:recurring_contract.menu_recurring_contract_form
+msgid "Contracts"
+msgstr "Contrats"
 
 #. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:82
-#: field:recurring.contract.line,amount:0
-#, python-format
-msgid "Price"
-msgstr "Prix"
+#: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__create_uid
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__create_uid
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_activate_wizard__create_uid
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_end_reason__create_uid
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__create_uid
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__create_uid
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer__create_uid
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer_wizard__create_uid
+msgid "Created by"
+msgstr "Créé par"
 
 #. module: recurring_contract
-#: model:ir.actions.act_window,help:recurring_contract.action_recurring_contract_form
-msgid ""
-"<p class=\"oe_view_nocontent_create\">\n"
-"\t\t\tClick to add a contract.\n"
-"\t\t  </p><p>\n"
-"\t\t\tOpenERP helps you to generate recurrent invoices.\n"
-"\t\t  </p>\n"
-"\t\t"
+#: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__create_date
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__create_date
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_activate_wizard__create_date
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_end_reason__create_date
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__create_date
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__create_date
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer__create_date
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer_wizard__create_date
+msgid "Created on"
+msgstr "Créé le"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__current_invoice_date
+msgid "Current Invoice Date"
 msgstr ""
-"<p class=\"oe_view_nocontent_create\">\n"
-"\t\t\tCliquez pour ajouter un contrat.\n"
-"\t\t  </p><p>\n"
-"\t\t\tOdoo vous aide à générer des factures récurrentes.\n"
-"\t\t  </p>\n"
-"\t\t"
 
 #. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:32
-#: view:recurring.contract.group:0 field:res.partner,contract_group_ids:0
-#, python-format
-msgid "Contract groups"
-msgstr "Groupe de contrats"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:48
-#, python-format
-msgid "You cannot delete a partner having an active contract."
-msgstr "Vous ne pouvez pas supprimer un partenaire ayant des contrats actifs."
-
-#. module: recurring_contract
-#: view:recurring.contract:0
-msgid "Search contract"
-msgstr "Chercher contrat"
-
-#. module: recurring_contract
-#: field:recurring.contract,message_ids:0
-#: field:recurring.contract.group,message_ids:0
-msgid "Messages"
-msgstr "Messages"
-
-#. module: recurring_contract
-#: help:recurring.contract,message_ids:0
-#: help:recurring.contract.group,message_ids:0
-msgid "Messages and communication history"
-msgstr "Messages and communication history"
-
-#. module: recurring_contract
-#: view:recurring.invoicer:0
-msgid "Validate invoices"
-msgstr "Valider les factures"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/contract_group.py:95
-#: code:addons/recurring_contract/model/recurring_contract.py:187
-#: field:recurring.contract,payment_term_id:0
-#: field:recurring.contract.group,payment_term_id:0
-#, python-format
-msgid "Payment Term"
-msgstr "Condition de payment"
-
-#. module: recurring_contract
-#: code:addons/recurring_contract/model/recurring_contract.py:172
-#, python-format
-msgid ""
-" * The 'Draft' status is used when a user is encoding a new and unconfirmed "
-"Contract.\n"
-"* The 'Active' status is used when the contract is confirmed and until it's "
-"terminated.\n"
-"* The 'Terminated' status is used when a contract is no longer active."
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract_group__invoice_suspended_until
+msgid "Date at which the sponsor should receive invoices again."
 msgstr ""
-" * Le statut 'Brouillon' est utilisé lorsqu'un utilisateur rempli un contrat "
-"non confirmé.\n"
-"* Le statut 'Actif' est utilisé lorsqu'un contrat a été confirmé et jusqu'à "
-"ce qu'il soit terminé.\n"
-"* Le statut 'Terminé' est utilisé lorsqu'un contrat n'est plus actif."
 
 #. module: recurring_contract
-#: selection:account.invoice.line,state:0
-msgid "Open"
-msgstr "Ouvert"
+#: model:ir.model.fields,help:recurring_contract.field_res_config_settings__do_generate_curr_month
+msgid ""
+"Define if the invoices should generate the current month by default or the "
+"next month.Ticked means we generate the current month and next month by "
+"default"
+msgstr ""
 
 #. module: recurring_contract
-#: view:recurring.contract:0
+#: model_terms:ir.ui.view,arch_db:recurring_contract.notification_settings
+msgid ""
+"Define if we start generating invoices from current month or next month only"
+msgstr ""
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.notification_settings
+msgid "Define the day that we want to suspend contract invoices on creation"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_account_move__display_name
+#: model:ir.model.fields,field_description:recurring_contract.field_account_move_line__display_name
+#: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__display_name
+#: model:ir.model.fields,field_description:recurring_contract.field_product_pricelist_item__display_name
+#: model:ir.model.fields,field_description:recurring_contract.field_product_product__display_name
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__display_name
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_activate_wizard__display_name
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_end_reason__display_name
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__display_name
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__display_name
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer__display_name
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer_wizard__display_name
+#: model:ir.model.fields,field_description:recurring_contract.field_res_config_settings__display_name
+#: model:ir.model.fields,field_description:recurring_contract.field_utm_medium__display_name
+msgid "Display Name"
+msgstr "Display Name"
+
+#. module: recurring_contract
+#: code:addons/recurring_contract/models/recurring_contract.py:0
+#: model:ir.model.fields.selection,name:recurring_contract.selection__recurring_contract__state__draft
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
+#, python-format
+msgid "Draft"
+msgstr "Brouillon"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_account_move_line__due_date
+#| msgid "Due date"
+msgid "Due Date"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__end_date
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__end_date
+#| msgid "End date"
+msgid "End Date"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__end_reason_id
+#| msgid "End reason"
+msgid "End Reason"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.actions.act_window,name:recurring_contract.action_end_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.end_contract_view
+msgid "End contract"
+msgstr "Terminer engagement"
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
+msgid "End date"
+msgstr "Date de fin"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__end_reason_id
+msgid "End reason"
+msgstr "Motif de fin"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__failed_message_ids
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__failed_message_ids
+#| msgid "Unread Messages"
+msgid "Failed Messages"
+msgstr ""
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
+msgid "Finished"
+msgstr "Terminé"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_follower_ids
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__message_follower_ids
+msgid "Followers"
+msgstr "Followers"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_channel_ids
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__message_channel_ids
+#| msgid "Followers"
+msgid "Followers (Channels)"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_partner_ids
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__message_partner_ids
+#| msgid "Followers"
+msgid "Followers (Partners)"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.actions.act_window,name:recurring_contract.action_activate_contract
+msgid "Force activation"
+msgstr "Force activation"
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.recurring_invoicer_wizard_view
+msgid "Generate"
+msgstr "Générer"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_res_config_settings__do_generate_curr_month
+msgid "Generate current month ?"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__recurring_value
+msgid "Generate every"
+msgstr "Générer chaque"
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_group_contract_form
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
 msgid "Generate invoices"
 msgstr "Générer Factures"
 
 #. module: recurring_contract
-#: view:recurring.contract:0 field:recurring.contract,total_amount:0
+#: model:ir.actions.act_window,name:recurring_contract.action_recurring_invoicer_form
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer__invoice_ids
+#: model:ir.ui.menu,name:recurring_contract.menu_recurring_invoicer_form
+msgid "Generated invoices"
+msgstr "Factures générées"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer__generation_date
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer_wizard__generation_date
+#| msgid "Generation date"
+msgid "Generation Date"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract_group__current_invoice_date
+msgid ""
+"Gives the current invoice date for the contract group, either the current "
+"month or the next one depending the settings."
+msgstr ""
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
+msgid "Group By..."
+msgstr "Grouper par..."
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_account_move__id
+#: model:ir.model.fields,field_description:recurring_contract.field_account_move_line__id
+#: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__id
+#: model:ir.model.fields,field_description:recurring_contract.field_product_pricelist_item__id
+#: model:ir.model.fields,field_description:recurring_contract.field_product_product__id
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__id
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_activate_wizard__id
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_end_reason__id
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__id
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__id
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer__id
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer_wizard__id
+#: model:ir.model.fields,field_description:recurring_contract.field_res_config_settings__id
+#: model:ir.model.fields,field_description:recurring_contract.field_utm_medium__id
+msgid "ID"
+msgstr "ID"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_exception_icon
+msgid "Icon"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__message_needaction
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__message_unread
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract_group__message_needaction
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract_group__message_unread
+#| msgid "If checked new messages require your attention."
+msgid "If checked, new messages require your attention."
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__message_has_error
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__message_has_sms_error
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract_group__message_has_error
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract_group__message_has_sms_error
+#| msgid "If checked new messages require your attention."
+msgid "If checked, some messages have a delivery error."
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_res_config_settings__inv_block_day
+msgid ""
+"If set, contracts created after this day will set their first invoice one "
+"month after. Contracts terminated after this day will cancel paid invoices "
+"one month after. Changes made to a contract after this day will apply only "
+"on the next month."
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__invoice_suspended_until
+#| msgid "Invoice generation"
+msgid "Invoice Suspended Until"
+msgstr ""
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.recurring_invoicer_wizard_view
+msgid "Invoice generation"
+msgstr "Génération de factures"
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.recurring_invoicer_wizard_view
+msgid "Invoice generation from contracts"
+msgstr "Génération de factures à partir de contrats"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_account_bank_statement_line__recurring_invoicer_id
+#: model:ir.model.fields,field_description:recurring_contract.field_account_move__recurring_invoicer_id
+#: model:ir.model.fields,field_description:recurring_contract.field_account_payment__recurring_invoicer_id
+msgid "Invoicer"
+msgstr "Générateur de facture"
+
+#. module: recurring_contract
+#: code:addons/recurring_contract/models/recurring_invoicer.py:0
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_group_contract_form
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
+#, python-format
+#| msgid "Invoice"
+msgid "Invoices"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_res_config_settings__inv_block_day
+msgid "Invoices Blocked Day"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_is_follower
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__message_is_follower
+#| msgid "Is a Follower"
+msgid "Is Follower"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model,name:recurring_contract.model_account_move
+#| msgid "Country"
+msgid "Journal Entry"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model,name:recurring_contract.model_account_move_line
+msgid "Journal Item"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_account_move____last_update
+#: model:ir.model.fields,field_description:recurring_contract.field_account_move_line____last_update
+#: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard____last_update
+#: model:ir.model.fields,field_description:recurring_contract.field_product_pricelist_item____last_update
+#: model:ir.model.fields,field_description:recurring_contract.field_product_product____last_update
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract____last_update
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_activate_wizard____last_update
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_end_reason____last_update
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group____last_update
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line____last_update
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer____last_update
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer_wizard____last_update
+#: model:ir.model.fields,field_description:recurring_contract.field_res_config_settings____last_update
+#: model:ir.model.fields,field_description:recurring_contract.field_utm_medium____last_update
+msgid "Last Modified on"
+msgstr "Last Modified on"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__last_paid_invoice_date
+#| msgid "Last paid invoice date"
+msgid "Last Paid Invoice Date"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_account_bank_statement_line__last_payment
+#: model:ir.model.fields,field_description:recurring_contract.field_account_move__last_payment
+#: model:ir.model.fields,field_description:recurring_contract.field_account_move_line__last_payment
+#: model:ir.model.fields,field_description:recurring_contract.field_account_payment__last_payment
+#| msgid "Waiting Payment"
+msgid "Last Payment"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__write_uid
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__write_uid
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_activate_wizard__write_uid
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_end_reason__write_uid
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__write_uid
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__write_uid
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer__write_uid
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer_wizard__write_uid
+msgid "Last Updated by"
+msgstr "Modifié par"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__write_date
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__write_date
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_activate_wizard__write_date
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_end_reason__write_date
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__write_date
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__write_date
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer__write_date
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer_wizard__write_date
+msgid "Last Updated on"
+msgstr "Modifié le"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__last_paid_invoice_date
+msgid "Last paid invoice date"
+msgstr "Dernière facture payée"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__due_invoice_ids
+#| msgid "Validate invoices"
+msgid "Late invoices"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.actions.server,name:recurring_contract.recurring_invoicer_cron_ir_actions_server
+#: model:ir.cron,cron_name:recurring_contract.recurring_invoicer_cron
+#: model:ir.cron,name:recurring_contract.recurring_invoicer_cron
+#| msgid "Launch invoices generation"
+msgid "Launch daily invoice generation"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.ui.menu,name:recurring_contract.menu_invoice_automatic_generation
+msgid "Launch invoices generation"
+msgstr "Générer les factures"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_main_attachment_id
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__message_main_attachment_id
+#| msgid "Waiting Payment"
+msgid "Main Attachment"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields.selection,name:recurring_contract.selection__utm_medium__type__manual
+#| msgid "Annual"
+msgid "Manual"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__medium_id
+msgid "Medium"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_has_error
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__message_has_error
+msgid "Message Delivery error"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_ids
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__message_ids
+msgid "Messages"
+msgstr "Messages"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__missing_invoices
+#| msgid "Recurring invoicers"
+msgid "Missing Invoices"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__month_interval
+msgid "Month Interval"
+msgstr ""
+
+#. module: recurring_contract
+#: code:addons/recurring_contract/models/contract_group.py:0
+#: model:ir.model.fields.selection,name:recurring_contract.selection__recurring_contract_group__recurring_unit__month
+#, python-format
+msgid "Month(s)"
+msgstr "Mois"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__months_due
+#| msgid "Months paid"
+msgid "Months Due"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__months_paid
+#| msgid "Months paid"
+msgid "Months Paid"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_end_reason__name
+msgid "Name"
+msgstr "Name"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__nb_invoices
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__nb_invoices
+#| msgid "Invoice"
+msgid "Nb Invoices"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_summary
+msgid "Next Activity Summary"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_type_id
+msgid "Next Activity Type"
+msgstr ""
+
+#. module: recurring_contract
+#: code:addons/recurring_contract/models/move.py:0
+#, python-format
+msgid "Notes from bank statement"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__months_paid
+msgid ""
+"Number indicating up to which month the contract is paid (<1=prev. "
+"year,1=Jan,12=December,>12=next year)"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_needaction_counter
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__message_needaction_counter
+msgid "Number of Actions"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_has_error_counter
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__message_has_error_counter
+msgid "Number of errors"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__message_needaction_counter
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract_group__message_needaction_counter
+msgid "Number of messages which requires an action"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__message_has_error_counter
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract_group__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__pricelist_item_count
+msgid "Number of price rules"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__months_due
+msgid "Number of unpaid months (in the past)"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__message_unread_counter
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract_group__message_unread_counter
+#| msgid "Unread Messages"
+msgid "Number of unread messages"
+msgstr ""
+
+#. module: recurring_contract
+#: code:addons/recurring_contract/models/recurring_contract.py:0
+#, python-format
+msgid "Only cancelled contracts can be set back to draft."
+msgstr ""
+
+#. module: recurring_contract
+#: code:addons/recurring_contract/models/recurring_contract.py:0
+#, python-format
+msgid "Only validated contracts can be activated."
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__open_invoice_ids
+#| msgid "Generate invoices"
+msgid "Open invoices"
+msgstr ""
+
+#. module: recurring_contract
+#: model_terms:ir.actions.act_window,help:recurring_contract.action_recurring_contract_form
+msgid "OpenERP helps you to generate recurrent invoices."
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__partner_id
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__partner_id
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
+msgid "Partner"
+msgstr "Partenaire"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__group_id
+msgid "Payment Options"
+msgstr "Conditions de paiement"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_account_move_line__payment_state
+#| msgid "Payment term"
+msgid "Payment Status"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__payment_mode_id
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__payment_mode_id
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
+#| msgid "Payment term"
+msgid "Payment mode"
+msgstr ""
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
+msgid "Payment term"
+msgstr "Conditions de paiement"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__period_paid
+msgid "Period Paid"
+msgstr ""
+
+#. module: recurring_contract
+#: code:addons/recurring_contract/models/recurring_contract.py:0
+#, python-format
+#| msgid "A contract line"
+msgid "Please configure contract lines"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__amount
+msgid "Price"
+msgstr "Prix"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__pricelist_id
+#| msgid "Price"
+msgid "Pricelist"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model,name:recurring_contract.model_product_pricelist_item
+msgid "Pricelist Rule"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model,name:recurring_contract.model_product_product
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__product_ids
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__product_id
+msgid "Product"
+msgstr "Produit"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__quantity
+msgid "Quantity"
+msgstr "Quantité"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__recurring_unit
+#| msgid "Reccurency"
+msgid "Recurrence"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model,name:recurring_contract.model_recurring_contract
+#| msgid "Recurring invoicer"
+msgid "Recurring contract"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model,name:recurring_contract.model_recurring_contract_activate_wizard
+#| msgid "Contract activation"
+msgid "Recurring contract activation wizard"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model,name:recurring_contract.model_recurring_contract_end_reason
+#| msgid "Recurring invoicers"
+msgid "Recurring contract end reason"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model,name:recurring_contract.model_end_contract_wizard
+#| msgid "recurring.invoicer.wizard"
+msgid "Recurring contract end wizard"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model,name:recurring_contract.model_recurring_contract_line
+#| msgid "A contract line"
+msgid "Recurring contract line"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model,name:recurring_contract.model_recurring_invoicer
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_invoicer_form
+msgid "Recurring invoicer"
+msgstr "Générateur de facture récurrent"
+
+#. module: recurring_contract
+#: model:ir.model,name:recurring_contract.model_recurring_invoicer_wizard
+#| msgid "recurring.invoicer.wizard"
+msgid "Recurring invoicer wizard"
+msgstr ""
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_invoicer_tree
+msgid "Recurring invoicers"
+msgstr "Générateurs de facture récurrents"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__reference
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__ref
+msgid "Reference"
+msgstr "Référence"
+
+#. module: recurring_contract
+#: model:ir.model.constraint,message:recurring_contract.constraint_recurring_contract_unique_ref
+#| msgid "Error: Reference should be unique"
+msgid "Reference must be unique!"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__invoice_line_ids
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
+msgid "Related invoice lines"
+msgstr "Lignes de facture associées"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_user_id
+msgid "Responsible User"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_has_sms_error
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr ""
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
+msgid "Search contract"
+msgstr "Chercher contrat"
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
+msgid "Set back to draft"
+msgstr "Remettre à brouillon"
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_invoicer_form
+#| msgid "Cancel invoices"
+msgid "Show invoices"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__source_id
+msgid "Source"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_account_move_line__contract_id
+msgid "Source contract"
+msgstr "Contrat d'origine"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__start_date
+#| msgid "Start date"
+msgid "Start Date"
+msgstr ""
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
+msgid "Start date"
+msgstr "Date de création"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__state
+msgid "State"
+msgstr "État"
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
+msgid "Status"
+msgstr "Statut"
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__subtotal
+msgid "Subtotal"
+msgstr "Sous-total"
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__missing_invoices
+msgid "Tells if invoices have not been generated yet"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__period_paid
+msgid "Tells if the advance billing period is already paid"
+msgstr ""
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
+msgid "Terminate"
+msgstr "Terminer"
+
+#. module: recurring_contract
+#: code:addons/recurring_contract/models/recurring_contract.py:0
+#: model:ir.model.fields.selection,name:recurring_contract.selection__recurring_contract__state__terminated
+#, python-format
+msgid "Terminated"
+msgstr "Terminé"
+
+#. module: recurring_contract
+#: code:addons/recurring_contract/models/product_pricelist_item.py:0
+#, python-format
+msgid ""
+"The prices of the contract lines associated with this pricelist item have "
+"been updated."
+msgstr ""
+
+#. module: recurring_contract
+#: code:addons/recurring_contract/models/contract_group.py:0
+#, python-format
+msgid ""
+"The suspension of invoices has to be in the future ! (Invoice Suspended "
+"Until field)"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__campaign_id
+msgid ""
+"This is a name that helps you keep track of your different campaign efforts, "
+"e.g. Fall_Drive, Christmas_Special"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__medium_id
+msgid "This is the method of delivery, e.g. Postcard, Email, or Banner Ad"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__source_id
+msgid ""
+"This is the source of the link, e.g. Search Engine, another domain, or name "
+"of email list"
+msgstr ""
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_activate_sponsorship
+msgid ""
+"This will mark the contract as Active, even if the partner has made no "
+"payment. Please be sure that you want to do this."
+msgstr ""
+"Cela va activer le contrat même si le partenaire n'a fait aucun paiement."
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__total_amount
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
 msgid "Total"
 msgstr "Total"
 
 #. module: recurring_contract
-#: selection:recurring.contract,state:0
-msgid "Waiting Mandate"
-msgstr "En attente du mandat"
+#: model:ir.model.fields,field_description:recurring_contract.field_utm_medium__type
+msgid "Type"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model,name:recurring_contract.model_utm_medium
+msgid "UTM Medium"
+msgstr ""
+
+#. module: recurring_contract
+#: code:addons/recurring_contract/models/move_line.py:0
+#, python-format
+msgid "Unexpected error while updating contract invoices."
+msgstr ""
+
+#. module: recurring_contract
+#: model:product.product,uom_name:recurring_contract.product_balance_migr
+#: model:product.template,uom_name:recurring_contract.product_balance_migr_product_template
+msgid "Units"
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_unread
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__message_unread
+msgid "Unread Messages"
+msgstr "Unread Messages"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_unread_counter
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__message_unread_counter
+#| msgid "Unread Messages"
+msgid "Unread Messages Counter"
+msgstr ""
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
+msgid "Validate"
+msgstr "Valider"
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
+msgid "Waiting"
+msgstr "En Création"
+
+#. module: recurring_contract
+#: code:addons/recurring_contract/models/recurring_contract.py:0
+#: model:ir.model.fields.selection,name:recurring_contract.selection__recurring_contract__state__waiting
+#, python-format
+msgid "Waiting Payment"
+msgstr "En attente de paiement"
+
+#. module: recurring_contract
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__website_message_ids
+#: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__website_message_ids
+msgid "Website Messages"
+msgstr "Website Messages"
+
+#. module: recurring_contract
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract__website_message_ids
+#: model:ir.model.fields,help:recurring_contract.field_recurring_contract_group__website_message_ids
+msgid "Website communication history"
+msgstr "Website communication history"
+
+#. module: recurring_contract
+#: code:addons/recurring_contract/models/contract_group.py:0
+#: model:ir.model.fields.selection,name:recurring_contract.selection__recurring_contract_group__recurring_unit__year
+#, python-format
+msgid "Year(s)"
+msgstr "Année(s)"
+
+#. module: recurring_contract
+#: code:addons/recurring_contract/models/recurring_contract.py:0
+#, python-format
+#| msgid "You cannot delete a partner having an active contract."
+msgid "You cannot delete a validated contract."
+msgstr ""
+
+#. module: recurring_contract
+#: model:ir.model.constraint,message:recurring_contract.constraint_recurring_contract_line_unique_product_per_contract
+msgid "You cannot set two lines with the same product."
+msgstr ""
+
+#. module: recurring_contract
+#: model_terms:ir.ui.view,arch_db:recurring_contract.recurring_invoicer_wizard_view
+msgid "or"
+msgstr "ou"
+
+#, python-format
+#~ msgid "Invoice Cancelled"
+#~ msgstr "Facture Annulée"
+
+#, python-format
+#~ msgid "You cannot rewind the next invoice date."
+#~ msgstr "Vous ne pouvez pas reculer la prochaine facture"
+
+#~ msgid "Draft Contracts"
+#~ msgstr "Contrat en brouillon"
+
+#, python-format
+#~ msgid "There is no invoice to cancel"
+#~ msgstr "Aucune facture à annuler"
+
+#~ msgid ""
+#~ "Holds the Chatter summary (number of messages, ...). This summary is "
+#~ "directly in html format in order to be inserted in kanban views."
+#~ msgstr ""
+#~ "Holds the Chatter summary (number of messages, ...). This summary is "
+#~ "directly in html format in order to be inserted in kanban views."
+
+#, python-format
+#~ msgid "There is no invoice to validate"
+#~ msgstr "Aucune facture à valider"
+
+#, python-format
+#~ msgid "Week(s)"
+#~ msgstr "Semaine(s)"
+
+#, python-format
+#~ msgid "Identifier"
+#~ msgstr "Identifiant"
+
+#, python-format
+#~ msgid ""
+#~ "You cannot delete a contract that is still active. Terminate it first."
+#~ msgstr ""
+#~ "Vous ne pouvez pas supprimer un contrat actif. Commencez par le terminer."
+
+#~ msgid "Invoice Line"
+#~ msgstr "Ligne de facture"
+
+#~ msgid ""
+#~ " * The 'Draft' status is used when a user is encoding a new and "
+#~ "unconfirmed Contract.\n"
+#~ " * The 'Waiting' status is used when the Contract is  confirmed but the "
+#~ "partner has not yet paid.\n"
+#~ " * The 'Active' status is used when the contract is confirmed and until "
+#~ "it's terminated.\n"
+#~ " * The 'Terminated' status is used when a contract is no longer active.\n"
+#~ " * The 'Cancelled' status is used when a contract was never paid."
+#~ msgstr ""
+#~ " * Le statut 'Brouillon' est utilisé lorsqu'un utilisateur rempli un "
+#~ "contrat non confirmé.\n"
+#~ "* Le statut 'En Création' est utilisé une fois le contrat confirmé et en "
+#~ "attente du premier paiement.\n"
+#~ "* Le statut 'Actif' est utilisé lorsqu'un contrat a été confirmé et "
+#~ "jusqu'à ce qu'il soit terminé.\n"
+#~ "* Le statut 'Terminé' est utilisé quand un contrat n'est plus actif.\n"
+#~ "* Le statut 'Annulé' est utilisé quand le contrat n'a jamais été payé."
+
+#~ msgid "Other contracts"
+#~ msgstr "Engagements"
+
+#~ msgid "recurring.invoicer"
+#~ msgstr "recurring.invoicer"
+
+#~ msgid "Are you sure ?"
+#~ msgstr "Etes-vous sûr ?"
+
+#~ msgid "Paid"
+#~ msgstr "Payé"
+
+#~ msgid "Summary"
+#~ msgstr "Summary"
+
+#~ msgid "Ended Contracts"
+#~ msgstr "Contrats terminés"
+
+#~ msgid "Pro-forma"
+#~ msgstr "Pro-forma"
+
+#~ msgid "Contract for recurring invoicing"
+#~ msgstr "Contrat à facturation récurrente"
+
+#, python-format
+#~ msgid "Day(s)"
+#~ msgstr "Jour(s)"
+
+#~ msgid "Invoicing"
+#~ msgstr "Facturation"
+
+#~ msgid ""
+#~ "<p class=\"oe_view_nocontent_create\">\n"
+#~ "\t\t\tClick to add a contract.\n"
+#~ "\t\t  </p><p>\n"
+#~ "\t\t\tOpenERP helps you to generate recurrent invoices.\n"
+#~ "\t\t  </p>\n"
+#~ "\t\t"
+#~ msgstr ""
+#~ "<p class=\"oe_view_nocontent_create\">\n"
+#~ "\t\t\tCliquez pour ajouter un contrat.\n"
+#~ "\t\t  </p><p>\n"
+#~ "\t\t\tOdoo vous aide à générer des factures récurrentes.\n"
+#~ "\t\t  </p>\n"
+#~ "\t\t"
+
+#, python-format
+#~ msgid "Contract groups"
+#~ msgstr "Groupe de contrats"
+
+#~ msgid "Messages and communication history"
+#~ msgstr "Messages and communication history"
+
+#, python-format
+#~ msgid "Payment Term"
+#~ msgstr "Condition de payment"
+
+#, python-format
+#~ msgid ""
+#~ " * The 'Draft' status is used when a user is encoding a new and "
+#~ "unconfirmed Contract.\n"
+#~ "* The 'Active' status is used when the contract is confirmed and until "
+#~ "it's terminated.\n"
+#~ "* The 'Terminated' status is used when a contract is no longer active."
+#~ msgstr ""
+#~ " * Le statut 'Brouillon' est utilisé lorsqu'un utilisateur rempli un "
+#~ "contrat non confirmé.\n"
+#~ "* Le statut 'Actif' est utilisé lorsqu'un contrat a été confirmé et "
+#~ "jusqu'à ce qu'il soit terminé.\n"
+#~ "* Le statut 'Terminé' est utilisé lorsqu'un contrat n'est plus actif."
+
+#~ msgid "Open"
+#~ msgstr "Ouvert"
+
+#~ msgid "Waiting Mandate"
+#~ msgstr "En attente du mandat"
+
+#~ msgid "\"Highly Vulnerable Children\" Fund"
+#~ msgstr "\"Highly Vulnerable Children\" Fund"
+
+#~ msgid "\"Stop Mosquitoes\" campaign"
+#~ msgstr "Campagne \"Stop Mosquitoes\""
+
+#~ msgid "\"Water for the children\" Fund"
+#~ msgstr "Fonds \"De l'eau pour les enfants\""
+
+#~ msgid "\"Water of Life\" - Water filter fund"
+#~ msgstr "\"De l'eau pour la vie\" - Fonds pour les filtres à eau"
+
+#~ msgid "# of Product Variants"
+#~ msgstr "# of Product Variants"
+
+#~ msgid ""
+#~ "A description of the Product that you want to communicate to your "
+#~ "customers. This description will be copied to every Sale Order, Delivery "
+#~ "Order and Customer Invoice/Refund"
+#~ msgstr ""
+#~ "A description of the Product that you want to communicate to your "
+#~ "customers. This description will be copied to every Sale Order, Delivery "
+#~ "Order and Customer Invoice/Refund"
+
+#~ msgid ""
+#~ "A description of the Product that you want to communicate to your "
+#~ "suppliers. This description will be copied to every Purchase Order, "
+#~ "Receipt and Supplier Invoice/Refund."
+#~ msgstr ""
+#~ "A description of the Product that you want to communicate to your "
+#~ "suppliers. This description will be copied to every Purchase Order, "
+#~ "Receipt and Supplier Invoice/Refund."
+
+#~ msgid ""
+#~ "A precise description of the Product, used only for internal information "
+#~ "purposes."
+#~ msgstr ""
+#~ "A precise description of the Product, used only for internal information "
+#~ "purposes."
+
+#~ msgid "AIDS/HIV Fund"
+#~ msgstr "Fonds SIDA/HIV"
+
+#~ msgid "Anonymous donations"
+#~ msgstr "Dons anonymes"
+
+#~ msgid "BVR"
+#~ msgstr "BVR"
+
+#~ msgid "BVR immediate"
+#~ msgstr "BVR immédiat"
+
+#~ msgid "Bank Transfer"
+#~ msgstr "Virement Bancaire"
+
+#~ msgid "Bank Transfer Immediate"
+#~ msgstr "Virement bancaire Immédiat"
+
+#~ msgid ""
+#~ "Base price to compute the customer price. Sometimes called the catalog "
+#~ "price."
+#~ msgstr ""
+#~ "Base price to compute the customer price. Sometimes called the catalog "
+#~ "price."
+
+#~ msgid "Basic Mandate"
+#~ msgstr "Mandat de base"
+
+#~ msgid "Bible Fund"
+#~ msgstr "Fonds pour les bibles"
+
+#~ msgid "Blind Children Fund"
+#~ msgstr "Fonds enfants aveugles"
+
+#~ msgid "CSP EC-C20 in Ecuador"
+#~ msgstr "CSP EC-C20 en Equateur"
+
+#~ msgid "CSP HA-C13 in Haiti"
+#~ msgstr "CSP HA-C13 à Haiti"
+
+#~ msgid "CSP HA-C46 in Haiti"
+#~ msgstr "CSP HA-C46 à Haiti"
+
+#~ msgid "Calendar"
+#~ msgstr "Calendrier"
+
+#~ msgid "Can be Rent"
+#~ msgstr "Can be Rent"
+
+#~ msgid "Can be Sold"
+#~ msgstr "Can be Sold"
+
+#~ msgid "Case"
+#~ msgstr "Case"
+
+#~ msgid "Child Survival Program"
+#~ msgstr "Child Survival Program"
+
+#~ msgid "Child gift"
+#~ msgstr "Cadeau enfant"
+
+#~ msgid "Cholera in Haiti - Filter action"
+#~ msgstr "Haïti - Action filtres"
+
+#~ msgid "Christmas Gift Fund"
+#~ msgstr "Fonds cadeaux de Noël"
+
+#~ msgid "Cicerolandia BR473 project Fund - supported by C3"
+#~ msgstr "Cicerolandia BR473 project Fund - supported by C3"
+
+#~ msgid ""
+#~ "Coefficient to convert default Unit of Measure to Unit of Sale\n"
+#~ " uos = uom * coeff"
+#~ msgstr ""
+#~ "Coefficient to convert default Unit of Measure to Unit of Sale\n"
+#~ " uos = uom * coeff"
+
+#~ msgid "Compassion Suisse"
+#~ msgstr "Compassion Suisse"
+
+#~ msgid "Compassion Suisse grant"
+#~ msgstr "Fonds Compassion Suisse"
+
+#~ msgid "Compassion magazine"
+#~ msgstr "Magazine Compassion"
+
+#~ msgid ""
+#~ "Compassion's Highly Vulnerable Children's Fund provides food, \n"
+#~ "\t\t\tclothing and a nurturing Christian home environment to children in "
+#~ "poverty who are orphans \n"
+#~ "\t\t\tor who have no adult caretakers."
+#~ msgstr ""
+#~ "Compassion's Highly Vulnerable Children's Fund provides food, \n"
+#~ "\t\t\tclothing and a nurturing Christian home environment to children in "
+#~ "poverty who are orphans \n"
+#~ "\t\t\tor who have no adult caretakers."
+
+#~ msgid ""
+#~ "Consumable: Will not imply stock management for this product. \n"
+#~ "Stockable product: Will imply stock management for this product."
+#~ msgstr ""
+#~ "Consumable: Will not imply stock management for this product. \n"
+#~ "Stockable product: Will imply stock management for this product."
+
+#~ msgid "Cost Price"
+#~ msgstr "Cost Price"
+
+#~ msgid ""
+#~ "Cost price of the product template used for standard stock valuation in "
+#~ "accounting and used as a base price on purchase orders. Expressed in the "
+#~ "default unit of measure of the product."
+#~ msgstr ""
+#~ "Cost price of the product template used for standard stock valuation in "
+#~ "accounting and used as a base price on purchase orders. Expressed in the "
+#~ "default unit of measure of the product."
+
+#~ msgid "Costing Method"
+#~ msgstr "Costing Method"
+
+#~ msgid "Creation date"
+#~ msgstr "Date de création"
+
+#~ msgid "Customer Lead Time"
+#~ msgstr "Customer Lead Time"
+
+#~ msgid "Customer Taxes"
+#~ msgstr "Customer Taxes"
+
+#~ msgid "Default Unit of Measure used for all stock operation."
+#~ msgstr "Default Unit of Measure used for all stock operation."
+
+#~ msgid ""
+#~ "Default Unit of Measure used for purchase orders. It must be in the same "
+#~ "category than the default unit of measure."
+#~ msgstr ""
+#~ "Default Unit of Measure used for purchase orders. It must be in the same "
+#~ "category than the default unit of measure."
+
+#~ msgid ""
+#~ "Depending on the modules installed, this will allow you to define the "
+#~ "route of the product: whether it will be bought, manufactured, MTO/MTS,..."
+#~ msgstr ""
+#~ "Depending on the modules installed, this will allow you to define the "
+#~ "route of the product: whether it will be bought, manufactured, MTO/MTS,..."
+
+#~ msgid "Description"
+#~ msgstr "Description"
+
+#~ msgid "Disaster Fund Haiti"
+#~ msgstr "Fonds catastrophe à Haïti"
+
+#~ msgid "Disaster Fund India"
+#~ msgstr "Fonds catastrophe en Inde"
+
+#~ msgid "Expense Account"
+#~ msgstr "Expense Account"
+
+#~ msgid "Famine Fund"
+#~ msgstr "Fonds contre la famine"
+
+#~ msgid ""
+#~ "Forces to specify a Serial Number on each and every operation related to "
+#~ "this product"
+#~ msgstr ""
+#~ "Forces to specify a Serial Number on each and every operation related to "
+#~ "this product"
+
+#~ msgid "Full Lots Traceability"
+#~ msgstr "Full Lots Traceability"
+
+#~ msgid "Fund"
+#~ msgstr "Fonds non désigné"
+
+#~ msgid "Fund \"Floods in Burkina Faso\""
+#~ msgstr "Fonds \"Inondations au Burkina Faso\""
+
+#~ msgid "General Fund"
+#~ msgstr "Fonds Général"
+
+#~ msgid ""
+#~ "Gives the different ways to package the same product. This has no impact "
+#~ "on the picking order and is mainly used if you use the EDI module."
+#~ msgstr ""
+#~ "Gives the different ways to package the same product. This has no impact "
+#~ "on the picking order and is mainly used if you use the EDI module."
+
+#~ msgid "Gross Weight"
+#~ msgstr "Gross Weight"
+
+#~ msgid "Humanitarian Fund"
+#~ msgstr "Fonds Humanitaire"
+
+#~ msgid "I want to transfer the child"
+#~ msgstr "Je veux transférer l'enfant"
+
+#~ msgid "Income Account"
+#~ msgstr "Income Account"
+
+#~ msgid "Internal Category"
+#~ msgstr "Internal Category"
+
+#~ msgid "International Staff Care Fund"
+#~ msgstr "International Staff Care Fund"
+
+#~ msgid "Inventory Location"
+#~ msgstr "Inventory Location"
+
+#~ msgid "Kids Games Burkina Faso"
+#~ msgstr "Kids Games Burkina Faso"
+
+#~ msgid "LDP Fund"
+#~ msgstr "Fonds LDP"
+
+#~ msgid "LSV"
+#~ msgstr "LSV"
+
+#~ msgid "LSV 25th"
+#~ msgstr "LSV au 25"
+
+#~ msgid "LSV immediate"
+#~ msgstr "LSV immédiat"
+
+#~ msgid "LSV multi-months"
+#~ msgstr "LSV multi-mois"
+
+#~ msgid "Local projects"
+#~ msgstr "Projets locaux"
+
+#~ msgid "Logistical Units"
+#~ msgstr "Logistical Units"
+
+#~ msgid "Malaria Fund"
+#~ msgstr "Fonds Malaria"
+
+#~ msgid "Mandate Format"
+#~ msgstr "Format du mandat"
+
+#~ msgid "Measure Type"
+#~ msgstr "Measure Type"
+
+#~ msgid "Medical Fund"
+#~ msgstr "Fonds médical"
+
+#~ msgid "Muskathlon"
+#~ msgstr "Muskathlon"
+
+#~ msgid "Muttertagsgottesdienst - CSP"
+#~ msgstr "Muttertagsgottesdienst - CSP"
+
+#~ msgid "Muttertagsgottesdienst - GEN"
+#~ msgstr "Muttertagsgottesdienst - GEN"
+
+#~ msgid "Net Weight"
+#~ msgstr "Net Weight"
+
+#~ msgid "New Building Yverdon"
+#~ msgstr "Nouveaux bureaux à Yverdon"
+
+#~ msgid ""
+#~ "On behalf of of Raymond Girardet, we thank you for your donation \n"
+#~ "\t\t\twhich will allow him to realize his project."
+#~ msgstr ""
+#~ "On behalf of of Raymond Girardet, we thank you for your donation \n"
+#~ "\t\t\twhich will allow him to realize his project."
+
+#~ msgid "Payment frequency"
+#~ msgstr "Payment frequency"
+
+#~ msgid "Permanent Order"
+#~ msgstr "Ordre permanent"
+
+#~ msgid "Permanent order immediate"
+#~ msgstr "Ordre permanent immédiat"
+
+#~ msgid "Postfinance Direct Debit"
+#~ msgstr "Postfinance Direct Debit"
+
+#~ msgid "Postfinance Direct Debit 25th"
+#~ msgstr "Postfinance Débit Direct au 25"
+
+#~ msgid "Postfinance Direct Debit multi-months"
+#~ msgstr "Postfinance Débit Direct multi-mois"
+
+#~ msgid "Postfinance direct"
+#~ msgstr "Postfinance direct"
+
+#~ msgid "Postfinance direct debit"
+#~ msgstr "Postfinance direct debit"
+
+#~ msgid "Postfinance direct debit immediate"
+#~ msgstr "Postfinance débit direct immédiat"
+
+#~ msgid "Procurement Location"
+#~ msgstr "Procurement Location"
+
+#~ msgid "Product Attributes"
+#~ msgstr "Product Attributes"
+
+#~ msgid "Product Manager"
+#~ msgstr "Product Manager"
+
+#~ msgid "Product Type"
+#~ msgstr "Product Type"
+
+#~ msgid "Product category"
+#~ msgstr "Catégorie de Produit"
+
+#~ msgid "Production Location"
+#~ msgstr "Production Location"
+
+#~ msgid "Products"
+#~ msgstr "Products"
+
+#~ msgid "Professional Fund"
+#~ msgstr "Fonds professionnel"
+
+#~ msgid "Project \"Marathon des Sables\""
+#~ msgstr "Projet \"Marathon des Sables\""
+
+#~ msgid "Purchase Description"
+#~ msgstr "Purchase Description"
+
+#~ msgid "Purchase Unit of Measure"
+#~ msgstr "Purchase Unit of Measure"
+
+#~ msgid "Rack"
+#~ msgstr "Rack"
+
+#~ msgid "Relief Fund Philippines"
+#~ msgstr "Fonds d'assistance pour les Philippines"
+
+#~ msgid "Routes"
+#~ msgstr "Routes"
+
+#~ msgid "Row"
+#~ msgstr "Row"
+
+#~ msgid "Sale Description"
+#~ msgstr "Sale Description"
+
+#~ msgid "Sale Price"
+#~ msgstr "Sale Price"
+
+#~ msgid "Sawyer Water Filters for Ndeiya"
+#~ msgstr "Sawyer Water Filters for Ndeiya"
+
+#~ msgid "Select category for the current product"
+#~ msgstr "Select category for the current product"
+
+#~ msgid "Special gift"
+#~ msgstr "Cadeau spécial"
+
+#~ msgid ""
+#~ "Specify a unit of measure here if invoicing is made in another unit of "
+#~ "measure than inventory. Keep empty to use the default unit of measure."
+#~ msgstr ""
+#~ "Specify a unit of measure here if invoicing is made in another unit of "
+#~ "measure than inventory. Keep empty to use the default unit of measure."
+
+#~ msgid "Specify if the product can be selected in a sales order line."
+#~ msgstr "Specify if the product can be selected in a sales order line."
+
+#~ msgid "Sponsored child"
+#~ msgstr "Sponsored child"
+
+#~ msgid "Sponsorship Fund"
+#~ msgstr "Fonds Parrainage"
+
+#~ msgid ""
+#~ "Standard Price: The cost price is manually updated at the end of a "
+#~ "specific period (usually every year).\n"
+#~ "                    Average Price: The cost price is recomputed at each "
+#~ "incoming shipment and used for the product valuation.\n"
+#~ "                    Real Price: The cost price displayed is the price of "
+#~ "the last outgoing product (will be use in case of inventory loss for "
+#~ "example)."
+#~ msgstr ""
+#~ "Standard Price: The cost price is manually updated at the end of a "
+#~ "specific period (usually every year).\n"
+#~ "                    Average Price: The cost price is recomputed at each "
+#~ "incoming shipment and used for the product valuation.\n"
+#~ "                    Real Price: The cost price displayed is the price of "
+#~ "the last outgoing product (will be use in case of inventory loss for "
+#~ "example)."
+
+#~ msgid "Stock Input Account"
+#~ msgstr "Stock Input Account"
+
+#~ msgid "Stock Output Account"
+#~ msgstr "Stock Output Account"
+
+#~ msgid "Supplier"
+#~ msgstr "Supplier"
+
+#~ msgid "Supplier Taxes"
+#~ msgstr "Supplier Taxes"
+
+#~ msgid ""
+#~ "Thanks to the AIDS fund we can bring the necessary lifelong care to \n"
+#~ "\t\t\tthe HIV-infected sponsored children (antiretroviral therapy).\n"
+#~ "\t\t\tWe are very grateful to you for your support to this fund and \n"
+#~ "\t\t\tfor the great hope you offer to the sick children and their "
+#~ "families."
+#~ msgstr ""
+#~ "Thanks to the AIDS fund we can bring the necessary lifelong care to \n"
+#~ "\t\t\tthe HIV-infected sponsored children (antiretroviral therapy).\n"
+#~ "\t\t\tWe are very grateful to you for your support to this fund and \n"
+#~ "\t\t\tfor the great hope you offer to the sick children and their "
+#~ "families."
+
+#~ msgid ""
+#~ "Thanks to the Christmas Gift Fund, we can offer a Christmas gift to \n"
+#~ "\t\t\teach child registered in a Compassion center. It prevents "
+#~ "inequalities between the children \n"
+#~ "\t\t\tat least at this special time of the year.\n"
+#~ "\t\t\tWe are very grateful for your donation by which you share the joy "
+#~ "of Christmas with each \n"
+#~ "\t\t\tchild of Compassion."
+#~ msgstr ""
+#~ "Thanks to the Christmas Gift Fund, we can offer a Christmas gift to \n"
+#~ "\t\t\teach child registered in a Compassion center. It prevents "
+#~ "inequalities between the children \n"
+#~ "\t\t\tat least at this special time of the year.\n"
+#~ "\t\t\tWe are very grateful for your donation by which you share the joy "
+#~ "of Christmas with each \n"
+#~ "\t\t\tchild of Compassion."
+
+#~ msgid ""
+#~ "Thanks to the LDP Fund, we currently support 3 LDP students, Alfredo "
+#~ "and \n"
+#~ "\t\t\tHellen from Ecuador and Tamirat from Ethiopia. The Leadership "
+#~ "Development Program allows gifted young \n"
+#~ "\t\t\tChristian people who have arrived at the end of their sponsorship "
+#~ "to go to University and be trained \n"
+#~ "\t\t\tas Christian leaders. In the coming years, these young people will "
+#~ "be able to positively influence \n"
+#~ "\t\t\ttheir nation for God.\n"
+#~ "\t\t\tThrough your donation you are offering these students a chance for "
+#~ "a promising future and we are very \n"
+#~ "\t\t\tgrateful to you for your support."
+#~ msgstr ""
+#~ "Thanks to the LDP Fund, we currently support 3 LDP students, Alfredo "
+#~ "and \n"
+#~ "\t\t\tHellen from Ecuador and Tamirat from Ethiopia. The Leadership "
+#~ "Development Program allows gifted young \n"
+#~ "\t\t\tChristian people who have arrived at the end of their sponsorship "
+#~ "to go to University and be trained \n"
+#~ "\t\t\tas Christian leaders. In the coming years, these young people will "
+#~ "be able to positively influence \n"
+#~ "\t\t\ttheir nation for God.\n"
+#~ "\t\t\tThrough your donation you are offering these students a chance for "
+#~ "a promising future and we are very \n"
+#~ "\t\t\tgrateful to you for your support."
+
+#~ msgid ""
+#~ "Thanks to water filters and rehydratation kits, the families of \n"
+#~ "\t\t\tsponsored children can face this severe epidemic efficiently.\n"
+#~ "\t\t\tWe are very grateful to you for your contribution to this action "
+#~ "and for the help you \n"
+#~ "\t\t\ttherefore give the children and their families."
+#~ msgstr ""
+#~ "Thanks to water filters and rehydratation kits, the families of \n"
+#~ "tttsponsored children can face this severe epidemic efficiently.\n"
+#~ "tttWe are very grateful to you for your contribution to this action and "
+#~ "for the help you \n"
+#~ "ttttherefore give the children and their families."
+
+#~ msgid ""
+#~ "Thanks to your donation to Compassion Suisse we can continue to make \n"
+#~ "\t\t\tour work known in Switzerland and to improve our services to "
+#~ "sponsors, donors and sponsorchildren. \n"
+#~ "\t\t\tWe can offer a more efficient help to many needy children through "
+#~ "sponsorships and complementary \n"
+#~ "\t\t\tinterventions in the countries supported by Compassion."
+#~ msgstr ""
+#~ "Thanks to your donation to Compassion Suisse we can continue to make \n"
+#~ "\t\t\tour work known in Switzerland and to improve our services to "
+#~ "sponsors, donors and sponsorchildren. \n"
+#~ "\t\t\tWe can offer a more efficient help to many needy children through "
+#~ "sponsorships and complementary \n"
+#~ "\t\t\tinterventions in the countries supported by Compassion."
+
+#~ msgid ""
+#~ "Thanks to your donation to Compassion Suisse we can continue to make "
+#~ "our \n"
+#~ "\t\t\twork known in Switzerland and to improve our services to sponsors, "
+#~ "donors and sponsored children. \n"
+#~ "\t\t\tWe can offer a more efficient help to many needy children through "
+#~ "sponsorships and complementary \n"
+#~ "\t\t\tinterventions in the countries supported by Compassion."
+#~ msgstr ""
+#~ "Thanks to your donation to Compassion Suisse we can continue to make "
+#~ "our \n"
+#~ "\t\t\twork known in Switzerland and to improve our services to sponsors, "
+#~ "donors and sponsored children. \n"
+#~ "\t\t\tWe can offer a more efficient help to many needy children through "
+#~ "sponsorships and complementary \n"
+#~ "\t\t\tinterventions in the countries supported by Compassion."
+
+#~ msgid ""
+#~ "Thanks to your donation to the General Fund, through your help we can "
+#~ "offer \n"
+#~ "\t\t\ta concrete help and a new future to many children on the field and "
+#~ "restore hope in their lives."
+#~ msgstr ""
+#~ "Thanks to your donation to the General Fund, through your help we can "
+#~ "offer \n"
+#~ "\t\t\ta concrete help and a new future to many children on the field and "
+#~ "restore hope in their lives."
+
+#~ msgid ""
+#~ "Thanks to your donation to the humanitarian emergency fund, \n"
+#~ "\t\t\tyou make it possible for the Compassion staff to bring the needed "
+#~ "help immediately to \n"
+#~ "\t\t\tthe families of sponsored children who are touched by a natural "
+#~ "disaster, famine or \n"
+#~ "\t\t\tany other tragedy.\n"
+#~ "\t\t\tFood, covers, shelters and replacement of certains belongings are "
+#~ "commonly covered by this fund.\n"
+#~ "\n"
+#~ "\t\t\tYour support is essential and brings new hope to the families of "
+#~ "sponsorchildren, the staff \n"
+#~ "\t\t\tof Compassion and the partner churches."
+#~ msgstr ""
+#~ "Thanks to your donation to the humanitarian emergency fund, \n"
+#~ "\t\t\tyou make it possible for the Compassion staff to bring the needed "
+#~ "help immediately to \n"
+#~ "\t\t\tthe families of sponsored children who are touched by a natural "
+#~ "disaster, famine or \n"
+#~ "\t\t\tany other tragedy.\n"
+#~ "\t\t\tFood, covers, shelters and replacement of certains belongings are "
+#~ "commonly covered by this fund.\n"
+#~ "\n"
+#~ "\t\t\tYour support is essential and brings new hope to the families of "
+#~ "sponsorchildren, the staff \n"
+#~ "\t\t\tof Compassion and the partner churches."
+
+#~ msgid ""
+#~ "Thanks to your donation to the medical fund we can offer each \n"
+#~ "\t\t\tsponsored child affected by a serious illness the necessary medical "
+#~ "care and that way \n"
+#~ "\t\t\trestore both health and hope. Apart from this we can also finance "
+#~ "complementary interventions \n"
+#~ "\t\t\tsuch as a vaccination campaign for several Compassion centers, "
+#~ "distribution of mosquito nets \n"
+#~ "\t\t\tto families that are registered in the Compassion program."
+#~ msgstr ""
+#~ "Thanks to your donation to the medical fund we can offer each \n"
+#~ "\t\t\tsponsored child affected by a serious illness the necessary medical "
+#~ "care and that way \n"
+#~ "\t\t\trestore both health and hope. Apart from this we can also finance "
+#~ "complementary interventions \n"
+#~ "\t\t\tsuch as a vaccination campaign for several Compassion centers, "
+#~ "distribution of mosquito nets \n"
+#~ "\t\t\tto families that are registered in the Compassion program."
+
+#~ msgid ""
+#~ "Thanks to your donation you have subscribed to our magazine and you \n"
+#~ "\t\t\thelp us to cover the publishing costs. Our magazine is an important "
+#~ "communication tool and \n"
+#~ "\t\t\tallows us to make our work known and to sensibilise many people to "
+#~ "the cause of poor children.\n"
+#~ "\t\t\tWe are very grateful for your precious support."
+#~ msgstr ""
+#~ "Thanks to your donation you have subscribed to our magazine and you \n"
+#~ "\t\t\thelp us to cover the publishing costs. Our magazine is an important "
+#~ "communication tool and \n"
+#~ "\t\t\tallows us to make our work known and to sensibilise many people to "
+#~ "the cause of poor children.\n"
+#~ "\t\t\tWe are very grateful for your precious support."
+
+#~ msgid ""
+#~ "Thanks to your donation you support the Bible Fund, by which we can \n"
+#~ "\t\t\toffer a Bible to each child registered in a Compassion center. The "
+#~ "holistic development of the \n"
+#~ "\t\t\tchild is one of the principal values of Compassion. \n"
+#~ "\t\t\tYour support helps the child to grow spiritually, to strengthen his "
+#~ "faith and to receive a \n"
+#~ "\t\t\tprecious encouragement."
+#~ msgstr ""
+#~ "Thanks to your donation you support the Bible Fund, by which we can \n"
+#~ "\t\t\toffer a Bible to each child registered in a Compassion center. The "
+#~ "holistic development of the \n"
+#~ "\t\t\tchild is one of the principal values of Compassion. \n"
+#~ "\t\t\tYour support helps the child to grow spiritually, to strengthen his "
+#~ "faith and to receive a \n"
+#~ "\t\t\tprecious encouragement."
+
+#~ msgid ""
+#~ "Thanks to your donation, the families touched by the recent cyclone Aila "
+#~ "in \n"
+#~ "\t\t\tIndia and Bangladesh can receive a precious help. Compassion has "
+#~ "already started to bring support and \n"
+#~ "\t\t\tfood to the affected families and will start to work at the "
+#~ "rebuilding of damaged or destroyed centers \n"
+#~ "\t\t\tor houses as soon as possible.\n"
+#~ "\t\t\tYour support is essential and brings new hope to the families of "
+#~ "sponsored children, the staff of \n"
+#~ "\t\t\tCompassion and the partner churches."
+#~ msgstr ""
+#~ "Thanks to your donation, the families touched by the recent cyclone Aila "
+#~ "in \n"
+#~ "\t\t\tIndia and Bangladesh can receive a precious help. Compassion has "
+#~ "already started to bring support and \n"
+#~ "\t\t\tfood to the affected families and will start to work at the "
+#~ "rebuilding of damaged or destroyed centers \n"
+#~ "\t\t\tor houses as soon as possible.\n"
+#~ "\t\t\tYour support is essential and brings new hope to the families of "
+#~ "sponsored children, the staff of \n"
+#~ "\t\t\tCompassion and the partner churches."
+
+#~ msgid ""
+#~ "Thanks to your donation, the families touched by the terrible earthquake "
+#~ "in \n"
+#~ "\t\t\tHaiti can receive a precious help. Compassion is currently bringing "
+#~ "support and food to the affected \n"
+#~ "\t\t\tfamilies and giving them all the necessary support. The emergency "
+#~ "fund will also enable Compassion to \n"
+#~ "\t\t\trebuild damaged or destroyed centers by the disaster.\n"
+#~ "\t\t\tYour support is essential and represents a clear sign of hope to "
+#~ "the sponsored children, their \n"
+#~ "\t\t\tfamilies, the staff of Compassion and the partner churches in Haiti."
+#~ msgstr ""
+#~ "Thanks to your donation, the families touched by the terrible earthquake "
+#~ "in \n"
+#~ "\t\t\tHaiti can receive a precious help. Compassion is currently bringing "
+#~ "support and food to the affected \n"
+#~ "\t\t\tfamilies and giving them all the necessary support. The emergency "
+#~ "fund will also enable Compassion to \n"
+#~ "\t\t\trebuild damaged or destroyed centers by the disaster.\n"
+#~ "\t\t\tYour support is essential and represents a clear sign of hope to "
+#~ "the sponsored children, their \n"
+#~ "\t\t\tfamilies, the staff of Compassion and the partner churches in Haiti."
+
+#~ msgid ""
+#~ "Thanks to your donation, the families touched by the typhoon in \n"
+#~ "\t\t\tthe Philippines can receive a precious help. Compassion Philippines "
+#~ "continues to distribute \n"
+#~ "\t\t\tfood as well as first aid material and bring the necessary support "
+#~ "to all who have been affected \n"
+#~ "\t\t\tby the floods.\n"
+#~ "\n"
+#~ "\t\t\tYour support is essential and brings new hope to the families of "
+#~ "sponsored children, the staff \n"
+#~ "\t\t\tof Compassion and the partner churches."
+#~ msgstr ""
+#~ "Thanks to your donation, the families touched by the typhoon in \n"
+#~ "\t\t\tthe Philippines can receive a precious help. Compassion Philippines "
+#~ "continues to distribute \n"
+#~ "\t\t\tfood as well as first aid material and bring the necessary support "
+#~ "to all who have been affected \n"
+#~ "\t\t\tby the floods.\n"
+#~ "\n"
+#~ "\t\t\tYour support is essential and brings new hope to the families of "
+#~ "sponsored children, the staff \n"
+#~ "\t\t\tof Compassion and the partner churches."
+
+#~ msgid ""
+#~ "Thanks to your donation, the sponsored children and their families \n"
+#~ "\t\t\ttouched by the recent floods in Burkina Faso can receive a precious "
+#~ "help. Compassion Burkina \n"
+#~ "\t\t\tFaso has already started to bring support and food to the affected "
+#~ "families and will start to \n"
+#~ "\t\t\twork at the rebuilding of damaged or destroyed centers or houses as "
+#~ "soon as possible.\n"
+#~ "\t\t\tYour support is essential and is a real sign of hope for the "
+#~ "sponsored children, their families, \n"
+#~ "\t\t\tthe staff of Compassion and the partner churches."
+#~ msgstr ""
+#~ "Thanks to your donation, the sponsored children and their families \n"
+#~ "\t\t\ttouched by the recent floods in Burkina Faso can receive a precious "
+#~ "help. Compassion Burkina \n"
+#~ "\t\t\tFaso has already started to bring support and food to the affected "
+#~ "families and will start to \n"
+#~ "\t\t\twork at the rebuilding of damaged or destroyed centers or houses as "
+#~ "soon as possible.\n"
+#~ "\t\t\tYour support is essential and is a real sign of hope for the "
+#~ "sponsored children, their families, \n"
+#~ "\t\t\tthe staff of Compassion and the partner churches."
+
+#~ msgid ""
+#~ "Thanks to your donation, the sponsored children and their families "
+#~ "touched \n"
+#~ "\t\t\tby famine receive a precious help. Compassion distributes food to "
+#~ "the affected families but also \n"
+#~ "\t\t\tprovides formation and tools that help families to combat hunger on "
+#~ "a long term basis.\n"
+#~ "\t\t\tWe thank you so much for your generosity and for your interest "
+#~ "towards the poorest children and their \n"
+#~ "\t\t\tfamilies and for the hope that you give them through your support."
+#~ msgstr ""
+#~ "Thanks to your donation, the sponsored children and their families "
+#~ "touched \n"
+#~ "\t\t\tby famine receive a precious help. Compassion distributes food to "
+#~ "the affected families but also \n"
+#~ "\t\t\tprovides formation and tools that help families to combat hunger on "
+#~ "a long term basis.\n"
+#~ "\t\t\tWe thank you so much for your generosity and for your interest "
+#~ "towards the poorest children and their \n"
+#~ "\t\t\tfamilies and for the hope that you give them through your support."
+
+#~ msgid ""
+#~ "Thanks to your donation, you help us to finance our calendar which \n"
+#~ "\t\t\tis a precious communication tool to make our work known in many "
+#~ "households during the year. \n"
+#~ "\t\t\tWe also can offer a concrete help and a new future to many children "
+#~ "on the field and restore \n"
+#~ "\t\t\thope in their lives.\n"
+#~ "\n"
+#~ "\t\t\tWe thank you very much for your support."
+#~ msgstr ""
+#~ "Thanks to your donation, you help us to finance our calendar which \n"
+#~ "\t\t\tis a precious communication tool to make our work known in many "
+#~ "households during the year. \n"
+#~ "\t\t\tWe also can offer a concrete help and a new future to many children "
+#~ "on the field and restore \n"
+#~ "\t\t\thope in their lives.\n"
+#~ "\n"
+#~ "\t\t\tWe thank you very much for your support."
+
+#~ msgid ""
+#~ "Thanks to your donation. It allows us to finance water disinfection \n"
+#~ "\t\t\tproject to provide sponsored children, their families, their "
+#~ "community and villages with \n"
+#~ "\t\t\tdrinking water, in the poorest regions of the world.\n"
+#~ "\t\t\tThis help would not be possible without you and we are very "
+#~ "grateful for your support."
+#~ msgstr ""
+#~ "Thanks to your donation. It allows us to finance water disinfection \n"
+#~ "\t\t\tproject to provide sponsored children, their families, their "
+#~ "community and villages with \n"
+#~ "\t\t\tdrinking water, in the poorest regions of the world.\n"
+#~ "\t\t\tThis help would not be possible without you and we are very "
+#~ "grateful for your support."
+
+#~ msgid ""
+#~ "Thanks to your donation. It allows us to finance water filters \n"
+#~ "\t\t\tto provide sponsored children, their families, their community and "
+#~ "villages with drinking \n"
+#~ "\t\t\twater, in the poorest regions of the world.\n"
+#~ "\t\t\tThis help would not be possible without you and we are very "
+#~ "grateful for your support."
+#~ msgstr ""
+#~ "Thanks to your donation. It allows us to finance water filters \n"
+#~ "tttto provide sponsored children, their families, their community and "
+#~ "villages with drinking \n"
+#~ "tttwater, in the poorest regions of the world.\n"
+#~ "tttThis help would not be possible without you and we are very grateful "
+#~ "for your support."
+
+#~ msgid ""
+#~ "Thanks to your gift that will be entirely allocated to them, the family "
+#~ "of \n"
+#~ "\t\t\tyour sponsored child will receive a precious additional help to "
+#~ "cover their special needs and to \n"
+#~ "\t\t\timprove their living conditions.\n"
+#~ "\t\t\tWe are very grateful for your complementary support to your "
+#~ "sponsored child and his family that \n"
+#~ "\t\t\tbrings more hope and great encouragement to them."
+#~ msgstr ""
+#~ "Thanks to your gift that will be entirely allocated to them, the family "
+#~ "of \n"
+#~ "tttyour sponsored child will receive a precious additional help to cover "
+#~ "their special needs and to \n"
+#~ "tttimprove their living conditions.\n"
+#~ "tttWe are very grateful for your complementary support to your sponsored "
+#~ "child and his family that \n"
+#~ "tttbrings more hope and great encouragement to them."
+
+#~ msgid "The 4th Musketeer Fund"
+#~ msgstr "The 4th Musketeer Fund"
+
+#~ msgid ""
+#~ "The CSP Fund  (Child Survival Program) allows us to support 3 CSP "
+#~ "centers,\n"
+#~ "\t\t\ttwo in Haiti and one in Ecuador. Each CSP center welcomes around 30 "
+#~ "mothers and their babies and \n"
+#~ "\t\t\tpregnant women. These women receive training, practical assistance, "
+#~ "food, thorough medical checks \n"
+#~ "\t\t\ton a regular basis and Bible lessons.\n"
+#~ "\n"
+#~ "\t\t\tWe are very grateful to you for your interest towards mothers and "
+#~ "their babies and for the hope you \n"
+#~ "\t\t\tare bringing to them through your help."
+#~ msgstr ""
+#~ "The CSP Fund  (Child Survival Program) allows us to support 3 CSP "
+#~ "centers,\n"
+#~ "\t\t\ttwo in Haiti and one in Ecuador. Each CSP center welcomes around 30 "
+#~ "mothers and their babies and \n"
+#~ "\t\t\tpregnant women. These women receive training, practical assistance, "
+#~ "food, thorough medical checks \n"
+#~ "\t\t\ton a regular basis and Bible lessons.\n"
+#~ "\n"
+#~ "\t\t\tWe are very grateful to you for your interest towards mothers and "
+#~ "their babies and for the hope you \n"
+#~ "\t\t\tare bringing to them through your help."
+
+#~ msgid ""
+#~ "The average delay in days between the confirmation of the customer order "
+#~ "and the delivery of the finished products. It's the time you promise to "
+#~ "your customers."
+#~ msgstr ""
+#~ "The average delay in days between the confirmation of the customer order "
+#~ "and the delivery of the finished products. It's the time you promise to "
+#~ "your customers."
+
+#~ msgid "The gross weight in Kg."
+#~ msgstr "The gross weight in Kg."
+
+#~ msgid "The net weight in Kg."
+#~ msgstr "The net weight in Kg."
+
+#~ msgid ""
+#~ "The professional fund allows many young sponsored people to receive \n"
+#~ "\t\t\ta professional training before they finish the sponsorship "
+#~ "program.\n"
+#~ "\t\t\tThanks to your support we can continue to offer this service on a "
+#~ "long-term basis and we are \n"
+#~ "\t\t\tvery grateful to you for your help."
+#~ msgstr ""
+#~ "The professional fund allows many young sponsored people to receive \n"
+#~ "\t\t\ta professional training before they finish the sponsorship "
+#~ "program.\n"
+#~ "\t\t\tThanks to your support we can continue to offer this service on a "
+#~ "long-term basis and we are \n"
+#~ "\t\t\tvery grateful to you for your help."
+
+#~ msgid "The volume in m3."
+#~ msgstr "The volume in m3."
+
+#~ msgid ""
+#~ "This account will be used for invoices instead of the default one to "
+#~ "value expenses for the current product."
+#~ msgstr ""
+#~ "This account will be used for invoices instead of the default one to "
+#~ "value expenses for the current product."
+
+#~ msgid ""
+#~ "This account will be used for invoices instead of the default one to "
+#~ "value sales for the current product."
+#~ msgstr ""
+#~ "This account will be used for invoices instead of the default one to "
+#~ "value sales for the current product."
+
+#~ msgid ""
+#~ "This stock location will be used, instead of the default one, as the "
+#~ "source location for stock moves generated by manufacturing orders."
+#~ msgstr ""
+#~ "This stock location will be used, instead of the default one, as the "
+#~ "source location for stock moves generated by manufacturing orders."
+
+#~ msgid ""
+#~ "This stock location will be used, instead of the default one, as the "
+#~ "source location for stock moves generated by procurements."
+#~ msgstr ""
+#~ "This stock location will be used, instead of the default one, as the "
+#~ "source location for stock moves generated by procurements."
+
+#~ msgid ""
+#~ "This stock location will be used, instead of the default one, as the "
+#~ "source location for stock moves generated when you do an inventory."
+#~ msgstr ""
+#~ "This stock location will be used, instead of the default one, as the "
+#~ "source location for stock moves generated when you do an inventory."
+
+#~ msgid "Unit of Measure"
+#~ msgstr "Unit of Measure"
+
+#~ msgid "Unit of Measure -> UOS Coeff"
+#~ msgstr "Unit of Measure -> UOS Coeff"
+
+#~ msgid "Unit of Sale"
+#~ msgstr "Unit of Sale"
+
+#~ msgid "Unsponsored Children Fund"
+#~ msgstr "Fonds pour les enfants non-parrainés"
+
+#~ msgid "Volume"
+#~ msgstr "Volume"
+
+#~ msgid "Warranty"
+#~ msgstr "Warranty"
+
+#~ msgid "Web Payment"
+#~ msgstr "Paiement Web"
+
+#~ msgid "Web Payment Immediate"
+#~ msgstr "Paiement Web Immédiat"
+
+#~ msgid ""
+#~ "When doing real-time inventory valuation, counterpart journal items for "
+#~ "all incoming stock moves will be posted in this account, unless there is "
+#~ "a specific valuation account set on the source location. When not set on "
+#~ "the product, the one from the product category is used."
+#~ msgstr ""
+#~ "When doing real-time inventory valuation, counterpart journal items for "
+#~ "all incoming stock moves will be posted in this account, unless there is "
+#~ "a specific valuation account set on the source location. When not set on "
+#~ "the product, the one from the product category is used."
+
+#~ msgid ""
+#~ "When doing real-time inventory valuation, counterpart journal items for "
+#~ "all outgoing stock moves will be posted in this account, unless there is "
+#~ "a specific valuation account set on the destination location. When not "
+#~ "set on the product, the one from the product category is used."
+#~ msgstr ""
+#~ "When doing real-time inventory valuation, counterpart journal items for "
+#~ "all outgoing stock moves will be posted in this account, unless there is "
+#~ "a specific valuation account set on the destination location. When not "
+#~ "set on the product, the one from the product category is used."
+
+#~ msgid ""
+#~ "With your donation, you support the CSP (child survival program) in \n"
+#~ "\t\t\tEcuador. The center welcomes around 30 mothers and their babies and "
+#~ "pregnant women. These women \n"
+#~ "\t\t\treceive training, practical assistance, food, thorough medical "
+#~ "checks on a regular basis and Bible lessons.\n"
+#~ "\n"
+#~ "\t\t\tWe are very grateful to you for your interest towards mothers and "
+#~ "their babies and for the hope you \n"
+#~ "\t\t\tare bringing to them through your help."
+#~ msgstr ""
+#~ "With your donation, you support the CSP (child survival program) in \n"
+#~ "\t\t\tEcuador. The center welcomes around 30 mothers and their babies and "
+#~ "pregnant women. These women \n"
+#~ "\t\t\treceive training, practical assistance, food, thorough medical "
+#~ "checks on a regular basis and Bible lessons.\n"
+#~ "\n"
+#~ "\t\t\tWe are very grateful to you for your interest towards mothers and "
+#~ "their babies and for the hope you \n"
+#~ "\t\t\tare bringing to them through your help."
+
+#~ msgid ""
+#~ "With your donation, you support the CSP (child survival program) in \n"
+#~ "\t\t\tHaiti. The center welcomes around 30 mothers and their babies and "
+#~ "pregnant women. These women \n"
+#~ "\t\t\treceive training, practical assistance, food, thorough medical "
+#~ "checks on a regular basis and Bible lessons.\n"
+#~ "\n"
+#~ "\t\t\tWe are very grateful to you for your interest towards mothers and "
+#~ "their babies and for the hope you \n"
+#~ "\t\t\tare bringing to them through your help."
+#~ msgstr ""
+#~ "With your donation, you support the CSP (child survival program) in \n"
+#~ "\t\t\tHaiti. The center welcomes around 30 mothers and their babies and "
+#~ "pregnant women. These women \n"
+#~ "\t\t\treceive training, practical assistance, food, thorough medical "
+#~ "checks on a regular basis and Bible lessons.\n"
+#~ "\n"
+#~ "\t\t\tWe are very grateful to you for your interest towards mothers and "
+#~ "their babies and for the hope you \n"
+#~ "\t\t\tare bringing to them through your help."
+
+#~ msgid ""
+#~ "Your donation to the \"Unsponsored Children Fund\" unlocks the benefits \n"
+#~ "\t\t\tof Compassion's program for children who have been registered but "
+#~ "not yet been sponsored. Your \n"
+#~ "\t\t\tgift to this fund also encourages parents and program staff as they "
+#~ "see Compassion benefits at \n"
+#~ "\t\t\twork for the children they love, even as they wait — and hope — for "
+#~ "sponsors.\n"
+#~ "\n"
+#~ "\t\t\tWe thank you very much for your precious support."
+#~ msgstr ""
+#~ "Your donation to the \"Unsponsored Children Fund\" unlocks the benefits \n"
+#~ "\t\t\tof Compassion's program for children who have been registered but "
+#~ "not yet been sponsored. Your \n"
+#~ "\t\t\tgift to this fund also encourages parents and program staff as they "
+#~ "see Compassion benefits at \n"
+#~ "\t\t\twork for the children they love, even as they wait — and hope — for "
+#~ "sponsors.\n"
+#~ "\n"
+#~ "\t\t\tWe thank you very much for your precious support."
+
+#~ msgid ""
+#~ "Your support helps the organizer of the Kids Games to plan this event \n"
+#~ "\t\t\tfor the first time in Burkina Faso. Your support also helps many of "
+#~ "the children in the sponsorship \n"
+#~ "\t\t\tprogram to take part of this event."
+#~ msgstr ""
+#~ "Your support helps the organizer of the Kids Games to plan this event \n"
+#~ "\t\t\tfor the first time in Burkina Faso. Your support also helps many of "
+#~ "the children in the sponsorship \n"
+#~ "\t\t\tprogram to take part of this event."
+
+#~ msgid ""
+#~ "['|', '|', '|', '|', '|', '|',\n"
+#~ "                             ('reference','ilike',self),\n"
+#~ "                             ('partner_id','child_of',self),\n"
+#~ "                             ('payment_term_id', 'ilike', self),\n"
+#~ "                             ('partner_codega', 'ilike', self),\n"
+#~ "                             ('child_code', 'ilike', self),\n"
+#~ "                             ('child_name', 'ilike', self),\n"
+#~ "                             ('origin_id', 'ilike', self),\n"
+#~ "                            ]"
+#~ msgstr ""
+#~ "['|', '|', '|', '|', '|', '|',\n"
+#~ "                             ('reference','ilike',self),\n"
+#~ "                             ('partner_id','child_of',self),\n"
+#~ "                             ('payment_term_id', 'ilike', self),\n"
+#~ "                             ('partner_codega', 'ilike', self),\n"
+#~ "                             ('child_code', 'ilike', self),\n"
+#~ "                             ('child_name', 'ilike', self),\n"
+#~ "                             ('origin_id', 'ilike', self),\n"
+#~ "                            ]"
+
+#~ msgid ""
+#~ "[('is_active', '=', True), ('state', 'not in', "
+#~ "('cancelled','terminated'))]"
+#~ msgstr ""
+#~ "[('is_active', '=', True), ('state', 'not in', "
+#~ "('cancelled','terminated'))]"
+
+#~ msgid ""
+#~ "blue:state == 'draft';red:state == 'mandate';green:state == 'waiting';"
+#~ "black:state == 'active';gray:state in ('terminated','cancelled')"
+#~ msgstr ""
+#~ "blue:state == 'draft';red:state == 'mandate';green:state == 'waiting';"
+#~ "black:state == 'active';gray:state in ('terminated','cancelled')"
+
+#~ msgid "draft,active,waiting,terminated"
+#~ msgstr "draft,active,waiting,terminated"
+
+#~ msgid "waiting,active"
+#~ msgstr "waiting,active"
 
 #~ msgid "Monthly"
 #~ msgstr "Mensuelle"
-
-#~ msgid "Annual"
-#~ msgstr "Annuelle"
 
 #~ msgid "Bimonthly"
 #~ msgstr "Bimensuelle"
@@ -641,1295 +2419,3 @@ msgstr "En attente du mandat"
 
 #~ msgid "Frequency"
 #~ msgstr "Fréquence"
-
-#. module: recurring_contract
-#: model:product.template,name:contract_compassion.product_template_fund_ovc
-msgid "\"Highly Vulnerable Children\" Fund"
-msgstr "\"Highly Vulnerable Children\" Fund"
-
-#. module: recurring_contract
-#: model:product.template,name:contract_compassion.product_template_fund_sm
-msgid "\"Stop Mosquitoes\" campaign"
-msgstr "Campagne \"Stop Mosquitoes\""
-
-#. module: recurring_contract
-#: model:product.template,name:contract_compassion.product_template_fund_wtp
-msgid "\"Water for the children\" Fund"
-msgstr "Fonds \"De l'eau pour les enfants\""
-
-#. module: recurring_contract
-#: model:product.template,name:contract_compassion.product_template_fund_wol
-msgid "\"Water of Life\" - Water filter fund"
-msgstr "\"De l'eau pour la vie\" - Fonds pour les filtres à eau"
-
-#. module: recurring_contract
-#: field:product.product,product_variant_count:0
-msgid "# of Product Variants"
-msgstr "# of Product Variants"
-
-#. module: recurring_contract
-#: help:product.product,description_sale:0
-msgid "A description of the Product that you want to communicate to your customers. This description will be copied to every Sale Order, Delivery Order and Customer Invoice/Refund"
-msgstr "A description of the Product that you want to communicate to your customers. This description will be copied to every Sale Order, Delivery Order and Customer Invoice/Refund"
-
-#. module: recurring_contract
-#: help:product.product,description_purchase:0
-msgid "A description of the Product that you want to communicate to your suppliers. This description will be copied to every Purchase Order, Receipt and Supplier Invoice/Refund."
-msgstr "A description of the Product that you want to communicate to your suppliers. This description will be copied to every Purchase Order, Receipt and Supplier Invoice/Refund."
-
-#. module: recurring_contract
-#: help:product.product,description:0
-msgid "A precise description of the Product, used only for internal information purposes."
-msgstr "A precise description of the Product, used only for internal information purposes."
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_aid
-msgid "AIDS/HIV Fund"
-msgstr "Fonds SIDA/HIV"
-
-#. module: recurring_contract
-#: view:recurring.contract.activate.wizard:recurring_contract.view_activate_sponsorship
-msgid "Activate"
-msgstr "Activer"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_any
-msgid "Anonymous donations"
-msgstr "Dons anonymes"
-
-#. module: recurring_contract
-#: model:account.payment.term,name:recurring_contract.payment_term_bvr
-msgid "BVR"
-msgstr "BVR"
-
-#. module: recurring_contract
-#: model:account.payment.term,note:recurring_contract.payment_term_bvr
-msgid "BVR immediate"
-msgstr "BVR immédiat"
-
-#. module: recurring_contract
-#: model:account.payment.term,name:recurring_contract.payment_term_virement
-msgid "Bank Transfer"
-msgstr "Virement Bancaire"
-
-#. module: recurring_contract
-#: model:account.payment.term,note:recurring_contract.payment_term_virement
-msgid "Bank Transfer Immediate"
-msgstr "Virement bancaire Immédiat"
-
-#. module: recurring_contract
-#: help:product.product,list_price:0
-msgid "Base price to compute the customer price. Sometimes called the catalog price."
-msgstr "Base price to compute the customer price. Sometimes called the catalog price."
-
-#. module: recurring_contract
-#: selection:account.banking.mandate,format:0
-msgid "Basic Mandate"
-msgstr "Mandat de base"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_bib
-msgid "Bible Fund"
-msgstr "Fonds pour les bibles"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_bli
-msgid "Blind Children Fund"
-msgstr "Fonds enfants aveugles"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_c20
-msgid "CSP EC-C20 in Ecuador"
-msgstr "CSP EC-C20 en Equateur"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_c13
-msgid "CSP HA-C13 in Haiti"
-msgstr "CSP HA-C13 à Haiti"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_c46
-msgid "CSP HA-C46 in Haiti"
-msgstr "CSP HA-C46 à Haiti"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_cal
-msgid "Calendar"
-msgstr "Calendrier"
-
-#. module: recurring_contract
-#: field:product.product,rental:0
-msgid "Can be Rent"
-msgstr "Can be Rent"
-
-#. module: recurring_contract
-#: field:product.product,sale_ok:0
-msgid "Can be Sold"
-msgstr "Can be Sold"
-
-#. module: recurring_contract
-#: field:product.product,loc_case:0
-msgid "Case"
-msgstr "Case"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_csp
-msgid "Child Survival Program"
-msgstr "Child Survival Program"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_kdo
-msgid "Child gift"
-msgstr "Cadeau enfant"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_haf
-msgid "Cholera in Haiti - Filter action"
-msgstr "Haïti - Action filtres"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_nol
-msgid "Christmas Gift Fund"
-msgstr "Fonds cadeaux de Noël"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_c3b
-msgid "Cicerolandia BR473 project Fund - supported by C3"
-msgstr "Cicerolandia BR473 project Fund - supported by C3"
-
-#. module: recurring_contract
-#: help:product.product,uos_coeff:0
-msgid ""
-"Coefficient to convert default Unit of Measure to Unit of Sale\n"
-" uos = uom * coeff"
-msgstr ""
-"Coefficient to convert default Unit of Measure to Unit of Sale\n"
-" uos = uom * coeff"
-
-#. module: recurring_contract
-#: field:product.product,company_id:0
-msgid "Company"
-msgstr "Company"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_anl
-msgid "Compassion Suisse"
-msgstr "Compassion Suisse"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_don
-msgid "Compassion Suisse grant"
-msgstr "Fonds Compassion Suisse"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_mag
-msgid "Compassion magazine"
-msgstr "Magazine Compassion"
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_ovc
-msgid ""
-"Compassion's Highly Vulnerable Children's Fund provides food, \n"
-"\t\t\tclothing and a nurturing Christian home environment to children in poverty who are orphans \n"
-"\t\t\tor who have no adult caretakers."
-msgstr ""
-"Compassion's Highly Vulnerable Children's Fund provides food, \n"
-"\t\t\tclothing and a nurturing Christian home environment to children in poverty who are orphans \n"
-"\t\t\tor who have no adult caretakers."
-
-#. module: recurring_contract
-#: help:product.product,type:0
-msgid ""
-"Consumable: Will not imply stock management for this product. \n"
-"Stockable product: Will imply stock management for this product."
-msgstr ""
-"Consumable: Will not imply stock management for this product. \n"
-"Stockable product: Will imply stock management for this product."
-
-#. module: recurring_contract
-#: view:recurring.contract.activate.wizard:recurring_contract.view_activate_sponsorship
-msgid "Contract activation"
-msgstr "Activation"
-
-#. module: recurring_contract
-#: field:product.product,standard_price:0
-msgid "Cost Price"
-msgstr "Cost Price"
-
-#. module: recurring_contract
-#: help:product.product,standard_price:0
-msgid "Cost price of the product template used for standard stock valuation in accounting and used as a base price on purchase orders. Expressed in the default unit of measure of the product."
-msgstr "Cost price of the product template used for standard stock valuation in accounting and used as a base price on purchase orders. Expressed in the default unit of measure of the product."
-
-#. module: recurring_contract
-#: field:product.product,cost_method:0
-msgid "Costing Method"
-msgstr "Costing Method"
-
-#. module: recurring_contract
-#: field:end.contract.wizard,transfer_country_id:0
-msgid "Country"
-msgstr "Pays"
-
-#. module: recurring_contract
-#: field:end.contract.wizard,create_uid:0
-#: field:recurring.contract.activate.wizard,create_uid:0
-#: field:recurring.contract.origin,create_uid:0
-msgid "Created by"
-msgstr "Créé par"
-
-#. module: recurring_contract
-#: field:end.contract.wizard,create_date:0
-#: field:recurring.contract.activate.wizard,create_date:0
-#: field:recurring.contract.origin,create_date:0
-msgid "Created on"
-msgstr "Créé le"
-
-#. module: recurring_contract
-#: view:recurring.contract:recurring_contract.view_recurring_contract_form_compassion
-msgid "Creation date"
-msgstr "Date de création"
-
-#. module: recurring_contract
-#: field:product.product,sale_delay:0
-msgid "Customer Lead Time"
-msgstr "Customer Lead Time"
-
-#. module: recurring_contract
-#: field:product.product,taxes_id:0
-msgid "Customer Taxes"
-msgstr "Customer Taxes"
-
-#. module: recurring_contract
-#: help:product.product,uom_id:0
-msgid "Default Unit of Measure used for all stock operation."
-msgstr "Default Unit of Measure used for all stock operation."
-
-#. module: recurring_contract
-#: help:product.product,uom_po_id:0
-msgid "Default Unit of Measure used for purchase orders. It must be in the same category than the default unit of measure."
-msgstr "Default Unit of Measure used for purchase orders. It must be in the same category than the default unit of measure."
-
-#. module: recurring_contract
-#: help:product.product,route_ids:0
-msgid "Depending on the modules installed, this will allow you to define the route of the product: whether it will be bought, manufactured, MTO/MTS,..."
-msgstr "Depending on the modules installed, this will allow you to define the route of the product: whether it will be bought, manufactured, MTO/MTS,..."
-
-#. module: recurring_contract
-#: field:product.product,description:0
-msgid "Description"
-msgstr "Description"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_hai
-msgid "Disaster Fund Haiti"
-msgstr "Fonds catastrophe à Haïti"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_ind
-msgid "Disaster Fund India"
-msgstr "Fonds catastrophe en Inde"
-
-#. module: recurring_contract
-#: field:end.contract.wizard,display_name:0
-#: field:product.product,display_name:0
-#: field:recurring.contract.activate.wizard,display_name:0
-#: field:recurring.contract.origin,display_name:0
-msgid "Display Name"
-msgstr "Display Name"
-
-#. module: recurring_contract
-#: view:end.contract.wizard:recurring_contract.end_contract_view
-#: model:ir.actions.act_window,name:recurring_contract.action_end_contract
-msgid "End contract"
-msgstr "Terminer engagement"
-
-#. module: recurring_contract
-#: view:end.contract.wizard:recurring_contract.end_contract_view
-msgid "End of contract"
-msgstr "Fin de l'engagement"
-
-#. module: recurring_contract
-#: field:end.contract.wizard,end_reason:0
-msgid "End reason"
-msgstr "Motif de fin"
-
-#. module: recurring_contract
-#: field:product.product,property_account_expense:0
-msgid "Expense Account"
-msgstr "Expense Account"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_fam
-msgid "Famine Fund"
-msgstr "Fonds contre la famine"
-
-#. module: recurring_contract
-#: view:recurring.contract:recurring_contract.view_recurring_contract_compassion_filter
-msgid "Finished"
-msgstr "Terminé"
-
-#. module: recurring_contract
-#: model:ir.actions.act_window,name:recurring_contract.action_activate_contract
-msgid "Force activation"
-msgstr "Force activation"
-
-#. module: recurring_contract
-#: help:product.product,track_all:0
-msgid "Forces to specify a Serial Number on each and every operation related to this product"
-msgstr "Forces to specify a Serial Number on each and every operation related to this product"
-
-#. module: recurring_contract
-#: field:product.product,track_all:0
-msgid "Full Lots Traceability"
-msgstr "Full Lots Traceability"
-
-#. module: recurring_contract
-#: model:product.category,name:recurring_contract.product_category_fund
-msgid "Fund"
-msgstr "Fonds non désigné"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_bfa
-msgid "Fund \"Floods in Burkina Faso\""
-msgstr "Fonds \"Inondations au Burkina Faso\""
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_gen
-msgid "General Fund"
-msgstr "Fonds Général"
-
-#. module: recurring_contract
-#: help:product.product,packaging_ids:0
-msgid "Gives the different ways to package the same product. This has no impact on the picking order and is mainly used if you use the EDI module."
-msgstr "Gives the different ways to package the same product. This has no impact on the picking order and is mainly used if you use the EDI module."
-
-#. module: recurring_contract
-#: field:product.product,weight:0
-msgid "Gross Weight"
-msgstr "Gross Weight"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_urg
-msgid "Humanitarian Fund"
-msgstr "Fonds Humanitaire"
-
-#. module: recurring_contract
-#: field:end.contract.wizard,do_transfer:0
-msgid "I want to transfer the child"
-msgstr "Je veux transférer l'enfant"
-
-#. module: recurring_contract
-#: field:end.contract.wizard,id:0
-#: field:recurring.contract.activate.wizard,id:0
-#: field:recurring.contract.origin,id:0
-msgid "ID"
-msgstr "ID"
-
-#. module: recurring_contract
-#: field:product.product,property_account_income:0
-msgid "Income Account"
-msgstr "Income Account"
-
-#. module: recurring_contract
-#: field:product.product,categ_id:0
-msgid "Internal Category"
-msgstr "Internal Category"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_isc
-msgid "International Staff Care Fund"
-msgstr "International Staff Care Fund"
-
-#. module: recurring_contract
-#: field:product.product,property_stock_inventory:0
-msgid "Inventory Location"
-msgstr "Inventory Location"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_kgs
-msgid "Kids Games Burkina Faso"
-msgstr "Kids Games Burkina Faso"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_ldp
-msgid "LDP Fund"
-msgstr "Fonds LDP"
-
-#. module: recurring_contract
-#: model:account.payment.term,name:recurring_contract.payment_term_lsv
-#: model:account.payment.term,note:recurring_contract.payment_term_lsv_25th
-#: model:account.payment.term,note:recurring_contract.payment_term_lsv_multi_months
-msgid "LSV"
-msgstr "LSV"
-
-#. module: recurring_contract
-#: model:account.payment.term,name:recurring_contract.payment_term_lsv_25th
-msgid "LSV 25th"
-msgstr "LSV au 25"
-
-#. module: recurring_contract
-#: model:account.payment.term,note:recurring_contract.payment_term_lsv
-msgid "LSV immediate"
-msgstr "LSV immédiat"
-
-#. module: recurring_contract
-#: model:account.payment.term,name:recurring_contract.payment_term_lsv_multi_months
-msgid "LSV multi-months"
-msgstr "LSV multi-mois"
-
-#. module: recurring_contract
-#: field:end.contract.wizard,__last_update:0
-#: field:product.product,__last_update:0
-#: field:recurring.contract.activate.wizard,__last_update:0
-msgid "Last Modified on"
-msgstr "Last Modified on"
-
-#. module: recurring_contract
-#: field:end.contract.wizard,write_uid:0
-#: field:recurring.contract.activate.wizard,write_uid:0
-msgid "Last Updated by"
-msgstr "Modifié par"
-
-#. module: recurring_contract
-#: field:end.contract.wizard,write_date:0
-#: field:recurring.contract.activate.wizard,write_date:0
-msgid "Last Updated on"
-msgstr "Modifié le"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_loc
-msgid "Local projects"
-msgstr "Projets locaux"
-
-#. module: recurring_contract
-#: field:product.product,packaging_ids:0
-msgid "Logistical Units"
-msgstr "Logistical Units"
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_sm
-msgid "Malaria Fund"
-msgstr "Fonds Malaria"
-
-#. module: recurring_contract
-#: field:account.banking.mandate,format:0
-msgid "Mandate Format"
-msgstr "Format du mandat"
-
-#. module: recurring_contract
-#: field:product.product,mes_type:0
-msgid "Measure Type"
-msgstr "Measure Type"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_med
-msgid "Medical Fund"
-msgstr "Fonds médical"
-
-#. module: recurring_contract
-#: field:recurring.contract,months_paid:0
-msgid "Months paid"
-msgstr "Mois payés"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_4mu
-msgid "Muskathlon"
-msgstr "Muskathlon"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_muttcsp
-msgid "Muttertagsgottesdienst - CSP"
-msgstr "Muttertagsgottesdienst - CSP"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_muttgen
-msgid "Muttertagsgottesdienst - GEN"
-msgstr "Muttertagsgottesdienst - GEN"
-
-#. module: recurring_contract
-#: field:product.product,name:0
-msgid "Name"
-msgstr "Name"
-
-#. module: recurring_contract
-#: field:product.product,weight_net:0
-msgid "Net Weight"
-msgstr "Net Weight"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_new
-msgid "New Building Yverdon"
-msgstr "Nouveaux bureaux à Yverdon"
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_mds
-msgid ""
-"On behalf of of Raymond Girardet, we thank you for your donation \n"
-"\t\t\twhich will allow him to realize his project."
-msgstr ""
-"On behalf of of Raymond Girardet, we thank you for your donation \n"
-"\t\t\twhich will allow him to realize his project."
-
-#. module: recurring_contract
-#: field:recurring.contract,group_freq:0
-msgid "Payment frequency"
-msgstr "Payment frequency"
-
-#. module: recurring_contract
-#: model:account.payment.term,name:recurring_contract.payment_term_permanent_order
-msgid "Permanent Order"
-msgstr "Ordre permanent"
-
-#. module: recurring_contract
-#: model:account.payment.term,note:recurring_contract.payment_term_permanent_order
-msgid "Permanent order immediate"
-msgstr "Ordre permanent immédiat"
-
-#. module: recurring_contract
-#: model:account.payment.term,name:recurring_contract.payment_term_postfinance_dd
-msgid "Postfinance Direct Debit"
-msgstr "Postfinance Direct Debit"
-
-#. module: recurring_contract
-#: model:account.payment.term,name:recurring_contract.payment_term_postfinance_dd_25th
-msgid "Postfinance Direct Debit 25th"
-msgstr "Postfinance Débit Direct au 25"
-
-#. module: recurring_contract
-#: model:account.payment.term,name:recurring_contract.payment_term_postfinance_dd_multi_months
-msgid "Postfinance Direct Debit multi-months"
-msgstr "Postfinance Débit Direct multi-mois"
-
-#. module: recurring_contract
-#: model:account.payment.term,note:recurring_contract.payment_term_postfinance_dd_multi_months
-msgid "Postfinance direct"
-msgstr "Postfinance direct"
-
-#. module: recurring_contract
-#: model:account.payment.term,note:recurring_contract.payment_term_postfinance_dd_25th
-msgid "Postfinance direct debit"
-msgstr "Postfinance direct debit"
-
-#. module: recurring_contract
-#: model:account.payment.term,note:recurring_contract.payment_term_postfinance_dd
-msgid "Postfinance direct debit immediate"
-msgstr "Postfinance débit direct immédiat"
-
-#. module: recurring_contract
-#: field:product.product,property_stock_procurement:0
-msgid "Procurement Location"
-msgstr "Procurement Location"
-
-#. module: recurring_contract
-#: field:product.product,attribute_line_ids:0
-msgid "Product Attributes"
-msgstr "Product Attributes"
-
-#. module: recurring_contract
-#: field:product.product,product_manager:0
-msgid "Product Manager"
-msgstr "Product Manager"
-
-#. module: recurring_contract
-#: field:product.product,type:0
-msgid "Product Type"
-msgstr "Product Type"
-
-#. module: recurring_contract
-#: field:product.product,categ_name:0
-msgid "Product category"
-msgstr "Catégorie de Produit"
-
-#. module: recurring_contract
-#: field:product.product,property_stock_production:0
-msgid "Production Location"
-msgstr "Production Location"
-
-#. module: recurring_contract
-#: field:product.product,product_variant_ids:0
-msgid "Products"
-msgstr "Products"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_pro
-msgid "Professional Fund"
-msgstr "Fonds professionnel"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_mds
-msgid "Project \"Marathon des Sables\""
-msgstr "Projet \"Marathon des Sables\""
-
-#. module: recurring_contract
-#: field:product.product,description_purchase:0
-msgid "Purchase Description"
-msgstr "Purchase Description"
-
-#. module: recurring_contract
-#: field:product.product,uom_po_id:0
-msgid "Purchase Unit of Measure"
-msgstr "Purchase Unit of Measure"
-
-#. module: recurring_contract
-#: field:product.product,loc_rack:0
-msgid "Rack"
-msgstr "Rack"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_phi
-msgid "Relief Fund Philippines"
-msgstr "Fonds d'assistance pour les Philippines"
-
-#. module: recurring_contract
-#: field:product.product,route_ids:0
-msgid "Routes"
-msgstr "Routes"
-
-#. module: recurring_contract
-#: field:product.product,loc_row:0
-msgid "Row"
-msgstr "Row"
-
-#. module: recurring_contract
-#: field:product.product,description_sale:0
-msgid "Sale Description"
-msgstr "Sale Description"
-
-#. module: recurring_contract
-#: field:product.product,list_price:0
-msgid "Sale Price"
-msgstr "Sale Price"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_sawyer
-msgid "Sawyer Water Filters for Ndeiya"
-msgstr "Sawyer Water Filters for Ndeiya"
-
-#. module: recurring_contract
-#: help:product.product,categ_id:0
-msgid "Select category for the current product"
-msgstr "Select category for the current product"
-
-#. module: recurring_contract
-#: view:recurring.contract:recurring_contract.view_recurring_contract_form_compassion
-msgid "Set back to draft"
-msgstr "Remettre à brouillon"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_sgi
-msgid "Special gift"
-msgstr "Cadeau spécial"
-
-#. module: recurring_contract
-#: help:product.product,uos_id:0
-msgid "Specify a unit of measure here if invoicing is made in another unit of measure than inventory. Keep empty to use the default unit of measure."
-msgstr "Specify a unit of measure here if invoicing is made in another unit of measure than inventory. Keep empty to use the default unit of measure."
-
-#. module: recurring_contract
-#: help:product.product,sale_ok:0
-msgid "Specify if the product can be selected in a sales order line."
-msgstr "Specify if the product can be selected in a sales order line."
-
-#. module: recurring_contract
-#: field:end.contract.wizard,child_id:0
-msgid "Sponsored child"
-msgstr "Sponsored child"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_par
-msgid "Sponsorship Fund"
-msgstr "Fonds Parrainage"
-
-#. module: recurring_contract
-#: help:product.product,cost_method:0
-msgid ""
-"Standard Price: The cost price is manually updated at the end of a specific period (usually every year).\n"
-"                    Average Price: The cost price is recomputed at each incoming shipment and used for the product valuation.\n"
-"                    Real Price: The cost price displayed is the price of the last outgoing product (will be use in case of inventory loss for example)."
-msgstr ""
-"Standard Price: The cost price is manually updated at the end of a specific period (usually every year).\n"
-"                    Average Price: The cost price is recomputed at each incoming shipment and used for the product valuation.\n"
-"                    Real Price: The cost price displayed is the price of the last outgoing product (will be use in case of inventory loss for example)."
-
-#. module: recurring_contract
-#: field:product.product,property_stock_account_input:0
-msgid "Stock Input Account"
-msgstr "Stock Input Account"
-
-#. module: recurring_contract
-#: field:product.product,property_stock_account_output:0
-msgid "Stock Output Account"
-msgstr "Stock Output Account"
-
-#. module: recurring_contract
-#: field:product.product,seller_ids:0
-msgid "Supplier"
-msgstr "Supplier"
-
-#. module: recurring_contract
-#: field:product.product,supplier_taxes_id:0
-msgid "Supplier Taxes"
-msgstr "Supplier Taxes"
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_aid
-msgid ""
-"Thanks to the AIDS fund we can bring the necessary lifelong care to \n"
-"\t\t\tthe HIV-infected sponsored children (antiretroviral therapy).\n"
-"\t\t\tWe are very grateful to you for your support to this fund and \n"
-"\t\t\tfor the great hope you offer to the sick children and their families."
-msgstr ""
-"Thanks to the AIDS fund we can bring the necessary lifelong care to \n"
-"\t\t\tthe HIV-infected sponsored children (antiretroviral therapy).\n"
-"\t\t\tWe are very grateful to you for your support to this fund and \n"
-"\t\t\tfor the great hope you offer to the sick children and their families."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_nol
-msgid ""
-"Thanks to the Christmas Gift Fund, we can offer a Christmas gift to \n"
-"\t\t\teach child registered in a Compassion center. It prevents inequalities between the children \n"
-"\t\t\tat least at this special time of the year.\n"
-"\t\t\tWe are very grateful for your donation by which you share the joy of Christmas with each \n"
-"\t\t\tchild of Compassion."
-msgstr ""
-"Thanks to the Christmas Gift Fund, we can offer a Christmas gift to \n"
-"\t\t\teach child registered in a Compassion center. It prevents inequalities between the children \n"
-"\t\t\tat least at this special time of the year.\n"
-"\t\t\tWe are very grateful for your donation by which you share the joy of Christmas with each \n"
-"\t\t\tchild of Compassion."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_ldp
-msgid ""
-"Thanks to the LDP Fund, we currently support 3 LDP students, Alfredo and \n"
-"\t\t\tHellen from Ecuador and Tamirat from Ethiopia. The Leadership Development Program allows gifted young \n"
-"\t\t\tChristian people who have arrived at the end of their sponsorship to go to University and be trained \n"
-"\t\t\tas Christian leaders. In the coming years, these young people will be able to positively influence \n"
-"\t\t\ttheir nation for God.\n"
-"\t\t\tThrough your donation you are offering these students a chance for a promising future and we are very \n"
-"\t\t\tgrateful to you for your support."
-msgstr ""
-"Thanks to the LDP Fund, we currently support 3 LDP students, Alfredo and \n"
-"\t\t\tHellen from Ecuador and Tamirat from Ethiopia. The Leadership Development Program allows gifted young \n"
-"\t\t\tChristian people who have arrived at the end of their sponsorship to go to University and be trained \n"
-"\t\t\tas Christian leaders. In the coming years, these young people will be able to positively influence \n"
-"\t\t\ttheir nation for God.\n"
-"\t\t\tThrough your donation you are offering these students a chance for a promising future and we are very \n"
-"\t\t\tgrateful to you for your support."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_haf
-msgid ""
-"Thanks to water filters and rehydratation kits, the families of \n"
-"\t\t\tsponsored children can face this severe epidemic efficiently.\n"
-"\t\t\tWe are very grateful to you for your contribution to this action and for the help you \n"
-"\t\t\ttherefore give the children and their families."
-msgstr ""
-"Thanks to water filters and rehydratation kits, the families of \n"
-"tttsponsored children can face this severe epidemic efficiently.\n"
-"tttWe are very grateful to you for your contribution to this action and for the help you \n"
-"ttttherefore give the children and their families."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_anl
-msgid ""
-"Thanks to your donation to Compassion Suisse we can continue to make \n"
-"\t\t\tour work known in Switzerland and to improve our services to sponsors, donors and sponsorchildren. \n"
-"\t\t\tWe can offer a more efficient help to many needy children through sponsorships and complementary \n"
-"\t\t\tinterventions in the countries supported by Compassion."
-msgstr ""
-"Thanks to your donation to Compassion Suisse we can continue to make \n"
-"\t\t\tour work known in Switzerland and to improve our services to sponsors, donors and sponsorchildren. \n"
-"\t\t\tWe can offer a more efficient help to many needy children through sponsorships and complementary \n"
-"\t\t\tinterventions in the countries supported by Compassion."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_don
-msgid ""
-"Thanks to your donation to Compassion Suisse we can continue to make our \n"
-"\t\t\twork known in Switzerland and to improve our services to sponsors, donors and sponsored children. \n"
-"\t\t\tWe can offer a more efficient help to many needy children through sponsorships and complementary \n"
-"\t\t\tinterventions in the countries supported by Compassion."
-msgstr ""
-"Thanks to your donation to Compassion Suisse we can continue to make our \n"
-"\t\t\twork known in Switzerland and to improve our services to sponsors, donors and sponsored children. \n"
-"\t\t\tWe can offer a more efficient help to many needy children through sponsorships and complementary \n"
-"\t\t\tinterventions in the countries supported by Compassion."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_gen
-msgid ""
-"Thanks to your donation to the General Fund, through your help we can offer \n"
-"\t\t\ta concrete help and a new future to many children on the field and restore hope in their lives."
-msgstr ""
-"Thanks to your donation to the General Fund, through your help we can offer \n"
-"\t\t\ta concrete help and a new future to many children on the field and restore hope in their lives."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_urg
-msgid ""
-"Thanks to your donation to the humanitarian emergency fund, \n"
-"\t\t\tyou make it possible for the Compassion staff to bring the needed help immediately to \n"
-"\t\t\tthe families of sponsored children who are touched by a natural disaster, famine or \n"
-"\t\t\tany other tragedy.\n"
-"\t\t\tFood, covers, shelters and replacement of certains belongings are commonly covered by this fund.\n"
-"\n"
-"\t\t\tYour support is essential and brings new hope to the families of sponsorchildren, the staff \n"
-"\t\t\tof Compassion and the partner churches."
-msgstr ""
-"Thanks to your donation to the humanitarian emergency fund, \n"
-"\t\t\tyou make it possible for the Compassion staff to bring the needed help immediately to \n"
-"\t\t\tthe families of sponsored children who are touched by a natural disaster, famine or \n"
-"\t\t\tany other tragedy.\n"
-"\t\t\tFood, covers, shelters and replacement of certains belongings are commonly covered by this fund.\n"
-"\n"
-"\t\t\tYour support is essential and brings new hope to the families of sponsorchildren, the staff \n"
-"\t\t\tof Compassion and the partner churches."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_med
-msgid ""
-"Thanks to your donation to the medical fund we can offer each \n"
-"\t\t\tsponsored child affected by a serious illness the necessary medical care and that way \n"
-"\t\t\trestore both health and hope. Apart from this we can also finance complementary interventions \n"
-"\t\t\tsuch as a vaccination campaign for several Compassion centers, distribution of mosquito nets \n"
-"\t\t\tto families that are registered in the Compassion program."
-msgstr ""
-"Thanks to your donation to the medical fund we can offer each \n"
-"\t\t\tsponsored child affected by a serious illness the necessary medical care and that way \n"
-"\t\t\trestore both health and hope. Apart from this we can also finance complementary interventions \n"
-"\t\t\tsuch as a vaccination campaign for several Compassion centers, distribution of mosquito nets \n"
-"\t\t\tto families that are registered in the Compassion program."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_mag
-msgid ""
-"Thanks to your donation you have subscribed to our magazine and you \n"
-"\t\t\thelp us to cover the publishing costs. Our magazine is an important communication tool and \n"
-"\t\t\tallows us to make our work known and to sensibilise many people to the cause of poor children.\n"
-"\t\t\tWe are very grateful for your precious support."
-msgstr ""
-"Thanks to your donation you have subscribed to our magazine and you \n"
-"\t\t\thelp us to cover the publishing costs. Our magazine is an important communication tool and \n"
-"\t\t\tallows us to make our work known and to sensibilise many people to the cause of poor children.\n"
-"\t\t\tWe are very grateful for your precious support."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_bib
-msgid ""
-"Thanks to your donation you support the Bible Fund, by which we can \n"
-"\t\t\toffer a Bible to each child registered in a Compassion center. The holistic development of the \n"
-"\t\t\tchild is one of the principal values of Compassion. \n"
-"\t\t\tYour support helps the child to grow spiritually, to strengthen his faith and to receive a \n"
-"\t\t\tprecious encouragement."
-msgstr ""
-"Thanks to your donation you support the Bible Fund, by which we can \n"
-"\t\t\toffer a Bible to each child registered in a Compassion center. The holistic development of the \n"
-"\t\t\tchild is one of the principal values of Compassion. \n"
-"\t\t\tYour support helps the child to grow spiritually, to strengthen his faith and to receive a \n"
-"\t\t\tprecious encouragement."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_ind
-msgid ""
-"Thanks to your donation, the families touched by the recent cyclone Aila in \n"
-"\t\t\tIndia and Bangladesh can receive a precious help. Compassion has already started to bring support and \n"
-"\t\t\tfood to the affected families and will start to work at the rebuilding of damaged or destroyed centers \n"
-"\t\t\tor houses as soon as possible.\n"
-"\t\t\tYour support is essential and brings new hope to the families of sponsored children, the staff of \n"
-"\t\t\tCompassion and the partner churches."
-msgstr ""
-"Thanks to your donation, the families touched by the recent cyclone Aila in \n"
-"\t\t\tIndia and Bangladesh can receive a precious help. Compassion has already started to bring support and \n"
-"\t\t\tfood to the affected families and will start to work at the rebuilding of damaged or destroyed centers \n"
-"\t\t\tor houses as soon as possible.\n"
-"\t\t\tYour support is essential and brings new hope to the families of sponsored children, the staff of \n"
-"\t\t\tCompassion and the partner churches."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_hai
-msgid ""
-"Thanks to your donation, the families touched by the terrible earthquake in \n"
-"\t\t\tHaiti can receive a precious help. Compassion is currently bringing support and food to the affected \n"
-"\t\t\tfamilies and giving them all the necessary support. The emergency fund will also enable Compassion to \n"
-"\t\t\trebuild damaged or destroyed centers by the disaster.\n"
-"\t\t\tYour support is essential and represents a clear sign of hope to the sponsored children, their \n"
-"\t\t\tfamilies, the staff of Compassion and the partner churches in Haiti."
-msgstr ""
-"Thanks to your donation, the families touched by the terrible earthquake in \n"
-"\t\t\tHaiti can receive a precious help. Compassion is currently bringing support and food to the affected \n"
-"\t\t\tfamilies and giving them all the necessary support. The emergency fund will also enable Compassion to \n"
-"\t\t\trebuild damaged or destroyed centers by the disaster.\n"
-"\t\t\tYour support is essential and represents a clear sign of hope to the sponsored children, their \n"
-"\t\t\tfamilies, the staff of Compassion and the partner churches in Haiti."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_phi
-msgid ""
-"Thanks to your donation, the families touched by the typhoon in \n"
-"\t\t\tthe Philippines can receive a precious help. Compassion Philippines continues to distribute \n"
-"\t\t\tfood as well as first aid material and bring the necessary support to all who have been affected \n"
-"\t\t\tby the floods.\n"
-"\n"
-"\t\t\tYour support is essential and brings new hope to the families of sponsored children, the staff \n"
-"\t\t\tof Compassion and the partner churches."
-msgstr ""
-"Thanks to your donation, the families touched by the typhoon in \n"
-"\t\t\tthe Philippines can receive a precious help. Compassion Philippines continues to distribute \n"
-"\t\t\tfood as well as first aid material and bring the necessary support to all who have been affected \n"
-"\t\t\tby the floods.\n"
-"\n"
-"\t\t\tYour support is essential and brings new hope to the families of sponsored children, the staff \n"
-"\t\t\tof Compassion and the partner churches."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_bfa
-msgid ""
-"Thanks to your donation, the sponsored children and their families \n"
-"\t\t\ttouched by the recent floods in Burkina Faso can receive a precious help. Compassion Burkina \n"
-"\t\t\tFaso has already started to bring support and food to the affected families and will start to \n"
-"\t\t\twork at the rebuilding of damaged or destroyed centers or houses as soon as possible.\n"
-"\t\t\tYour support is essential and is a real sign of hope for the sponsored children, their families, \n"
-"\t\t\tthe staff of Compassion and the partner churches."
-msgstr ""
-"Thanks to your donation, the sponsored children and their families \n"
-"\t\t\ttouched by the recent floods in Burkina Faso can receive a precious help. Compassion Burkina \n"
-"\t\t\tFaso has already started to bring support and food to the affected families and will start to \n"
-"\t\t\twork at the rebuilding of damaged or destroyed centers or houses as soon as possible.\n"
-"\t\t\tYour support is essential and is a real sign of hope for the sponsored children, their families, \n"
-"\t\t\tthe staff of Compassion and the partner churches."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_fam
-msgid ""
-"Thanks to your donation, the sponsored children and their families touched \n"
-"\t\t\tby famine receive a precious help. Compassion distributes food to the affected families but also \n"
-"\t\t\tprovides formation and tools that help families to combat hunger on a long term basis.\n"
-"\t\t\tWe thank you so much for your generosity and for your interest towards the poorest children and their \n"
-"\t\t\tfamilies and for the hope that you give them through your support."
-msgstr ""
-"Thanks to your donation, the sponsored children and their families touched \n"
-"\t\t\tby famine receive a precious help. Compassion distributes food to the affected families but also \n"
-"\t\t\tprovides formation and tools that help families to combat hunger on a long term basis.\n"
-"\t\t\tWe thank you so much for your generosity and for your interest towards the poorest children and their \n"
-"\t\t\tfamilies and for the hope that you give them through your support."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_cal
-msgid ""
-"Thanks to your donation, you help us to finance our calendar which \n"
-"\t\t\tis a precious communication tool to make our work known in many households during the year. \n"
-"\t\t\tWe also can offer a concrete help and a new future to many children on the field and restore \n"
-"\t\t\thope in their lives.\n"
-"\n"
-"\t\t\tWe thank you very much for your support."
-msgstr ""
-"Thanks to your donation, you help us to finance our calendar which \n"
-"\t\t\tis a precious communication tool to make our work known in many households during the year. \n"
-"\t\t\tWe also can offer a concrete help and a new future to many children on the field and restore \n"
-"\t\t\thope in their lives.\n"
-"\n"
-"\t\t\tWe thank you very much for your support."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_wtp
-msgid ""
-"Thanks to your donation. It allows us to finance water disinfection \n"
-"\t\t\tproject to provide sponsored children, their families, their community and villages with \n"
-"\t\t\tdrinking water, in the poorest regions of the world.\n"
-"\t\t\tThis help would not be possible without you and we are very grateful for your support."
-msgstr ""
-"Thanks to your donation. It allows us to finance water disinfection \n"
-"\t\t\tproject to provide sponsored children, their families, their community and villages with \n"
-"\t\t\tdrinking water, in the poorest regions of the world.\n"
-"\t\t\tThis help would not be possible without you and we are very grateful for your support."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_wol
-msgid ""
-"Thanks to your donation. It allows us to finance water filters \n"
-"\t\t\tto provide sponsored children, their families, their community and villages with drinking \n"
-"\t\t\twater, in the poorest regions of the world.\n"
-"\t\t\tThis help would not be possible without you and we are very grateful for your support."
-msgstr ""
-"Thanks to your donation. It allows us to finance water filters \n"
-"tttto provide sponsored children, their families, their community and villages with drinking \n"
-"tttwater, in the poorest regions of the world.\n"
-"tttThis help would not be possible without you and we are very grateful for your support."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_kdo
-msgid ""
-"Thanks to your gift that will be entirely allocated to them, the family of \n"
-"\t\t\tyour sponsored child will receive a precious additional help to cover their special needs and to \n"
-"\t\t\timprove their living conditions.\n"
-"\t\t\tWe are very grateful for your complementary support to your sponsored child and his family that \n"
-"\t\t\tbrings more hope and great encouragement to them."
-msgstr ""
-"Thanks to your gift that will be entirely allocated to them, the family of \n"
-"tttyour sponsored child will receive a precious additional help to cover their special needs and to \n"
-"tttimprove their living conditions.\n"
-"tttWe are very grateful for your complementary support to your sponsored child and his family that \n"
-"tttbrings more hope and great encouragement to them."
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_4mu_2
-msgid "The 4th Musketeer Fund"
-msgstr "The 4th Musketeer Fund"
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_csp
-msgid ""
-"The CSP Fund  (Child Survival Program) allows us to support 3 CSP centers,\n"
-"\t\t\ttwo in Haiti and one in Ecuador. Each CSP center welcomes around 30 mothers and their babies and \n"
-"\t\t\tpregnant women. These women receive training, practical assistance, food, thorough medical checks \n"
-"\t\t\ton a regular basis and Bible lessons.\n"
-"\n"
-"\t\t\tWe are very grateful to you for your interest towards mothers and their babies and for the hope you \n"
-"\t\t\tare bringing to them through your help."
-msgstr ""
-"The CSP Fund  (Child Survival Program) allows us to support 3 CSP centers,\n"
-"\t\t\ttwo in Haiti and one in Ecuador. Each CSP center welcomes around 30 mothers and their babies and \n"
-"\t\t\tpregnant women. These women receive training, practical assistance, food, thorough medical checks \n"
-"\t\t\ton a regular basis and Bible lessons.\n"
-"\n"
-"\t\t\tWe are very grateful to you for your interest towards mothers and their babies and for the hope you \n"
-"\t\t\tare bringing to them through your help."
-
-#. module: recurring_contract
-#: help:product.product,sale_delay:0
-msgid "The average delay in days between the confirmation of the customer order and the delivery of the finished products. It's the time you promise to your customers."
-msgstr "The average delay in days between the confirmation of the customer order and the delivery of the finished products. It's the time you promise to your customers."
-
-#. module: recurring_contract
-#: help:product.product,weight:0
-msgid "The gross weight in Kg."
-msgstr "The gross weight in Kg."
-
-#. module: recurring_contract
-#: help:product.product,weight_net:0
-msgid "The net weight in Kg."
-msgstr "The net weight in Kg."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_pro
-msgid ""
-"The professional fund allows many young sponsored people to receive \n"
-"\t\t\ta professional training before they finish the sponsorship program.\n"
-"\t\t\tThanks to your support we can continue to offer this service on a long-term basis and we are \n"
-"\t\t\tvery grateful to you for your help."
-msgstr ""
-"The professional fund allows many young sponsored people to receive \n"
-"\t\t\ta professional training before they finish the sponsorship program.\n"
-"\t\t\tThanks to your support we can continue to offer this service on a long-term basis and we are \n"
-"\t\t\tvery grateful to you for your help."
-
-#. module: recurring_contract
-#: help:product.product,volume:0
-msgid "The volume in m3."
-msgstr "The volume in m3."
-
-#. module: recurring_contract
-#: help:product.product,property_account_expense:0
-msgid "This account will be used for invoices instead of the default one to value expenses for the current product."
-msgstr "This account will be used for invoices instead of the default one to value expenses for the current product."
-
-#. module: recurring_contract
-#: help:product.product,property_account_income:0
-msgid "This account will be used for invoices instead of the default one to value sales for the current product."
-msgstr "This account will be used for invoices instead of the default one to value sales for the current product."
-
-#. module: recurring_contract
-#: help:product.product,property_stock_production:0
-msgid "This stock location will be used, instead of the default one, as the source location for stock moves generated by manufacturing orders."
-msgstr "This stock location will be used, instead of the default one, as the source location for stock moves generated by manufacturing orders."
-
-#. module: recurring_contract
-#: help:product.product,property_stock_procurement:0
-msgid "This stock location will be used, instead of the default one, as the source location for stock moves generated by procurements."
-msgstr "This stock location will be used, instead of the default one, as the source location for stock moves generated by procurements."
-
-#. module: recurring_contract
-#: help:product.product,property_stock_inventory:0
-msgid "This stock location will be used, instead of the default one, as the source location for stock moves generated when you do an inventory."
-msgstr "This stock location will be used, instead of the default one, as the source location for stock moves generated when you do an inventory."
-
-#. module: recurring_contract
-#: view:recurring.contract.activate.wizard:recurring_contract.view_activate_sponsorship
-msgid "This will mark the contract as Active, even if the partner has made no payment. Please be sure that you want to do this."
-msgstr "Cela va activer le contrat même si le partenaire n'a fait aucun paiement."
-
-#. module: recurring_contract
-#: field:product.product,uom_id:0
-msgid "Unit of Measure"
-msgstr "Unit of Measure"
-
-#. module: recurring_contract
-#: field:product.product,uos_coeff:0
-msgid "Unit of Measure -> UOS Coeff"
-msgstr "Unit of Measure -> UOS Coeff"
-
-#. module: recurring_contract
-#: field:product.product,uos_id:0
-msgid "Unit of Sale"
-msgstr "Unit of Sale"
-
-#. module: recurring_contract
-#: model:product.template,name:recurring_contract.product_template_fund_usp
-msgid "Unsponsored Children Fund"
-msgstr "Fonds pour les enfants non-parrainés"
-
-#. module: recurring_contract
-#: field:product.product,volume:0
-msgid "Volume"
-msgstr "Volume"
-
-#. module: recurring_contract
-#: view:recurring.contract:recurring_contract.view_recurring_contract_compassion_filter
-msgid "Waiting"
-msgstr "En Création"
-
-#. module: recurring_contract
-#: field:product.product,warranty:0
-msgid "Warranty"
-msgstr "Warranty"
-
-#. module: recurring_contract
-#: model:account.payment.term,name:recurring_contract.payment_term_web
-msgid "Web Payment"
-msgstr "Paiement Web"
-
-#. module: recurring_contract
-#: model:account.payment.term,note:recurring_contract.payment_term_web
-msgid "Web Payment Immediate"
-msgstr "Paiement Web Immédiat"
-
-#. module: recurring_contract
-#: field:recurring.contract,website_message_ids:0
-#: field:recurring.contract.group,website_message_ids:0
-msgid "Website Messages"
-msgstr "Website Messages"
-
-#. module: recurring_contract
-#: help:recurring.contract,website_message_ids:0
-#: help:recurring.contract.group,website_message_ids:0
-msgid "Website communication history"
-msgstr "Website communication history"
-
-#. module: recurring_contract
-#: help:product.product,property_stock_account_input:0
-msgid "When doing real-time inventory valuation, counterpart journal items for all incoming stock moves will be posted in this account, unless there is a specific valuation account set on the source location. When not set on the product, the one from the product category is used."
-msgstr "When doing real-time inventory valuation, counterpart journal items for all incoming stock moves will be posted in this account, unless there is a specific valuation account set on the source location. When not set on the product, the one from the product category is used."
-
-#. module: recurring_contract
-#: help:product.product,property_stock_account_output:0
-msgid "When doing real-time inventory valuation, counterpart journal items for all outgoing stock moves will be posted in this account, unless there is a specific valuation account set on the destination location. When not set on the product, the one from the product category is used."
-msgstr "When doing real-time inventory valuation, counterpart journal items for all outgoing stock moves will be posted in this account, unless there is a specific valuation account set on the destination location. When not set on the product, the one from the product category is used."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_c20
-msgid ""
-"With your donation, you support the CSP (child survival program) in \n"
-"\t\t\tEcuador. The center welcomes around 30 mothers and their babies and pregnant women. These women \n"
-"\t\t\treceive training, practical assistance, food, thorough medical checks on a regular basis and Bible lessons.\n"
-"\n"
-"\t\t\tWe are very grateful to you for your interest towards mothers and their babies and for the hope you \n"
-"\t\t\tare bringing to them through your help."
-msgstr ""
-"With your donation, you support the CSP (child survival program) in \n"
-"\t\t\tEcuador. The center welcomes around 30 mothers and their babies and pregnant women. These women \n"
-"\t\t\treceive training, practical assistance, food, thorough medical checks on a regular basis and Bible lessons.\n"
-"\n"
-"\t\t\tWe are very grateful to you for your interest towards mothers and their babies and for the hope you \n"
-"\t\t\tare bringing to them through your help."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_c13
-#: model:product.template,description:recurring_contract.product_template_fund_c46
-msgid ""
-"With your donation, you support the CSP (child survival program) in \n"
-"\t\t\tHaiti. The center welcomes around 30 mothers and their babies and pregnant women. These women \n"
-"\t\t\treceive training, practical assistance, food, thorough medical checks on a regular basis and Bible lessons.\n"
-"\n"
-"\t\t\tWe are very grateful to you for your interest towards mothers and their babies and for the hope you \n"
-"\t\t\tare bringing to them through your help."
-msgstr ""
-"With your donation, you support the CSP (child survival program) in \n"
-"\t\t\tHaiti. The center welcomes around 30 mothers and their babies and pregnant women. These women \n"
-"\t\t\treceive training, practical assistance, food, thorough medical checks on a regular basis and Bible lessons.\n"
-"\n"
-"\t\t\tWe are very grateful to you for your interest towards mothers and their babies and for the hope you \n"
-"\t\t\tare bringing to them through your help."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_usp
-msgid ""
-"Your donation to the \"Unsponsored Children Fund\" unlocks the benefits \n"
-"\t\t\tof Compassion's program for children who have been registered but not yet been sponsored. Your \n"
-"\t\t\tgift to this fund also encourages parents and program staff as they see Compassion benefits at \n"
-"\t\t\twork for the children they love, even as they wait — and hope — for sponsors.\n"
-"\n"
-"\t\t\tWe thank you very much for your precious support."
-msgstr ""
-"Your donation to the \"Unsponsored Children Fund\" unlocks the benefits \n"
-"\t\t\tof Compassion's program for children who have been registered but not yet been sponsored. Your \n"
-"\t\t\tgift to this fund also encourages parents and program staff as they see Compassion benefits at \n"
-"\t\t\twork for the children they love, even as they wait — and hope — for sponsors.\n"
-"\n"
-"\t\t\tWe thank you very much for your precious support."
-
-#. module: recurring_contract
-#: model:product.template,description:recurring_contract.product_template_fund_kgs
-msgid ""
-"Your support helps the organizer of the Kids Games to plan this event \n"
-"\t\t\tfor the first time in Burkina Faso. Your support also helps many of the children in the sponsorship \n"
-"\t\t\tprogram to take part of this event."
-msgstr ""
-"Your support helps the organizer of the Kids Games to plan this event \n"
-"\t\t\tfor the first time in Burkina Faso. Your support also helps many of the children in the sponsorship \n"
-"\t\t\tprogram to take part of this event."
-
-#. module: recurring_contract
-#: view:recurring.contract:recurring_contract.view_recurring_contract_compassion_filter
-msgid ""
-"['|', '|', '|', '|', '|', '|',\n"
-"                             ('reference','ilike',self),\n"
-"                             ('partner_id','child_of',self),\n"
-"                             ('payment_term_id', 'ilike', self),\n"
-"                             ('partner_codega', 'ilike', self),\n"
-"                             ('child_code', 'ilike', self),\n"
-"                             ('child_name', 'ilike', self),\n"
-"                             ('origin_id', 'ilike', self),\n"
-"                            ]"
-msgstr ""
-"['|', '|', '|', '|', '|', '|',\n"
-"                             ('reference','ilike',self),\n"
-"                             ('partner_id','child_of',self),\n"
-"                             ('payment_term_id', 'ilike', self),\n"
-"                             ('partner_codega', 'ilike', self),\n"
-"                             ('child_code', 'ilike', self),\n"
-"                             ('child_name', 'ilike', self),\n"
-"                             ('origin_id', 'ilike', self),\n"
-"                            ]"
-
-#. module: recurring_contract
-#: view:recurring.contract:recurring_contract.view_recurring_contract_compassion_filter
-msgid "[('is_active', '=', True), ('state', 'not in', ('cancelled','terminated'))]"
-msgstr "[('is_active', '=', True), ('state', 'not in', ('cancelled','terminated'))]"
-
-#. module: recurring_contract
-#: view:recurring.contract:recurring_contract.view_recurring_contract_tree_compassion
-msgid "blue:state == 'draft';red:state == 'mandate';green:state == 'waiting';black:state == 'active';gray:state in ('terminated','cancelled')"
-msgstr "blue:state == 'draft';red:state == 'mandate';green:state == 'waiting';black:state == 'active';gray:state in ('terminated','cancelled')"
-
-#. module: recurring_contract
-#: view:recurring.contract:recurring_contract.view_recurring_contract_form_compassion
-msgid "draft,active,waiting,terminated"
-msgstr "draft,active,waiting,terminated"
-
-#. module: recurring_contract
-#: view:recurring.contract:recurring_contract.view_recurring_contract_form_compassion
-msgid "waiting,active"
-msgstr "waiting,active"
