@@ -25,7 +25,7 @@ class AccountMove(models.Model):
         "recurring.invoicer", "Invoicer", readonly=False
     )
 
-    @api.depends("line_ids.full_reconcile_id", "line_ids.reconciled")
+    @api.depends("payment_state", "line_ids.full_reconcile_id", "line_ids.reconciled")
     def _compute_last_payment(self):
         for invoice in self:
             payment_dates = []
@@ -261,19 +261,3 @@ class AccountMove(models.Model):
             # Update other lines
             res.extend(lines_to_update._update_invoice_lines_from_contract(contract))
         return res
-
-    @api.model
-    def create(self, vals):
-        res = super(AccountMove, self).create(vals)
-        res._recompute_last_payment()
-        return res
-
-    def write(self, vals):
-        res = super(AccountMove, self).write(vals)
-        if 'line_ids' in vals:
-            self._recompute_last_payment()
-        return res
-
-    def _recompute_last_payment(self):
-        for invoice in self:
-            invoice._compute_last_payment()
