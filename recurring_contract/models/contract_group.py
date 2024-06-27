@@ -229,6 +229,7 @@ class ContractGroup(models.Model):
         Context value async_mode set to False can force to perform
         the task immediately.
         """
+        self.ensure_one()
         invoicer = self.env["recurring.invoicer"].create({})
         if self.env.context.get("async_mode", True):
             for group in self:
@@ -244,15 +245,35 @@ class ContractGroup(models.Model):
         _logger.info(
             f"Starting generation of invoices for contract groups : {self.ids}"
         )
+
+        # Set to track processed invoices to avoid duplication
+        processed_invoices = set()
+
         for group in self:
+            # Calculate the initial invoicing date and starting offset
             invoicing_date, starting_offset = group._calculate_start_date_and_offset()
+
+            # Iterate through invoice offsets to generate invoices
             for invoice_offset in range(
                 starting_offset, group.advance_billing_months + 1, group.month_interval
             ):
-                invoicing_date += relativedelta(months=invoice_offset)
-                if group._should_skip_invoice_generation(invoicing_date):
+                # Calculate the current invoicing date for this offset
+                current_invoicing_date = invoicing_date + relativedelta(months=invoice_offset)
+
+                # Check if invoice generation should be skipped for this date
+                if group._should_skip_invoice_generation(current_invoicing_date):
                     continue
-                group._process_invoice_generation(invoicer, invoicing_date)
+
+                # Create a unique key for the invoice to track it
+                invoice_key = (group.id, current_invoicing_date)
+
+                # Check if the invoice for this key has already been processed
+                if invoice_key not in processed_invoices:
+                    # Process invoice generation if not already processed
+                    group._process_invoice_generation(invoicer, current_invoicing_date)
+                    # Add the invoice key to the set of processed invoices
+                    processed_invoices.add(invoice_key)
+
         # Refresh state to check whether invoices are missing in some contracts
         self.mapped("active_contract_ids")._compute_missing_invoices()
         _logger.info("Process successfully generated invoices")
