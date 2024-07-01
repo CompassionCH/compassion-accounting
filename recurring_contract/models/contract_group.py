@@ -229,7 +229,6 @@ class ContractGroup(models.Model):
         Context value async_mode set to False can force to perform
         the task immediately.
         """
-        self.ensure_one()
         invoicer = self.env["recurring.invoicer"].create({})
         if self.env.context.get("async_mode", True):
             for group in self:
