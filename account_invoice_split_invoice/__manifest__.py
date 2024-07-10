@@ -34,9 +34,10 @@
     "author": "Compassion CH",
     "website": "https://github.com/CompassionCH/test-repo",
     "category": "Accounting",
-    "depends": ["account"],
+    "depends": ["account", "sponsorship_compassion"],
     "external_dependencies": {},
     "data": [
+        "security/ir.model.access.csv",
         "views/account_invoice_split_wizard_view.xml",
     ],
     "demo": [],
