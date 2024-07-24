@@ -259,6 +259,24 @@ class RecurringContract(models.Model):
 
     def _compute_period_paid(self):
         for contract in self:
+            today = date.today()
+            current_billing_year = today.year
+
+            advance_billing = contract.group_id.advance_billing_months
+            to_pay_period = min(today.month + advance_billing, 12)
+
+            if today.month == 12 and today.day >= 15:
+                current_billing_year += 1
+                to_pay_period -= 12
+
+            months_to_pay = len(list(contract.open_invoice_ids.filtered(
+                lambda invoice: invoice.date.month <= to_pay_period and invoice.date.year == current_billing_year)))
+
+            contract.period_paid = months_to_pay == 0
+
+            return
+
+
             advance_billing = contract.group_id.advance_billing_months
             this_month = date.today().month
             # Don't consider next year in the period to pay
