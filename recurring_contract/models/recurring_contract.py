@@ -269,22 +269,16 @@ class RecurringContract(models.Model):
                 current_billing_year += 1
                 to_pay_period -= 12
 
-            months_to_pay = len(list(contract.open_invoice_ids.filtered(
-                lambda invoice: invoice.date.month <= to_pay_period and invoice.date.year == current_billing_year)))
+            months_to_pay = len(
+                list(
+                    contract.open_invoice_ids.filtered(
+                        lambda invoice: invoice.date.month <= to_pay_period
+                        and invoice.date.year == current_billing_year
+                    )
+                )
+            )
 
             contract.period_paid = months_to_pay == 0
-
-            return
-
-
-            advance_billing = contract.group_id.advance_billing_months
-            this_month = date.today().month
-            # Don't consider next year in the period to pay
-            to_pay_period = min(this_month + advance_billing, 12)
-            # Exception for december, we will consider next year
-            if this_month == 12:
-                to_pay_period += advance_billing
-            contract.period_paid = contract.months_paid >= to_pay_period
 
     def _compute_months_paid(self):
         """This is a query returning the number of months paid for the current year."""
