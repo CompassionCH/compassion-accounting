@@ -321,7 +321,6 @@ class ContractGroup(models.Model):
         self.ensure_one()
 
         if contract:
-            # I changed the logic here... If the given contract already has an invoice for that month that is not cancelled -> skip it
             search_filter = [
                 "&",
                 "&",
@@ -359,16 +358,19 @@ class ContractGroup(models.Model):
                     self.active_contract_ids.mapped("product_ids").ids,
                 )]
 
-        dangling_invoices = self.env["account.move"].search(search_filter)
+        existing_invoices = self.env["account.move"].search(search_filter)
 
-        # Check for contract group suspension
-        # Should this really be checked ???? I feel like it's always today + 1 month so no prior invoices will ever be created...
-        is_suspended = False if contract is not None and contract.source_id is not 554 else (
-            self.invoice_suspended_until
-            and self.invoice_suspended_until > invoicing_date
-        )
+        is_sub_proposal = contract is not None and contract.source_id is 554
 
-        return bool(dangling_invoices) or is_suspended
+        # Check for contract group suspension when no specific contract is given from a sub proposal is given
+        if is_sub_proposal:
+            return bool(existing_invoices)
+        else:
+            is_suspended = (
+                self.invoice_suspended_until
+                and self.invoice_suspended_until > invoicing_date
+            )
+            return bool(existing_invoices) or is_suspended
 
     def _process_invoice_generation(self, invoicer, invoicing_date, contract=None):
         self.ensure_one()
