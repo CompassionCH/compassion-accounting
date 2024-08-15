@@ -524,9 +524,6 @@ class ContractGroup(models.Model):
                         invoicing_date=invoicing_date, contract_line=cl
                     ),
                 )
-                # This loop is the cause in invoices being doubled/tripled/...
-                # We should only get here if there is not an existing open invoice for this period,
-                # so before there was no reason to reference the contract_line_ids of the other active invoices
                 for cl in (
                     contract.contract_line_ids - already_paid_cl
                 )
