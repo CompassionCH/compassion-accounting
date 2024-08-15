@@ -316,10 +316,9 @@ class ContractGroup(models.Model):
         - There is already an invoice for this due date which has been cancelled or
           edited.
         - Contract group suspension.
+        - A specific contract is given and an invoice for this due date have already exists and isn't cancelled
         """
         self.ensure_one()
-
-        search_filter = []
 
         if contract:
             # I changed the logic here... If the given contract already has an invoice for that month that is not cancelled -> skip it
@@ -373,10 +372,9 @@ class ContractGroup(models.Model):
 
     def _process_invoice_generation(self, invoicer, invoicing_date, contract=None):
         self.ensure_one()
-        # active_contracts = contract if contract else self.active_contract_ids
         active_contracts = self.active_contract_ids
         open_invoices = self.active_contract_ids.mapped("open_invoice_ids").filtered(
-            lambda i: i.invoice_date_due >= invoicing_date and i.invoice_date_due.year == invoicing_date.year # ADDED CHECK FOR SAME INVOICING YEAR
+            lambda i: i.invoice_date_due >= invoicing_date and i.invoice_date_due.year == invoicing_date.year
         )
 
         # invoice already open we complete the move lines
@@ -386,9 +384,9 @@ class ContractGroup(models.Model):
         open_invoice = open_invoices.filtered(
             lambda m: getattr(m.invoice_date_due, self.recurring_unit) == current_rec_unit_date
         )
-        if len(open_invoice) > 1: # NOT SURE ABOUT THIS, IT DOESN'T SEEM TO MAKE SENSE TO HAVE MORE THAN ONE
-            _logger.warning(
-                f"Found more than one open invoice on {invoicing_date} for {self.id}"
+        if len(open_invoice) > 1:
+            _logger.error(
+                f"Found more than one open invoice on {invoicing_date} for the group {self.id}"
             )
             return False
 
@@ -443,7 +441,12 @@ class ContractGroup(models.Model):
             )
         else:
             # Building invoices data
-            inv_data = self._build_invoice_gen_data(invoicing_date, invoicer, contract if contract is not None else self.active_contract_ids[0])
+            if contract is None:
+                # we use the first contract because the information we retrieve has to be shared
+                # between all the contracts of the list
+                contract = self.active_contract_ids[0]
+
+            inv_data = self._build_invoice_gen_data(invoicing_date, invoicer, contract)
             # Creating the actual invoice
             _logger.info(f"Generating invoice : {inv_data}")
             invoice = self.env["account.move"].create(inv_data)
@@ -480,8 +483,6 @@ class ContractGroup(models.Model):
             )
             .mapped("contract_id.contract_line_ids")
         )
-        # we use the first contract because the information we retrieve has to be shared
-        # between all the contracts of the list
         company_id = contract.company_id.id
         partner_id = self._get_partner_for_contract(contract).id
         journal = self.env["account.journal"].search(
@@ -521,7 +522,10 @@ class ContractGroup(models.Model):
                         invoicing_date=invoicing_date, contract_line=cl
                     ),
                 )
-                for cl in ( # not sure about this one bro... this is why the invoices are doubled/trippled/quadruppled ect...
+                # This loop is the cause in invoices being doubled/tripled/...
+                # We should only get here if there is not an existing open invoice for this period,
+                # so before there was no reason to reference the contract_line_ids of the other active invoices
+                for cl in (
                     contract.contract_line_ids - already_paid_cl
                 )
                 if cl
