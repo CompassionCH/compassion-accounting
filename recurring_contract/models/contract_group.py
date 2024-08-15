@@ -269,7 +269,9 @@ class ContractGroup(models.Model):
                 )
 
                 # Check if invoice generation should be skipped for this date
-                if group._should_skip_invoice_generation(current_invoicing_date, contract):
+                if group._should_skip_invoice_generation(
+                    current_invoicing_date, contract
+                ):
                     continue
 
                 # Create a unique key for the invoice to track it
@@ -278,7 +280,9 @@ class ContractGroup(models.Model):
                 # Check if the invoice for this key has already been processed
                 if invoice_key not in processed_invoices:
                     # Process invoice generation if not already processed
-                    group._process_invoice_generation(invoicer, current_invoicing_date, contract)
+                    group._process_invoice_generation(
+                        invoicer, current_invoicing_date, contract
+                    )
                     # Add the invoice key to the set of processed invoices
                     processed_invoices.add(invoice_key)
 
@@ -336,7 +340,7 @@ class ContractGroup(models.Model):
                     "line_ids.product_id",
                     "in",
                     contract.product_ids.ids,
-                )
+                ),
             ]
         else:
             search_filter = [
@@ -356,7 +360,8 @@ class ContractGroup(models.Model):
                     "line_ids.product_id",
                     "in",
                     self.active_contract_ids.mapped("product_ids").ids,
-                )]
+                ),
+            ]
 
         existing_invoices = self.env["account.move"].search(search_filter)
 
@@ -376,7 +381,8 @@ class ContractGroup(models.Model):
         self.ensure_one()
         active_contracts = self.active_contract_ids
         open_invoices = self.active_contract_ids.mapped("open_invoice_ids").filtered(
-            lambda i: i.invoice_date_due >= invoicing_date and i.invoice_date_due.year == invoicing_date.year
+            lambda i: i.invoice_date_due >= invoicing_date
+            and i.invoice_date_due.year == invoicing_date.year
         )
 
         # invoice already open we complete the move lines
@@ -384,7 +390,8 @@ class ContractGroup(models.Model):
         # Keep invoice from the same month or year
         # (depending on the recurring unit)
         open_invoice = open_invoices.filtered(
-            lambda m: getattr(m.invoice_date_due, self.recurring_unit) == current_rec_unit_date
+            lambda m: getattr(m.invoice_date_due, self.recurring_unit)
+            == current_rec_unit_date
         )
         if len(open_invoice) > 1:
             _logger.error(
@@ -462,7 +469,9 @@ class ContractGroup(models.Model):
                 )
                 invoice.unlink()
 
-    def _build_invoice_gen_data(self, invoicing_date, invoicer, contract, gift_wizard=False):
+    def _build_invoice_gen_data(
+        self, invoicing_date, invoicer, contract, gift_wizard=False
+    ):
         """Setup a dict with data passed to invoice.create.
         If any custom data is wanted in invoice from contract group, just
         inherit this method.
@@ -524,9 +533,7 @@ class ContractGroup(models.Model):
                         invoicing_date=invoicing_date, contract_line=cl
                     ),
                 )
-                for cl in (
-                    contract.contract_line_ids - already_paid_cl
-                )
+                for cl in (contract.contract_line_ids - already_paid_cl)
                 if cl
             ],
             "narration": "\n".join(
