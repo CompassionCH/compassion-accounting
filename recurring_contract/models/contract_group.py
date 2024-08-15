@@ -320,7 +320,8 @@ class ContractGroup(models.Model):
         - There is already an invoice for this due date which has been cancelled or
           edited.
         - Contract group suspension.
-        - A specific contract is given and an invoice for this due date have already exists and isn't cancelled
+        - A specific contract is given and an invoice for this due date already exists
+          and isn't cancelled.
         """
         self.ensure_one()
 
@@ -367,7 +368,8 @@ class ContractGroup(models.Model):
 
         is_sub_proposal = contract is not None and contract.source_id is 554
 
-        # Check for contract group suspension when no specific contract is given from a sub proposal is given
+        # Check for contract group suspension when no specific contract is given
+        # from a sub proposal is given
         if is_sub_proposal:
             return bool(existing_invoices)
         else:
@@ -395,7 +397,8 @@ class ContractGroup(models.Model):
         )
         if len(open_invoice) > 1:
             _logger.error(
-                f"Found more than one open invoice on {invoicing_date} for the group {self.id}"
+                f"Found more than one open invoice on {invoicing_date}"
+                f"for the group {self.id}"
             )
             return False
 
@@ -451,8 +454,8 @@ class ContractGroup(models.Model):
         else:
             # Building invoices data
             if contract is None:
-                # we use the first contract because the information we retrieve has to be shared
-                # between all the contracts of the list
+                # we use the first contract because the information we retrieve
+                # has to be shared between all the contracts of the list
                 contract = self.active_contract_ids[0]
 
             inv_data = self._build_invoice_gen_data(invoicing_date, invoicer, contract)
