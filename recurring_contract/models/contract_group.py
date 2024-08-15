@@ -386,7 +386,13 @@ class ContractGroup(models.Model):
         open_invoice = open_invoices.filtered(
             lambda m: getattr(m.invoice_date_due, self.recurring_unit) == current_rec_unit_date
         )
-        if open_invoice: # THIS ONE SEEMS CORRECTIMUNDO
+        if len(open_invoice) > 1: # NOT SURE ABOUT THIS, IT DOESN'T SEEM TO MAKE SENSE TO HAVE MORE THAN ONE
+            _logger.warning(
+                f"Found more than one open invoice on {invoicing_date} for {self.id}"
+            )
+            return False
+
+        if open_invoice:
             # Retrieve account_move_line already existing for this contract
             acc_move_line_curr_contr = open_invoice.mapped("invoice_line_ids").filtered(
                 lambda line: line.contract_id in active_contracts
@@ -456,7 +462,6 @@ class ContractGroup(models.Model):
         If any custom data is wanted in invoice from contract group, just
         inherit this method.
         """
-        # THISSSSSSSSSSSSSSSSSSSSSSSSSSS
         self.ensure_one()
         # Filter the contract line already paid
         already_paid_cl = (
