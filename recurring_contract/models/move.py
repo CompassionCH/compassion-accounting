@@ -171,10 +171,11 @@ class AccountMove(models.Model):
         ):
             if updt_val.get(invoice.name):
                 val_to_updt = updt_val[invoice.name]
-                if ('partner_id' in val_to_updt
-                    and val_to_updt['partner_id'] == invoice.partner_id.id
+                if (
+                    "partner_id" in val_to_updt
+                    and val_to_updt["partner_id"] == invoice.partner_id.id
                 ):
-                    del val_to_updt['partner_id']
+                    del val_to_updt["partner_id"]
                     if not val_to_updt:
                         continue
                 # In case we modify the amount we want to test if the amount is zero
