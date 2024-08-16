@@ -382,7 +382,7 @@ class ContractGroup(models.Model):
     def _process_invoice_generation(self, invoicer, invoicing_date, contract=None):
         self.ensure_one()
         active_contracts = self.active_contract_ids
-        open_invoices = self.active_contract_ids.mapped("open_invoice_ids").filtered(
+        open_invoices = active_contracts.mapped("open_invoice_ids").filtered(
             lambda i: i.invoice_date_due >= invoicing_date
             and i.invoice_date_due.year == invoicing_date.year
         )
