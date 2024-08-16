@@ -366,7 +366,7 @@ class ContractGroup(models.Model):
 
         existing_invoices = self.env["account.move"].search(search_filter)
 
-        is_sub_proposal = contract is not None and contract.source_id is 554
+        is_sub_proposal = contract is not None and contract.source_id == 554
 
         # Check for contract group suspension when no specific contract is given
         # from a sub proposal is given
