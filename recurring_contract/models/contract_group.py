@@ -447,7 +447,11 @@ class ContractGroup(models.Model):
         # between all the contracts of the list
         contract = self.active_contract_ids[0]
         company_id = contract.company_id.id
-        partner_id = self.partner_id.id
+        partner_id = (
+            self.partner_id.id
+            if not contract.send_gifts_to
+            else contract[contract.send_gifts_to].id
+        )
         journal = self.env["account.journal"].search(
             [("type", "=", "sale"), ("company_id", "=", company_id)], limit=1
         )
