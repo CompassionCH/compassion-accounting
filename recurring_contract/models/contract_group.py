@@ -447,11 +447,7 @@ class ContractGroup(models.Model):
         # between all the contracts of the list
         contract = self.active_contract_ids[0]
         company_id = contract.company_id.id
-        partner_id = (
-            self.partner_id.id
-            if not contract.send_gifts_to
-            else contract[contract.send_gifts_to].id
-        )
+        partner_id = self._get_partner_for_contract(contract).id
         journal = self.env["account.journal"].search(
             [("type", "=", "sale"), ("company_id", "=", company_id)], limit=1
         )
@@ -567,3 +563,6 @@ class ContractGroup(models.Model):
             # In case the advance_billing_months is greater than before
             # we should generate more invoices
             self.active_contract_ids.button_generate_invoices()
+
+    def _get_partner_for_contract(self, contract):
+        return contract.partner_id
