@@ -482,7 +482,7 @@ class ContractGroup(models.Model):
                     (
                         "product_id",
                         "in",
-                        contracts.product_ids.ids,
+                        contracts.mapped("product_ids").ids,
                     ),
                     ("payment_state", "=", "paid"),
                 ]
@@ -491,7 +491,7 @@ class ContractGroup(models.Model):
         )
         reference_contract = contracts[0]
         company_id = reference_contract.company_id.id
-        partner_id = self._get_partner_for_contract(contract).id
+        partner_id = self._get_partner_for_contract(reference_contract).id
         journal = self.env["account.journal"].search(
             [("type", "=", "sale"), ("company_id", "=", company_id)], limit=1
         )
