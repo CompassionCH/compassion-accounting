@@ -446,8 +446,6 @@ class ContractGroup(models.Model):
             contracts = self.active_contract_ids
 
             if contract is not None:
-                # we use the first contract because the information we retrieve
-                # has to be shared between all the contracts of the list
                 contracts = contract
 
             inv_data = self._build_invoice_gen_data(invoicing_date, invoicer, contracts)
@@ -489,6 +487,8 @@ class ContractGroup(models.Model):
             )
             .mapped("contract_id.contract_line_ids")
         )
+        # we use the first contract because the information we retrieve
+        # has to be shared between all the contracts of the list
         reference_contract = contracts[0]
         company_id = reference_contract.company_id.id
         partner_id = self._get_partner_for_contract(reference_contract).id
