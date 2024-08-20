@@ -356,7 +356,7 @@ class ContractGroup(models.Model):
 
         existing_invoices = self.env["account.move"].search_count(search_filter)
 
-        is_sub_proposal = contract is not None and contract.source_id == 554
+        is_sub_proposal = contract is not None and contract.source_id.id == 554
 
         # Check for contract group suspension when no specific contract is given
         # from a sub proposal is given
@@ -443,12 +443,14 @@ class ContractGroup(models.Model):
             )
         else:
             # Building invoices data
-            if contract is None:
+            contracts = self.active_contract_ids
+
+            if contract is not None:
                 # we use the first contract because the information we retrieve
                 # has to be shared between all the contracts of the list
-                contract = self.active_contract_ids[0]
+                contracts = contract
 
-            inv_data = self._build_invoice_gen_data(invoicing_date, invoicer, contract)
+            inv_data = self._build_invoice_gen_data(invoicing_date, invoicer, contracts)
             # Creating the actual invoice
             _logger.info(f"Generating invoice : {inv_data}")
             invoice = self.env["account.move"].create(inv_data)
@@ -463,7 +465,7 @@ class ContractGroup(models.Model):
                 invoice.unlink()
 
     def _build_invoice_gen_data(
-        self, invoicing_date, invoicer, contract, gift_wizard=False
+        self, invoicing_date, invoicer, contracts, gift_wizard=False
     ):
         """Setup a dict with data passed to invoice.create.
         If any custom data is wanted in invoice from contract group, just
@@ -476,18 +478,19 @@ class ContractGroup(models.Model):
             .search(
                 [
                     ("date", "=", invoicing_date),
-                    ("contract_id", "in", self.active_contract_ids.ids),
+                    ("contract_id", "in", contracts.ids),
                     (
                         "product_id",
                         "in",
-                        self.active_contract_ids.mapped("product_ids").ids,
+                        contracts.product_ids.ids,
                     ),
                     ("payment_state", "=", "paid"),
                 ]
             )
             .mapped("contract_id.contract_line_ids")
         )
-        company_id = contract.company_id.id
+        reference_contract = contracts[0]
+        company_id = reference_contract.company_id.id
         partner_id = self._get_partner_for_contract(contract).id
         journal = self.env["account.journal"].search(
             [("type", "=", "sale"), ("company_id", "=", company_id)], limit=1
@@ -498,10 +501,10 @@ class ContractGroup(models.Model):
             "move_type": "out_invoice",
             "partner_id": partner_id,
             "journal_id": journal.id,
-            "currency_id": contract.pricelist_id.currency_id.id,
+            "currency_id": reference_contract.pricelist_id.currency_id.id,
             "invoice_date": invoicing_date,  # Accountant date
             "recurring_invoicer_id": invoicer.id,
-            "pricelist_id": contract.pricelist_id.id,
+            "pricelist_id": reference_contract.pricelist_id.id,
             "payment_mode_id": self.payment_mode_id.id,
             "company_id": company_id,
             # Field for the invoice_due_date to be automatically calculated
@@ -526,7 +529,9 @@ class ContractGroup(models.Model):
                         invoicing_date=invoicing_date, contract_line=cl
                     ),
                 )
-                for cl in (contract.contract_line_ids - already_paid_cl)
+                for cl in (
+                    contracts.mapped("contract_line_ids") - already_paid_cl
+                )
                 if cl
             ],
             "narration": "\n".join(
