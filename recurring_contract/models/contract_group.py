@@ -327,11 +327,6 @@ class ContractGroup(models.Model):
 
         if contract:
             search_filter = [
-                "&",
-                "&",
-                "&",
-                "&",
-                "&",
                 ("state", "!=", "cancel"),
                 ("invoice_date_due", "=", invoicing_date),
                 ("partner_id", "=", self.partner_id.id),
@@ -345,14 +340,6 @@ class ContractGroup(models.Model):
             ]
         else:
             search_filter = [
-                "&",
-                "&",
-                "&",
-                "&",
-                "&",
-                "|",
-                ("payment_state", "not in", ["paid", "not_paid"]),
-                ("state", "=", "cancel"),
                 ("invoice_date_due", "=", invoicing_date),
                 ("partner_id", "=", self.partner_id.id),
                 ("move_type", "=", "out_invoice"),
@@ -362,9 +349,12 @@ class ContractGroup(models.Model):
                     "in",
                     self.active_contract_ids.mapped("product_ids").ids,
                 ),
+                "|",
+                ("payment_state", "not in", ["paid", "not_paid"]),
+                ("state", "=", "cancel"),
             ]
 
-        existing_invoices = self.env["account.move"].search(search_filter)
+        existing_invoices = self.env["account.move"].search_count(search_filter)
 
         is_sub_proposal = contract is not None and contract.source_id == 554
 
