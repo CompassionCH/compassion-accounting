@@ -380,11 +380,7 @@ class ContractGroup(models.Model):
             == current_rec_unit_date
         )
         if len(open_invoice) > 1:
-            _logger.error(
-                f"Found more than one open invoice on {invoicing_date}"
-                f"for the group {self.id}"
-            )
-            return False
+            raise ValueError(f"Found more than one open invoice on {invoicing_date}.")
 
         if open_invoice:
             # Retrieve account_move_line already existing for this contract
