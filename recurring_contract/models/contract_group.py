@@ -356,18 +356,12 @@ class ContractGroup(models.Model):
 
         existing_invoices = self.env["account.move"].search_count(search_filter)
 
-        is_sub_proposal = contract is not None and contract.source_id.id == 554
+        is_suspended = (
+            self.invoice_suspended_until
+            and self.invoice_suspended_until > invoicing_date
+        )
 
-        # Check for contract group suspension when no specific contract is given
-        # from a sub proposal is given
-        if is_sub_proposal:
-            return bool(existing_invoices)
-        else:
-            is_suspended = (
-                self.invoice_suspended_until
-                and self.invoice_suspended_until > invoicing_date
-            )
-            return bool(existing_invoices) or is_suspended
+        return bool(existing_invoices) or is_suspended
 
     def _process_invoice_generation(self, invoicer, invoicing_date, contract=None):
         self.ensure_one()
