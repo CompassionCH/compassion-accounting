@@ -519,9 +519,7 @@ class ContractGroup(models.Model):
                         invoicing_date=invoicing_date, contract_line=cl
                     ),
                 )
-                for cl in (
-                    contracts.mapped("contract_line_ids") - already_paid_cl
-                )
+                for cl in (contracts.mapped("contract_line_ids") - already_paid_cl)
                 if cl
             ],
             "narration": "\n".join(
