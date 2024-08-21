@@ -537,7 +537,7 @@ class RecurringContract(models.Model):
     def invoice_paid(self, invoice):
         """Activate contract if it is waiting for payment."""
         activate_contracts = self.filtered(lambda c: c.state == "waiting")
-        if activate_contracts:
+        if self._can_activate_contract(activate_contracts):
             activate_contracts.contract_active()
 
     ##########################################################################
@@ -662,3 +662,6 @@ class RecurringContract(models.Model):
                     data_invs[inv_name] = inv_data
         if data_invs:
             self.mapped("open_invoice_ids").update_open_invoices(data_invs)
+
+    def _can_activate_contract(self, contract: "RecurringContract"):
+        return bool(contract)
