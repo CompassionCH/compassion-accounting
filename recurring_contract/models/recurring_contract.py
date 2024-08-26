@@ -45,6 +45,16 @@ class RecurringContract(models.Model):
         copy=False,
         tracking=True,
     )
+    correspondent_id = fields.Many2one(
+        "res.partner",
+        "Correspondent",
+        required=True,
+        ondelete="restrict",
+        tracking=True,
+        readonly=False,
+    )
+    type = fields.Text()
+
     end_date = fields.Datetime(
         readonly=False,
         states={"terminated": [("readonly", True)]},

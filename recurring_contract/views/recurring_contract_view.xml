@@ -18,11 +18,13 @@
                 <field name="reference" />
                 <field name="partner_id" />
                 <field name="start_date" />
+                <field name="correspondent_id" />
                 <field name="activation_date" />
                 <field name="end_date" />
                 <field name="payment_mode_id" />
                 <field name="total_amount" />
                 <field name="state" />
+                <field name="type"/>
             </tree>
         </field>
     </record>
@@ -90,6 +92,14 @@
                             <field
                                 name="partner_id"
                                 options="{'create': false, 'm2o_dialog': false}"
+                            />
+                            <field
+                                name="correspondent_id"
+                                attrs="{'invisible':[('type','!=','CSP')]}"
+                            />
+                            <field
+                                name="type"
+                                invisible="1"
                             />
                             <field
                                 name="company_id"
@@ -241,6 +251,12 @@
                         name="end_date"
                         domain="[]"
                         context="{'group_by':'end_date'}"
+                    />
+                    <filter
+                        string="Correspondent"
+                        name="correspondent_id"
+                        domain="[]"
+                        context="{'group_by':'correspondent_id'}"
                     />
                     <filter
                         string="Payment mode"
