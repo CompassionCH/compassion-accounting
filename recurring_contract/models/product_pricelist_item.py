@@ -14,8 +14,8 @@ class ProductPricelistItem(models.Model):
                 ]
             )
             for cl in contract_lines:
-                price = cl.contract_id.pricelist_id.get_product_price(
-                    cl.product_id, cl.quantity, cl.contract_id.partner_id
+                price = cl.contract_id.pricelist_id._get_product_price(
+                    cl.product_id, cl.quantity
                 )
                 if cl.amount != price:
                     cl.amount = price

@@ -10,28 +10,25 @@
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="account.res_config_settings_view_form" />
         <field name="arch" type="xml">
-            <xpath expr="//div[@id='invoicing_settings']" position="inside">
-                <div class="col-xs-12 col-md-6 o_setting_box">
-                    <div class="o_setting_left_pane">
-                        <field name="do_generate_curr_month" />
-                    </div>
-                    <div class="o_setting_right_pane">
-                        <label
-                            for="do_generate_curr_month"
-                            class="o_form_label"
-                        />
-                        <span
-                            class="fa fa-lg fa-building-o"
-                            title="Values set here are company-specific."
-                        />
-                        <div class="text-muted">
-                            Define if we start generating invoices from current month or next month only
+            <block id="invoicing_settings" position="after">
+                <block
+                    title="Recurring contracts"
+                    name="default_recurring_contract"
+                >
+                    <setting id="recurring_invoicing_generation">
+                        <div>
+                            <field name="do_generate_curr_month" />
+                            <label for="do_generate_curr_month" />
+                            <span
+                                class="fa fa-lg fa-building-o"
+                                title="Values set here are company-specific."
+                            />
+                            <div class="text-muted">
+                                Define if we start generating invoices from current month or next month only
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="col-xs-12 col-md-6 o_setting_box">
-                    <div class="o_setting_left_pane" />
-                    <div class="o_setting_right_pane">
+                    </setting>
+                    <setting id="recurring_invoicing_suspension">
                         <label for="inv_block_day" class="o_form_label" />
                         <span
                             class="fa fa-lg fa-building-o"
@@ -41,9 +38,9 @@
                             Define the day that we want to suspend contract invoices on creation
                         </div>
                         <field name="inv_block_day" />
-                    </div>
-                </div>
-            </xpath>
+                    </setting>
+                </block>
+            </block>
         </field>
     </record>
 </odoo>

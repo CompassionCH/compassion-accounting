@@ -42,6 +42,12 @@ class ContractGroup(models.Model):
         "customer in january.",
         default=1,
     )
+    company_id = fields.Many2one(
+        "res.company",
+        "Company",
+        default=lambda self: self.env.company,
+        index=True,
+    )
     payment_mode_id = fields.Many2one(
         "account.payment.mode",
         "Payment mode",
@@ -58,7 +64,6 @@ class ContractGroup(models.Model):
         string="Invoice Suspended Until",
         help="Date at which the sponsor should receive invoices again.",
         tracking=True,
-        states={"draft": [("readonly", False)]},
     )
     partner_id = fields.Many2one(
         "res.partner",
@@ -485,13 +490,18 @@ class ContractGroup(models.Model):
         journal = self.env["account.journal"].search(
             [("type", "=", "sale"), ("company_id", "=", company_id)], limit=1
         )
+        if not journal:
+            raise UserError(
+                _("No sale journal found for company %s")
+                % reference_contract.company_id.name
+            )
         inv_data = {
             "payment_reference": self.ref,  # Accountant reference
             "ref": self.ref,  # Internal reference
             "move_type": "out_invoice",
             "partner_id": partner_id,
             "journal_id": journal.id,
-            "currency_id": reference_contract.pricelist_id.currency_id.id,
+            "currency_id": reference_contract.currency_id.id,
             "invoice_date": invoicing_date,  # Accountant date
             "recurring_invoicer_id": invoicer.id,
             "pricelist_id": reference_contract.pricelist_id.id,
@@ -547,15 +557,11 @@ class ContractGroup(models.Model):
             contract = contract_line.contract_id
             line_name = product.name
             if contract_line.pricelist_item_count:
-                price = contract.pricelist_id.get_product_price(
-                    product, qty, contract.partner_id, invoicing_date
+                price = contract.pricelist_id._get_product_price(
+                    product, qty, date=invoicing_date
                 )
             else:
                 price = contract_line.amount
-            if product.pricelist_item_count > 0:
-                price = contract.pricelist_id.get_product_price(
-                    product, qty, self.partner_id, invoicing_date
-                )
         elif gift_wizard:
             product = gift_wizard.product_id
             qty = gift_wizard.quantity

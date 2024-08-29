@@ -33,27 +33,29 @@
         <field name="model">recurring.contract</field>
         <field name="arch" type="xml">
             <form>
+                <field name="company_id" invisible="1" />
+                <field name="pricelist_id" invisible="1" />
                 <header>
-                    <field name="state" widget="statusbar" />
+                    <field name="state" widget="statusbar" readonly="1" />
                     <button
                         name="contract_waiting"
                         class="oe_highlight"
                         string="Validate"
-                        states="draft"
+                        invisible="state != 'draft'"
                         type="object"
                     />
                     <button
                         name="action_cancel_draft"
                         type="object"
                         string="Set back to draft"
-                        states="cancelled"
+                        invisible="state != 'cancelled'"
                     />
                     <button
                         name="%(action_end_contract)d"
                         type="action"
                         string="Terminate"
                         class="oe_highlight"
-                        attrs="{'invisible': ['|', ('state', 'in', ['terminated', 'cancelled']), ('end_date', '!=', False)]}"
+                        invisible="state in ('terminated','cancelled') or end_date"
                     />
                 </header>
                 <sheet>
@@ -64,7 +66,7 @@
                             class="oe_inline oe_stat_button"
                             icon="fa-refresh"
                             string="Generate invoices"
-                            states="waiting,active"
+                            invisible="state not in ('waiting','active')"
                         />
                         <button
                             name="open_invoices"
@@ -82,33 +84,43 @@
 
                     <div class="oe_title">
                         <h1>
-                            <field name="reference" default_focus="1" />
+                            <field
+                                name="reference"
+                                default_focus="1"
+                                readonly="state != 'draft'"
+                            />
                         </h1>
                     </div>
                     <group>
                         <group>
                             <field
                                 name="partner_id"
+                                readonly="state != 'draft'"
                                 options="{'create': false, 'm2o_dialog': false}"
                             />
+                            <field name="country_id" />
                             <field
                                 name="company_id"
                                 groups="base.group_multi_company"
                             />
-                            <field name="pricelist_id" />
+                            <field
+                                name="pricelist_id"
+                                groups="product.group_product_pricelist"
+                            />
                             <field
                                 name="group_id"
-                                domain="[('partner_id', '=', partner_id), ('contract_ids.company_id', '=', company_id), ('contract_ids.pricelist_id', '=', pricelist_id)]"
-                                context="{'default_partner_id': partner_id, 'contract_id': id}"
+                                domain="[('partner_id', '=', partner_id)]"
+                                context="{'default_partner_id': partner_id, 'contract_id': id, 'default_company_id': company_id}"
+                                options="{'no_quick_create': True}"
                             />
                         </group>
                         <group>
-                            <field name="start_date" />
-                            <field name="activation_date" />
+                            <field name="start_date" readonly="1" />
+                            <field name="activation_date" readonly="1" />
                             <field name="end_date" />
                             <field
                                 name="end_reason_id"
-                                states="terminated,cancelled"
+                                invisible="state not in ('terminated','cancelled')"
                             />
                         </group>
                         <group>
@@ -178,11 +190,11 @@
         <field name="arch" type="xml">
             <tree string="Contract Lines" editable="bottom">
                 <field name="product_id" />
-                <field name="pricelist_item_count" invisible="1" />
+                <field name="pricelist_item_count" column_invisible="1" />
                 <field
                     name="amount"
                     force_save="1"
-                    attrs="{'readonly': [('pricelist_item_count', '>', 0)]}"
+                    readonly="pricelist_item_count > 0"
                 />
                 <field name="quantity" />
                 <field name="subtotal" />

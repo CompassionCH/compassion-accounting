@@ -43,13 +43,9 @@ class AccountMove(models.Model):
             else:
                 invoice.last_payment = False
 
-    def register_payment(
-        self, payment_line, writeoff_acc_id=False, writeoff_journal_id=False
-    ):
+    def action_register_payment(self):
         """After registering a payment post a message of the bank statement linked"""
-        out = super().register_payment(
-            payment_line, writeoff_acc_id, writeoff_journal_id
-        )
+        out = super().action_register_payment()
         self.message_post_bank_statement_notes()
         return out
 
@@ -74,20 +70,12 @@ class AccountMove(models.Model):
         )
         return statement_line_ids.filtered("narration").mapped("narration")
 
-    def action_invoice_paid(self):
+    def _invoice_paid_hook(self):
         """Call invoice_paid method on related contracts."""
-        res = super().action_invoice_paid()
+        res = super()._invoice_paid_hook()
         for invoice in self:
             contracts = invoice.mapped("invoice_line_ids.contract_id")
             contracts.invoice_paid(invoice)
-        return res
-
-    def action_invoice_re_open(self):
-        """Call invoice_unpaid method on related contract."""
-        res = super().action_invoice_re_open()
-        for invoice in self:
-            contracts = invoice.mapped("invoice_line_ids.contract_id")
-            contracts.invoice_unpaid(invoice)
         return res
 
     def reconcile_after_clean(self):

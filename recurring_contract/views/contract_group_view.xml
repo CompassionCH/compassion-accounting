@@ -11,6 +11,7 @@
         <field name="model">recurring.contract.group</field>
         <field name="arch" type="xml">
             <form>
+                <field name="company_id" invisible="1" />
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button
@@ -57,7 +58,14 @@
                                 domain="[('customer_rank', '>', 0)]"
                                 readonly="1"
                             />
-                            <field name="payment_mode_id" />
+                            <field
+                                name="company_id"
+                                groups="base.group_multi_company"
+                            />
+                            <field
+                                name="payment_mode_id"
+                                domain="[('company_id', '=', company_id)]"
+                            />
                             <field name="invoice_suspended_until" />
                         </group>
                     </group>

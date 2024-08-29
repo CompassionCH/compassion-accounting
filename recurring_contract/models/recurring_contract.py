@@ -27,6 +27,7 @@ class RecurringContract(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin", "utm.mixin"]
     _rec_name = "reference"
     _order = "create_date desc"
+    _check_company_auto = True
 
     ##########################################################################
     #                                 FIELDS                                 #
@@ -35,19 +36,13 @@ class RecurringContract(models.Model):
     reference = fields.Char(
         default="/",
         required=True,
-        readonly=True,
-        states={"draft": [("readonly", False)]},
         copy=False,
     )
     start_date = fields.Datetime(
-        readonly=True,
-        states={"draft": [("readonly", False)]},
         copy=False,
         tracking=True,
     )
     end_date = fields.Datetime(
-        readonly=False,
-        states={"terminated": [("readonly", True)]},
         tracking=True,
         copy=False,
     )
@@ -56,17 +51,15 @@ class RecurringContract(models.Model):
         "End reason",
         copy=False,
         ondelete="restrict",
-        readonly=False,
     )
     last_paid_invoice_date = fields.Date(compute="_compute_last_paid_invoice")
     partner_id = fields.Many2one(
         "res.partner",
         "Partner",
         required=True,
-        readonly=True,
-        states={"draft": [("readonly", False)]},
         ondelete="restrict",
         index=True,
+        check_company=True,
     )
     group_id = fields.Many2one(
         "recurring.contract.group",
@@ -74,14 +67,13 @@ class RecurringContract(models.Model):
         required=True,
         ondelete="restrict",
         tracking=True,
-        readonly=False,
     )
     invoice_line_ids = fields.One2many(
         "account.move.line",
         "contract_id",
         "Related invoice lines",
-        readonly=True,
         copy=False,
+        check_company=True,
     )
     open_invoice_ids = fields.Many2many(
         "account.move", string="Open invoices", compute="_compute_invoices"
@@ -95,7 +87,10 @@ class RecurringContract(models.Model):
         readonly=False,
     )
     product_ids = fields.Many2many(
-        "product.product", "Contract products", compute="_compute_contract_products"
+        "product.product",
+        "Contract products",
+        compute="_compute_contract_products",
+        check_company=True,
     )
     state = fields.Selection(
         [
@@ -106,7 +101,6 @@ class RecurringContract(models.Model):
             ("cancelled", _("Cancelled")),
         ],
         default="draft",
-        readonly=True,
         tracking=True,
         copy=False,
         index=True,
@@ -120,22 +114,38 @@ class RecurringContract(models.Model):
         related="group_id.payment_mode_id",
         readonly=True,
         store=True,
+        check_company=True,
     )
     nb_invoices = fields.Integer(compute="_compute_invoices")
-    activation_date = fields.Datetime(readonly=True, copy=False)
+    activation_date = fields.Datetime(copy=False)
     company_id = fields.Many2one(
         "res.company",
         "Company",
-        required=True,
+        index=True,
         default=lambda self: self.env.company,
-        readonly=False,
+    )
+    country_id = fields.Many2one(
+        "res.country",
+        "Country",
+        compute="_compute_country",
+        precompute=True,
+        required=True,
+        store=True,
+        index=True,
     )
     pricelist_id = fields.Many2one(
         "product.pricelist",
         "Pricelist",
-        domain="[('company_id', '=', company_id)]",
-        required=True,
-        readonly=False,
+        check_company=True,
+        compute="_compute_pricelist",
+        precompute=True,
+        store=True,
+        index=True,
+    )
+    currency_id = fields.Many2one(
+        "res.currency",
+        "Currency",
+        compute="_compute_currency",
     )
     comment = fields.Text()
     due_invoice_ids = fields.Many2many(
@@ -143,6 +153,7 @@ class RecurringContract(models.Model):
         string="Late invoices",
         compute="_compute_due_invoices",
         store=True,
+        check_company=True,
     )
     amount_due = fields.Integer(compute="_compute_due_invoices", store=True)
     months_due = fields.Integer(
@@ -341,14 +352,15 @@ class RecurringContract(models.Model):
     ##########################################################################
     #                              ORM METHODS                               #
     ##########################################################################
-    @api.model
-    def create(self, vals):
+    @api.model_create_multi
+    def create(self, vals_list):
         """Add a sequence generated ref if none is given"""
-        if vals.get("reference", "/") == "/":
-            vals["reference"] = self.env["ir.sequence"].next_by_code(
-                "recurring.contract.ref"
-            )
-        res = super().create(vals)
+        for vals in vals_list:
+            if vals.get("reference", "/") == "/":
+                vals["reference"] = self.env["ir.sequence"].next_by_code(
+                    "recurring.contract.ref"
+                )
+        res = super().create(vals_list)
         return res
 
     def write(self, vals):
@@ -390,14 +402,15 @@ class RecurringContract(models.Model):
         else:
             self._cancel_invoices()
 
-    ##########################################################################
-    #                             VIEW CALLBACKS                             #
-    ##########################################################################
+    @api.depends("partner_id")
+    def _compute_country(self):
+        for contract in self:
+            contract.country_id = contract.partner_id.country_id
+
     @api.onchange("partner_id")
     def on_change_partner_id(self):
         """On partner change, we update the group_id. If partner has
         only 1 group, we take it. Else, we take nothing.
-        We also update the company_id when the partner have a country_id
         """
         group_ids = self.env["recurring.contract.group"].search(
             [("partner_id", "=", self.partner_id.id)]
@@ -407,31 +420,18 @@ class RecurringContract(models.Model):
         else:
             self.group_id = False
 
-        # Update the company value based on the partner.country_id
-        # as there is no value for partner.company_id
-        if self.partner_id.country_id:
-            company_ids = self.env["res.company"].search(
-                [("partner_id.country_id", "=", self.partner_id.country_id.id)], limit=1
-            )
-            self.company_id = company_ids.filtered(
-                lambda company: company.country_id == self.partner_id.country_id
-            )
+    @api.depends("partner_id", "company_id")
+    def _compute_pricelist(self):
+        for contract in self:
+            contract.pricelist_id = contract.partner_id.property_product_pricelist
 
-    @api.onchange("company_id")
-    def on_change_company_id(self):
-        """On company change, we update the pricelist_id dropdown list.
-        So that the list offers company currency or EUR as a choice"""
-        pricelist = self.env["product.pricelist"].search(
-            [("company_id", "=", self.company_id.id)]
-        )
-
-        # Set pricelist if there is a result
-        if pricelist:
-            # Take first result
-            self.pricelist_id = pricelist[0]
-        # Unset pricelist_id if the company selected doesn't have one
-        else:
-            self.pricelist_id = False
+    def _compute_currency(self):
+        for contract in self:
+            contract.currency_id = (
+                contract.pricelist_id.currency_id
+                or contract.company_id.currency_id
+                or contract.country_id.currency_id
+            )
 
     def open_invoices(self):
         self.ensure_one()
@@ -446,9 +446,6 @@ class RecurringContract(models.Model):
             "context": {"search_default_unpaid": 1},
         }
 
-    ##########################################################################
-    #                            WORKFLOW METHODS                            #
-    ##########################################################################
     def contract_draft(self):
         if self.filtered(lambda c: c.state == "active"):
             raise UserError(_("Active contract cannot be put to draft"))
@@ -530,18 +527,11 @@ class RecurringContract(models.Model):
         self.contract_active()
         return True
 
-    def invoice_unpaid(self, invoice):
-        """Hook when invoice is unpaid"""
-        pass
-
     def invoice_paid(self, invoice):
         activatable_contracts = self._activatable_contracts()
         if activatable_contracts:
             activatable_contracts.contract_active()
 
-    ##########################################################################
-    #                             PRIVATE METHODS                            #
-    ##########################################################################
     def _cancel_invoices(self):
         """Cancel invoices
         This method cancel invoices that are due in the future
@@ -635,7 +625,7 @@ class RecurringContract(models.Model):
 
     def _updt_invoices_rc(self, vals):
         """
-        It updates the invoices of a contract when the contract is updated
+        It updates the invoices for a contract when the contract is updated
 
         :param vals: the values that are being updated on the contract
         """

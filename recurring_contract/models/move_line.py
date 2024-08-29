@@ -8,7 +8,7 @@
 #
 ##############################################################################
 
-from odoo import _, api, fields, models
+from odoo import _, fields, models
 from odoo.exceptions import UserError
 
 
@@ -33,17 +33,6 @@ class MoveLine(models.Model):
     payment_state = fields.Selection(
         related="move_id.payment_state", store=True, readonly=True, index=True
     )
-
-    @api.onchange("product_id")
-    def _onchange_product_id(self):
-        # workaround an odoo bug :
-        # could be fixed by applying this change here
-        # - self.analytic_tag_ids = rec.analytic_tag_ids.ids
-        # + self.analytic_tag_ids = rec.analytic_tag_ids
-        # https://github.com/odoo/odoo/blame/12.0/addons/account_analytic_default/models/account_analytic_default.py#L100
-        self.analytic_tag_ids = self.env["account.analytic.tag"]
-        res = super()._onchange_product_id()
-        return res
 
     def group_reconcile(self, matched_lines, credit_or_debit="debit"):
         """
