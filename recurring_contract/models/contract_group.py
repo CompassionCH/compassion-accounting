@@ -317,11 +317,12 @@ class ContractGroup(models.Model):
 
     def _should_skip_invoice_generation(self, invoicing_date, contract=None):
         """In such cases, we should skip the invoice generation:
-        - There is already an invoice for this due date which has been cancelled or
-          edited.
-        - Contract group suspension.
         - A specific contract is given and an invoice for this due date already exists
           and isn't cancelled.
+        - All active contracts already have an invoice for this due date that
+          isn't cancelled.
+        - Contract group suspension.
+
         """
         self.ensure_one()
 
@@ -347,20 +348,14 @@ class ContractGroup(models.Model):
                 ("invoice_date_due", "=", invoicing_date),
                 ("partner_id", "=", self.partner_id.id),
                 ("move_type", "=", "out_invoice"),
-                ("line_ids.contract_id", "in", self.active_contract_ids.ids), # ----> should check that it found count == active_contracts.count ? if not if a single other active contract has an invoice it will not generate or update the amount
+                ("line_ids.contract_id", "in", self.active_contract_ids.ids),
                 (
                     "line_ids.product_id",
                     "in",
                     self.active_contract_ids.mapped("product_ids").ids,
                 ),
                 ('state', '!=', 'cancel')
-                #"|",
-                #("payment_state", "not in", ["paid", "not_paid"]),
-                #("state", "=", "cancel"), # ----> change double condition to ("state", "!=", "cancel") ?????
             ]
-
-            # self.env["account.move"].search([("invoice_date_due", "=", invoicing_date), ("partner_id", "=", self.partner_id.id), ("move_type", "=", "out_invoice"), ("line_ids.contract_id", "in", self.active_contract_ids.ids), ("state", "!=", "cancel")])
-            # 31551
 
             open_invoices = self.env["account.move"].search(search_filter)
 
