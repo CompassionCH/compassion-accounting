@@ -343,7 +343,7 @@ class ContractGroup(models.Model):
                 ("invoice_date_due", "=", invoicing_date),
                 ("partner_id", "=", self.partner_id.id),
                 ("move_type", "=", "out_invoice"),
-                ("line_ids.contract_id", "in", self.active_contract_ids.ids),
+                ("line_ids.contract_id", "in", self.active_contract_ids.ids), # ----> should check that it found count == active_contracts.count ? if not if a single other active contract has an invoice it will not generate or update the amount
                 (
                     "line_ids.product_id",
                     "in",
@@ -351,7 +351,9 @@ class ContractGroup(models.Model):
                 ),
                 "|",
                 ("payment_state", "not in", ["paid", "not_paid"]),
-                ("state", "=", "cancel"),
+                ("state", "=", "cancel"), # ----> change double condition to ("state", "!=", "cancel") ?????
+                # self.env["account.move"].search([("invoice_date_due", "=", invoicing_date), ("partner_id", "=", self.partner_id.id), ("move_type", "=", "out_invoice"), ("line_ids.contract_id", "in", self.active_contract_ids.ids), ("state", "!=", "cancel")])
+                # 31551
             ]
 
         existing_invoices = self.env["account.move"].search_count(search_filter)
