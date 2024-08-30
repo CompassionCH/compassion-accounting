@@ -325,6 +325,8 @@ class ContractGroup(models.Model):
         """
         self.ensure_one()
 
+        has_all_invoices = False
+
         if contract:
             search_filter = [
                 ("state", "!=", "cancel"),
@@ -338,6 +340,8 @@ class ContractGroup(models.Model):
                     contract.product_ids.ids,
                 ),
             ]
+
+            has_all_invoices = bool(self.env["account.move"].search_count(search_filter))
         else:
             search_filter = [
                 ("invoice_date_due", "=", invoicing_date),
@@ -349,21 +353,25 @@ class ContractGroup(models.Model):
                     "in",
                     self.active_contract_ids.mapped("product_ids").ids,
                 ),
-                "|",
-                ("payment_state", "not in", ["paid", "not_paid"]),
-                ("state", "=", "cancel"), # ----> change double condition to ("state", "!=", "cancel") ?????
-                # self.env["account.move"].search([("invoice_date_due", "=", invoicing_date), ("partner_id", "=", self.partner_id.id), ("move_type", "=", "out_invoice"), ("line_ids.contract_id", "in", self.active_contract_ids.ids), ("state", "!=", "cancel")])
-                # 31551
+                ('state', '!=', 'cancel')
+                #"|",
+                #("payment_state", "not in", ["paid", "not_paid"]),
+                #("state", "=", "cancel"), # ----> change double condition to ("state", "!=", "cancel") ?????
             ]
 
-        existing_invoices = self.env["account.move"].search_count(search_filter)
+            # self.env["account.move"].search([("invoice_date_due", "=", invoicing_date), ("partner_id", "=", self.partner_id.id), ("move_type", "=", "out_invoice"), ("line_ids.contract_id", "in", self.active_contract_ids.ids), ("state", "!=", "cancel")])
+            # 31551
+
+            open_invoices = self.env["account.move"].search(search_filter)
+
+            has_all_invoices = len(self.active_contract_ids - open_invoices.line_ids.contract_id) == 0
 
         is_suspended = (
             self.invoice_suspended_until
             and self.invoice_suspended_until > invoicing_date
         )
 
-        return bool(existing_invoices) or is_suspended
+        return has_all_invoices or is_suspended
 
     def _process_invoice_generation(self, invoicer, invoicing_date, contract=None):
         self.ensure_one()
