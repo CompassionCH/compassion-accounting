@@ -43,7 +43,7 @@ class InvoicerWizard(models.TransientModel):
         group_ids = [r[0] for r in self.env.cr.fetchall()]
         groups = self.env["recurring.contract.group"].browse(group_ids)
 
-        # TOTO : REVERT DUMMY CHANGES BEFORE PUBLISHING PR
+        # TODO (NiP): REVERT DUMMY CHANGES BEFORE PUBLISHING PR
         #groups = self.env["recurring.contract.group"].browse(20772)
         groups = groups[1]
 
