@@ -322,13 +322,16 @@ class ContractGroup(models.Model):
 
     def _should_skip_invoice_generation(self, invoicing_date, contract=None):
         """In such cases, we should skip the invoice generation:
-        - There is already an invoice for this due date which has been cancelled or
-          edited.
-        - Contract group suspension.
         - A specific contract is given and an invoice for this due date already exists
           and isn't cancelled.
+        - All active contracts already have an invoice for this due date that
+          isn't cancelled.
+        - Contract group suspension.
+
         """
         self.ensure_one()
+
+        has_all_invoices = False
 
         if contract:
             search_filter = [
@@ -343,6 +346,8 @@ class ContractGroup(models.Model):
                     contract.product_ids.ids,
                 ),
             ]
+
+            has_all_invoices = bool(self.env["account.move"].search_count(search_filter))
         else:
             search_filter = [
                 ("invoice_date_due", "=", invoicing_date),
@@ -354,19 +359,20 @@ class ContractGroup(models.Model):
                     "in",
                     self.active_contract_ids.mapped("product_ids").ids,
                 ),
-                "|",
-                ("payment_state", "not in", ["paid", "not_paid"]),
-                ("state", "=", "cancel"),
+                ('state', '!=', 'cancel')
             ]
 
-        existing_invoices = self.env["account.move"].search_count(search_filter)
+            open_invoices = self.env["account.move"].search(search_filter)
+
+            has_all_invoices = len(self.active_contract_ids -
+                                   open_invoices.mapped("line_ids.contract_id")) == 0
 
         is_suspended = (
             self.invoice_suspended_until
             and self.invoice_suspended_until > invoicing_date
         )
 
-        return bool(existing_invoices) or is_suspended
+        return has_all_invoices or is_suspended
 
     def _process_invoice_generation(self, invoicer, invoicing_date, contract=None):
         self.ensure_one()
