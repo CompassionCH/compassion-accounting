@@ -359,7 +359,8 @@ class ContractGroup(models.Model):
 
             open_invoices = self.env["account.move"].search(search_filter)
 
-            has_all_invoices = len(self.active_contract_ids - open_invoices.line_ids.contract_id) == 0
+            has_all_invoices = len(self.active_contract_ids -
+                                   open_invoices.mapped("line_ids.contract_id")) == 0
 
         is_suspended = (
             self.invoice_suspended_until
