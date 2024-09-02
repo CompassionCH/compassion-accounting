@@ -94,12 +94,14 @@
                                 options="{'create': false, 'm2o_dialog': false}"
                             />
                             <field
-                                name="correspondent_id"
-                                attrs="{'invisible':[('type','!=','CSP')]}"
-                            />
-                            <field
                                 name="type"
                                 invisible="1"
+                                options="{'create': false}"
+                            />
+                            <!--filter_domain="[('type','=','CSP')]" -->
+                            <field
+                                name="correspondent_id"
+                                attrs="{'invisible':[('type','!=','CSP')]}"
                             />
                             <field
                                 name="company_id"

@@ -53,7 +53,7 @@ class RecurringContract(models.Model):
         tracking=True,
         readonly=False,
     )
-    type = fields.Text()
+    type = fields.Char(readonly=True,copy=False,tracking=True)
 
     end_date = fields.Datetime(
         readonly=False,
