@@ -558,9 +558,11 @@ class ContractGroup(models.Model):
         """
         self.ensure_one()
         if contract_line:
-            product = contract_line.product_id
             qty = contract_line.quantity
             contract = contract_line.contract_id
+            product = contract_line.product_id.with_company(
+                contract.company_id.id
+            )
             line_name = product.name
             if contract_line.pricelist_item_count:
                 price = contract.pricelist_id._get_product_price(
@@ -569,9 +571,11 @@ class ContractGroup(models.Model):
             else:
                 price = contract_line.amount
         elif gift_wizard:
-            product = gift_wizard.product_id
             qty = gift_wizard.quantity
             contract = gift_wizard.contract_id
+            product = gift_wizard.product_id.with_company(
+                contract.company_id.id
+            )
             price = gift_wizard.amount
             line_name = gift_wizard.description or product.name
         else:
@@ -585,10 +589,9 @@ class ContractGroup(models.Model):
             "quantity": qty,
             "product_id": product.id,
             "contract_id": contract.id,
-            "account_id": product.with_company(
-                contract.company_id.id
-            ).property_account_income_id.id
-            or False,
+            "account_id": (
+                product.property_account_income_id
+                or product.categ_id.property_account_income_categ_id).id,
         }
 
     def _updt_invoices_cg(self, vals):

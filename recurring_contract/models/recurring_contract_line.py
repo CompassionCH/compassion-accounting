@@ -42,7 +42,8 @@ class ContractLine(models.Model):
         "Product",
         required=True,
         readonly=False,
-        domain=[("property_account_income_id", "!=", False)],
+        domain=["|", ("property_account_income_id", "!=", False),
+                ("categ_id.property_account_income_categ_id", "!=", False)],
     )
     amount = fields.Float("Price", required=True)
     quantity = fields.Integer(default=1, required=True)
