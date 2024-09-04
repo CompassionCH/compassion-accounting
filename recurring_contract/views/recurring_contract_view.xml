@@ -98,7 +98,6 @@
                                 invisible="1"
                                 options="{'create': false}"
                             />
-                            <!--filter_domain="[('type','=','CSP')]" -->
                             <field
                                 name="correspondent_id"
                                 attrs="{'invisible':[('type','!=','CSP')]}"
