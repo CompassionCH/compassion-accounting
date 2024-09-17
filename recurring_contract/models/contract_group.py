@@ -222,6 +222,7 @@ class ContractGroup(models.Model):
                 "title": ("Generation of Invoices"),
                 "message": msg,
                 "type": f"{notification_type}",
+                "next": {"type": "ir.actions.client", "tag": "soft_reload"},
             },
         }
         return notification
@@ -347,7 +348,9 @@ class ContractGroup(models.Model):
                 ),
             ]
 
-            has_all_invoices = bool(self.env["account.move"].search_count(search_filter))
+            has_all_invoices = bool(
+                self.env["account.move"].search_count(search_filter)
+            )
         else:
             search_filter = [
                 ("invoice_date_due", "=", invoicing_date),
@@ -359,13 +362,18 @@ class ContractGroup(models.Model):
                     "in",
                     self.active_contract_ids.mapped("product_ids").ids,
                 ),
-                ('state', '!=', 'cancel')
+                ("state", "!=", "cancel"),
             ]
 
             open_invoices = self.env["account.move"].search(search_filter)
 
-            has_all_invoices = len(self.active_contract_ids -
-                                   open_invoices.mapped("line_ids.contract_id")) == 0
+            has_all_invoices = (
+                len(
+                    self.active_contract_ids
+                    - open_invoices.mapped("line_ids.contract_id")
+                )
+                == 0
+            )
 
         is_suspended = (
             self.invoice_suspended_until
@@ -560,9 +568,7 @@ class ContractGroup(models.Model):
         if contract_line:
             qty = contract_line.quantity
             contract = contract_line.contract_id
-            product = contract_line.product_id.with_company(
-                contract.company_id.id
-            )
+            product = contract_line.product_id.with_company(contract.company_id.id)
             line_name = product.name
             if contract_line.pricelist_item_count:
                 price = contract.pricelist_id._get_product_price(
@@ -573,9 +579,7 @@ class ContractGroup(models.Model):
         elif gift_wizard:
             qty = gift_wizard.quantity
             contract = gift_wizard.contract_id
-            product = gift_wizard.product_id.with_company(
-                contract.company_id.id
-            )
+            product = gift_wizard.product_id.with_company(contract.company_id.id)
             price = gift_wizard.amount
             line_name = gift_wizard.description or product.name
         else:
@@ -591,7 +595,8 @@ class ContractGroup(models.Model):
             "contract_id": contract.id,
             "account_id": (
                 product.property_account_income_id
-                or product.categ_id.property_account_income_categ_id).id,
+                or product.categ_id.property_account_income_categ_id
+            ).id,
         }
 
     def _updt_invoices_cg(self, vals):
