@@ -123,6 +123,7 @@ class RecurringContract(models.Model):
     )
     nb_invoices = fields.Integer(compute="_compute_invoices")
     activation_date = fields.Datetime(readonly=True, copy=False)
+
     company_id = fields.Many2one(
         "res.company",
         "Company",
@@ -407,9 +408,11 @@ class RecurringContract(models.Model):
         else:
             self.group_id = False
 
-        # Update the company value based on the partner.country_id
-        # as there is no value for partner.company_id
-        if self.partner_id.country_id:
+        # Update the company value based on the partner.company_id
+        # If there is none, update it based on partner.country_id
+        if self.partner_id.company_id:
+            self.company_id = self.partner_id.company_id
+        elif self.partner_id.country_id:
             company_ids = self.env["res.company"].search(
                 [("partner_id.country_id", "=", self.partner_id.country_id.id)], limit=1
             )
