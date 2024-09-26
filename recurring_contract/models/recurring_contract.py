@@ -123,7 +123,6 @@ class RecurringContract(models.Model):
     )
     nb_invoices = fields.Integer(compute="_compute_invoices")
     activation_date = fields.Datetime(readonly=True, copy=False)
-
     company_id = fields.Many2one(
         "res.company",
         "Company",
