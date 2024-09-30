@@ -415,9 +415,10 @@ class RecurringContract(models.Model):
             company_ids = self.env["res.company"].search(
                 [("partner_id.country_id", "=", self.partner_id.country_id.id)], limit=1
             )
-            self.company_id = company_ids.filtered(
-                lambda company: company.country_id == self.partner_id.country_id
-            )
+            if company_ids:
+                self.company_id = company_ids.filtered(
+                    lambda company: company.country_id == self.partner_id.country_id
+                )
 
     @api.onchange("company_id")
     def on_change_company_id(self):
