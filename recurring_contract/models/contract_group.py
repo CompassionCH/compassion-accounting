@@ -595,5 +595,7 @@ class ContractGroup(models.Model):
             # we should generate more invoices
             self.active_contract_ids.button_generate_invoices()
 
-    def _get_partner_for_contract(self, contract):
+    def _get_partner_for_contract(self, contract, gift_wizard=False):
+        # gift_wizard optional parameter is necessary to maintain compatibility with
+        # compassion-modules/sponsorship_compassion/models/contract_group.py
         return contract.partner_id
