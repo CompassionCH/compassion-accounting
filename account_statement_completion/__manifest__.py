@@ -33,9 +33,9 @@
     "category": "Finance",
     "website": "https://github.com/CompassionCH/test-repo",
     "depends": [
-        "account_statement_import",
-        "account_payment_order",
-    ],  # source/addons
+        "account_statement_import",  # OCA/bank-statement-import
+        "account_payment_order",  # OCA/bank-payment
+    ],
     "data": [
         "views/completion_rules_view.xml",
         "data/data.xml",

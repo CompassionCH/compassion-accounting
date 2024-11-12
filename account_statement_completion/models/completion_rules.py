@@ -99,4 +99,5 @@ class StatementCompletionRule(models.Model):
             "stmt_line": stmt_line,
             "env": self.env,
             "re": wrap_module(re, ["search", "findall"]),
+            "logger": logger,
         }

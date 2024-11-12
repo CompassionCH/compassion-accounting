@@ -43,13 +43,9 @@ class AccountMove(models.Model):
             else:
                 invoice.last_payment = False
 
-    def register_payment(
-        self, payment_line, writeoff_acc_id=False, writeoff_journal_id=False
-    ):
+    def action_register_payment(self):
         """After registering a payment post a message of the bank statement linked"""
-        out = super().register_payment(
-            payment_line, writeoff_acc_id, writeoff_journal_id
-        )
+        out = super().action_register_payment()
         self.message_post_bank_statement_notes()
         return out
 
@@ -77,7 +73,7 @@ class AccountMove(models.Model):
     def action_invoice_paid(self):
         """Call invoice_paid method on related contracts."""
         res = super().action_invoice_paid()
-        for invoice in self:
+        for invoice in self.filtered(lambda i: i.payment_state == "paid"):
             contracts = invoice.mapped("invoice_line_ids.contract_id")
             contracts.invoice_paid(invoice)
         return res

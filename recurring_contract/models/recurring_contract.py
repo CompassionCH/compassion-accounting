@@ -407,15 +407,18 @@ class RecurringContract(models.Model):
         else:
             self.group_id = False
 
-        # Update the company value based on the partner.country_id
-        # as there is no value for partner.company_id
-        if self.partner_id.country_id:
+        # Update the company value based on the partner.company_id
+        # If there is none, update it based on partner.country_id
+        if self.partner_id.company_id:
+            self.company_id = self.partner_id.company_id
+        elif self.partner_id.country_id:
             company_ids = self.env["res.company"].search(
                 [("partner_id.country_id", "=", self.partner_id.country_id.id)], limit=1
             )
-            self.company_id = company_ids.filtered(
-                lambda company: company.country_id == self.partner_id.country_id
-            )
+            if company_ids:
+                self.company_id = company_ids.filtered(
+                    lambda company: company.country_id == self.partner_id.country_id
+                )
 
     @api.onchange("company_id")
     def on_change_company_id(self):
@@ -590,7 +593,10 @@ class RecurringContract(models.Model):
             )
             if remaining_lines:
                 # We can move or remove the line
-                invoice.write({"invoice_line_ids": [(2, inv_line.id)]})
+                invoice.write({
+                    "invoice_line_ids": [(2, inv_line.id)],
+                    "payment_mode_id": invoice.payment_mode_id.id,
+                })
             else:
                 # The invoice would be empty if we remove the line
                 empty_invoices |= invoice
