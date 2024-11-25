@@ -15,7 +15,7 @@
         <field name="model_id" ref="model_recurring_contract" />
         <field name="code">
 now = datetime.datetime.now()
-expired = self.search([
+expired = model.search([
     ('end_date', '&lt;=', now),
     ('state', 'not in', ['cancelled', 'terminated'])
     ])
