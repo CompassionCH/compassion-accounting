@@ -536,7 +536,7 @@ class RecurringContract(models.Model):
 
     def invoice_paid(self, invoice):
         activatable_contracts = self._activatable_contracts()
-        if activatable_contracts:
+        if invoice.payment_state == "paid" and activatable_contracts:
             activatable_contracts.contract_active()
 
     ##########################################################################
