@@ -342,7 +342,9 @@ class ContractGroup(models.Model):
                 ),
             ]
 
-            has_all_invoices = bool(self.env["account.move"].search_count(search_filter))
+            has_all_invoices = bool(
+                self.env["account.move"].search_count(search_filter)
+            )
         else:
             search_filter = [
                 ("invoice_date_due", "=", invoicing_date),
@@ -354,13 +356,18 @@ class ContractGroup(models.Model):
                     "in",
                     self.active_contract_ids.mapped("product_ids").ids,
                 ),
-                ('state', '!=', 'cancel')
+                ("state", "!=", "cancel"),
             ]
 
             open_invoices = self.env["account.move"].search(search_filter)
 
-            has_all_invoices = len(self.active_contract_ids -
-                                   open_invoices.mapped("line_ids.contract_id")) == 0
+            has_all_invoices = (
+                len(
+                    self.active_contract_ids
+                    - open_invoices.mapped("line_ids.contract_id")
+                )
+                == 0
+            )
 
         is_suspended = (
             self.invoice_suspended_until
@@ -437,8 +444,8 @@ class ContractGroup(models.Model):
                     "payment_mode_id": self.payment_mode_id.id,
                 }
             )
-            open_invoice.mapped('invoice_line_ids').filtered(
-                lambda line : line.contract_id in contract_lines_to_inv.contract_id
+            open_invoice.mapped("invoice_line_ids").filtered(
+                lambda line: line.contract_id in contract_lines_to_inv.contract_id
             ).create_analytic_lines()
         else:
             # Building invoices data
