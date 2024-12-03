@@ -580,10 +580,12 @@ class RecurringContract(models.Model):
             )
             if remaining_lines:
                 # We can move or remove the line
-                invoice.write({
-                    "invoice_line_ids": [(2, inv_line.id)],
-                    "payment_mode_id": invoice.payment_mode_id.id,
-                })
+                invoice.write(
+                    {
+                        "invoice_line_ids": [(2, inv_line.id)],
+                        "payment_mode_id": invoice.payment_mode_id.id,
+                    }
+                )
             else:
                 # The invoice would be empty if we remove the line
                 empty_invoices |= invoice

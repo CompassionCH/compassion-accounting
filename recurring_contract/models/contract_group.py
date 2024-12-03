@@ -450,6 +450,9 @@ class ContractGroup(models.Model):
                     "payment_mode_id": self.payment_mode_id.id,
                 }
             )
+            open_invoice.mapped("invoice_line_ids").filtered(
+                lambda line: line.contract_id in contract_lines_to_inv.contract_id
+            ).create_analytic_lines()
         else:
             # Building invoices data
             contracts = self.active_contract_ids
