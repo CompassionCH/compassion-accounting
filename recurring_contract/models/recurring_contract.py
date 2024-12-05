@@ -286,11 +286,12 @@ class RecurringContract(models.Model):
         """This is a query returning the number of months paid for the current year."""
         self._cr.execute(
             """
-            SELECT contract_id, count(contract_id) AS paid_month
+            SELECT contract_id,
+            COUNT(DISTINCT EXTRACT(month FROM due_date)) AS paid_month
             FROM account_move_line
             WHERE payment_state = 'paid'
             AND contract_id = ANY(%s)
-            AND EXTRACT(year FROM last_payment) = EXTRACT(year FROM CURRENT_DATE)
+            AND EXTRACT(year FROM due_date) = EXTRACT(year FROM CURRENT_DATE)
             GROUP BY contract_id
             """,
             (self.ids,),
