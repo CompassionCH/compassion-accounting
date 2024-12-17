@@ -267,7 +267,7 @@ class RecurringContract(models.Model):
 
             if today.month == 12 and today.day >= 15:
                 current_billing_year += 1
-                to_pay_period -= 12
+                to_pay_period -= 11
 
             months_to_pay = len(
                 list(
