@@ -15,6 +15,14 @@ All accounting extensions needed for supporting Compassion's mission, in particu
 <!-- prettier-ignore-start -->
 
 [//]: # (addons)
+
+Available addons
+----------------
+addon | version | maintainers | summary
+--- | --- | --- | ---
+[account_reconcile_compassion_ee](account_reconcile_compassion_ee/) | 17.0.1.0.0 |  | Enterprise Bank Statement Reconcile for Compassion
+[recurring_contract](recurring_contract/) | 17.0.1.0.0 |  | Contract for recurring invoicing
+
 [//]: # (end addons)
 
 <!-- prettier-ignore-end -->
