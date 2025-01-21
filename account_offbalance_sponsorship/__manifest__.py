@@ -32,7 +32,7 @@
         Off-Balance accounting for sponsorships.
 """,
     "author": "Compassion Switzerland, David Wulliamoz",
-    "website": "https://github.com/CompassionCH/test-repo",
+    "website": "https://github.com/CompassionCH/compassion-accounting",
     "category": "sponsorship and donation",
     "license": "AGPL-3",
     "version": "14.0.1.0.0",
