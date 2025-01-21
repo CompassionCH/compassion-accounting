@@ -18,6 +18,8 @@ exclude: |
   /build/|/dist/|
   # You don't usually want a bot to modify your legal texts
   (LICENSE.*|COPYING.*)
+  # Module not written properly
+  ^account_invoice_export_grouped|
 default_language_version:
   python: python3
   node: "16.17.0"
