@@ -1,13 +1,11 @@
 # Copyright 2020 Camptocamp SA
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html)
 
-import requests
 
 import odoo
-from odoo import _, api, fields, models
+from odoo import _, models
 from odoo.exceptions import UserError, except_orm
 
-from odoo.addons.queue_job.job import identity_exact
 
 class AccountMove(models.Model):
     _inherit = "account.move"
@@ -17,7 +15,7 @@ class AccountMove(models.Model):
         self.with_context(grouped_invoices=True)
         self.env.context.get("grouped_invoices")
         for partner in self.partner_id:
-            invoices = self.filtered(lambda move : move.partner_id.id == partner.id)
+            invoices = self.filtered(lambda move: move.partner_id.id == partner.id)
             invoices._job_export_invoice_grouped(True)
 
     def _invoices_can_be_grouped_on_ebill(self, raiseError=False):
@@ -31,40 +29,52 @@ class AccountMove(models.Model):
         # 7) The currency_id should be the same
         if len(self.partner_id) > 1:
             if raiseError:
-                raise UserError("The invoices cannot be grouped as they are not all for the same partner")
+                raise UserError(
+                    "The invoices cannot be grouped as they are not all for the same partner"
+                )
             return False
         if len(self.partner_bank_id) > 1:
             if raiseError:
-                raise UserError("The invoices cannot be grouped as they are not all for the same bank")
+                raise UserError(
+                    "The invoices cannot be grouped as they are not all for the same bank"
+                )
             return False
-        if len(self.partner_shipping_id) > 1 :
+        if len(self.partner_shipping_id) > 1:
             if raiseError:
-                raise UserError("The invoices cannot be grouped as they have not the same shipping id")
+                raise UserError(
+                    "The invoices cannot be grouped as they have not the same shipping id"
+                )
             return False
         if len(self.company_id) > 1:
             if raiseError:
-                raise UserError("The invoices cannot be grouped as they have not the same company id")
+                raise UserError(
+                    "The invoices cannot be grouped as they have not the same company id"
+                )
             return False
-        if len(set([inv.move_type for inv in self])) > 1:
+        if len({inv.move_type for inv in self}) > 1:
             if raiseError:
-                raise UserError("The invoices cannot be grouped as they have not the same move type")
+                raise UserError(
+                    "The invoices cannot be grouped as they have not the same move type"
+                )
             return False
-        if len(set([len(inv.amount_by_group) for inv in self])) > 1:
+        if len({len(inv.amount_by_group) for inv in self}) > 1:
             if raiseError:
-                raise UserError("The invoices cannot be grouped as they have not the same amount_by_group")
+                raise UserError(
+                    "The invoices cannot be grouped as they have not the same amount_by_group"
+                )
             return False
         if len(self.currency_id) > 1:
             if raiseError:
-                raise UserError("The invoices cannot be grouped as they don't have the same currency")
+                raise UserError(
+                    "The invoices cannot be grouped as they don't have the same currency"
+                )
             return False
         return True
 
     def _job_export_invoice_grouped(self, resend_invoice=False):
         """Export ebill to external server and update the chatter."""
         if self._invoices_can_be_grouped_on_ebill(True):
-            if (
-                not resend_invoice
-            ):
+            if not resend_invoice:
                 return _("Nothing done, invoice has already been exported before.")
             try:
                 res = self._export_invoice_grouped()
@@ -115,5 +125,3 @@ class AccountMove(models.Model):
             message.send_to_postfinance()
             self.invoice_exported = True
             return "Postfinance invoice generated and in state {}".format(message.state)
-
-
