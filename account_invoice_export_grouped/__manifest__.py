@@ -28,7 +28,7 @@
 # pylint: disable=C8101
 {
     "name": "Account Invoice Export Grouped",
-    "summary": "Extend the Account Invoice Export module with the \"Send eBill as installment\" feature.",
+    "summary": 'Extend the Account Invoice Export module with the "Send eBill as installment" feature.',
     "version": "14.0.1.0.0",
     "license": "AGPL-3",
     "author": "Compassion CH",
@@ -36,7 +36,7 @@
     "category": "Accounting",
     "depends": [
         "account_invoice_export",  # edi/account_invoice_export
-        "ebill_postfinance"
+        "ebill_postfinance",
     ],
     "external_dependencies": {},
     "data": [
