@@ -35,12 +35,12 @@
     "website": "https://github.com/CompassionCH/compassion-accounting",
     "category": "sponsorship and donation",
     "license": "AGPL-3",
-    "version": "16.0.1.0.0",
+    "version": "17.0.1.0.0",
     # any module necessary for this one to work correctly
     "depends": [
         "base",
         "sponsorship_compassion",
-        "account_reconciliation_widget",
+        "account_accountant",
     ],
     # always loaded
     "data": [

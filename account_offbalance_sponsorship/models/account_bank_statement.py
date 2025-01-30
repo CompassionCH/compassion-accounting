@@ -9,4 +9,4 @@ class AccountBankStatementLine(models.Model):
         return super(
             AccountBankStatementLine,
             self.with_context(bypass_offbalance_operations=True),
-        ).button_undo_reconciliation()
+        ).action_undo_reconciliation()
