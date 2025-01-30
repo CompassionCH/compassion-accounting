@@ -1,14 +1,4 @@
-##############################################################################
-#
-#    Copyright (C) 2014-today Compassion CH (http://www.compassion.ch)
-#    Releasing children from poverty in Jesus' name
-#    @author: David Wulliamoz <dwulliamoz@compassion.ch>
-#
-#    The licence is in the file __manifest__.py
-#
-##############################################################################
-
-from odoo import models
+from odoo import models, api
 
 
 class AccountMove(models.Model):
@@ -37,56 +27,68 @@ class AccountMoveLine(models.Model):
             param_obj.get_param("account_offbalance_asset"),
         )
 
-    def reconcile(self):
-        # check if there is a currency diff
-        # and reload the invoice with the rate received
-        filtered_item = self.filtered(
-            lambda line: line.journal_id != self.company_id.currency_exchange_journal_id
-        )
-        total = total_curr = 0
-        for line in filtered_item:
-            total = line.debit - line.credit + total
-            total_curr = line.amount_currency + total_curr
-        if total != 0 and total_curr == 0:
-            inv_to_refresh = filtered_item.filtered(
-                lambda line: line.move_id.journal_id.type == "sale"
-            ).move_id
-            nr = filtered_item.filtered(
-                lambda line: line.move_id.journal_id.type != "sale"
-            )
-            new_rate = sum(n.amount_currency for n in nr) / sum(
-                n.debit - n.credit for n in nr
-            )
-            inv_to_refresh.button_draft()
-            for line in inv_to_refresh.line_ids.with_context(check_move_validity=False):
-                line.debit = (
-                    abs(line.amount_currency / new_rate)
-                    if line.amount_currency > 0
-                    else 0
-                )
-                line.credit = (
-                    abs(line.amount_currency / new_rate)
-                    if line.amount_currency < 0
-                    else 0
-                )
-            inv_to_refresh.action_post()
-        # reconcile
-        res = super().reconcile()
-        # check if the reconcile is regarding off balance moves
-        (
-            account_offbalance_receivable,
-            account_offbalance_asset,
-        ) = self.get_account_offbalance(self[0].move_id.company_id)
-        if self[0].account_id.id == account_offbalance_receivable:
-            if "partials" in res.keys():
-                for part in res["partials"]:
-                    self.add_off_balance_lines(
-                        part,
-                        account_offbalance_receivable,
-                        account_offbalance_asset,
-                        self[0].move_id.company_id,
-                    )
-                return res
+    @api.model
+    def _reconcile_plan(self, reconciliation_plan):
+        """
+        Override _reconcile_plan
+        Add additionnal account_move_line to meet nordics, offset balance accounting specification.
+
+        """
+        # Get the standard reconciliation plan
+        plan_list, all_amls = self._optimize_reconciliation_plan(reconciliation_plan)
+
+        for plan_node in plan_list:
+            amls = plan_node['amls']
+
+            # Check if customer accoutn is affected
+            if any(aml.account_id.code.startswith("91") for aml in amls):
+                # If so add the additional line for offeset balance
+                self._add_off_balance_lines(plan_node)
+
+        # Keep going with the standard logic
+        move_container = {'records': all_amls.move_id}
+        with all_amls.move_id._check_balanced(move_container), \
+             all_amls.move_id._sync_dynamic_lines(move_container):
+            self._reconcile_plan_with_sync(plan_list, all_amls)
+
+    def _add_off_balance_lines(self, plan_node):
+        """
+        Creates offset balance account_move_lines
+
+        :param plan_node: Dict containing reconciliation plan data.
+        """
+        company = plan_node['amls'][0].move_id.company_id
+        #Retrieve accounts defines in the settings
+        account_offbalance_receivable, account_offbalance_asset = self.get_account_offbalance(company)
+
+        for aml in plan_node['amls']:
+            if aml.account_id.code.startswith("91"):
+                move = aml.move_id
+                credit_amount = aml.credit if aml.credit > 0 else 0.0
+
+                # Check amount before creating hte account_move_lines
+                if credit_amount > 0:
+                    self.env["account.move.line"].with_context(check_move_validity=False).create([
+                        {
+                            "account_id": account_offbalance_asset,
+                            "name": "off-balance asset",
+                            "move_id": move.id,
+                            "partner_id": move.partner_id.id,
+                            "debit": credit_amount,
+                            "credit": 0.0,
+                        },
+                        {
+                            "account_id": self.env["account.account"].search([
+                                ("code", "=", "32110"),
+                                ("company_id", "=", company.id),
+                            ], limit=1).id,
+                            "name": "CDSP Sponsorship",
+                            "move_id": move.id,
+                            "partner_id": move.partner_id.id,
+                            "debit": 0.0,
+                            "credit": credit_amount,
+                        },
+                    ])
 
     def remove_off_balance_lines(self, inv_move, pmt_move):
         rec_lines = pmt_move.line_ids
@@ -107,86 +109,3 @@ class AccountMoveLine(models.Model):
                 pmt.write({"state": "posted"})
 
         return True
-
-    def add_off_balance_lines(
-        self, mv, account_offbalance_receivable, account_offbalance_asset, company
-    ):
-        rec_invoice_line_ids = mv.debit_move_id.move_id.line_ids.filtered(
-            lambda mvl: mvl.account_id.code.startswith("93")
-        )
-        counterpart_credit_amount = sum(
-            inv_line.credit for inv_line in rec_invoice_line_ids
-        )
-        # Only allocate as income what has been "closed"
-        pmt_move = mv.credit_move_id.move_id
-        pmt_move_receivable_amount = sum(
-            mvl.credit - mvl.debit
-            for mvl in pmt_move.line_ids.filtered(
-                lambda a: a.account_id.id == account_offbalance_receivable
-            )
-        )
-        closed_amount = (
-            mv.amount
-            if mv.amount < pmt_move_receivable_amount
-            else pmt_move_receivable_amount
-        )
-        add_lines = (
-            self.env["account.move.line"]
-            .with_context(check_move_validity=False)
-            .create(
-                {
-                    "account_id": account_offbalance_asset,
-                    "name": mv.debit_move_id.move_id.name,
-                    "move_id": pmt_move.id,
-                    "partner_id": pmt_move.partner_id.id,
-                    "debit": closed_amount,
-                    "credit": 0,
-                }
-            )
-        )
-        total_amount_lines = 0
-        for inv_line in rec_invoice_line_ids:
-            inc_acc = self.env["account.account"].search(
-                [
-                    ("code", "=", inv_line.account_id.code[1:]),
-                    ("company_id", "=", company.id),
-                ]
-            )
-            amount_line = round(
-                closed_amount / counterpart_credit_amount * inv_line.credit, 2
-            )
-            if abs(closed_amount - total_amount_lines - amount_line) <= 0.1:
-                # to avoid rounding issues
-                amount_line = closed_amount - total_amount_lines
-            else:
-                total_amount_lines += amount_line
-            add_lines += (
-                self.env["account.move.line"]
-                .with_context(check_move_validity=False)
-                .create(
-                    {
-                        "account_id": inc_acc.id,
-                        "move_id": pmt_move.id,
-                        "debit": 0,
-                        "name": mv.debit_move_id.move_id.name,
-                        "product_id": inv_line.product_id.id,
-                        "partner_id": inv_line.partner_id.id,
-                        "credit": amount_line,
-                    }
-                )
-            )
-        pmt_move.line_ids += add_lines
-
-    def remove_move_reconcile(self):
-        """Undo a reconciliation"""
-        if not self._context.get("bypass_offbalance_operations"):
-            inv_move = (
-                self.matched_debit_ids.debit_move_id.move_id
-                + self.matched_credit_ids.debit_move_id.move_id
-            )
-            pmt_move = (
-                self.matched_credit_ids.credit_move_id.move_id
-                + self.matched_debit_ids.credit_move_id.move_id
-            )
-            self.remove_off_balance_lines(inv_move, pmt_move)
-        super().remove_move_reconcile()
