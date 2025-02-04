@@ -31,7 +31,7 @@
     "version": "14.0.1.0.1",
     "license": "AGPL-3",
     "author": "Compassion Suisse",
-    "website": "https://github.com/CompassionCH/test-repo",
+    "website": "https://github.com/CompassionCH/compassion-accounting",
     "category": "Banking addons",
     "depends": ["account_payment_order"],
     "data": [
