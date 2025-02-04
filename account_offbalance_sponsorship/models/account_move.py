@@ -5,17 +5,41 @@ class AccountMove(models.Model):
     _inherit = "account.move"
 
     def js_remove_outstanding_partial(self, partial_id):
-        """Called by the 'payment' widget to remove a reconciled entry to the present
-        invoice.
+        """Called by the 'payment' widget to remove a reconciled entry from the present invoice.
 
-        :param partial_id: The id of an existing partial reconciled with the current
-        invoice.
+        :param partial_id: The id of an existing partial reconciliation linked to the current invoice.
         """
-        mv = self.env["account.partial.reconcile"].browse(partial_id)
-        mv.debit_move_id.remove_off_balance_lines(mv.debit_move_id.move_id, self)
-        res = super().js_remove_outstanding_partial(partial_id)
-        return res
 
+        self.ensure_one()
+        partial = self.env["account.partial.reconcile"].browse(partial_id)
+
+        if not partial:
+            return False
+
+        # Unreconcile
+        res = super().js_remove_outstanding_partial(partial_id)
+
+        # Get off-balance accounts
+        off_rec, off_ass = self.line_ids.get_account_offbalance(self.company_id)
+        account_32110 = self.env["account.account"].search([
+            ("code", "=", "32110"),
+            ("company_id", "=", self.company_id.id),
+        ], limit=1).id
+
+        # Need to set the move to draft so we can edit its move_lines
+        self.write({"state": "draft"})
+
+        # Get lines to remove
+        lines_to_remove = self.line_ids.filtered(lambda line: line.account_id.id in [off_ass, account_32110])
+
+        if lines_to_remove:
+            lines_to_remove.unlink()
+
+        # Set move as posted after removing the lines
+        self.write({"state": "posted"})
+
+
+        return res
 
 class AccountMoveLine(models.Model):
     _inherit = "account.move.line"
@@ -64,17 +88,17 @@ class AccountMoveLine(models.Model):
         for aml in plan_node['amls']:
             if aml.account_id.code.startswith("91"):
                 move = aml.move_id
-                credit_amount = aml.credit if aml.credit > 0 else 0.0
+                amount = aml.credit if aml.credit > 0 else 0.0
 
                 # Check amount before creating hte account_move_lines
-                if credit_amount > 0:
+                if amount > 0:
                     self.env["account.move.line"].with_context(check_move_validity=False).create([
                         {
                             "account_id": account_offbalance_asset,
                             "name": "off-balance asset",
                             "move_id": move.id,
                             "partner_id": move.partner_id.id,
-                            "debit": credit_amount,
+                            "debit": amount,
                             "credit": 0.0,
                         },
                         {
@@ -86,26 +110,6 @@ class AccountMoveLine(models.Model):
                             "move_id": move.id,
                             "partner_id": move.partner_id.id,
                             "debit": 0.0,
-                            "credit": credit_amount,
+                            "credit": amount,
                         },
                     ])
-
-    def remove_off_balance_lines(self, inv_move, pmt_move):
-        rec_lines = pmt_move.line_ids
-        off_rec, off_ass = rec_lines.get_account_offbalance(inv_move.company_id)
-        if rec_lines.filtered(lambda r: r.account_id.id == off_rec):
-            for pmt in pmt_move:
-                pmt.with_context(skip_account_move_synchronization=True).write(
-                    {"state": "draft"}
-                )
-                ids_to_unlink = self.env["account.move.line"]
-                for move_name in inv_move.mapped("name"):
-                    ids_to_unlink += rec_lines.filtered(
-                        lambda line, current_name=move_name: line.account_id.id
-                        != off_rec
-                        and line.name == current_name
-                    )
-                pmt.line_ids -= ids_to_unlink
-                pmt.write({"state": "posted"})
-
-        return True
