@@ -15,7 +15,6 @@ class AccountPaymentLine(models.Model):
 
     returned = fields.Boolean(
         string="Move unlinked",
-        readonly=True,
         default=False,
         help="This field indicates if the invoice is still "
         "linked with the payment line",

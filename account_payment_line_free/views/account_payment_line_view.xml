@@ -9,13 +9,13 @@
         />
         <field name="arch" type="xml">
             <field name="payment_type" position="after">
-                <field name="returned" />
+                <field name="returned" readonly="1"/>
                 <button
                     name="free_line"
                     type="object"
                     title="This button unlink the invoice with the payment line"
                     icon="fa-unlink"
-                    attrs="{'invisible': [('move_line_id', '=', False)]}"
+                    invisible="not move_line_id"
                 />
             </field>
         </field>
