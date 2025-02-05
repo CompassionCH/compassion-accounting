@@ -9,7 +9,7 @@
         />
         <field name="arch" type="xml">
             <field name="payment_type" position="after">
-                <field name="returned" readonly="1"/>
+                <field name="returned" readonly="1" />
                 <button
                     name="free_line"
                     type="object"
