@@ -1,0 +1,38 @@
+<odoo>
+    <data>
+        <template id="message_payment_line_unlinked">
+            <p>
+                The invoice
+                <a
+                    t-att-href="'/web#id=%s&amp;view_type=form&amp;model=account.move' % invoice.id"
+                >
+                    <t t-esc="invoice.name" />
+                </a>
+                has been marked as returned and freed from
+                <a
+                    t-att-href="'/web#id=%s&amp;view_type=form&amp;model=account.payment.order' % order.id"
+                >
+                    <t t-esc="order.name" />
+                </a>.
+                <t t-if="additional_msg">
+                    <br /><t t-esc="additional_msg" />
+                </t>
+            </p>
+        </template>
+
+        <template id="message_payment_order_unlinked">
+            <p>
+                <a
+                    t-att-href="'/web#id=%s&amp;view_type=form&amp;model=account.move' % invoice.id"
+                >
+                    <t t-esc="invoice.name" />
+                </a>
+                has been unlinked from the line:
+                <t t-esc="payment_line_name" />.
+                <t t-if="additional_msg">
+                    <br /><t t-esc="additional_msg" />
+                </t>
+            </p>
+        </template>
+    </data>
+</odoo>
