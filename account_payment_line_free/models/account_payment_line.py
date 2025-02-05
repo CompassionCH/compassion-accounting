@@ -21,11 +21,6 @@ class AccountPaymentLine(models.Model):
     )
 
     def free_line(self, rsn=""):
-        """
-        Set move_line_id to Null in order to cancel the related invoice
-        check if the payment_line is returned, if not, check the related
-        move_line is not reconciled
-        """
         for rec in self:
             if "paid" not in rec.payment_ids.reconciled_invoice_ids.mapped(
                 "payment_state"
@@ -50,29 +45,31 @@ class AccountPaymentLine(models.Model):
         from the move_line.
         """
         for payment_line in self:
-            # Create a link to the invoice that was removed
             invoice = payment_line.move_line_id.move_id
             order = payment_line.order_id
-            if additional_msg != "":
-                additional_msg = "\n" + additional_msg
-            invoice_url = (
-                f'<a href="web#id={invoice.id}&view_type=form&model='
-                f'account.move">{invoice.name}</a>'
+
+            render_values_invoice = {
+                "invoice": invoice,
+                "order": order,
+                "additional_msg": additional_msg or "",
+            }
+
+            render_values_payment_order = {
+                "invoice": invoice,
+                "payment_line_name": payment_line.name,
+                "additional_msg": additional_msg or "",
+            }
+
+            # Post message on invoice (linking to payment order)
+            invoice.message_post_with_source(
+                "account_payment_line_free.message_payment_line_unlinked",
+                render_values=render_values_invoice,
+                subtype_xmlid="mail.mt_note",
             )
-            payment_order_url = (
-                f'<a href="web#id={order.id}&view_type=form&model='
-                f'account.payment.order">{order.name}</a>'
-            )
-            # Add a message to the invoice
-            invoice.message_post(
-                body="The invoice has been marked as returned and freed from "
-                + payment_order_url
-                + additional_msg
-            )
-            # Add a message to the payment order
-            payment_line.order_id.message_post(
-                body=invoice_url
-                + " has been unlinked from the line: "
-                + payment_line.name
-                + additional_msg
+
+            # Post message on payment order (linking to invoice)
+            order.message_post_with_source(
+                "account_payment_line_free.message_payment_order_unlinked",
+                render_values=render_values_payment_order,
+                subtype_xmlid="mail.mt_note",
             )
