@@ -1,9 +1,8 @@
 /** @odoo-module **/
 
+import { BankRecKanbanController } from "@account_accountant/components/bank_reconciliation/kanban";
 import { _t } from "@web/core/l10n/translation";
 import { patch } from "@web/core/utils/patch";
-
-import { BankRecKanbanController } from "@account_accountant/components/bank_reconciliation/kanban";
 
 patch(BankRecKanbanController.prototype, {
     getOne2ManyColumns() {

@@ -40,7 +40,10 @@
         "gift_compassion",
         "thankyou_letters",
     ],
-    "data": [],
+    "data": [
+        "security/ir.model.access.csv",
+        "views/account_reconcile_model_view.xml",
+    ],
     "assets": {
         "web.assets_backend": [
             "account_reconcile_compassion_ee/static/src/components/**/*",
