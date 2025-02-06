@@ -1,5 +1,7 @@
 import re
 
+from dateutil.relativedelta import relativedelta
+
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
@@ -10,6 +12,14 @@ class AccountReconcileModel(models.Model):
     partner_matching_ids = fields.One2many(
         "account.reconcile.model.partner.matching", "model_id", "Partner Matching Rules"
     )
+    only_this_month = fields.Boolean(
+        default=False, help="Check to search only from the start of the month"
+    )
+
+    @api.onchange("past_months_limit")
+    def _uncheck_only_this_month(self):
+        if self.past_months_limit and self.only_this_month:
+            self.only_this_month = False
 
     def _get_partner_from_mapping(self, st_line):
         partner = super()._get_partner_from_mapping(st_line)
@@ -19,6 +29,25 @@ class AccountReconcileModel(models.Model):
                 if partner:
                     return partner
         return partner
+
+    def _get_invoice_matching_amls_domain(self, st_line, partner):
+        domain = super()._get_invoice_matching_amls_domain(st_line, partner)
+        st_line_date = st_line.date or fields.Date.today()
+        if self.past_months_limit:
+            # Replace the date filter with the bs_date instead of today's date
+            date_limit = st_line_date - relativedelta(months=self.past_months_limit)
+            domain = [
+                ("date", ">=", fields.Date.to_string(date_limit))
+                if filter[0] == "date"
+                else filter
+                for filter in domain
+            ]
+        elif self.only_this_month:
+            date_limit = st_line_date.replace(day=1)
+            domain.append(
+                ("date", ">=", fields.Date.to_string(date_limit)),
+            )
+        return domain
 
 
 class AccountReconcileModelPartnerMatching(models.Model):
