@@ -50,7 +50,7 @@ Credits
 Authors
 -------
 
-* Compassion Switzerland
+* Compassion CH
 * David Wulliamoz
 
 Maintainers
