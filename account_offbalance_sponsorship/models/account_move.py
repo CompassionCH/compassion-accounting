@@ -102,8 +102,8 @@ class AccountMoveLine(models.Model):
         # Retrieve the payment lines linked to the off-balance receivable account,
         # excluding the open balance line
         payment_lines = payment_entry.line_ids.filtered(
-            lambda l: l.account_id.id == account_offbalance_receivable
-            and "open balance" not in (l.name or "").lower()
+            lambda line: line.account_id.id == account_offbalance_receivable
+            and "open balance" not in (line.name or "").lower()
         )
         payment_amount = sum(payment_lines.mapped("credit"))
 
@@ -114,9 +114,9 @@ class AccountMoveLine(models.Model):
 
         # Get affected lines
         for line in invoice_lines.filtered(
-            lambda l: l.account_id
-            and l.account_id.id != account_offbalance_receivable
-            and l.account_id.code.startswith("9")
+            lambda invl: invl.account_id
+            and invl.account_id.id != account_offbalance_receivable
+            and invl.account_id.code.startswith("9")
         ):
             # Get line amount
             amount = line.credit if line.credit > 0 else 0.0

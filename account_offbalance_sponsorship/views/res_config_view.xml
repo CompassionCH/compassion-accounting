@@ -3,7 +3,10 @@
     <record id="view_account_off_balance_setting" model="ir.ui.view">
         <field name="name">Offbalance accounting settings</field>
         <field name="model">res.config.settings</field>
-        <field name="inherit_id" ref="message_center_compassion.compassion_settings" />
+        <field
+            name="inherit_id"
+            ref="message_center_compassion.compassion_settings"
+        />
         <field name="arch" type="xml">
             <xpath expr="//app[@name='compassion_settings']" position="inside">
                 <block title="Sponsorship Off-Balance Accounting Settings">
