@@ -20,7 +20,9 @@ Available addons
 ----------------
 addon | version | maintainers | summary
 --- | --- | --- | ---
-[account_reconcile_compassion_ee](account_reconcile_compassion_ee/) | 17.0.1.0.0 |  | Enterprise Bank Statement Reconcile for Compassion
+[account_offbalance_sponsorship](account_offbalance_sponsorship/) | 17.0.1.0.0 |  | Off-Balance accounting for sponsorships.
+[account_payment_line_free](account_payment_line_free/) | 17.0.1.0.0 |  | Account payment line free
+[account_reconcile_compassion_ee](account_reconcile_compassion_ee/) | 17.0.1.0.1 |  | Enterprise Bank Statement Reconcile for Compassion
 [recurring_contract](recurring_contract/) | 17.0.1.0.0 |  | Contract for recurring invoicing
 
 [//]: # (end addons)
