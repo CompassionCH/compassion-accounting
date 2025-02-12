@@ -144,15 +144,11 @@ class AccountMove(models.Model):
         inv_block_day = self.env["res.config.settings"].get_param_multi_company(
             "recurring_contract.invoice_block_day"
         )
-        # Filter out past invoices.
-        date_selection = date.today()
-        if inv_block_day and date_selection.day >= int(inv_block_day):
-            date_selection += relativedelta(months=1)
-        date_selection = date_selection.replace(day=1)
+
+        # Filter out unpaid invoices
         for invoice in self.filtered(
             lambda i: i.state != "cancel"
             and i.payment_state != "paid"
-            and i.invoice_date_due >= date_selection
             and (
                 i.payment_order_id.state in ["draft", "open"] or not i.payment_order_id
             )
