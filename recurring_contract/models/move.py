@@ -149,6 +149,7 @@ class AccountMove(models.Model):
         :param updt_val: a dictionary of invoices values with the invoice name
         which refer to another dictionary of values for that invoice name
         """
+        # Filter out unpaid invoices
         for invoice in self.filtered(
             lambda i: i.state != "cancel"
             and i.payment_state != "paid"
