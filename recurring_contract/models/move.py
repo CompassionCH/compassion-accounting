@@ -141,10 +141,6 @@ class AccountMove(models.Model):
         :param updt_val: a dictionary of invoices values with the invoice name
         which refer to another dictionary of values for that invoice name
         """
-        inv_block_day = self.env["res.config.settings"].get_param_multi_company(
-            "recurring_contract.invoice_block_day"
-        )
-
         # Filter out unpaid invoices
         for invoice in self.filtered(
             lambda i: i.state != "cancel"
