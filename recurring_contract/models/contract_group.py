@@ -325,10 +325,8 @@ class ContractGroup(models.Model):
         """In such cases, we should skip the invoice generation:
         - A specific contract is given and an invoice for this due date already exists
           and isn't cancelled.
-        - All active contracts already have an invoice for this due date that
-          isn't cancelled.
+        - All active contracts already have an invoice for this due date
         - Contract group suspension.
-
         """
         self.ensure_one()
 
@@ -336,7 +334,6 @@ class ContractGroup(models.Model):
 
         if contract:
             search_filter = [
-                ("state", "!=", "cancel"),
                 ("invoice_date_due", "=", invoicing_date),
                 ("partner_id", "=", self.partner_id.id),
                 ("move_type", "=", "out_invoice"),
@@ -362,7 +359,6 @@ class ContractGroup(models.Model):
                     "in",
                     self.active_contract_ids.mapped("product_ids").ids,
                 ),
-                ("state", "!=", "cancel"),
             ]
 
             open_invoices = self.env["account.move"].search(search_filter)
@@ -450,6 +446,9 @@ class ContractGroup(models.Model):
                     "payment_mode_id": self.payment_mode_id.id,
                 }
             )
+            open_invoice.mapped("invoice_line_ids").filtered(
+                lambda line: line.contract_id in contract_lines_to_inv.contract_id
+            ).create_analytic_lines()
         else:
             # Building invoices data
             contracts = self.active_contract_ids

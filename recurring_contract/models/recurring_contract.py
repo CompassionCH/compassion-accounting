@@ -278,7 +278,7 @@ class RecurringContract(models.Model):
 
             if today.month == 12 and today.day >= 15:
                 current_billing_year += 1
-                to_pay_period -= 12
+                to_pay_period -= 11
 
             months_to_pay = len(
                 list(
@@ -297,11 +297,12 @@ class RecurringContract(models.Model):
         """This is a query returning the number of months paid for the current year."""
         self._cr.execute(
             """
-            SELECT contract_id, count(contract_id) AS paid_month
+            SELECT contract_id,
+            COUNT(DISTINCT EXTRACT(month FROM due_date)) AS paid_month
             FROM account_move_line
             WHERE payment_state = 'paid'
             AND contract_id = ANY(%s)
-            AND EXTRACT(year FROM last_payment) = EXTRACT(year FROM CURRENT_DATE)
+            AND EXTRACT(year FROM due_date) = EXTRACT(year FROM CURRENT_DATE)
             GROUP BY contract_id
             """,
             (self.ids,),
@@ -580,7 +581,12 @@ class RecurringContract(models.Model):
             )
             if remaining_lines:
                 # We can move or remove the line
-                invoice.write({"invoice_line_ids": [(2, inv_line.id)]})
+                invoice.write(
+                    {
+                        "invoice_line_ids": [(2, inv_line.id)],
+                        "payment_mode_id": invoice.payment_mode_id.id,
+                    }
+                )
             else:
                 # The invoice would be empty if we remove the line
                 empty_invoices |= invoice
