@@ -24,7 +24,7 @@ class AccountReconcileModel(models.Model):
     def _get_partner_from_mapping(self, st_line):
         partner = super()._get_partner_from_mapping(st_line)
         if not partner:
-            for matching in self.partner_matching_ids:
+            for matching in self.partner_matching_ids.filtered("active"):
                 partner = matching.match_line(st_line)
                 if partner:
                     return partner
@@ -105,6 +105,7 @@ class AccountReconcileModelPartnerMatching(models.Model):
         default=True,
     )
     partner_model_id = fields.Integer(compute="_compute_partner_model_id")
+    active = fields.Boolean(default=True)
 
     def _compute_partner_model_id(self):
         partner_model = self.env["ir.model"].search([("model", "=", "res.partner")])

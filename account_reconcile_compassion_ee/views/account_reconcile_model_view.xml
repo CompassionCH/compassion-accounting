@@ -50,6 +50,7 @@
                             />
                             />
                             <field name="unique_match" />
+                            <field name="active" />
                         </tree>
                     </field>
                 </page>
