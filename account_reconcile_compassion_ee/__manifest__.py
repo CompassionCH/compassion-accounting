@@ -29,7 +29,7 @@
 # pylint: disable=C8101
 {
     "name": "Enterprise Bank Statement Reconcile for Compassion",
-    "version": "17.0.1.0.2",
+    "version": "17.0.1.0.3",
     "author": "Compassion CH",
     "license": "AGPL-3",
     "category": "Finance",
@@ -49,6 +49,7 @@
             "account_reconcile_compassion_ee/static/src/components/**/*",
         ],
     },
+    "excludes": ["account_reconcile_oca", "account_reconcile_model_oca"],
     "auto_install": False,
     "installable": True,
 }
