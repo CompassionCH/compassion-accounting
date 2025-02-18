@@ -50,7 +50,7 @@
                             />
                             />
                             <field name="unique_match" />
-                            <field name="active" />
+                            <field name="is_active" />
                         </tree>
                     </field>
                 </page>
