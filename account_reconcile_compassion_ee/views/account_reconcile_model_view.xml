@@ -22,6 +22,29 @@
                     string="Partner Matching Rules"
                     invisible="rule_type == 'writeoff_button'"
                 >
+                    <div class="alert alert-dark" role="alert">
+                            <strong>Configure the Matching Rule Fields:</strong>
+                            <ul>
+                              <li><strong
+                                >Sequence:</strong> Set the order in which the rules should be applied.</li>
+                                <li><strong
+                                >Lookup Field:</strong> Select the field in the partner model or related model to match against the extracted value.</li>
+                                <li><strong
+                                >Search Operator:</strong> Choose the operator for the search (e.g., `=` for exact match, or contains).</li>
+                                <li><strong
+                                >Statement Field:</strong> Select the field from the bank statement or account move that contains the value to be matched.</li>
+                                <li><strong
+                                >Extract Regex:</strong> (Optional) Provide a regular expression to extract a specific part of the statement field value.</li>
+                                <li><strong
+                                >Replace Value:</strong> (Optional) Provide a function for formatting the extracted value.</li>
+                              <li><strong
+                                >Partner Field:</strong> (Optional) Select the field in the related model that points to the partner.</li>
+                              <li><strong
+                                >Unique Match:</strong> Check this box if only one unique match should be considered valid.</li>
+                              <li><strong
+                                >Active:</strong> Ensure the rule is active by checking this box.</li>
+                            </ul>
+                    </div>
                     <field
                         name="partner_matching_ids"
                         context="{'default_model_id': active_id}"
@@ -36,6 +59,10 @@
                             <field name="search_operator" />
                             <field name="statement_field_id" />
                             <field name="extract_regex" />
+                            <field
+                                name="regex_replace"
+                                invisible="not extract_regex"
+                            />
                             <field
                                 name="partner_model_id"
                                 column_invisible="1"

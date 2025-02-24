@@ -74,6 +74,12 @@ class AccountReconcileModelPartnerMatching(models.Model):
         "Extract Regex",
         help="Regular expression to extract the value from the statement field",
     )
+    regex_replace = fields.Selection(
+        "list_match_functions",
+        "Replace Value",
+        help="Provide a function used in a regex substitution for "
+        "formatting the extracted value to your needs",
+    )
     lookup_field_id = fields.Many2one(
         "ir.model.fields",
         "Lookup Field",
@@ -131,10 +137,12 @@ class AccountReconcileModelPartnerMatching(models.Model):
         partner_obj = self.env["res.partner"]
         if statement_value:
             if self.extract_regex:
-                re.match()
                 match = re.search(self.extract_regex, statement_value)
                 if match:
-                    statement_value = match.group(0)
+                    if self.regex_replace:
+                        statement_value = getattr(self, self.regex_replace)(match)
+                    else:
+                        statement_value = match.group(0)
                 else:
                     return partner_obj
             found_record = self.env[self.lookup_model].search(
@@ -150,3 +158,26 @@ class AccountReconcileModelPartnerMatching(models.Model):
             if len(partner) == 1 or not self.unique_match:
                 return partner[:1]
         return partner_obj
+
+    def list_match_functions(self):
+        """
+        Utility method to list all functions starting with 'match_'
+        along with their docstrings.
+        """
+        match_methods = []
+        for attr_name in dir(self):
+            if attr_name.startswith("_match_"):
+                method = getattr(self, attr_name)
+                if callable(method):
+                    docstring = method.__doc__ or "No docstring available"
+                    match_methods.append((attr_name, docstring))
+        return match_methods
+
+    def _match_child_ref(self, match):
+        """
+        Normalize the child reference to 9 digits (add leading 0s).
+        """
+        ref = match.group(0)
+        if len(ref) == 9:
+            ref = "0" + match.group(1) + "0" + match.group(2)
+        return ref
