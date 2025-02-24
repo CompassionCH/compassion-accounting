@@ -202,45 +202,43 @@ class ContractGroup(models.Model):
     def button_generate_invoices(self, contract_id=None):
         """Immediately generate invoices for the contract group."""
         invoicer = (
-            self.with_context({"async_mode": False})
+            self.with_context({"queue_job__no_delay": True})
             .with_company(self.active_contract_ids[0].company_id)
             .generate_invoices(contract_id)
         )
+        notification = {
+            "type": "ir.actions.client",
+        }
         if invoicer.invoice_ids:
-            notification_type = "success"
-            msg = "The generation was successfully processed."
+            notification["tag"] = "reload"
         else:
-            notification_type = "info"
-            msg = (
+            msg = _(
                 "The generation didn't created any new invoices. This could "
                 "be because the sponsorship already have the correct invoices open."
             )
-        notification = {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "title": ("Generation of Invoices"),
-                "message": msg,
-                "type": f"{notification_type}",
-                "next": {"type": "ir.actions.client", "tag": "soft_reload"},
-            },
-        }
+            notification.update(
+                {
+                    "tag": "display_notification",
+                    "params": {
+                        "title": _("Generation of Invoices"),
+                        "message": msg,
+                        "type": "info",
+                        "next": {"type": "ir.actions.client", "tag": "soft_reload"},
+                    },
+                }
+            )
         return notification
 
     ##########################################################################
     #                             PRIVATE METHODS                            #
     ##########################################################################
     def generate_invoices(self, contract_id=None):
-        """By default, launch asynchronous job to perform the task.
-        Context value async_mode set to False can force to perform
-        the task immediately.
-        """
         invoicer = self.env["recurring.invoicer"].create({})
-        if self.env.context.get("async_mode", True):
-            for group in self:
-                group.with_delay()._generate_invoices(invoicer, contract_id)
-        else:
-            self._generate_invoices(invoicer, contract_id)
+        for group in self:
+            group.with_delay(
+                priority=100,
+                identity_key=self._name + ".generate_invoices." + str(group.id),
+            )._generate_invoices(invoicer, contract_id)
         return invoicer
 
     def _generate_invoices(self, invoicer, contract_id=None):

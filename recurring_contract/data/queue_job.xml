@@ -1,7 +1,7 @@
 <odoo>
     <!-- Channels -->
     <record id="channel_recurring_contract" model="queue.job.channel">
-        <field name="name">recurring_contract</field>
+        <field name="name">accounting</field>
         <field name="parent_id" ref="queue_job.channel_root" />
     </record>
 
