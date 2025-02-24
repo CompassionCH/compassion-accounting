@@ -375,21 +375,14 @@ class RecurringContract(models.Model):
         return self.mapped("group_id").button_generate_invoices(self.id)
 
     def generate_invoices(self):
-        """By default, launch asynchronous job to perform the task.
-        Context value async_mode set to False can force to perform
-        the task immediately.
-        """
         self.mapped("group_id").generate_invoices(self.id)
 
     def cancel_contract_invoices(self):
-        """By default, launch asynchronous job to perform the task.
-        Context value async_mode set to False can force to perform
-        the task immediately.
-        """
-        if self.env.context.get("async_mode", True):
-            self.with_delay()._cancel_invoices()
-        else:
-            self._cancel_invoices()
+        self.with_delay(
+            channel="root.accounting",
+            priority=500,
+            identity_key=self._name + ".cancel_contract_invoices." + str(self.ids),
+        )._cancel_invoices()
 
     ##########################################################################
     #                             VIEW CALLBACKS                             #

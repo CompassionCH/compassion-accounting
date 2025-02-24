@@ -28,6 +28,14 @@ def test_generate_invoice(contract):
 class BaseContractTest(TransactionCase):
     """Basic class that gives access to helper to generate some test"""
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.env = cls.env(context=dict(
+            cls.env.context,
+            queue_job__no_delay=True
+        ))
+
     def setUp(self):
         super().setUp()
         self.env["ir.config_parameter"].set_param(
@@ -39,12 +47,8 @@ class BaseContractTest(TransactionCase):
         self.partner_1 = self.env.ref("base.res_partner_address_1")
         self.partner_2 = self.env.ref("base.res_partner_address_2")
         self.partner_3 = self.env.ref("base.res_partner_address_3")
-        self.RecurringContractGroup = self.env["recurring.contract.group"].with_context(
-            async_mode=False
-        )
-        self.RecurringContract = self.env["recurring.contract"].with_context(
-            async_mode=False
-        )
+        self.RecurringContractGroup = self.env["recurring.contract.group"]
+        self.RecurringContract = self.env["recurring.contract"]
         self.payment_mode = self.env.ref(
             "account_payment_mode.payment_mode_inbound_ct2"
         )
