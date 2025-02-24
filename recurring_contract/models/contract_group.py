@@ -239,7 +239,6 @@ class ContractGroup(models.Model):
                         "title": _("Generation of Invoices"),
                         "message": msg,
                         "type": "info",
-                        "next": {"type": "ir.actions.client", "tag": "soft_reload"},
                     },
                 }
             )
