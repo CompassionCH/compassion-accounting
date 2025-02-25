@@ -375,7 +375,7 @@ class RecurringContract(models.Model):
         return self.mapped("group_id").button_generate_invoices(self.id)
 
     def generate_invoices(self):
-        self.mapped("group_id").generate_invoices(self.id)
+        self.mapped("group_id").generate_invoices(self.ids)
 
     def cancel_contract_invoices(self):
         self.with_delay(
