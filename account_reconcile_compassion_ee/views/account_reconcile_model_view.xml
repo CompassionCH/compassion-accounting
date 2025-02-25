@@ -34,9 +34,9 @@
                                 <li><strong
                                 >Statement Field:</strong> Select the field from the bank statement or account move that contains the value to be matched.</li>
                                 <li><strong
-                                >Extract Regex:</strong> (Optional) Provide a regular expression to extract a specific part of the statement field value.</li>
+                                >Extract Value:</strong> (Optional) Provide a function or custom regex to extract a specific part of the statement field value.</li>
                                 <li><strong
-                                >Replace Value:</strong> (Optional) Provide a function for formatting the extracted value.</li>
+                                >Custom Regex:</strong> (Optional) Write your regex for extracting the desired value.</li>
                               <li><strong
                                 >Partner Field:</strong> (Optional) Select the field in the related model that points to the partner.</li>
                               <li><strong
@@ -58,10 +58,11 @@
                             />
                             <field name="search_operator" />
                             <field name="statement_field_id" />
-                            <field name="extract_regex" />
+                            <field name="predefined_extract" />
                             <field
-                                name="regex_replace"
-                                invisible="not extract_regex"
+                                name="extract_regex"
+                                invisible="predefined_extract != '_match_custom' "
+                                required="predefined_extract == '_match_custom' "
                             />
                             <field
                                 name="partner_model_id"
