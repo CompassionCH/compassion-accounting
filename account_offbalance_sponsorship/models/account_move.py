@@ -18,16 +18,32 @@ class AccountMove(models.Model):
         if not partial:
             return False
 
-        # Unreconcile
+        # Retrieving EXCH move (created if foreign currency payment)
+        exch_moves = self.env["account.move"].search(
+            [
+                ("name", "like", "EXCH/%"),
+                ("state", "=", "posted"),
+                ("line_ids.full_reconcile_id", "=", partial.full_reconcile_id.id),
+            ]
+        )
+
+        # Delete exch move record
+        if exch_moves:
+            exch_moves.line_ids.sudo().remove_move_reconcile()
+            exch_moves.sudo().write({"state": "draft"})
+            exch_moves.sudo().unlink()
+
+        #  perform normal Unreconcile
         res = super().js_remove_outstanding_partial(partial_id)
 
+        # Now removing added lines for noridc accounting
         # Get off-balance accounts
         off_rec, off_ass = self.line_ids.get_account_offbalance(self.company_id)
 
         # Set the move to draft so its move_lines can be edited
         self.write({"state": "draft"})
 
-        ## Retrieve lines to remove
+        # Retrieve lines to remove
         # One of the lines is the one linked to off_ass.
         # The others are identified by their name.
 
@@ -79,7 +95,15 @@ class AccountMoveLine(models.Model):
 
         # If AML corresponds to the off-balance receivable account
         if any(aml.account_id.id == account_offbalance_receivable for aml in all_amls):
-            self._add_off_balance_lines(move, company)
+            # Excluding the case when this method is called
+            # by creating the exchange move for foreign money exchange
+            if not any(m.name.startswith("EXCH") for m in move):
+                # Exclude the case when calling by unreconcile on a account_move with
+                # currency rate change.
+                if not any(
+                    line.account_type == "asset_current" for line in move.line_ids
+                ):
+                    self._add_off_balance_lines(move, company)
 
         # Continue with the standard reconciliation logic
         move_container = {"records": all_amls.move_id}
@@ -94,10 +118,9 @@ class AccountMoveLine(models.Model):
             account_offbalance_asset,
         ) = self.get_account_offbalance(company)
 
-        # Separate the invoice and the payment in the move
+        # Separate the invoice and the payment from the move
         invoice = move.filtered(lambda m: m.move_type == "out_invoice")
         payment_entry = move.filtered(lambda m: m.move_type == "entry")
-        residual_amount = invoice.amount_residual
 
         # Retrieve the payment lines linked to the off-balance receivable account,
         # excluding the open balance line
@@ -105,6 +128,7 @@ class AccountMoveLine(models.Model):
             lambda line: line.account_id.id == account_offbalance_receivable
             and "open balance" not in (line.name or "").lower()
         )
+
         payment_amount = sum(payment_lines.mapped("credit"))
 
         invoice_lines = invoice.line_ids
@@ -112,12 +136,13 @@ class AccountMoveLine(models.Model):
         # Dictionary for account code and amount for each line
         sponsorship_lines = {}
 
+        # Get invoice line for each product (sponsorship, gift, ... )
+        product_invoice_lines = invoice_lines.filtered(
+            lambda line: line.display_type == "product"
+        )
+
         # Get affected lines
-        for line in invoice_lines.filtered(
-            lambda invl: invl.account_id
-            and invl.account_id.id != account_offbalance_receivable
-            and invl.account_id.code.startswith("9")
-        ):
+        for line in product_invoice_lines:
             # Get line amount
             amount = line.credit if line.credit > 0 else 0.0
             if amount > 0:
@@ -136,17 +161,26 @@ class AccountMoveLine(models.Model):
                         amount
                     )
 
-        # Get the ratio to adjust the amount based on the payment made
-        ratio = payment_amount / residual_amount if residual_amount else 0.0
+        # Get the ratio to adjust the amount based on
+        # the payment made and the value of each product lines
+        total_sponsorship_amount = sum(
+            sum(amounts) for amounts in sponsorship_lines.values()
+        )
 
-        # Calculate the prorated and rounded amounts for each sponsorship line
+        # Calculate ratio depending on total ammoun from the sponsorship
+        ratio = (
+            payment_amount / total_sponsorship_amount
+            if total_sponsorship_amount
+            else 0.0
+        )
+
+        # Calculate prorated ammount for each line
         lines_to_create = []
         total_prorated = 0.0
         for sponsorship_account_id, amounts in sponsorship_lines.items():
             for amt in amounts:
                 prorated_amount = amt * ratio
-                # Round to the nearest tenth
-                rounded_amount = round(prorated_amount, 1)
+                rounded_amount = round(prorated_amount, 2)
                 lines_to_create.append(
                     {
                         "account_id": sponsorship_account_id,
@@ -155,7 +189,7 @@ class AccountMoveLine(models.Model):
                 )
                 total_prorated += rounded_amount
 
-        diff = round(payment_amount - total_prorated, 1)
+        diff = round(payment_amount - total_prorated, 2)
         if lines_to_create:
             lines_to_create[-1]["amount"] += diff
             total_prorated += diff
@@ -183,7 +217,7 @@ class AccountMoveLine(models.Model):
                 "name": payment_entry.name,
                 "move_id": payment_entry.id,
                 "partner_id": move.partner_id.id,
-                "debit": round(total_prorated, 1),
+                "debit": round(total_prorated, 2),
                 "credit": 0.0,
             }
         )
