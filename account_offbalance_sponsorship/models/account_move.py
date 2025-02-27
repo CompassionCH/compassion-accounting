@@ -18,16 +18,32 @@ class AccountMove(models.Model):
         if not partial:
             return False
 
-        # Unreconcile
+        # Retrieving EXCH move (created if foreign currency payment)
+        exch_moves = self.env["account.move"].search(
+            [
+                ("name", "like", "EXCH/%"),
+                ("state", "=", "posted"),
+                ("line_ids.full_reconcile_id", "=", partial.full_reconcile_id.id),
+            ]
+        )
+
+        # Delete exch move record
+        if exch_moves:
+            exch_moves.line_ids.sudo().remove_move_reconcile()
+            exch_moves.sudo().write({"state": "draft"})
+            exch_moves.sudo().unlink()
+
+        #  perform normal Unreconcile
         res = super().js_remove_outstanding_partial(partial_id)
 
+        # Now removing added lines for noridc accounting
         # Get off-balance accounts
         off_rec, off_ass = self.line_ids.get_account_offbalance(self.company_id)
 
         # Set the move to draft so its move_lines can be edited
         self.write({"state": "draft"})
 
-        ## Retrieve lines to remove
+        # Retrieve lines to remove
         # One of the lines is the one linked to off_ass.
         # The others are identified by their name.
 
@@ -79,7 +95,15 @@ class AccountMoveLine(models.Model):
 
         # If AML corresponds to the off-balance receivable account
         if any(aml.account_id.id == account_offbalance_receivable for aml in all_amls):
-            self._add_off_balance_lines(move, company)
+            # Excluding the case when this method is called
+            # by creating the exchange move for foreign money exchange
+            if not any(m.name.startswith("EXCH") for m in move):
+                # Exclude the case when calling by unreconcile on a account_move with
+                # currency rate change.
+                if not any(
+                    line.account_type == "asset_current" for line in move.line_ids
+                ):
+                    self._add_off_balance_lines(move, company)
 
         # Continue with the standard reconciliation logic
         move_container = {"records": all_amls.move_id}
