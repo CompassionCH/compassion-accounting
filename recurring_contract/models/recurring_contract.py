@@ -417,7 +417,8 @@ class RecurringContract(models.Model):
     @api.depends("partner_id", "company_id")
     def _compute_pricelist(self):
         for contract in self:
-            contract.pricelist_id = contract.partner_id.property_product_pricelist
+            contract.pricelist_id = contract.partner_id.with_company(
+                contract.company_id).property_product_pricelist
 
     def _compute_currency(self):
         for contract in self:
