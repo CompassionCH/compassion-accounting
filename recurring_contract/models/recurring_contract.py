@@ -27,7 +27,6 @@ class RecurringContract(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin", "utm.mixin"]
     _rec_name = "reference"
     _order = "create_date desc"
-    _check_company_auto = True
 
     ##########################################################################
     #                                 FIELDS                                 #
@@ -59,7 +58,6 @@ class RecurringContract(models.Model):
         required=True,
         ondelete="restrict",
         index=True,
-        check_company=True,
     )
     group_id = fields.Many2one(
         "recurring.contract.group",
@@ -67,13 +65,13 @@ class RecurringContract(models.Model):
         required=True,
         ondelete="restrict",
         tracking=True,
+        index=True,
     )
     invoice_line_ids = fields.One2many(
         "account.move.line",
         "contract_id",
         "Related invoice lines",
         copy=False,
-        check_company=True,
     )
     open_invoice_ids = fields.Many2many(
         "account.move", string="Open invoices", compute="_compute_invoices"
@@ -90,7 +88,6 @@ class RecurringContract(models.Model):
         "product.product",
         "Contract products",
         compute="_compute_contract_products",
-        check_company=True,
     )
     state = fields.Selection(
         [
@@ -114,16 +111,10 @@ class RecurringContract(models.Model):
         related="group_id.payment_mode_id",
         readonly=True,
         store=True,
-        check_company=True,
     )
     nb_invoices = fields.Integer(compute="_compute_invoices")
     activation_date = fields.Datetime(copy=False)
-    company_id = fields.Many2one(
-        "res.company",
-        "Company",
-        index=True,
-        default=lambda self: self.env.company,
-    )
+    company_id = fields.Many2one(related="group_id.company_id")
     country_id = fields.Many2one(
         "res.country",
         "Country",
@@ -134,19 +125,11 @@ class RecurringContract(models.Model):
         index=True,
     )
     pricelist_id = fields.Many2one(
-        "product.pricelist",
-        "Pricelist",
-        check_company=True,
-        compute="_compute_pricelist",
-        precompute=True,
+        related="group_id.pricelist_id",
         store=True,
         index=True,
     )
-    currency_id = fields.Many2one(
-        "res.currency",
-        "Currency",
-        compute="_compute_currency",
-    )
+    currency_id = fields.Many2one(related="group_id.currency_id")
     comment = fields.Text()
     due_invoice_ids = fields.Many2many(
         "account.move",
@@ -350,6 +333,11 @@ class RecurringContract(models.Model):
         for contract in self:
             contract.product_ids = self.mapped("contract_line_ids.product_id")
 
+    @api.depends("partner_id")
+    def _compute_country(self):
+        for contract in self:
+            contract.country_id = contract.partner_id.country_id
+
     ##########################################################################
     #                              ORM METHODS                               #
     ##########################################################################
@@ -396,11 +384,6 @@ class RecurringContract(models.Model):
             identity_key=self._name + ".cancel_contract_invoices." + str(self.ids),
         )._cancel_invoices()
 
-    @api.depends("partner_id")
-    def _compute_country(self):
-        for contract in self:
-            contract.country_id = contract.partner_id.country_id
-
     @api.onchange("partner_id")
     def on_change_partner_id(self):
         """On partner change, we update the group_id. If partner has
@@ -413,20 +396,6 @@ class RecurringContract(models.Model):
             self.group_id = group_ids
         else:
             self.group_id = False
-
-    @api.depends("partner_id", "company_id")
-    def _compute_pricelist(self):
-        for contract in self:
-            contract.pricelist_id = contract.partner_id.with_company(
-                contract.company_id).property_product_pricelist
-
-    def _compute_currency(self):
-        for contract in self:
-            contract.currency_id = (
-                contract.pricelist_id.currency_id
-                or contract.company_id.currency_id
-                or contract.country_id.currency_id
-            )
 
     def open_invoices(self):
         self.ensure_one()

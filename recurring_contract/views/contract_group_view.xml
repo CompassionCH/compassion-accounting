@@ -63,8 +63,12 @@
                                 groups="base.group_multi_company"
                             />
                             <field
+                                name="pricelist_id"
+                                groups="product.group_product_pricelist"
+                            />
+                            <field
                                 name="payment_mode_id"
-                                domain="[('company_id', '=', company_id)]"
+                                domain="['|',('company_id', '=', company_id),('company_id', '=', False)]"
                             />
                             <field name="invoice_suspended_until" />
                         </group>

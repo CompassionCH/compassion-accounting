@@ -33,8 +33,6 @@
         <field name="model">recurring.contract</field>
         <field name="arch" type="xml">
             <form>
-                <field name="company_id" invisible="1" />
-                <field name="pricelist_id" invisible="1" />
                 <header>
                     <field name="state" widget="statusbar" readonly="1" />
                     <button
@@ -98,19 +96,10 @@
                                 readonly="state != 'draft'"
                                 options="{'create': false, 'm2o_dialog': false}"
                             />
-                            <field name="country_id" />
-                            <field
-                                name="company_id"
-                                groups="base.group_multi_company"
-                            />
-                            <field
-                                name="pricelist_id"
-                                groups="product.group_product_pricelist"
-                            />
                             <field
                                 name="group_id"
                                 domain="[('partner_id', '=', partner_id)]"
-                                context="{'default_partner_id': partner_id, 'contract_id': id, 'default_company_id': company_id}"
+                                context="{'default_partner_id': partner_id, 'contract_id': id,}"
                                 options="{'no_quick_create': True}"
                             />
                         </group>

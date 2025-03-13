@@ -29,6 +29,7 @@ class ContractGroup(models.Model):
     _description = "A group of contracts"
     _inherit = "mail.thread"
     _rec_name = "ref"
+    _check_company_auto = True
 
     ##########################################################################
     #                                 FIELDS                                 #
@@ -47,6 +48,21 @@ class ContractGroup(models.Model):
         "Company",
         default=lambda self: self.env.company,
         index=True,
+        required=True,
+    )
+    pricelist_id = fields.Many2one(
+        "product.pricelist",
+        "Pricelist",
+        check_company=True,
+        compute="_compute_pricelist",
+        precompute=True,
+        store=True,
+        index=True,
+    )
+    currency_id = fields.Many2one(
+        "res.currency",
+        "Currency",
+        compute="_compute_currency",
     )
     payment_mode_id = fields.Many2one(
         "account.payment.mode",
@@ -54,6 +70,7 @@ class ContractGroup(models.Model):
         domain=[("payment_type", "=", "inbound")],
         tracking=True,
         readonly=False,
+        check_company=True,
     )
     last_paid_invoice_date = fields.Date(
         compute="_compute_last_paid_invoice", string="Last paid invoice date"
@@ -72,6 +89,7 @@ class ContractGroup(models.Model):
         ondelete="cascade",
         tracking=True,
         readonly=False,
+        check_company=True,
     )
     ref = fields.Char("Reference", tracking=True)
     recurring_unit = fields.Selection(
@@ -127,23 +145,6 @@ class ContractGroup(models.Model):
                 )
             )
 
-    @api.constrains("contract_ids")
-    def _same_company_all_contract(self):
-        """
-        The contract linked to a payment options should be on the same company
-        and only one pricelist possible.
-        """
-        for pay_opt in self:
-            active_contracts = pay_opt.active_contract_ids
-            if active_contracts:
-                company_to_match = active_contracts[0].company_id
-                pricelist_to_match = active_contracts[0].pricelist_id
-                for contract in active_contracts:
-                    if contract.company_id != company_to_match:
-                        raise UserError(ERROR_MESSAGE.format("companies"))
-                    if contract.company_id != pricelist_to_match:
-                        raise UserError(ERROR_MESSAGE.format("pricelists"))
-
     @staticmethod
     def day_selection():
         return [(str(day), str(day)) for day in range(1, 32)]
@@ -158,6 +159,21 @@ class ContractGroup(models.Model):
         for group in self:
             start_date, offset = group._calculate_start_date_and_offset()
             group.current_invoice_date = start_date + relativedelta(months=offset)
+
+    @api.depends("partner_id", "company_id")
+    def _compute_pricelist(self):
+        for group in self:
+            group.pricelist_id = group.partner_id.with_company(
+                group.company_id
+            ).property_product_pricelist
+
+    def _compute_currency(self):
+        for group in self:
+            group.currency_id = (
+                group.pricelist_id.currency_id
+                or group.company_id.currency_id
+                or group.partner_id.country_id.currency_id
+            )
 
     ##########################################################################
     #                              ORM METHODS                               #
@@ -203,7 +219,7 @@ class ContractGroup(models.Model):
         """Immediately generate invoices for the contract group."""
         invoicer = (
             self.with_context({"queue_job__no_delay": True})
-            .with_company(self.active_contract_ids[0].company_id)
+            .with_company(self.company_id)
             .generate_invoices(contract_id)
         )
         notification = {
@@ -304,8 +320,9 @@ class ContractGroup(models.Model):
         @return: date, int
         """
         self.ensure_one()
-        company = self.mapped("active_contract_ids.company_id")
-        settings_obj = self.env["res.config.settings"].sudo().with_company(company.id)
+        settings_obj = (
+            self.env["res.config.settings"].sudo().with_company(self.company_id)
+        )
         curr_month = settings_obj.get_param_multi_company(
             "recurring_contract.do_generate_curr_month"
         )
@@ -446,7 +463,7 @@ class ContractGroup(models.Model):
             )
             open_invoice.mapped("invoice_line_ids").filtered(
                 lambda line: line.contract_id in contract_lines_to_inv.contract_id
-            ).create_analytic_lines()
+            )._create_analytic_lines()
         else:
             # Building invoices data
             contracts = self.active_contract_ids
@@ -496,15 +513,13 @@ class ContractGroup(models.Model):
         # we use the first contract because the information we retrieve
         # has to be shared between all the contracts of the list
         reference_contract = contracts[0]
-        company_id = reference_contract.company_id.id
         partner_id = self._get_partner_for_contract(reference_contract, gift_wizard).id
         journal = self.env["account.journal"].search(
-            [("type", "=", "sale"), ("company_id", "=", company_id)], limit=1
+            [("type", "=", "sale"), ("company_id", "=", self.company_id.id)], limit=1
         )
         if not journal:
             raise UserError(
-                _("No sale journal found for company %s")
-                % reference_contract.company_id.name
+                _("No sale journal found for company %s") % self.company_id.name
             )
         inv_data = {
             "payment_reference": self.ref,  # Accountant reference
@@ -512,12 +527,12 @@ class ContractGroup(models.Model):
             "move_type": "out_invoice",
             "partner_id": partner_id,
             "journal_id": journal.id,
-            "currency_id": reference_contract.currency_id.id,
+            "currency_id": self.currency_id.id,
             "invoice_date": invoicing_date,  # Accountant date
             "recurring_invoicer_id": invoicer.id,
-            "pricelist_id": reference_contract.pricelist_id.id,
+            "pricelist_id": self.pricelist_id.id,
             "payment_mode_id": self.payment_mode_id.id,
-            "company_id": company_id,
+            "company_id": self.company_id.id,
             # Field for the invoice_due_date to be automatically calculated
             "invoice_payment_term_id": self.partner_id.property_payment_term_id.id
             or self.env.ref("account.account_payment_term_immediate").id,
@@ -565,10 +580,10 @@ class ContractGroup(models.Model):
         if contract_line:
             qty = contract_line.quantity
             contract = contract_line.contract_id
-            product = contract_line.product_id.with_company(contract.company_id.id)
+            product = contract_line.product_id.with_company(self.company_id.id)
             line_name = product.name
             if contract_line.pricelist_item_count:
-                price = contract.pricelist_id._get_product_price(
+                price = self.pricelist_id._get_product_price(
                     product, qty, date=invoicing_date
                 )
             else:
@@ -576,7 +591,7 @@ class ContractGroup(models.Model):
         elif gift_wizard:
             qty = gift_wizard.quantity
             contract = gift_wizard.contract_id
-            product = gift_wizard.product_id.with_company(contract.company_id.id)
+            product = gift_wizard.product_id.with_company(self.company_id.id)
             price = gift_wizard.amount
             line_name = gift_wizard.description or product.name
         else:
