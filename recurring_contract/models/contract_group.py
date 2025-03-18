@@ -58,6 +58,7 @@ class ContractGroup(models.Model):
         precompute=True,
         store=True,
         index=True,
+        readonly=False,
     )
     currency_id = fields.Many2one(
         "res.currency",

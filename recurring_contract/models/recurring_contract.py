@@ -114,7 +114,7 @@ class RecurringContract(models.Model):
     )
     nb_invoices = fields.Integer(compute="_compute_invoices")
     activation_date = fields.Datetime(copy=False)
-    company_id = fields.Many2one(related="group_id.company_id")
+    company_id = fields.Many2one(related="group_id.company_id", store=True)
     country_id = fields.Many2one(
         "res.country",
         "Country",

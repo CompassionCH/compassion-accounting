@@ -23,6 +23,16 @@
                 <field name="payment_mode_id" />
                 <field name="total_amount" />
                 <field name="state" />
+                <field
+                    name="company_id"
+                    optional="hide"
+                    groups="base.group_multi_company"
+                />
+                <field
+                    name="pricelist_id"
+                    optional="hide"
+                    groups="product.group_product_pricelist"
+                />
             </tree>
         </field>
     </record>
@@ -90,7 +100,10 @@
                         </h1>
                     </div>
                     <group>
-                        <group>
+                        <group
+                            string="Contract Details"
+                            name="contract_details"
+                        >
                             <field
                                 name="partner_id"
                                 readonly="state != 'draft'"
@@ -102,8 +115,17 @@
                                 context="{'default_partner_id': partner_id, 'contract_id': id,}"
                                 options="{'no_quick_create': True}"
                             />
+                            <field
+                                name="company_id"
+                                groups="base.group_multi_company"
+                            />
+                            <field
+                                name="pricelist_id"
+                                groups="product.group_product_pricelist"
+                            />
+                            <field name="comment" />
                         </group>
-                        <group>
+                        <group string="Dates" name="contract_dates">
                             <field name="start_date" readonly="1" />
                             <field name="activation_date" readonly="1" />
                             <field name="end_date" />
@@ -112,7 +134,12 @@
                                 invisible="state not in ('terminated','cancelled')"
                             />
                         </group>
-                        <group>
+                    </group>
+                    <group>
+                        <group
+                            string="Marketing Information"
+                            name="contract_marketing"
+                        >
                             <field
                                 name="medium_id"
                                 domain="[('type', '=', 'manual')]"
@@ -123,10 +150,12 @@
                             />
                             <field name="source_id" />
                         </group>
-                        <group>
+                        <group
+                            string="Payment Information"
+                            name="contract_payment"
+                        >
                             <field name="last_paid_invoice_date" />
                             <field name="months_paid" />
-                            <field name="comment" />
                         </group>
                     </group>
                     <notebook>
