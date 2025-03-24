@@ -72,11 +72,10 @@ class MoveLine(models.Model):
             )
             data_dict = {}
             if contract_line.product_id.pricelist_item_count > 0:
-                price = modified_contract.pricelist_id.get_product_price(
+                price = modified_contract.pricelist_id._get_product_price(
                     contract_line.product_id,
-                    contract_line.quantity,
-                    invoice.partner_id,
-                    invoice.invoice_date_due,
+                    quantity=contract_line.quantity,
+                    date=invoice.invoice_date_due,
                 )
                 data_dict["price_unit"] = price
                 data_dict["quantity"] = contract_line.quantity
