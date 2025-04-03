@@ -12,6 +12,7 @@ class AccountReconcileModel(models.Model):
     only_this_month = fields.Boolean(
         default=False, help="Check to search only from the start of the month"
     )
+    matching_account_id = fields.Many2one("account.account")
 
     @api.onchange("past_months_limit")
     def _uncheck_only_this_month(self):
@@ -40,8 +41,12 @@ class AccountReconcileModel(models.Model):
                 for filter in domain
             ]
         elif self.only_this_month:
-            date_limit = st_line_date.replace(day=1)
+            date_start = st_line_date.replace(day=1)
+            date_end = date_start.replace(month=date_start.month + 1)
             domain.append(
-                ("date", ">=", fields.Date.to_string(date_limit)),
+                ("date", ">=", fields.Date.to_string(date_start)),
+                ("date", "<", fields.Date.to_string(date_end)),
             )
+        if self.matching_account_id:
+            domain.append(("account_id", "=", self.matching_account_id.id))
         return domain

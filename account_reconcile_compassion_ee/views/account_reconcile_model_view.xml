@@ -11,6 +11,10 @@
         <field name="arch" type="xml">
             <field name="past_months_limit" position="before">
                 <field
+                    name="matching_account_id"
+                    invisible="rule_type != 'invoice_matching'"
+                />
+                <field
                     name="only_this_month"
                     readonly="past_months_limit != 0"
                     invisible="rule_type != 'invoice_matching'"
