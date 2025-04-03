@@ -43,10 +43,10 @@ class AccountReconcileModel(models.Model):
         elif self.only_this_month:
             date_start = st_line_date.replace(day=1)
             date_end = date_start.replace(month=date_start.month + 1)
-            domain.append(
+            domain.extend([
                 ("date", ">=", fields.Date.to_string(date_start)),
                 ("date", "<", fields.Date.to_string(date_end)),
-            )
+            ])
         if self.matching_account_id:
             domain.append(("account_id", "=", self.matching_account_id.id))
         return domain
