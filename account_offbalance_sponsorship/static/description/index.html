@@ -370,25 +370,100 @@ ul.auto-toc {
 !! source digest: sha256:eb5f5892e8010671bcfb91746ecfef8a321631e5d4e9671fdbe069f42e30c369
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! -->
 <p><a class="reference external image-reference" href="https://odoo-community.org/page/development-status"><img alt="Beta" src="https://img.shields.io/badge/maturity-Beta-yellow.png" /></a> <a class="reference external image-reference" href="http://www.gnu.org/licenses/agpl-3.0-standalone.html"><img alt="License: AGPL-3" src="https://img.shields.io/badge/licence-AGPL--3-blue.png" /></a> <a class="reference external image-reference" href="https://github.com/CompassionCH/compassion-accounting/tree/17.0/account_offbalance_sponsorship"><img alt="CompassionCH/compassion-accounting" src="https://img.shields.io/badge/github-CompassionCH%2Fcompassion--accounting-lightgray.png?logo=github" /></a></p>
-<p>It’s not possible to use the stock off-balance feature because it’s not
-possible to have a reconciliable off-balance account. So we use the 9xxx
-account and a configuration to define: - receivable (off-balance): A -
-asset (off-balance): B this function adds in the payment move if there
-is an off-balance (A) receivable account: - the off-balance asset (B) -
-add the outstanding account again.</p>
-<p><strong>Table of contents</strong></p>
-<div class="contents local topic" id="contents">
+<div class="section" id="overview">
+<h1>Overview</h1>
+<p>The off-balance feature in Compassion Accounting is designed to handle
+specific accounting requirements where certain accounts need to be
+managed off the main balance sheet. This is particularly useful for
+handling donations, sponsorships, or other transactions that should not
+directly impact the company’s financial statements until they are fully
+realized.</p>
+</div>
+<div class="section" id="why-use-off-balance-accounts">
+<h1>Why Use Off-Balance Accounts?</h1>
+<p>In some accounting scenarios, it is necessary to track certain
+transactions separately from the main financial statements. Off-balance
+accounts allow for this separation, ensuring that these transactions are
+recorded and managed without affecting the overall financial health
+indicators of the company.</p>
+</div>
+<div class="section" id="process">
+<h1>Process</h1>
+<div class="section" id="identifying-off-balance-accounts">
+<h2>1. Identifying Off-Balance Accounts</h2>
+<p>During the reconciliation process, the system identifies accounts that
+are marked as off-balance. These accounts are typically used for
+specific transactions, such as sponsorships or donations, where the
+actual cash flow may not align with the recognition of income. The
+<tt class="docutils literal">off_balance_asset_account_id</tt> field in the <tt class="docutils literal">res.company</tt> model is
+used to configure the off-balance asset account.</p>
+</div>
+<div class="section" id="reconciliation">
+<h2>2. Reconciliation</h2>
+<p>During the reconciliation process, the system checks if any account move
+lines (AMLs) correspond to off-balance receivable accounts. If so, it
+adds additional account move lines to comply with the Nordic offset
+balance specification. This involves prorating the amounts based on the
+payment made and the value of each product line. The system uses the
+<tt class="docutils literal">on_balance_account_id</tt> field to determine the linked on-balance
+account for each off-balance account.</p>
+</div>
+<div class="section" id="example">
+<h2>3. Example</h2>
+<p>Here is an example of how the off-balance feature works:</p>
 <ul class="simple">
-<li><a class="reference internal" href="#bug-tracker" id="toc-entry-1">Bug Tracker</a></li>
-<li><a class="reference internal" href="#credits" id="toc-entry-2">Credits</a><ul>
-<li><a class="reference internal" href="#authors" id="toc-entry-3">Authors</a></li>
-<li><a class="reference internal" href="#maintainers" id="toc-entry-4">Maintainers</a></li>
+<li>A payment is made involving an off-balance receivable account.</li>
+<li>The system identifies the off-balance accounts and calculates the
+prorated amounts for each product line.</li>
+<li>Additional account move lines are created to reflect the off-balance
+transactions.</li>
+<li>The reconciliation process ensures that the off-balance entries are
+properly managed.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="purpose">
+<h1>Purpose</h1>
+<p>The stock off-balance feature cannot be used because:</p>
+<ul class="simple">
+<li>It does not support reconcilable off-balance accounts. Instead, the
+system uses 9xxx accounts and a configuration to define:<ul>
+<li><strong>Receivable (off-balance)</strong>: A</li>
+<li><strong>Asset (off-balance)</strong>: B</li>
 </ul>
 </li>
 </ul>
+<p>This functionality adds the following entries to the payment move if
+there is an off-balance receivable account (A):</p>
+<ol class="arabic simple">
+<li>The off-balance asset account (B).</li>
+<li>The outstanding account again.</li>
+</ol>
+<p>This ensures compliance with the Nordic offset balance specification and
+proper management of off-balance transactions.</p>
+<p><strong>Table of contents</strong></p>
+</div>
+<div class="section" id="configuration">
+<h1>Configuration</h1>
+<p>To use the off-balance feature, you need to:</p>
+<ol class="arabic simple">
+<li><strong>Configure the Off-Balance Accounts</strong>:<ul>
+<li>Go to your chart account</li>
+<li>Enable the off-balance feature on the desired accounts</li>
+<li>Define the linked on-balance account where the off-balance entries
+will be posted once a payment is made.</li>
+</ul>
+</li>
+<li><strong>Asset (Off-Balance)</strong>:<ul>
+<li>In the System parameters, define the asset account (off-balance)
+that will be used as a counterpart of the on-balance income
+entries.</li>
+</ul>
+</li>
+</ol>
 </div>
 <div class="section" id="bug-tracker">
-<h1><a class="toc-backref" href="#toc-entry-1">Bug Tracker</a></h1>
+<h1>Bug Tracker</h1>
 <p>Bugs are tracked on <a class="reference external" href="https://github.com/CompassionCH/compassion-accounting/issues">GitHub Issues</a>.
 In case of trouble, please check there if your issue has already been reported.
 If you spotted it first, help us to smash it by providing a detailed and welcomed
@@ -396,16 +471,16 @@ If you spotted it first, help us to smash it by providing a detailed and welcome
 <p>Do not contact contributors directly about support or help with technical issues.</p>
 </div>
 <div class="section" id="credits">
-<h1><a class="toc-backref" href="#toc-entry-2">Credits</a></h1>
+<h1>Credits</h1>
 <div class="section" id="authors">
-<h2><a class="toc-backref" href="#toc-entry-3">Authors</a></h2>
+<h2>Authors</h2>
 <ul class="simple">
 <li>Compassion CH</li>
 <li>David Wulliamoz</li>
 </ul>
 </div>
 <div class="section" id="maintainers">
-<h2><a class="toc-backref" href="#toc-entry-4">Maintainers</a></h2>
+<h2>Maintainers</h2>
 <p>This module is part of the <a class="reference external" href="https://github.com/CompassionCH/compassion-accounting/tree/17.0/account_offbalance_sponsorship">CompassionCH/compassion-accounting</a> project on GitHub.</p>
 <p>You are welcome to contribute.</p>
 </div>

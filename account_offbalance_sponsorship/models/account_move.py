@@ -1,4 +1,4 @@
-from odoo import api, models
+from odoo import models
 
 
 class AccountMove(models.Model):
@@ -18,208 +18,25 @@ class AccountMove(models.Model):
         if not partial:
             return False
 
-        # Retrieving EXCH move (created if foreign currency payment)
-        exch_moves = self.env["account.move"].search(
-            [
-                ("name", "like", "EXCH/%"),
-                ("state", "=", "posted"),
-                ("line_ids.full_reconcile_id", "=", partial.full_reconcile_id.id),
-            ]
+        reconciled_lines = partial.credit_move_id + partial.debit_move_id
+        # The generated move lines have the same name as the move
+        move_lines_to_unlink = reconciled_lines.move_id.line_ids.filtered(
+            "is_off_balance_generated"
         )
-
-        # Delete exch move record
-        if exch_moves:
-            exch_moves.line_ids.sudo().remove_move_reconcile()
-            exch_moves.sudo().write({"state": "draft"})
-            exch_moves.sudo().unlink()
-
-        #  perform normal Unreconcile
-        res = super().js_remove_outstanding_partial(partial_id)
-
-        # Now removing added lines for noridc accounting
-        # Get off-balance accounts
-        off_rec, off_ass = self.line_ids.get_account_offbalance(self.company_id)
-
-        # Set the move to draft so its move_lines can be edited
-        self.write({"state": "draft"})
-
-        # Retrieve lines to remove
-        # One of the lines is the one linked to off_ass.
-        # The others are identified by their name.
-
-        # Identify lines to remove
-        lines_to_remove = self.line_ids.filtered(lambda line: line.name == self.name)
-        if lines_to_remove:
-            lines_to_remove.unlink()
+        if not move_lines_to_unlink:
+            # In case of debit orders we also fetch the banking entry reconciled
+            reconciled_lines += (
+                reconciled_lines.move_id.line_ids.full_reconcile_id.reconciled_line_ids
+            )
+            move_lines_to_unlink = reconciled_lines.move_id.line_ids.filtered(
+                "is_off_balance_generated"
+            )
+        if move_lines_to_unlink:
+            move_lines_to_unlink.with_context(force_delete=True).unlink()
 
         # Undo reconciliation for the statement lines
         st_lines = self.statement_line_ids
         for line in st_lines:
             line.action_undo_reconciliation()
 
-        return res
-
-
-class AccountMoveLine(models.Model):
-    _inherit = "account.move.line"
-
-    def get_account_offbalance(self, company):
-        """
-        Retrieves the off-balance accounts defined in
-        the settings for the given company.
-        Returns a tuple (account_offbalance_receivable,
-        account_offbalance_asset).
-        """
-        param_obj = self.env["res.config.settings"].with_company(company)
-        return (
-            param_obj.get_param("account_offbalance_receivable"),
-            param_obj.get_param("account_offbalance_asset"),
-        )
-
-    @api.model
-    def _reconcile_plan(self, reconciliation_plan):
-        """
-        Override of _reconcile_plan.
-        Adds additional account.move.line entries to comply
-        with the Nordic offset balance specification.
-        """
-        # Retrieve the standard plan and all related AMLs
-        plan_list, all_amls = self._optimize_reconciliation_plan(reconciliation_plan)
-
-        # Determine the company from one of the AMLs
-        company = all_amls and all_amls[0].company_id or self.env.company
-        move = all_amls.move_id
-
-        # Retrieve the off-balance receivable account defined in the settings
-        account_offbalance_receivable, _ = self.get_account_offbalance(company)
-
-        # If AML corresponds to the off-balance receivable account
-        if any(aml.account_id.id == account_offbalance_receivable for aml in all_amls):
-            # Excluding the case when this method is called
-            # by creating the exchange move for foreign money exchange
-            if not any(m.name.startswith("EXCH") for m in move):
-                # Exclude the case when calling by unreconcile on a account_move with
-                # currency rate change.
-                if not any(
-                    line.account_type == "asset_current" for line in move.line_ids
-                ):
-                    self._add_off_balance_lines(move, company)
-
-        # Continue with the standard reconciliation logic
-        move_container = {"records": all_amls.move_id}
-        with all_amls.move_id._check_balanced(
-            move_container
-        ), all_amls.move_id._sync_dynamic_lines(move_container):
-            return self._reconcile_plan_with_sync(plan_list, all_amls)
-
-    def _add_off_balance_lines(self, move, company):
-        (
-            account_offbalance_receivable,
-            account_offbalance_asset,
-        ) = self.get_account_offbalance(company)
-
-        # Separate the invoice and the payment from the move
-        invoice = move.filtered(lambda m: m.move_type == "out_invoice")
-        payment_entry = move.filtered(lambda m: m.move_type == "entry")
-
-        # Retrieve the payment lines linked to the off-balance receivable account,
-        # excluding the open balance line
-        payment_lines = payment_entry.line_ids.filtered(
-            lambda line: line.account_id.id == account_offbalance_receivable
-            and "open balance" not in (line.name or "").lower()
-        )
-
-        payment_amount = sum(payment_lines.mapped("credit"))
-
-        invoice_lines = invoice.line_ids
-
-        # Dictionary for account code and amount for each line
-        sponsorship_lines = {}
-
-        # Get invoice line for each product (sponsorship, gift, ... )
-        product_invoice_lines = invoice_lines.filtered(
-            lambda line: line.display_type == "product"
-        )
-
-        # Get affected lines
-        for line in product_invoice_lines:
-            # Get line amount
-            amount = line.credit if line.credit > 0 else 0.0
-            if amount > 0:
-                # Remove "9" from the account code
-                # and retrieve the corresponding account
-                new_code = line.account_id.code[1:]
-                sponsorship_account = self.env["account.account"].search(
-                    [
-                        ("code", "=", new_code),
-                        ("company_id", "=", company.id),
-                    ],
-                    limit=1,
-                )
-                if sponsorship_account:
-                    sponsorship_lines.setdefault(sponsorship_account.id, []).append(
-                        amount
-                    )
-
-        # Get the ratio to adjust the amount based on
-        # the payment made and the value of each product lines
-        total_sponsorship_amount = sum(
-            sum(amounts) for amounts in sponsorship_lines.values()
-        )
-
-        # Calculate ratio depending on total ammoun from the sponsorship
-        ratio = (
-            payment_amount / total_sponsorship_amount
-            if total_sponsorship_amount
-            else 0.0
-        )
-
-        # Calculate prorated ammount for each line
-        lines_to_create = []
-        total_prorated = 0.0
-        for sponsorship_account_id, amounts in sponsorship_lines.items():
-            for amt in amounts:
-                prorated_amount = amt * ratio
-                rounded_amount = round(prorated_amount, 2)
-                lines_to_create.append(
-                    {
-                        "account_id": sponsorship_account_id,
-                        "amount": rounded_amount,
-                    }
-                )
-                total_prorated += rounded_amount
-
-        diff = round(payment_amount - total_prorated, 2)
-        if lines_to_create:
-            lines_to_create[-1]["amount"] += diff
-            total_prorated += diff
-
-        # Create an account_move_line
-        for line_dict in lines_to_create:
-            self.env["account.move.line"].with_context(
-                check_move_validity=False
-            ).create(
-                {
-                    "account_id": line_dict["account_id"],
-                    "name": payment_entry.name,
-                    "move_id": payment_entry.id,
-                    "partner_id": move.partner_id.id,
-                    "debit": 0.0,
-                    "credit": line_dict["amount"],
-                }
-            )
-
-        # Create an account_move_line reflecting
-        # the reconciliation amount on account_offbalance_asset
-        self.env["account.move.line"].with_context(check_move_validity=False).create(
-            {
-                "account_id": account_offbalance_asset,
-                "name": payment_entry.name,
-                "move_id": payment_entry.id,
-                "partner_id": move.partner_id.id,
-                "debit": round(total_prorated, 2),
-                "credit": 0.0,
-            }
-        )
-
-        return True
+        return super().js_remove_outstanding_partial(partial_id)
