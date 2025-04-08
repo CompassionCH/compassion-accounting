@@ -1,0 +1,40 @@
+<odoo>
+    <data>
+        <!-- Inherit the tree view for account.account -->
+        <record id="view_account_tree_inherit" model="ir.ui.view">
+            <field name="name">account.account.tree.inherit</field>
+            <field name="model">account.account</field>
+            <field name="inherit_id" ref="account.view_account_list" />
+            <field name="arch" type="xml">
+                <xpath expr="//tree" position="inside">
+                    <field name="is_off_balance" widget="boolean_toggle" />
+                    <field
+                        name="on_balance_account_id"
+                        required="is_off_balance"
+                        invisible="not is_off_balance"
+                    />
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Inherit the form view for account.account -->
+        <record id="view_account_form_inherit" model="ir.ui.view">
+            <field name="name">account.account.form.inherit</field>
+            <field name="model">account.account</field>
+            <field name="inherit_id" ref="account.view_account_form" />
+            <field name="arch" type="xml">
+                <xpath
+                    expr="//page[@name='accounting']/group/group[2]"
+                    position="inside"
+                >
+                        <field name="is_off_balance" />
+                        <field
+                        name="on_balance_account_id"
+                        required="is_off_balance"
+                        invisible="not is_off_balance"
+                    />
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

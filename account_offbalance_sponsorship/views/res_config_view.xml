@@ -3,18 +3,19 @@
     <record id="view_account_off_balance_setting" model="ir.ui.view">
         <field name="name">Offbalance accounting settings</field>
         <field name="model">res.config.settings</field>
-        <field
-            name="inherit_id"
-            ref="message_center_compassion.compassion_settings"
-        />
+        <field name="inherit_id" ref="account.res_config_settings_view_form" />
         <field name="arch" type="xml">
-            <xpath expr="//app[@name='compassion_settings']" position="inside">
-                <block title="Sponsorship Off-Balance Accounting Settings">
-                    <setting string="Receivable Off-Balance Account">
-                        <field name="account_offbalance_receivable" />
-                    </setting>
-                    <setting string="Asset Off-Balance Account">
-                        <field name="account_offbalance_asset" />
+            <xpath expr="//app[@name='account']" position="inside">
+                <block title="Off-Balance Accounting Settings">
+                    <setting
+                        string="Asset Off-Balance Account"
+                        company_dependent="1"
+                    >
+                        <field
+                            name="off_balance_asset_account_id"
+                            readonly="0"
+                            domain="[('company_id', '=', company_id),('account_type', 'like', 'asset'), ('is_off_balance', '=', True)]"
+                        />
                     </setting>
                 </block>
             </xpath>
