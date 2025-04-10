@@ -43,7 +43,9 @@
         "queue_job",  # OCA/queue,
         "utm",
     ],
-    "external_dependencies": {},
+    "external_dependencies": {
+        "python": ["openupgradelib"]
+    },
     "data": [
         "views/end_contract_wizard_view.xml",
         "views/activate_contract_view.xml",
