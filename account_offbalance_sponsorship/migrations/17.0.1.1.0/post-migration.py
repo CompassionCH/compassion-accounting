@@ -1,8 +1,9 @@
+from odoo import api, SUPERUSER_ID
 from openupgradelib import openupgrade
 
 
-@openupgrade.migrate()
-def migrate(env, version):
+def migrate(cr, version):
+    env = api.Environment(cr, SUPERUSER_ID, {})
     off_balance_accounts = (
         env["account.account"]
         .search([("code", "like", "9"), ("account_type", "!=", "equity_unaffected")])
