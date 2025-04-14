@@ -302,7 +302,7 @@ class ContractGroup(models.Model):
                 # Check if the invoice for this key has already been processed
                 if invoice_key not in processed_invoices:
                     # Process invoice generation if not already processed
-                    group._process_invoice_generation(
+                    group.with_company(group.company_id)._process_invoice_generation(
                         invoicer, current_invoicing_date, contracts
                     )
                     # Add the invoice key to the set of processed invoices

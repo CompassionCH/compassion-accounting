@@ -25,6 +25,15 @@ class AccountMove(models.Model):
         "recurring.invoicer", "Invoicer", readonly=False
     )
 
+    @api.depends("partner_id", "company_id")
+    def _compute_pricelist_id(self):
+        # Prevent overriding the pricelist_id if it is already set for a new move
+        for invoice in self:
+            if not invoice.id and invoice.pricelist_id:
+                invoice.pricelist_id = invoice.pricelist_id
+            else:
+                super(AccountMove, invoice)._compute_pricelist_id()
+
     @api.depends("payment_state", "line_ids.full_reconcile_id", "line_ids.reconciled")
     def _compute_last_payment(self):
         for invoice in self:

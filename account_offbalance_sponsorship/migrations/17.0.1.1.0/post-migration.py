@@ -1,5 +1,6 @@
-from odoo import api, SUPERUSER_ID
 from openupgradelib import openupgrade
+
+from odoo import SUPERUSER_ID, api
 
 
 def migrate(cr, version):
