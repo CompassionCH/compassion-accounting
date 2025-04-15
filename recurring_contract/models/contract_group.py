@@ -311,62 +311,31 @@ class ContractGroup(models.Model):
             offset = 1
         return start_date, offset
 
-    def _should_skip_invoice_generation(self, invoicing_date, contracts=None):
-        """In such cases, we should skip the invoice generation:
-        - A specific contract is given and an invoice for this due date already exists
-          and isn't cancelled.
-        - All active contracts already have an invoice for this due date
-        - Contract group suspension.
-        """
+    def _get_open_invoices_filter(self, invoicing_date, contracts):
+        """Retrieve open invoices for the given invoicing date and contracts."""
         self.ensure_one()
+        return [
+            ("invoice_date", "=", invoicing_date),
+            ("partner_id", "=", self.partner_id.id),
+            ("move_type", "=", "out_invoice"),
+            ("line_ids.contract_id", "in", contracts.ids),
+            ("line_ids.product_id", "in", contracts.mapped("product_ids").ids),
+        ]
 
-        has_all_invoices = False
-
-        if contracts:
-            search_filter = [
-                ("invoice_date", "=", invoicing_date),
-                ("partner_id", "=", self.partner_id.id),
-                ("move_type", "=", "out_invoice"),
-                ("line_ids.contract_id", "=", contracts.id),
-                (
-                    "line_ids.product_id",
-                    "in",
-                    contracts.mapped("product_ids").ids,
-                ),
-            ]
-
-            has_all_invoices = bool(
-                self.env["account.move"].search_count(search_filter)
-            )
-        else:
-            search_filter = [
-                ("invoice_date", "=", invoicing_date),
-                ("partner_id", "=", self.partner_id.id),
-                ("move_type", "=", "out_invoice"),
-                ("line_ids.contract_id", "in", self.active_contract_ids.ids),
-                (
-                    "line_ids.product_id",
-                    "in",
-                    self.active_contract_ids.mapped("product_ids").ids,
-                ),
-            ]
-
-            open_invoices = self.env["account.move"].search(search_filter)
-
-            has_all_invoices = (
-                len(
-                    self.active_contract_ids
-                    - open_invoices.mapped("line_ids.contract_id")
-                )
-                == 0
-            )
-
+    def _should_skip_invoice_generation(self, invoicing_date, contracts=None, skip_suspended=True):
+        """Determine if invoice generation should be skipped."""
+        self.ensure_one()
         is_suspended = (
             self.invoice_suspended_until
             and self.invoice_suspended_until > invoicing_date
         )
-
-        return has_all_invoices or is_suspended
+        if skip_suspended and is_suspended:
+            return True
+        if contracts is None:
+            contracts = self.active_contract_ids
+        open_invoices = self.env["account.move"].search(self._get_open_invoices_filter(invoicing_date, contracts))
+        has_all_invoices = len(contracts) == len(open_invoices.mapped("line_ids.contract_id"))
+        return has_all_invoices
 
     def _process_invoice_generation(self, invoicer, invoicing_date, contracts=None):
         self.ensure_one()
