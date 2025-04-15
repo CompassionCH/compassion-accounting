@@ -75,7 +75,7 @@ class MoveLine(models.Model):
                 price = modified_contract.pricelist_id._get_product_price(
                     contract_line.product_id,
                     quantity=contract_line.quantity,
-                    date=invoice.invoice_date_due,
+                    date=invoice.invoice_date,
                 )
                 data_dict["price_unit"] = price
                 data_dict["quantity"] = contract_line.quantity
