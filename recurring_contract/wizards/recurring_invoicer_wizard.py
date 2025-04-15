@@ -22,26 +22,26 @@ class InvoicerWizard(models.TransientModel):
     generation_date = fields.Date(readonly=True)
 
     def generate(self):
-        # self.env.cr.execute(
-        #     """
-        # SELECT DISTINCT gr.id
-        # FROM recurring_contract rc
-        # JOIN recurring_contract_group gr ON rc.group_id = gr.id
-        # WHERE rc.state IN ('active', 'waiting')
-        # AND rc.total_amount > 0
-        # AND (rc.end_date IS NULL OR rc.end_date >= CURRENT_DATE + INTERVAL '1 month')
-        # AND NOT EXISTS(
-        #     SELECT id
-        #     FROM account_move_line aml
-        #     WHERE contract_id = rc.id
-        #     AND payment_state = 'not_paid'
-        #     AND date_maturity >= CURRENT_DATE + (
-        #         INTERVAL '1 month' * gr.advance_billing_months)
-        # )
-        # """
-        # )
-        # group_ids = [r[0] for r in self.env.cr.fetchall()]
-        groups = self.env["recurring.contract.group"].browse(14308)
+        self.env.cr.execute(
+            """
+        SELECT DISTINCT gr.id
+        FROM recurring_contract rc
+        JOIN recurring_contract_group gr ON rc.group_id = gr.id
+        WHERE rc.state IN ('active', 'waiting')
+        AND rc.total_amount > 0
+        AND (rc.end_date IS NULL OR rc.end_date >= CURRENT_DATE + INTERVAL '1 month')
+        AND NOT EXISTS(
+            SELECT id
+            FROM account_move_line aml
+            WHERE contract_id = rc.id
+            AND payment_state = 'not_paid'
+            AND date_maturity >= CURRENT_DATE + (
+                INTERVAL '1 month' * gr.advance_billing_months)
+        )
+        """
+        )
+        group_ids = [r[0] for r in self.env.cr.fetchall()]
+        groups = self.env["recurring.contract.group"].browse(group_ids)
 
         # Add a job for all groups and start the job when all jobs are created.
         invoicer = groups.generate_invoices()
