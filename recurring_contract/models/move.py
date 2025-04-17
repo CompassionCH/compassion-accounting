@@ -29,8 +29,11 @@ class AccountMove(models.Model):
     def _compute_pricelist_id(self):
         # Prevent overriding the pricelist_id if it is already set for a new move
         for invoice in self:
+            pricelist = invoice.mapped("invoice_line_ids.contract_id.pricelist_id")
             if not invoice.id and invoice.pricelist_id:
                 invoice.pricelist_id = invoice.pricelist_id
+            elif len(pricelist) == 1:
+                invoice.pricelist_id = pricelist
             else:
                 super(AccountMove, invoice)._compute_pricelist_id()
 
