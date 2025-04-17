@@ -29,8 +29,11 @@ class AccountMove(models.Model):
     def _compute_pricelist_id(self):
         # Prevent overriding the pricelist_id if it is already set for a new move
         for invoice in self:
+            pricelist = invoice.mapped("invoice_line_ids.contract_id.pricelist_id")
             if not invoice.id and invoice.pricelist_id:
                 invoice.pricelist_id = invoice.pricelist_id
+            elif len(pricelist) == 1:
+                invoice.pricelist_id = pricelist
             else:
                 super(AccountMove, invoice)._compute_pricelist_id()
 
@@ -98,7 +101,7 @@ class AccountMove(models.Model):
         mvl_obj = self.env["account.move.line"]
         for partner in self.mapped("partner_id"):
             invoices = self.filtered(lambda i, p=partner: i.partner_id == p)
-            past_invoices = invoices.filtered(lambda i: i.invoice_date_due <= today)
+            past_invoices = invoices.filtered(lambda i: i.invoice_date <= today)
             past_lines = past_invoices.mapped("line_ids").filtered("debit")
             past_amount = sum(past_invoices.mapped("amount_total"))
             future_invoices = invoices - past_invoices
@@ -161,7 +164,7 @@ class AccountMove(models.Model):
         for invoice in self.filtered(
             lambda i: i.state != "cancel"
             and i.payment_state != "paid"
-            and i.invoice_date_due >= date_selection
+            and i.invoice_date >= date_selection
             and (
                 i.payment_order_id.state in ["draft", "open"] or not i.payment_order_id
             )
@@ -240,7 +243,7 @@ class AccountMove(models.Model):
         self.ensure_one()
         res = []
         for contract in modified_contracts.filtered(
-            lambda c: c.start_date.date() < self.invoice_date_due
+            lambda c: c.start_date.date() < self.invoice_date
         ):
             invoice_lines = self.invoice_line_ids.filtered(
                 lambda invoice_line, c=contract: invoice_line.contract_id == c
