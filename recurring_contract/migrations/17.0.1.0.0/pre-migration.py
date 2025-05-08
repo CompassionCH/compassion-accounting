@@ -8,12 +8,12 @@ def migrate(cr, version):
         WHERE name->>'en_US' = 'Contract line update on pricelist item end date'
     """
     )
-    res_id = cr.fetchone()[0]
-    if res_id:
+    res_id = cr.fetchone()
+    if res_id and res_id[0]:
         openupgrade.add_xmlid(
             cr,
             "recurring_contract",
             "action_pricelist_item_update",
             "ir.actions.server",
-            res_id,
+            res_id[0],
         )
