@@ -39,6 +39,7 @@
         "analytic",
         "gift_compassion",
         "thankyou_letters",
+        "account_offbalance_sponsorship",
     ],
     "data": [
         "security/ir.model.access.csv",

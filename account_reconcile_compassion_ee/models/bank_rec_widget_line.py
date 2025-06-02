@@ -9,7 +9,9 @@ class BankRecWidgetLine(models.Model):
         compute="_compute_product_id",
         store=True,
         readonly=False,
-        domain="[('company_id', 'in', [False, company_id])]",
+        domain="[('company_id', 'in', [False, company_id]),"
+        "('property_account_income_id.is_off_balance', '=', False),"
+        "('property_account_expense_id.is_off_balance', '=', False)]",
     )
     contract_id = fields.Many2one(
         comodel_name="recurring.contract",

@@ -7,7 +7,9 @@ class AccountReconcileModel(models.Model):
     _inherit = "account.reconcile.model"
 
     partner_matching_ids = fields.One2many(
-        "account.reconcile.model.partner.matching", "model_id", "Partner Matching Rules",
+        "account.reconcile.model.partner.matching",
+        "model_id",
+        "Partner Matching Rules",
         copy=True,
     )
     only_this_month = fields.Boolean(

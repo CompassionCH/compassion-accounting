@@ -349,7 +349,9 @@ class ContractGroup(models.Model):
             ("line_ids.product_id", "in", contracts.mapped("product_ids").ids),
         ]
 
-    def _should_skip_invoice_generation(self, invoicing_date, contracts=None, skip_suspended=True):
+    def _should_skip_invoice_generation(
+        self, invoicing_date, contracts=None, skip_suspended=True
+    ):
         """Determine if invoice generation should be skipped."""
         self.ensure_one()
         is_suspended = (
@@ -360,8 +362,12 @@ class ContractGroup(models.Model):
             return True
         if contracts is None:
             contracts = self.active_contract_ids
-        open_invoices = self.env["account.move"].search(self._get_open_invoices_filter(invoicing_date, contracts))
-        has_all_invoices = len(contracts) == len(open_invoices.mapped("line_ids.contract_id"))
+        open_invoices = self.env["account.move"].search(
+            self._get_open_invoices_filter(invoicing_date, contracts)
+        )
+        has_all_invoices = len(contracts) == len(
+            open_invoices.mapped("line_ids.contract_id")
+        )
         return has_all_invoices
 
     def _process_invoice_generation(self, invoicer, invoicing_date, contracts=None):
