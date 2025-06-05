@@ -337,13 +337,21 @@ class ContractGroup(models.Model):
         if curr_month != "True" or today.day > int(block_day):
             offset = 1
         # T2325 Push forward the offset if the month interval is not 1
-        last_invoice_date = self.env["account.move.line"].search([
-            ("contract_id", "in", self.active_contract_ids.ids),
-            ("parent_state", "=", "posted"),
-        ], limit=1).move_id.invoice_date
+        last_invoice_date = (
+            self.env["account.move.line"]
+            .search(
+                [
+                    ("contract_id", "in", self.active_contract_ids.ids),
+                    ("parent_state", "=", "posted"),
+                ],
+                limit=1,
+            )
+            .move_id.invoice_date
+        )
         if last_invoice_date:
             next_invoice_date = last_invoice_date + relativedelta(
-                months=self.month_interval)
+                months=self.month_interval
+            )
             offset = max(offset, relativedelta(next_invoice_date, start_date).months)
         return start_date, offset
 
