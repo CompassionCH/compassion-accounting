@@ -160,7 +160,7 @@ class AccountMove(models.Model):
         for invoice in self.filtered(
             lambda i: i.state != "cancel"
             and i.payment_state != "paid"
-            and i.invoice_date >= date_selection
+            and (i.invoice_date or i.date) >= date_selection
             and (
                 i.payment_order_id.state in ["draft", "open"] or not i.payment_order_id
             )
