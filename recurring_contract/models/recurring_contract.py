@@ -372,8 +372,9 @@ class RecurringContract(models.Model):
     #                             PUBLIC METHODS                             #
     ##########################################################################
     def button_generate_invoices(self):
-        return self.mapped("group_id").button_generate_invoices(self.id)
-
+        for group in self.mapped("group_id"):
+            group_contract_ids = group.contract_ids.ids
+            group.button_generate_invoices(group_contract_ids)
     def generate_invoices(self):
         self.mapped("group_id").generate_invoices(self.ids)
 
