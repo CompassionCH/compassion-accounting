@@ -194,12 +194,12 @@ class ContractGroup(models.Model):
             "context": {"search_default_unpaid": 1},
         }
 
-    def button_generate_invoices(self, contract_id=None):
+    def button_generate_invoices(self):
         """Immediately generate invoices for the contract group."""
         invoicer = (
             self.with_context({"queue_job__no_delay": True})
             .with_company(self.active_contract_ids[0].company_id)
-            .generate_invoices(contract_id)
+            .generate_invoices()
         )
         notification = {
             "type": "ir.actions.client",
@@ -224,16 +224,16 @@ class ContractGroup(models.Model):
     ##########################################################################
     #                             PRIVATE METHODS                            #
     ##########################################################################
-    def generate_invoices(self, contract_ids=None):
+    def generate_invoices(self):
         invoicer = self.env["recurring.invoicer"].create({})
         for group in self:
             group.with_delay(
                 priority=100,
                 identity_key=self._name + ".generate_invoices." + str(group.id)
-            )._generate_invoices(invoicer, contract_ids)
+            )._generate_invoices(invoicer)
         return invoicer
 
-    def _generate_invoices(self, invoicer, contract_ids=None):
+    def _generate_invoices(self, invoicer):
         """Checks all contracts and generate invoices if needed.
         Create an invoice per contract group per date.
         """
@@ -243,13 +243,6 @@ class ContractGroup(models.Model):
 
         # Set to track processed invoices to avoid duplication
         processed_invoices = set()
-
-        contracts = None
-        if contract_ids:
-            contracts = self.env["recurring.contract"].browse(contract_ids).exists()
-            if not contracts:
-                _logger.error(f"The contract with the id {contract_ids} does not exist.")
-                return False
 
         for group in self:
             # Calculate the initial invoicing date and starting offset
@@ -266,7 +259,7 @@ class ContractGroup(models.Model):
 
                 # Check if invoice generation should be skipped for this date
                 if group._should_skip_invoice_generation(
-                    current_invoicing_date, contracts
+                    current_invoicing_date, group.active_contract_ids
                 ):
                     continue
 
@@ -277,7 +270,7 @@ class ContractGroup(models.Model):
                 if invoice_key not in processed_invoices:
                     # Process invoice generation if not already processed
                     group._process_invoice_generation(
-                        invoicer, current_invoicing_date, contracts
+                        invoicer, current_invoicing_date
                     )
                     # Add the invoice key to the set of processed invoices
                     processed_invoices.add(invoice_key)
@@ -304,10 +297,12 @@ class ContractGroup(models.Model):
         block_day = settings_obj.get_param_multi_company(
             "recurring_contract.invoice_block_day"
         )
-        today = date.today()
-        start_date = today.replace(day=1)
+        start_date = date.today()
+        if self.invoice_suspended_until and self.invoice_suspended_until > start_date:
+            start_date = self.invoice_suspended_until
+        start_date = start_date.replace(day=1)
         offset = 0
-        if curr_month != "True" or today.day > int(block_day):
+        if curr_month != "True" or start_date.day > int(block_day):
             offset = 1
         # T2325 Push forward the offset if the month interval is not 1
         last_invoice_date = self.env["account.move.line"].search([
@@ -320,18 +315,7 @@ class ContractGroup(models.Model):
             offset = max(offset, relativedelta(next_invoice_date, start_date).months)
         return start_date, offset
 
-    def _get_open_invoices_filter(self, invoicing_date, contracts):
-        """Retrieve open invoices for the given invoicing date and contracts."""
-        self.ensure_one()
-        return [
-            ("invoice_date", "=", invoicing_date),
-            ("partner_id", "=", self.partner_id.id),
-            ("move_type", "=", "out_invoice"),
-            ("line_ids.contract_id", "in", contracts.ids),
-            ("line_ids.product_id", "in", contracts.mapped("product_ids").ids),
-        ]
-
-    def _should_skip_invoice_generation(self, invoicing_date, contracts=None, skip_suspended=True):
+    def _should_skip_invoice_generation(self, invoicing_date, contracts, skip_suspended=True):
         """Determine if invoice generation should be skipped."""
         self.ensure_one()
         is_suspended = (
@@ -340,13 +324,17 @@ class ContractGroup(models.Model):
         )
         if skip_suspended and is_suspended:
             return True
-        if contracts is None:
-            contracts = self.active_contract_ids
-        open_invoices = self.env["account.move"].search(self._get_open_invoices_filter(invoicing_date, contracts))
+        open_invoices = self.env["account.move"].search([
+            ("invoice_date", "=", invoicing_date),
+            ("partner_id", "=", self.partner_id.id),
+            ("move_type", "=", "out_invoice"),
+            ("line_ids.contract_id", "in", contracts.ids),
+            ("line_ids.product_id", "in", contracts.mapped("product_ids").ids),
+        ])
         has_all_invoices = len(contracts) == len(open_invoices.mapped("line_ids.contract_id"))
         return has_all_invoices
 
-    def _process_invoice_generation(self, invoicer, invoicing_date, contracts=None):
+    def _process_invoice_generation(self, invoicer, invoicing_date):
         self.ensure_one()
         active_contracts = self.active_contract_ids
         open_invoices = active_contracts.mapped("open_invoice_ids").filtered(
@@ -419,8 +407,7 @@ class ContractGroup(models.Model):
             ).create_analytic_lines()
         else:
             # Building invoices data
-            contracts = contracts or self.active_contract_ids
-            inv_data = self._build_invoice_gen_data(invoicing_date, invoicer, contracts)
+            inv_data = self._build_invoice_gen_data(invoicing_date, invoicer)
             # Creating the actual invoice
             _logger.info(f"Generating invoice : {inv_data}")
             invoice = self.env["account.move"].create(inv_data)
@@ -435,13 +422,14 @@ class ContractGroup(models.Model):
                 invoice.unlink()
 
     def _build_invoice_gen_data(
-        self, invoicing_date, invoicer, contracts, gift_wizard=False
+        self, invoicing_date, invoicer, gift_wizard=False
     ):
         """Setup a dict with data passed to invoice.create.
         If any custom data is wanted in invoice from contract group, just
         inherit this method.
         """
         self.ensure_one()
+        contracts = self.active_contract_ids
         # Filter the contract line already paid
         already_paid_cl = (
             self.env["account.move.line"]

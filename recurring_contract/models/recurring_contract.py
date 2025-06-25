@@ -372,10 +372,10 @@ class RecurringContract(models.Model):
     #                             PUBLIC METHODS                             #
     ##########################################################################
     def button_generate_invoices(self):
-        return self.mapped("group_id").button_generate_invoices(self.id)
+        return self.mapped("group_id").button_generate_invoices()
 
     def generate_invoices(self):
-        self.mapped("group_id").generate_invoices(self.ids)
+        self.mapped("group_id").generate_invoices()
 
     def cancel_contract_invoices(self):
         self.with_delay(
