@@ -302,17 +302,10 @@ class ContractGroup(models.Model):
             start_date = self.invoice_suspended_until
         start_date = start_date.replace(day=1)
         offset = 0
-        if curr_month != "True" or start_date.day > int(block_day):
+        # Only apply offset if there are waiting contracts
+        has_waiting_contracts = any(contract.state == 'waiting' for contract in self.active_contract_ids)
+        if has_waiting_contracts and (curr_month != "True" or start_date.day > int(block_day)):
             offset = 1
-        # T2325 Push forward the offset if the month interval is not 1
-        last_invoice_date = self.env["account.move.line"].search([
-            ("contract_id", "in", self.active_contract_ids.ids),
-            ("parent_state", "=", "posted"),
-        ], limit=1).move_id.invoice_date
-        if last_invoice_date:
-            next_invoice_date = last_invoice_date + relativedelta(
-                months=self.month_interval)
-            offset = max(offset, relativedelta(next_invoice_date, start_date).months)
         return start_date, offset
 
     def _should_skip_invoice_generation(self, invoicing_date, contracts, skip_suspended=True):

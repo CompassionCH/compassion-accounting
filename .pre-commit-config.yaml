@@ -44,7 +44,7 @@ repos:
       # update the NOT INSTALLABLE ADDONS section above
       - id: oca-update-pre-commit-excluded-addons
       - id: oca-fix-manifest-website
-        args: ["https://github.com/CompassionCH/test-repo"]
+        args: ["https://github.com/CompassionCH/compassion-accounting"]
       - id: oca-gen-addon-readme
         args:
           - --addons-dir=.
