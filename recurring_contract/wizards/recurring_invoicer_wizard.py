@@ -24,20 +24,25 @@ class InvoicerWizard(models.TransientModel):
     def generate(self):
         self.env.cr.execute(
             """
-        SELECT DISTINCT gr.id
-        FROM recurring_contract rc
-        JOIN recurring_contract_group gr ON rc.group_id = gr.id
-        WHERE rc.state IN ('active', 'waiting')
-        AND rc.total_amount > 0
-        AND (rc.end_date IS NULL OR rc.end_date >= CURRENT_DATE + INTERVAL '1 month')
-        AND NOT EXISTS(
-            SELECT id
-            FROM account_move_line aml
-            WHERE contract_id = rc.id
-            AND payment_state = 'not_paid'
-            AND date_maturity >= CURRENT_DATE + (
-                INTERVAL '1 month' * gr.advance_billing_months)
-        )
+           SELECT gr.id
+FROM recurring_contract_group gr
+WHERE (gr.invoice_suspended_until IS NULL OR gr.invoice_suspended_until < CURRENT_DATE)
+  AND EXISTS (
+    SELECT 1
+    FROM recurring_contract rc
+    WHERE rc.group_id = gr.id
+      AND rc.state IN ('active', 'waiting')
+      AND rc.total_amount > 0
+      AND (rc.end_date IS NULL OR rc.end_date >= CURRENT_DATE + INTERVAL '1 month')
+      AND NOT EXISTS (
+        SELECT 1
+        FROM account_move_line aml
+        JOIN account_move am ON aml.move_id = am.id
+        WHERE aml.contract_id = rc.id
+          AND am.state IN ('posted', 'cancel')
+          AND am.invoice_date >= date_trunc('month', CURRENT_DATE + (INTERVAL '1 month' * gr.advance_billing_months))
+      )
+  );
         """
         )
         group_ids = [r[0] for r in self.env.cr.fetchall()]
