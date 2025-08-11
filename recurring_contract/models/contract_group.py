@@ -328,8 +328,12 @@ class ContractGroup(models.Model):
         start_date = start_date.replace(day=1)
         offset = 0
         # Only apply offset if there are waiting contracts
-        has_waiting_contracts = any(contract.state == 'waiting' for contract in self.active_contract_ids)
-        if has_waiting_contracts and (curr_month != "True" or start_date.day > int(block_day)):
+        has_waiting_contracts = any(
+            contract.state == "waiting" for contract in self.active_contract_ids
+        )
+        if has_waiting_contracts and (
+            curr_month != "True" or start_date.day > int(block_day)
+        ):
             offset = 1
         return start_date, offset
 
@@ -344,13 +348,14 @@ class ContractGroup(models.Model):
         )
         if skip_suspended and is_suspended:
             return True
-        open_invoices = self.env["account.move"].search([
-            ("invoice_date", "=", invoicing_date),
-            ("partner_id", "=", self.partner_id.id),
-            ("move_type", "=", "out_invoice"),
-            ("line_ids.contract_id", "in", contracts.ids),
-            ("line_ids.product_id", "in", contracts.mapped("product_ids").ids),
-        ]
+        open_invoices = self.env["account.move"].search(
+            [
+                ("invoice_date", "=", invoicing_date),
+                ("partner_id", "=", self.partner_id.id),
+                ("move_type", "=", "out_invoice"),
+                ("line_ids.contract_id", "in", contracts.ids),
+                ("line_ids.product_id", "in", contracts.mapped("product_ids").ids),
+            ]
         )
         has_all_invoices = len(contracts) == len(
             open_invoices.mapped("line_ids.contract_id")
@@ -444,9 +449,7 @@ class ContractGroup(models.Model):
                 )
                 invoice.unlink()
 
-    def _build_invoice_gen_data(
-        self, invoicing_date, invoicer, gift_wizard=False
-    ):
+    def _build_invoice_gen_data(self, invoicing_date, invoicer, gift_wizard=False):
         """Setup a dict with data passed to invoice.create.
         If any custom data is wanted in invoice from contract group, just
         inherit this method.

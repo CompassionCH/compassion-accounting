@@ -22,6 +22,7 @@ class InvoicerWizard(models.TransientModel):
     generation_date = fields.Date(readonly=True)
 
     def generate(self):
+        # ruff: noqa: E501
         self.env.cr.execute(
             """
             -- Select distinct contract group IDs that are ready for invoicing.
