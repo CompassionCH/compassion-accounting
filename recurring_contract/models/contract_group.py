@@ -86,6 +86,11 @@ class ContractGroup(models.Model):
         "Active contracts",
         compute="_compute_active_contracts",
     )
+    has_active_contracts = fields.Boolean(
+        compute="_compute_active_contracts",
+        search="_search_has_active_contracts",
+        string="Has active contracts",
+    )
     current_invoice_date = fields.Date(
         compute="_compute_current_invoice_date",
         help="Gives the current invoice date for the contract group, "
@@ -101,6 +106,18 @@ class ContractGroup(models.Model):
             pay_opt.active_contract_ids = pay_opt.contract_ids.filtered(
                 lambda c: c.state in ("active", "waiting")
             )
+            pay_opt.has_active_contracts = pay_opt.active_contract_ids
+
+    def _search_has_active_contracts(self, operator, value):
+        if operator not in ("=", "!=") or value not in (True, False):
+            return [("id", "in", [])]
+        active_contracts = self.env["recurring.contract"].search([
+            ("state", "in", ("active", "waiting"))
+        ])
+        if value is True and operator == "=":
+            return [("id", "in", active_contracts.mapped("group_id").ids)]
+        else:
+            return [("id", "not in", active_contracts.mapped("group_id").ids)]
 
     def _compute_last_paid_invoice(self):
         for group in self:
