@@ -82,14 +82,6 @@ class AccountMove(models.Model):
         )
         return statement_line_ids.filtered("narration").mapped("narration")
 
-    def _invoice_paid_hook(self):
-        """Call invoice_paid method on related contracts."""
-        res = super()._invoice_paid_hook()
-        for invoice in self.filtered(lambda i: i.payment_state == "paid"):
-            contracts = invoice.mapped("invoice_line_ids.contract_id")
-            contracts.invoice_paid(invoice)
-        return res
-
     def reconcile_after_clean(self):
         """
         Called after clean invoices. If invoices can be reconciled

@@ -87,3 +87,22 @@ class MoveLine(models.Model):
             # Add the modification on the line
             res.append((1, invoice_line.id, data_dict))
         return res
+
+    def _reconcile_post_hook(self, data):
+        """
+        When a direct debit is reconciled, the linked invoice is paid.
+        We need to trigger the invoice_paid method on the contract.
+        """
+        res = super()._reconcile_post_hook(data)
+        all_reconciles = self.mapped("move_id.line_ids.full_reconcile_id")
+        for reconcile in all_reconciles:
+            # Find invoices that are part of the reconciliation and are now paid.
+            invoices = reconcile.reconciled_line_ids.mapped("move_id").filtered(
+                lambda m: m.is_invoice(include_receipts=True)
+                and m.payment_state == "paid"
+                and m.invoice_line_ids.contract_id
+            )
+            for invoice in invoices:
+                contracts = invoice.mapped("invoice_line_ids.contract_id")
+                contracts.invoice_paid(invoice)
+        return res
