@@ -99,5 +99,11 @@
             </div>
 
         </xpath>
+        <xpath
+            expr="//Many2OneField[@name=&quot;'partner_id'&quot;]"
+            position="attributes"
+        >
+            <attribute name="placeholder">data.partner_name</attribute>
+        </xpath>
     </t>
 </templates>
