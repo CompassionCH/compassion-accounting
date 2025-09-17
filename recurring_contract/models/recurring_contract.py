@@ -229,7 +229,7 @@ class RecurringContract(models.Model):
             )
             months = set()
             for invoice in due_invoices:
-                idate = invoice.date
+                idate = invoice.invoice_date_due
                 months.add((idate.month, idate.year))
             contract.months_due = len(months)
 
@@ -268,8 +268,8 @@ class RecurringContract(models.Model):
                     contract.open_invoice_ids.filtered(
                         lambda invoice,
                         period=to_pay_period,
-                        year=current_billing_year: invoice.date.month <= period
-                        and invoice.date.year == year
+                        year=current_billing_year: invoice.invoice_date_due.month <= period
+                        and invoice.invoice_date_due.year == year
                     )
                 )
             )

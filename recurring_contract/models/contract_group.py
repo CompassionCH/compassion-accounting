@@ -411,7 +411,7 @@ class ContractGroup(models.Model):
                 self.env["account.move.line"]
                 .search(
                     [
-                        ("date", "=", invoicing_date),
+                        ("invoice_date", "=", invoicing_date),
                         ("contract_id", "in", self.active_contract_ids.ids),
                         (
                             "product_id",
@@ -478,7 +478,7 @@ class ContractGroup(models.Model):
             self.env["account.move.line"]
             .search(
                 [
-                    ("date", "=", invoicing_date),
+                    ("invoice_date", "=", invoicing_date),
                     ("contract_id", "in", contracts.ids),
                     (
                         "product_id",
