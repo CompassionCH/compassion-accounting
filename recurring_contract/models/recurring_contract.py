@@ -268,7 +268,8 @@ class RecurringContract(models.Model):
                     contract.open_invoice_ids.filtered(
                         lambda invoice,
                         period=to_pay_period,
-                        year=current_billing_year: invoice.invoice_date_due.month <= period
+                        year=current_billing_year: invoice.invoice_date_due.month
+                        <= period
                         and invoice.invoice_date_due.year == year
                     )
                 )

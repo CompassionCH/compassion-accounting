@@ -1,4 +1,8 @@
+import logging
+
 from odoo import models
+
+_logger = logging.getLogger(__name__)
 
 
 class AccountStatementImport(models.TransientModel):
@@ -9,9 +13,14 @@ class AccountStatementImport(models.TransientModel):
         statements = self.env["account.bank.statement"].browse(res["statement_ids"])
         line_to_reconcile = statements.mapped("line_ids")
         if line_to_reconcile:
+            _logger.info(
+                "Launching reconciliation of %d statement lines", len(line_to_reconcile)
+            )
             line_to_reconcile.with_delay(
                 channel="root.accounting",
                 priority=100,
                 description="Auto Reconcile statement lines",
             )._cron_try_auto_reconcile_statement_lines()
+        else:
+            _logger.warning("No statement lines to reconcile")
         return res
