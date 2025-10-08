@@ -73,9 +73,9 @@ class AccountMoveLine(models.Model):
             on_balance_account = line.account_id.on_balance_account_id
             remaining_amount = line.credit
             # b. Deduce the amount already generated
-            remaining_amount -= already_generated.filtered(
+            remaining_amount -= sum(already_generated.filtered(
                 lambda line, account=on_balance_account: line.account_id == account
-            ).credit
+            ).mapped('credit'))
             onbalance_amounts_by_account[on_balance_account.id] += remaining_amount
             total_offbalance_amount += remaining_amount
 
