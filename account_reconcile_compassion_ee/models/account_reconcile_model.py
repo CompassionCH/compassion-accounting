@@ -39,9 +39,9 @@ class AccountReconcileModel(models.Model):
             date_limit = st_line_date - relativedelta(months=self.past_months_limit)
             domain = [
                 ("date", ">=", fields.Date.to_string(date_limit))
-                if filter[0] == "date"
-                else filter
-                for filter in domain
+                if isinstance(item, tuple | list) and item and item[0] == "date"
+                else item
+                for item in domain
             ]
         elif self.only_this_month:
             date_start = st_line_date.replace(day=1)
@@ -55,3 +55,12 @@ class AccountReconcileModel(models.Model):
         if self.matching_account_id:
             domain.append(("account_id", "=", self.matching_account_id.id))
         return domain
+
+    def _get_invoice_matching_amls_result(self, st_line, partner, candidate_vals):
+        result = super()._get_invoice_matching_amls_result(
+            st_line, partner, candidate_vals
+        )
+        # T2665 Nordic team would always like auto reconciliation to happen
+        if self.auto_reconcile and "auto_reconcile" in result:
+            result["auto_reconcile"] = True
+        return result
