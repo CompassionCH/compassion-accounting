@@ -61,6 +61,10 @@ class AccountReconcileModel(models.Model):
             st_line, partner, candidate_vals
         )
         # T2665 Nordic team would always like auto reconciliation to happen
-        if self.auto_reconcile and self.rule_type == "invoice_matching":
+        if (
+            result is not None
+            and self.auto_reconcile
+            and self.rule_type == "invoice_matching"
+        ):
             result["auto_reconcile"] = True
         return result
