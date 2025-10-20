@@ -111,12 +111,12 @@ class AccountMoveLine(models.Model):
         currency = income_entry.currency_id
         for (
             on_balance_account_id,
-            on_balance_account_product,
+            amounts_by_product,
         ) in onbalance_amounts_by_account.items():
             for (
                 on_balance_product_id,
                 remaining_amount,
-            ) in on_balance_account_product.items():
+            ) in amounts_by_product.items():
                 prorated_amount = remaining_amount * distribution_ratio
                 distributed_amount = currency.round(prorated_amount)
                 lines_to_create.append(
