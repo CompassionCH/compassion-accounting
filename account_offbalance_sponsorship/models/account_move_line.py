@@ -76,10 +76,10 @@ class AccountMoveLine(models.Model):
             # b. Deduce the amount already generated
             remaining_amount -= sum(
                 already_generated.filtered(
-                    lambda mvl,
+                    lambda move_line,
                     account=on_balance_account,
-                    product=on_balance_product: mvl.account_id == account
-                    and mvl.product_id == product
+                    product=on_balance_product: move_line.account_id == account
+                    and move_line.product_id == product
                 ).mapped("credit")
             )
             onbalance_amounts_by_account[on_balance_account.id][
