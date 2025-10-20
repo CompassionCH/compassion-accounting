@@ -65,24 +65,26 @@ class AccountMoveLine(models.Model):
                 lambda m: m.move_type == "out_invoice"
             ).invoice_line_ids
 
-        onbalance_amounts_by_account = defaultdict(dict)
+        onbalance_amounts_by_account = defaultdict(lambda: defaultdict(float))
         total_offbalance_amount = 0
         for line in invoice_lines.filtered(
             lambda invoice_line: invoice_line.account_id.on_balance_account_id
         ):
-            onbalance_account_product = defaultdict(float)
             on_balance_account = line.account_id.on_balance_account_id
             on_balance_product = line.product_id
             remaining_amount = line.credit
             # b. Deduce the amount already generated
             remaining_amount -= sum(
                 already_generated.filtered(
-                    lambda line, account=on_balance_account, product=on_balance_product:
-                    line.account_id == account and line.product_id == product
+                    lambda mvl,
+                    account=on_balance_account,
+                    product=on_balance_product: mvl.account_id == account
+                    and mvl.product_id == product
                 ).mapped("credit")
             )
-            onbalance_account_product[on_balance_product.id] += remaining_amount
-            onbalance_amounts_by_account[on_balance_account.id] = onbalance_account_product
+            onbalance_amounts_by_account[on_balance_account.id][
+                on_balance_product.id
+            ] += remaining_amount
             total_offbalance_amount += remaining_amount
 
         # Get the ratio to adjust the amount based on
@@ -108,11 +110,13 @@ class AccountMoveLine(models.Model):
         # Get the currency precision
         currency = income_entry.currency_id
         for (
-                on_balance_account_id,
-                on_balance_account_product,
+            on_balance_account_id,
+            on_balance_account_product,
         ) in onbalance_amounts_by_account.items():
-            for (on_balance_product_id, remaining_amount) in on_balance_account_product.items():
-
+            for (
+                on_balance_product_id,
+                remaining_amount,
+            ) in on_balance_account_product.items():
                 prorated_amount = remaining_amount * distribution_ratio
                 distributed_amount = currency.round(prorated_amount)
                 lines_to_create.append(
