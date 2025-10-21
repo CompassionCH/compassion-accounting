@@ -53,7 +53,7 @@ class AccountMoveLine(models.Model):
         already_generated = income_moves.line_ids.filtered("is_off_balance_generated")
         payment_amount -= sum(already_generated.mapped("credit"))
 
-        invoice_lines=self.env["account.move.line"]
+        invoice_lines = self.env["account.move.line"]
         for debit_move in self.matched_debit_ids.debit_move_id.move_id:
             if debit_move.move_type == "out_invoice":
                 # Scenario 1: The income is directly reconciled with an invoice
