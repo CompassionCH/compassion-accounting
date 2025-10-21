@@ -53,17 +53,18 @@ class AccountMoveLine(models.Model):
         already_generated = income_moves.line_ids.filtered("is_off_balance_generated")
         payment_amount -= sum(already_generated.mapped("credit"))
 
-        debit_move = self.matched_debit_ids.debit_move_id.move_id[0]
-        if debit_move.move_type == "out_invoice":
-            # Scenario 1: The income is directly reconciled with an invoice
-            invoice_lines = debit_move.invoice_line_ids
-        else:
-            # Scenario 2: The income is reconciled with a debit order
-            # We fetch all reconciled lines from both moves and filter invoices
-            all_lines = self.move_id.line_ids.full_reconcile_id.reconciled_line_ids
-            invoice_lines = all_lines.move_id.filtered(
-                lambda m: m.move_type == "out_invoice"
-            ).invoice_line_ids
+        invoice_lines=self.env["account.move.line"]
+        for debit_move in self.matched_debit_ids.debit_move_id.move_id:
+            if debit_move.move_type == "out_invoice":
+                # Scenario 1: The income is directly reconciled with an invoice
+                invoice_lines += debit_move.invoice_line_ids
+            else:
+                # Scenario 2: The income is reconciled with a debit order
+                # We fetch all reconciled lines from both moves and filter invoices
+                all_lines = self.move_id.line_ids.full_reconcile_id.reconciled_line_ids
+                invoice_lines += all_lines.move_id.filtered(
+                    lambda m: m.move_type == "out_invoice"
+                ).invoice_line_ids
 
         onbalance_amounts_by_account = defaultdict(lambda: defaultdict(float))
         total_offbalance_amount = 0
