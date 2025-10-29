@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve" owl="1">
+    <t
+        t-name="recurring_contract.AccountPaymentField"
+        t-inherit="account.AccountPaymentField"
+        t-inherit-mode="extension"
+    >
+        <xpath
+            expr="//i[contains(@class, 'o_payment_label')]"
+            position="replace"
+        >
+            <t t-if="line.payment_state">
+                <i
+                    class="o_field_widget text-start o_payment_label"
+                >Withdrawn on <t t-out="line.formattedDate" /></i>
+                <t t-if="line.payment_state == 'paid'">
+                    <i
+                        class="o_field_widget text-start o_payment_label"
+                    >Paid on <t t-out="line.formattedPaymentDate" /></i>
+                </t>
+            </t>
+            <t t-else="">
+                <i class="o_field_widget text-start o_payment_label">Paid on <t
+                        t-out="line.formattedDate"
+                    /></i>
+            </t>
+        </xpath>
+    </t>
+</templates>

@@ -29,7 +29,7 @@
 {
     "name": "Recurring contract",
     "summary": "Contract for recurring invoicing",
-    "version": "17.0.1.0.4",
+    "version": "17.0.1.0.5",
     "license": "AGPL-3",
     "author": "Compassion CH",
     "development_status": "Production/Stable",
@@ -53,6 +53,7 @@
         "views/recurring_invoicer_wizard_view.xml",
         "views/res_config_settings_view.xml",
         "views/utm_medium_view.xml",
+        "views/account_move_view.xml",
         "data/balance_product_for_migr.xml",
         "data/recurring_contract_sequence.xml",
         "data/contract_expire_cron.xml",
@@ -63,4 +64,10 @@
         "security/ir.model.access.csv",
     ],
     "installable": True,
+    "assets": {
+        "web.assets_backend": [
+            "recurring_contract/static/src/components/account_payment.xml",
+            "recurring_contract/static/src/components/account_payment_field.esm.js",
+        ],
+    },
 }

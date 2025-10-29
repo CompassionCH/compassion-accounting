@@ -20,7 +20,9 @@ class AccountMove(models.Model):
     _name = "account.move"
     _inherit = "account.move"
 
-    last_payment = fields.Date(compute="_compute_last_payment", store=True)
+    last_payment = fields.Date(
+        "Paid on", compute="_compute_last_payment", store=True, tracking=True
+    )
     recurring_invoicer_id = fields.Many2one(
         "recurring.invoicer", "Invoicer", readonly=False
     )
@@ -49,11 +51,49 @@ class AccountMove(models.Model):
                     payment_lines = line.full_reconcile_id.reconciled_line_ids.filtered(
                         lambda r, _mv_filter=mv_filter: r[_mv_filter]
                     )
-                    payment_dates.extend(payment_lines.mapped("date"))
+                    # Direct Debit : the payment is not linked
+                    # with a bank statement line
+                    if not payment_lines.move_id.statement_line_id:
+                        # We search for the reconciled
+                        # bank statement lines to get the date
+                        st_lines = payment_lines.mapped(
+                            "move_id.line_ids.full_reconcile_id.reconciled_line_ids"
+                            ".statement_line_id"
+                        )
+                        payment_dates.extend(st_lines.mapped("date"))
+                    else:
+                        payment_dates.extend(payment_lines.mapped("date"))
             if payment_dates:
                 invoice.last_payment = max(payment_dates)
             else:
                 invoice.last_payment = False
+
+    def _compute_payments_widget_reconciled_info(self):
+        # Add payment date info to the payment widget (for direct debit payments)
+        super()._compute_payments_widget_reconciled_info()
+        for move in self:
+            if move.invoice_payments_widget:
+                if move.payment_state in ("paid", "in_payment") and move.is_invoice(
+                    include_receipts=True
+                ):
+                    reconciled_partials = move._get_all_reconciled_invoice_partials()
+                    for i, reconciled_partial in enumerate(reconciled_partials):
+                        counterpart_line = reconciled_partial["aml"]
+                        payment_lines = counterpart_line.mapped(
+                            "matched_debit_ids.debit_move_id.payment_line_ids"
+                        )
+                        if payment_lines:
+                            bank_lines = counterpart_line.move_id.line_ids.mapped(
+                                "matched_credit_ids.credit_move_id.statement_line_id"
+                            )
+                            move.invoice_payments_widget["content"][i].update(
+                                {
+                                    "payment_state": move.payment_state,
+                                    "payment_date": max(
+                                        (bank_lines or payment_lines).mapped("date")
+                                    ),
+                                }
+                            )
 
     def action_register_payment(self):
         """After registering a payment post a message of the bank statement linked"""
