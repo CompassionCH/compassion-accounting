@@ -39,3 +39,14 @@ class BankRecWidget(models.Model):
 
         if line.flag != "tax_line":
             self._lines_recompute_taxes()
+
+    def _lines_prepare_auto_balance_line(self):
+        # T2699 Improve the name of the auto-balance line
+        line_data = super()._lines_prepare_auto_balance_line()
+        line_data["name"] = self._get_auto_balance_line_name()
+        return line_data
+
+    def _get_auto_balance_line_name(self):
+        self.ensure_one()
+        st_line = self.st_line_id
+        return st_line.name
