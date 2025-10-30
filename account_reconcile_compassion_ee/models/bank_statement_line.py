@@ -10,7 +10,7 @@ _logger = logging.getLogger(__name__)
 class BankStatementLine(models.Model):
     _inherit = "account.bank.statement.line"
 
-    def auto_reconcile_statement_lines(self):
+    def auto_reconcile_statement_lines(self, force_reconcile=False):
         """Extracted from the auto_reconcile_statement_lines cron job to be called
         independently and on selected lines."""
         # The field `cron_last_check` will be written on all processed lines
@@ -49,7 +49,9 @@ class BankStatementLine(models.Model):
                 getattr(wizard, "state", None),
                 getattr(wizard, "matching_rules_allow_auto_reconcile", None),
             )
-            if wizard.state == "valid" and wizard.matching_rules_allow_auto_reconcile:
+            if (
+                wizard.state == "valid" and wizard.matching_rules_allow_auto_reconcile
+            ) or force_reconcile:
                 _logger.info(
                     "Attempting auto-validate for statement line %s", st_line.id
                 )
