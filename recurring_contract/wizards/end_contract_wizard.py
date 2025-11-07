@@ -34,7 +34,8 @@ class EndContractWizard(models.TransientModel):
             {"end_reason_id": self.end_reason_id.id, "end_date": self.end_date}
         )
         if self.additional_notes:
-            self.contract_ids.message_post(body=self.additional_notes)
+            for contract in self.contract_ids:
+                contract.message_post(body=self.additional_notes)
         now = datetime.now()
         end_date = self.end_date
         if end_date > now:
