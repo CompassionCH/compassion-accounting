@@ -55,10 +55,12 @@ class AccountMove(models.Model):
             ).unlink()
 
         # Remove payment lines
-        self.env["account.payment.line"].search([
+        payment_lines = self.env["account.payment.line"].search([
             ("move_line_id", "in", reconciled_lines.ids)
-        ]).unlink()
-
+        ])
+        payment_lines.mapped("payment_ids").action_cancel()
+        payment_lines.unlink()
+        # TODO change reconcile account from Transfer to Client account
         partial = self.env["account.partial.reconcile"].browse(partial_id)
         if not partial.exists():
             return True
