@@ -39,6 +39,7 @@
     # any module necessary for this one to work correctly
     "depends": [
         "account",
+        "account_payment_order"  # OCA/bank-payment
     ],
     # always loaded
     "data": [

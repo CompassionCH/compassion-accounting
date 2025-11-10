@@ -54,10 +54,10 @@ class AccountMove(models.Model):
                 dynamic_unlink=True, force_delete=True
             ).unlink()
 
-        # Undo reconciliation for the statement lines
-        st_lines = self.statement_line_ids
-        for line in st_lines:
-            line.action_undo_reconciliation()
+        # Remove payment lines
+        self.env["account.payment.line"].search([
+            ("move_line_id", "in", reconciled_lines.ids)
+        ]).unlink()
 
         partial = self.env["account.partial.reconcile"].browse(partial_id)
         if not partial.exists():
