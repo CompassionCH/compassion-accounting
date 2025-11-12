@@ -61,7 +61,7 @@
                             canOpen="false"
                             readonly="reconciled"
                             canQuickCreate="false"
-                            domain="[['company_id', 'in', [false, data.company_id[0]]],['categ_name', '!=', 'Sponsorship'],['property_account_income_id.is_off_balance','=',false],['property_account_expense_id.is_off_balance','=',false]]"
+                            domain="[['company_id', 'in', [false, data.company_id[0]]],['property_account_income_id.is_off_balance','=',false],['property_account_expense_id.is_off_balance','=',false]]"
                         />
                     </div>
                 </div>
