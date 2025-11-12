@@ -48,11 +48,6 @@ class AccountMoveLine(models.Model):
         if not income_move_lines:
             return
 
-        income_moves = income_move_lines.move_id
-        payment_amount = sum(income_move_lines.mapped("debit"))
-        already_generated = income_moves.line_ids.filtered("is_off_balance_generated")
-        payment_amount -= sum(already_generated.mapped("credit"))
-
         invoice_lines = self.env["account.move.line"]
         for debit_move in self.matched_debit_ids.debit_move_id.move_id:
             if debit_move.move_type == "out_invoice":
@@ -66,6 +61,13 @@ class AccountMoveLine(models.Model):
                     lambda m: m.move_type == "out_invoice"
                 ).invoice_line_ids
 
+        off_balance_lines = invoice_lines.filtered("account_id.is_off_balance")
+        if not off_balance_lines.filtered("credit"):
+            return
+        amount_to_distribute = sum(off_balance_lines.mapped("credit"))
+        income_moves = income_move_lines.move_id
+        already_generated = income_moves.line_ids.filtered("is_off_balance_generated")
+        amount_to_distribute -= sum(already_generated.mapped("credit"))
         onbalance_amounts_by_account = defaultdict(lambda: defaultdict(float))
         total_offbalance_amount = 0
         for line in invoice_lines.filtered(
@@ -92,7 +94,7 @@ class AccountMoveLine(models.Model):
         # the payment made and the value of each product lines
         # Calculate ratio depending on total amount from the sponsorship
         distribution_ratio = (
-            payment_amount / total_offbalance_amount if total_offbalance_amount else 0.0
+            amount_to_distribute / total_offbalance_amount if total_offbalance_amount else 0.0
         )
 
         # Calculate prorated amount for each off_balance line
@@ -132,7 +134,7 @@ class AccountMoveLine(models.Model):
 
         if lines_to_create:
             rounding_adjustment = currency.round(
-                payment_amount - total_distributed_amount
+                amount_to_distribute - total_distributed_amount
             )
             lines_to_create[-1]["credit"] += rounding_adjustment
             total_distributed_amount += rounding_adjustment
