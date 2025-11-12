@@ -54,7 +54,7 @@ class AccountMoveLine(models.Model):
 
         # Step 3: Validate off-balance lines exist
         off_balance_lines = invoice_lines.filtered("account_id.is_off_balance")
-        if not off_balance_lines.filtered("credit"):
+        if not off_balance_lines:
             _logger.debug("No off-balance credit lines found")
             return False
 
@@ -62,7 +62,7 @@ class AccountMoveLine(models.Model):
         amount_to_distribute = self._calculate_distribution_amount(
             off_balance_lines, income_move_lines
         )
-        if amount_to_distribute <= 0:
+        if not amount_to_distribute:
             _logger.debug("No amount to distribute")
             return False
 
@@ -72,7 +72,7 @@ class AccountMoveLine(models.Model):
             total_offbalance_amount,
         ) = self._build_onbalance_amounts(invoice_lines, income_move_lines)
 
-        if not onbalance_amounts_by_account or total_offbalance_amount <= 0:
+        if not onbalance_amounts_by_account or not total_offbalance_amount:
             _logger.debug("No on-balance amounts to process")
             return False
 
@@ -94,20 +94,18 @@ class AccountMoveLine(models.Model):
 
     def _get_income_move_lines(self):
         """
-        Extract income move lines from matched credits.
-
-        Income lines are debit lines on banking/prepayment accounts
-        that are not the reconciliation lines themselves.
+        Extract income move lines: those with asset accounts credited
+        linked to the reconciled receivable lines.
+        (should not be an outstanding payment)
 
         :return: Recordset of income move lines
         """
-        matched_credit_lines = self.matched_credit_ids.credit_move_id
-        income_move_lines = (
-            matched_credit_lines.move_id.line_ids - matched_credit_lines
-        ).filtered(
-            lambda line: line.account_type in ["asset_cash", "asset_prepayments"]
+        return self.move_id.line_ids.filtered(
+            lambda line: line.move_type == "entry"
+            and line.account_internal_group == "asset"
+            and line.credit
+            and not line.payment_id
         )
-        return income_move_lines
 
     def _get_related_invoice_lines(self):
         """
@@ -119,23 +117,21 @@ class AccountMoveLine(models.Model):
 
         :return: Recordset of invoice lines
         """
-        invoice_lines = self.env["account.move.line"]
-
-        for debit_move in self.matched_debit_ids.debit_move_id.move_id:
-            if debit_move.move_type == "out_invoice":
-                # Scenario 1: Direct reconciliation with invoice
-                invoice_lines += debit_move.invoice_line_ids
-            else:
-                # Scenario 2: Reconciliation through debit order
-                # Fetch all reconciled lines and filter invoices
-                all_reconciled_lines = (
-                    self.move_id.line_ids.full_reconcile_id.reconciled_line_ids
-                )
-                invoice_lines += all_reconciled_lines.move_id.filtered(
-                    lambda m: m.move_type == "out_invoice"
-                ).invoice_line_ids
-
-        return invoice_lines
+        invoices = self.filtered(
+            lambda mvl: mvl.move_type in ("out_invoice", "out_refund")
+        ).move_id
+        if invoices:
+            # Scenario 1: Direct reconciliation with invoice
+            return invoices.mapped("invoice_line_ids")
+        else:
+            # Scenario 2: Reconciliation through debit order
+            # Fetch all reconciled lines and filter invoices
+            all_reconciled_lines = (
+                self.move_id.line_ids.full_reconcile_id.reconciled_line_ids
+            )
+            return all_reconciled_lines.move_id.filtered(
+                lambda m: m.move_type in ("out_invoice", "out_refund")
+            ).invoice_line_ids
 
     def _calculate_distribution_amount(self, off_balance_lines, income_move_lines):
         """
@@ -146,13 +142,11 @@ class AccountMoveLine(models.Model):
         :param income_move_lines: Income move lines
         :return: Amount to distribute
         """
-        amount_to_distribute = sum(off_balance_lines.mapped("credit"))
-
+        amount_to_distribute = sum(off_balance_lines.mapped(lambda mvl: mvl.balance))
         # Subtract already generated amounts
         income_moves = income_move_lines.move_id
         already_generated = income_moves.line_ids.filtered("is_off_balance_generated")
-        amount_to_distribute -= sum(already_generated.mapped("credit"))
-
+        amount_to_distribute -= sum(already_generated.mapped(lambda mvl: mvl.balance))
         return amount_to_distribute
 
     def _build_onbalance_amounts(self, invoice_lines, income_move_lines):
@@ -178,12 +172,12 @@ class AccountMoveLine(models.Model):
             on_balance_product = invoice_line.product_id
 
             # Calculate remaining amount after deducting already generated amounts
-            remaining_amount = invoice_line.credit
+            remaining_amount = invoice_line.balance
             remaining_amount -= self._get_already_generated_amount(
                 already_generated, on_balance_account, on_balance_product
             )
 
-            if remaining_amount > 0:
+            if remaining_amount:
                 onbalance_amounts_by_account[on_balance_account.id][
                     on_balance_product.id
                 ] += remaining_amount
@@ -200,13 +194,13 @@ class AccountMoveLine(models.Model):
         :param already_generated: Already generated move lines
         :param on_balance_account: The on-balance account
         :param on_balance_product: The product
-        :return: Sum of credit amounts
+        :return: Sum of amounts
         """
         matching_lines = already_generated.filtered(
             lambda line: line.account_id == on_balance_account
             and line.product_id == on_balance_product
         )
-        return sum(matching_lines.mapped("credit"))
+        return sum(matching_lines.mapped(lambda mvl: mvl.balance))
 
     def _create_onbalance_move_lines(
         self,
@@ -238,7 +232,6 @@ class AccountMoveLine(models.Model):
         line_template = {
             "move_id": income_entry.id,
             "partner_id": income_entry.partner_id.id,
-            "debit": 0.0,
             "is_off_balance_generated": True,
             "name": "Off-Balance Adjustment",
         }
@@ -256,7 +249,7 @@ class AccountMoveLine(models.Model):
                     {
                         "account_id": on_balance_account_id,
                         "product_id": on_balance_product_id,
-                        "credit": distributed_amount,
+                        "balance": distributed_amount,
                         **line_template,
                     }
                 )
@@ -268,7 +261,7 @@ class AccountMoveLine(models.Model):
                 amount_to_distribute - total_distributed_amount
             )
             if rounding_adjustment:
-                lines_to_create[-1]["credit"] += rounding_adjustment
+                lines_to_create[-1]["balance"] += rounding_adjustment
                 total_distributed_amount += rounding_adjustment
 
             # Create the on-balance lines
@@ -286,7 +279,7 @@ class AccountMoveLine(models.Model):
 
         :param income_entry: The income journal entry
         :param currency: The currency for rounding
-        :param amount: The total distributed amount
+        :param amount: The total distributed amount (negative for income)
         """
         self.env["account.move.line"].with_context(check_move_validity=False).create(
             {
@@ -294,8 +287,7 @@ class AccountMoveLine(models.Model):
                 "name": "Off-Balance Adjustment",
                 "move_id": income_entry.id,
                 "partner_id": income_entry.partner_id.id,
-                "debit": currency.round(amount),
-                "credit": 0.0,
+                "balance": currency.round(-amount),  # Negative to balance the credits
                 "is_off_balance_generated": True,
             }
         )
