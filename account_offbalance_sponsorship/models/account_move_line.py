@@ -1,6 +1,9 @@
+import logging
 from collections import defaultdict
 
 from odoo import fields, models
+
+_logger = logging.getLogger(__name__)
 
 
 class AccountMoveLine(models.Model):
@@ -30,79 +33,208 @@ class AccountMoveLine(models.Model):
         When an income is reconciled, we look if it was linked to a donation invoiced
         on the off-balance account. If so, we create the corresponding lines on the
         on-balance account.
-        We cover eight possible scenarios:
+
+        We cover the following scenarios:
         1. The income is directly reconciled with an invoice
         2. The income is reconciled with a debit order connected with the invoice
-        a. Full reconciliation
-        b. Partial reconciliation
+           a. Full reconciliation
+           b. Partial reconciliation
+
         :param self: The reconciled lines
+        :return: True if lines were created, False otherwise
+        """
+        # Step 1: Get income move lines
+        income_move_lines = self._get_income_move_lines()
+        if not income_move_lines:
+            _logger.debug("No income move lines found for off-balance registration")
+            return False
+
+        # Step 2: Get related invoice lines
+        invoice_lines = self._get_related_invoice_lines()
+
+        # Step 3: Validate off-balance lines exist
+        off_balance_lines = invoice_lines.filtered("account_id.is_off_balance")
+        if not off_balance_lines.filtered("credit"):
+            _logger.debug("No off-balance credit lines found")
+            return False
+
+        # Step 4: Calculate amounts to distribute
+        amount_to_distribute = self._calculate_distribution_amount(
+            off_balance_lines, income_move_lines
+        )
+        if amount_to_distribute <= 0:
+            _logger.debug("No amount to distribute")
+            return False
+
+        # Step 5: Build on-balance amounts by account and product
+        (
+            onbalance_amounts_by_account,
+            total_offbalance_amount,
+        ) = self._build_onbalance_amounts(invoice_lines, income_move_lines)
+
+        if not onbalance_amounts_by_account or total_offbalance_amount <= 0:
+            _logger.debug("No on-balance amounts to process")
+            return False
+
+        # Step 6: Create on-balance move lines
+        income_entry = income_move_lines.move_id[-1]
+        self._create_onbalance_move_lines(
+            onbalance_amounts_by_account,
+            total_offbalance_amount,
+            amount_to_distribute,
+            income_entry,
+        )
+
+        _logger.info(
+            "Created off-balance adjustment for move %s, amount: %s",
+            income_entry.name,
+            amount_to_distribute,
+        )
+        return True
+
+    def _get_income_move_lines(self):
+        """
+        Extract income move lines from matched credits.
+
+        Income lines are debit lines on banking/prepayment accounts
+        that are not the reconciliation lines themselves.
+
+        :return: Recordset of income move lines
         """
         matched_credit_lines = self.matched_credit_ids.credit_move_id
-        # Get only real income lines: it must be a debit line on a banking account
-        # (it's not one of the reconciliation lines)
         income_move_lines = (
             matched_credit_lines.move_id.line_ids - matched_credit_lines
         ).filtered(
             lambda line: line.account_type in ["asset_cash", "asset_prepayments"]
         )
-        if not income_move_lines:
-            return
+        return income_move_lines
 
+    def _get_related_invoice_lines(self):
+        """
+        Get invoice lines related to the reconciled lines.
+
+        Handles two scenarios:
+        - Direct reconciliation with invoices
+        - Reconciliation through debit orders
+
+        :return: Recordset of invoice lines
+        """
         invoice_lines = self.env["account.move.line"]
+
         for debit_move in self.matched_debit_ids.debit_move_id.move_id:
             if debit_move.move_type == "out_invoice":
-                # Scenario 1: The income is directly reconciled with an invoice
+                # Scenario 1: Direct reconciliation with invoice
                 invoice_lines += debit_move.invoice_line_ids
             else:
-                # Scenario 2: The income is reconciled with a debit order
-                # We fetch all reconciled lines from both moves and filter invoices
-                all_lines = self.move_id.line_ids.full_reconcile_id.reconciled_line_ids
-                invoice_lines += all_lines.move_id.filtered(
+                # Scenario 2: Reconciliation through debit order
+                # Fetch all reconciled lines and filter invoices
+                all_reconciled_lines = (
+                    self.move_id.line_ids.full_reconcile_id.reconciled_line_ids
+                )
+                invoice_lines += all_reconciled_lines.move_id.filtered(
                     lambda m: m.move_type == "out_invoice"
                 ).invoice_line_ids
 
-        off_balance_lines = invoice_lines.filtered("account_id.is_off_balance")
-        if not off_balance_lines.filtered("credit"):
-            return
+        return invoice_lines
+
+    def _calculate_distribution_amount(self, off_balance_lines, income_move_lines):
+        """
+        Calculate the amount to distribute based on off-balance lines
+        minus already generated amounts.
+
+        :param off_balance_lines: Off-balance invoice lines
+        :param income_move_lines: Income move lines
+        :return: Amount to distribute
+        """
         amount_to_distribute = sum(off_balance_lines.mapped("credit"))
+
+        # Subtract already generated amounts
         income_moves = income_move_lines.move_id
         already_generated = income_moves.line_ids.filtered("is_off_balance_generated")
         amount_to_distribute -= sum(already_generated.mapped("credit"))
-        onbalance_amounts_by_account = defaultdict(lambda: defaultdict(float))
-        total_offbalance_amount = 0
-        for line in invoice_lines.filtered(
-            lambda invoice_line: invoice_line.account_id.on_balance_account_id
-        ):
-            on_balance_account = line.account_id.on_balance_account_id
-            on_balance_product = line.product_id
-            remaining_amount = line.credit
-            # b. Deduce the amount already generated
-            remaining_amount -= sum(
-                already_generated.filtered(
-                    lambda move_line,
-                    account=on_balance_account,
-                    product=on_balance_product: move_line.account_id == account
-                    and move_line.product_id == product
-                ).mapped("credit")
-            )
-            onbalance_amounts_by_account[on_balance_account.id][
-                on_balance_product.id
-            ] += remaining_amount
-            total_offbalance_amount += remaining_amount
 
-        # Get the ratio to adjust the amount based on
-        # the payment made and the value of each product lines
-        # Calculate ratio depending on total amount from the sponsorship
+        return amount_to_distribute
+
+    def _build_onbalance_amounts(self, invoice_lines, income_move_lines):
+        """
+        Build a dictionary of on-balance amounts grouped by account and product.
+
+        :param invoice_lines: Invoice lines to process
+        :param income_move_lines: Income move lines
+        :return: Tuple of (amounts_dict, total_amount)
+        """
+        onbalance_amounts_by_account = defaultdict(lambda: defaultdict(float))
+        total_offbalance_amount = 0.0
+
+        # Get already generated lines for deduction
+        income_moves = income_move_lines.move_id
+        already_generated = income_moves.line_ids.filtered("is_off_balance_generated")
+
+        # Process invoice lines with on-balance accounts
+        for invoice_line in invoice_lines.filtered(
+            lambda line: line.account_id.on_balance_account_id
+        ):
+            on_balance_account = invoice_line.account_id.on_balance_account_id
+            on_balance_product = invoice_line.product_id
+
+            # Calculate remaining amount after deducting already generated amounts
+            remaining_amount = invoice_line.credit
+            remaining_amount -= self._get_already_generated_amount(
+                already_generated, on_balance_account, on_balance_product
+            )
+
+            if remaining_amount > 0:
+                onbalance_amounts_by_account[on_balance_account.id][
+                    on_balance_product.id
+                ] += remaining_amount
+                total_offbalance_amount += remaining_amount
+
+        return onbalance_amounts_by_account, total_offbalance_amount
+
+    def _get_already_generated_amount(
+        self, already_generated, on_balance_account, on_balance_product
+    ):
+        """
+        Calculate the amount already generated for a specific account and product.
+
+        :param already_generated: Already generated move lines
+        :param on_balance_account: The on-balance account
+        :param on_balance_product: The product
+        :return: Sum of credit amounts
+        """
+        matching_lines = already_generated.filtered(
+            lambda line: line.account_id == on_balance_account
+            and line.product_id == on_balance_product
+        )
+        return sum(matching_lines.mapped("credit"))
+
+    def _create_onbalance_move_lines(
+        self,
+        onbalance_amounts_by_account,
+        total_offbalance_amount,
+        amount_to_distribute,
+        income_entry,
+    ):
+        """
+        Create on-balance move lines based on prorated distribution.
+
+        :param onbalance_amounts_by_account: Dict of amounts by account and product
+        :param total_offbalance_amount: Total amount from off-balance lines
+        :param amount_to_distribute: Amount to distribute
+        :param income_entry: The income journal entry
+        """
+        # Calculate distribution ratio
         distribution_ratio = (
-            amount_to_distribute / total_offbalance_amount if total_offbalance_amount else 0.0
+            amount_to_distribute / total_offbalance_amount
+            if total_offbalance_amount
+            else 0.0
         )
 
-        # Calculate prorated amount for each off_balance line
-        # and create the corresponding on_balance move_line
+        # Prepare line creation
         lines_to_create = []
         total_distributed_amount = 0.0
-        # Get the last income entry (in case of partials)
-        income_entry = income_moves[-1:]
+        currency = income_entry.currency_id
+
         line_template = {
             "move_id": income_entry.id,
             "partner_id": income_entry.partner_id.id,
@@ -110,18 +242,16 @@ class AccountMoveLine(models.Model):
             "is_off_balance_generated": True,
             "name": "Off-Balance Adjustment",
         }
-        # Get the currency precision
-        currency = income_entry.currency_id
+
+        # Create prorated lines for each account/product combination
         for (
             on_balance_account_id,
             amounts_by_product,
         ) in onbalance_amounts_by_account.items():
-            for (
-                on_balance_product_id,
-                remaining_amount,
-            ) in amounts_by_product.items():
+            for on_balance_product_id, remaining_amount in amounts_by_product.items():
                 prorated_amount = remaining_amount * distribution_ratio
                 distributed_amount = currency.round(prorated_amount)
+
                 lines_to_create.append(
                     {
                         "account_id": on_balance_account_id,
@@ -132,39 +262,55 @@ class AccountMoveLine(models.Model):
                 )
                 total_distributed_amount += distributed_amount
 
+        # Apply rounding adjustment to the last line
         if lines_to_create:
             rounding_adjustment = currency.round(
                 amount_to_distribute - total_distributed_amount
             )
-            lines_to_create[-1]["credit"] += rounding_adjustment
-            total_distributed_amount += rounding_adjustment
+            if rounding_adjustment:
+                lines_to_create[-1]["credit"] += rounding_adjustment
+                total_distributed_amount += rounding_adjustment
+
+            # Create the on-balance lines
             self.with_context(check_move_validity=False).create(lines_to_create)
 
-        # Create an account_move_line reflecting
-        # the reconciliation amount on account_offbalance_asset
+            # Create the off-balance asset line
+            self._create_offbalance_asset_line(
+                income_entry, currency, total_distributed_amount
+            )
+
+    def _create_offbalance_asset_line(self, income_entry, currency, amount):
+        """
+        Create an account move line reflecting the reconciliation amount
+        on the off-balance asset account.
+
+        :param income_entry: The income journal entry
+        :param currency: The currency for rounding
+        :param amount: The total distributed amount
+        """
         self.env["account.move.line"].with_context(check_move_validity=False).create(
             {
                 "account_id": income_entry.company_id.off_balance_asset_account_id.id,
                 "name": "Off-Balance Adjustment",
                 "move_id": income_entry.id,
                 "partner_id": income_entry.partner_id.id,
-                "debit": currency.round(total_distributed_amount),
+                "debit": currency.round(amount),
                 "credit": 0.0,
                 "is_off_balance_generated": True,
             }
         )
-        return True
 
     def _prepare_exchange_difference_move_vals(
         self, amounts_list, company=None, exchange_date=None, **kwargs
     ):
         """
         Replace the exchange rate diff account with the off balance account
-        If the income is off-balance.
+        if the income is off-balance.
         """
         res = super()._prepare_exchange_difference_move_vals(
             amounts_list, company=company, exchange_date=exchange_date, **kwargs
         )
+
         for i, line in enumerate(self):
             exchange_vals = res["move_values"]["line_ids"][((i + 1) * 2) - 1]
             if line.account_id.is_off_balance:
@@ -175,4 +321,5 @@ class AccountMoveLine(models.Model):
                 if off_balance_exchange_account:
                     exchange_vals[2]["account_id"] = off_balance_exchange_account.id
                     exchange_vals[2]["is_off_balance_generated"] = True
+
         return res
