@@ -29,7 +29,9 @@ class MoveLine(models.Model):
     due_date = fields.Date(
         related="move_id.invoice_date_due", store=True, readonly=True, index=True
     )
-    last_payment = fields.Date(related="move_id.last_payment", store=True)
+    last_payment = fields.Date(
+        related="move_id.last_payment", store=True, readonly=True
+    )
     payment_state = fields.Selection(
         related="move_id.payment_state", store=True, readonly=True, index=True
     )

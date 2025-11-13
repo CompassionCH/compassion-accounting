@@ -46,8 +46,8 @@ class RecurringInvoicer(models.Model):
         return {
             "type": "ir.actions.act_window",
             "name": _("Invoices"),
-            "view_mode": "tree,form",
-            "views": [[False, "tree"], [False, "form"]],
+            "view_mode": "list,form",
+            "views": [[False, "list"], [False, "form"]],
             "res_model": "account.move",
             "domain": [("id", "in", self.invoice_ids.ids)],
             "target": "current",

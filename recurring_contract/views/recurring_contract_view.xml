@@ -5,12 +5,12 @@
     The licence is in the file __manifest__.py
 -->
 <odoo>
-    <!-- Contract tree view -->
+    <!-- Contract list view -->
     <record id="view_recurring_contract_tree" model="ir.ui.view">
-        <field name="name">recurring.contract.tree</field>
+        <field name="name">recurring.contract.list</field>
         <field name="model">recurring.contract</field>
         <field name="arch" type="xml">
-            <tree
+            <list
                 decoration-muted="state in ('terminated','cancelled')"
                 decoration-success="state == 'waiting'"
                 decoration-primary="state == 'draft'"
@@ -33,7 +33,7 @@
                     optional="hide"
                     groups="product.group_product_pricelist"
                 />
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -168,7 +168,7 @@
                         </page>
                         <page string="Related invoice lines">
                             <field name="invoice_line_ids">
-                                <tree>
+                                <list>
                                     <field name="move_id" />
                                     <field name="name" />
                                     <field name="due_date" />
@@ -187,26 +187,22 @@
                                         decoration-info="payment_state == 'in_payment'"
                                         decoration-success="payment_state == 'paid'"
                                     />
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>
                 </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids" />
-                    <field name="activity_ids" />
-                    <field name="message_ids" />
-                </div>
+                <chatter/>
             </form>
         </field>
     </record>
 
-    <!-- Contract line tree view -->
+    <!-- Contract line list view -->
     <record id="view_recurring_contract_line_tree" model="ir.ui.view">
-        <field name="name">recurring.contract.line.tree</field>
+        <field name="name">recurring.contract.line.list</field>
         <field name="model">recurring.contract.line</field>
         <field name="arch" type="xml">
-            <tree string="Contract Lines" editable="bottom">
+            <list editable="bottom">
                 <field name="product_id" />
                 <field name="pricelist_item_count" column_invisible="1" />
                 <field
@@ -216,7 +212,7 @@
                 />
                 <field name="quantity" />
                 <field name="subtotal" />
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -300,7 +296,7 @@
         <field name="name">Contracts</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">recurring.contract</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="help" type="html">
             <p class="oe_view_nocontent_create">
                 Click to add a contract.

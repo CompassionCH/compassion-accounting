@@ -5,16 +5,16 @@
     The licence is in the file __manifest__.py
 -->
 <odoo>
-    <!-- Recurring invoicer tree view -->
+    <!-- Recurring invoicer list view -->
     <record id="view_recurring_invoicer_tree" model="ir.ui.view">
-        <field name="name">recurring.invoicer.tree</field>
+        <field name="name">recurring.invoicer.list</field>
         <field name="model">recurring.invoicer</field>
         <field name="priority" eval="8" />
         <field name="arch" type="xml">
-            <tree string="Recurring invoicers" create="false">
+            <list create="false">
                 <field name="generation_date" />
                 <field name="invoice_ids" />
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -53,7 +53,7 @@
         <field name="name">Generated invoices</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">recurring.invoicer</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
     <menuitem

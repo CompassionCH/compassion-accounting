@@ -29,7 +29,7 @@
 {
     "name": "Recurring contract",
     "summary": "Contract for recurring invoicing",
-    "version": "17.0.1.0.5",
+    "version": "18.0.1.0.0",
     "license": "AGPL-3",
     "author": "Compassion CH",
     "development_status": "Production/Stable",
@@ -43,7 +43,6 @@
         "queue_job",  # OCA/queue,
         "utm",
     ],
-    "external_dependencies": {"python": ["openupgradelib"]},
     "data": [
         "views/end_contract_wizard_view.xml",
         "views/activate_contract_view.xml",

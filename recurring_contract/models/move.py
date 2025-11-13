@@ -243,9 +243,9 @@ class AccountMove(models.Model):
         for invoice in self:
             inv_val_dict = {}
             if contracts:
-                inv_val_dict[
-                    "invoice_line_ids"
-                ] = invoice._build_invoice_lines_from_contracts(contracts)
+                inv_val_dict["invoice_line_ids"] = (
+                    invoice._build_invoice_lines_from_contracts(contracts)
+                )
                 # Special case for payment_mode: it needs always to be there,
                 # otherwise a compute method overrides it.
                 if not pay_mode_id:

@@ -76,10 +76,7 @@
                     <h2>Active Contracts</h2>
                     <field name="contract_ids" />
                 </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids" />
-                    <field name="message_ids" />
-                </div>
+                <chatter/>
             </form>
         </field>
     </record>

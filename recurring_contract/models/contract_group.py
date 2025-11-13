@@ -94,7 +94,7 @@ class ContractGroup(models.Model):
     )
     ref = fields.Char("Reference", tracking=True)
     recurring_unit = fields.Selection(
-        [("month", _("Month(s)")), ("year", _("Year(s)"))],
+        [("month", "Month(s)"), ("year", "Year(s)")],
         "Recurrence",
         default="month",
         required=True,
@@ -226,7 +226,7 @@ class ContractGroup(models.Model):
         return {
             "name": _("Contract invoices"),
             "type": "ir.actions.act_window",
-            "view_mode": "tree,form",
+            "view_mode": "list,form",
             "res_model": "account.move",
             "domain": [("id", "in", invoice_ids)],
             "target": "current",

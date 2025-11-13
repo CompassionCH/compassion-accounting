@@ -14,7 +14,7 @@ from dateutil.relativedelta import relativedelta
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
-from odoo.tools import flatten
+from odoo.tools.misc import flatten
 
 _logger = logging.getLogger(__name__)
 
@@ -91,11 +91,11 @@ class RecurringContract(models.Model):
     )
     state = fields.Selection(
         [
-            ("draft", _("Draft")),
-            ("waiting", _("Waiting Payment")),
-            ("active", _("Active")),
-            ("terminated", _("Terminated")),
-            ("cancelled", _("Cancelled")),
+            ("draft", "Draft"),
+            ("waiting", "Waiting Payment"),
+            ("active", "Active"),
+            ("terminated", "Terminated"),
+            ("cancelled", "Cancelled"),
         ],
         default="draft",
         tracking=True,
@@ -404,7 +404,7 @@ class RecurringContract(models.Model):
         return {
             "name": _("Contract invoices"),
             "type": "ir.actions.act_window",
-            "view_mode": "tree,form",
+            "view_mode": "list,form",
             "res_model": "account.move",
             "domain": [("id", "in", invoice_ids)],
             "target": "current",
