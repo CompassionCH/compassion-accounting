@@ -541,7 +541,7 @@ class ContractGroup(models.Model):
         elif gift_wizard:
             product = gift_wizard.product_id
             qty = gift_wizard.quantity
-            contract = gift_wizard.contract_id
+            contract = gift_wizard.current_contract_id
             price = gift_wizard.amount
             line_name = gift_wizard.description or product.name
         else:
