@@ -43,5 +43,5 @@
         "account_statement_import_file",
     ],
     "auto_install": False,
-    "installable": True,
+    'installable': False,
 }

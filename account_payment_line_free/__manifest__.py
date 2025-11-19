@@ -40,5 +40,5 @@
         "views/account_payment_line_view.xml",
         "views/line_free_chatter_template.xml",
     ],
-    "installable": True,
+    'installable': False,
 }

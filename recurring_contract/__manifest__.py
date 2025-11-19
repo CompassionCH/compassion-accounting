@@ -63,7 +63,7 @@
         "data/queue_job.xml",
         "security/ir.model.access.csv",
     ],
-    "installable": True,
+    'installable': False,
     "assets": {
         "web.assets_backend": [
             "recurring_contract/static/src/components/account_payment.xml",

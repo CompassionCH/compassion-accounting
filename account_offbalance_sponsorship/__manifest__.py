@@ -46,4 +46,5 @@
         "views/res_config_view.xml",
         "views/account_account_view.xml",
     ],
+    'installable': False,
 }

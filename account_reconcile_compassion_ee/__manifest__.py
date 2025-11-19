@@ -52,5 +52,5 @@
     },
     "excludes": ["account_reconcile_oca", "account_reconcile_model_oca"],
     "auto_install": False,
-    "installable": True,
+    'installable': False,
 }
