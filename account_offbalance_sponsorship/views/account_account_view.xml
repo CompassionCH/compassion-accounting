@@ -1,12 +1,12 @@
 <odoo>
     <data>
-        <!-- Inherit the tree view for account.account -->
+        <!-- Inherit the list view for account.account -->
         <record id="view_account_tree_inherit" model="ir.ui.view">
-            <field name="name">account.account.tree.inherit</field>
+            <field name="name">account.account.list.inherit</field>
             <field name="model">account.account</field>
             <field name="inherit_id" ref="account.view_account_list" />
             <field name="arch" type="xml">
-                <xpath expr="//tree" position="inside">
+                <xpath expr="//list" position="inside">
                     <field name="is_off_balance" widget="boolean_toggle" />
                     <field
                         name="on_balance_account_id"

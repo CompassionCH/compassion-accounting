@@ -1,5 +1,3 @@
-/** @odoo-module **/
-
 import { BankRecKanbanController } from "@account_accountant/components/bank_reconciliation/kanban";
 import { _t } from "@web/core/l10n/translation";
 import { patch } from "@web/core/utils/patch";
@@ -11,13 +9,13 @@ patch(BankRecKanbanController.prototype, {
 
         if (lineIdsRecords.some((r) => r.data.product_id)) {
             const debit_col_index = columns.findIndex(
-                (col) => col[0] === "account"
+                (col) => col[0] === "account",
             );
             columns.splice(debit_col_index, 0, ["product", _t("Product")]);
         }
         if (lineIdsRecords.some((r) => r.data.contract_id)) {
             const debit_col_index = columns.findIndex(
-                (col) => col[0] === "account"
+                (col) => col[0] === "account",
             );
             columns.splice(debit_col_index, 0, ["contract", _t("Contract")]);
         }

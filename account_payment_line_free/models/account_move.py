@@ -34,7 +34,7 @@ class AccountMove(models.Model):
             return {
                 "name": _("Freed invoices"),
                 "type": "ir.actions.act_window",
-                "view_mode": "tree,form",
+                "view_mode": "list,form",
                 "res_model": "account.move",
                 "domain": [("id", "in", self.ids)],
                 "target": "current",

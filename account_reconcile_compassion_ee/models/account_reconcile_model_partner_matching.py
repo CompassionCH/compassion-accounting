@@ -12,7 +12,7 @@ class AccountReconcileModelPartnerMatching(models.Model):
     model_id = fields.Many2one(
         "account.reconcile.model", "Reconcile Model", required=True, ondelete="cascade"
     )
-    sequence = fields.Integer("Sequence", default=10, required=True)
+    sequence = fields.Integer(default=10, required=True)
     statement_field_id = fields.Many2one(
         "ir.model.fields",
         "Statement Field",
@@ -55,12 +55,10 @@ class AccountReconcileModelPartnerMatching(models.Model):
             ("=", "="),
             ("ilike", "contains"),
         ],
-        "Search Operator",
         default="ilike",
         required=True,
     )
     unique_match = fields.Boolean(
-        "Unique Match",
         help="If unchecked, the first matching partner will be assigned",
         default=True,
     )

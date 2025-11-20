@@ -14,7 +14,7 @@
                         <field
                             name="off_balance_asset_account_id"
                             readonly="0"
-                            domain="[('company_id', '=', company_id),('account_type', 'like', 'asset'), ('is_off_balance', '=', True)]"
+                            domain="[('company_ids', '=', company_id),('account_type', 'like', 'asset'), ('is_off_balance', '=', True)]"
                         />
                     </setting>
                 </block>

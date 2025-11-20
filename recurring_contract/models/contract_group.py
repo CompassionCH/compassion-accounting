@@ -79,7 +79,6 @@ class ContractGroup(models.Model):
     nb_invoices = fields.Integer(compute="_compute_invoices")
     # Define the next time a partner should rereceive an invoice
     invoice_suspended_until = fields.Date(
-        string="Invoice Suspended Until",
         help="Date at which the sponsor should receive invoices again.",
         tracking=True,
     )
@@ -236,7 +235,7 @@ class ContractGroup(models.Model):
     def button_generate_invoices(self):
         """Immediately generate invoices for the contract group."""
         invoicer = (
-            self.with_context({"queue_job__no_delay": True})
+            self.with_context(queue_job__no_delay=True)
             .with_company(self.company_id)
             .generate_invoices()
         )

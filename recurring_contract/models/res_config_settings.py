@@ -59,7 +59,7 @@ class MandateStaffNotifSettings(models.TransientModel):
             "recurring_contract.do_generate_curr_month",
             str(self.do_generate_curr_month),
         )
-        super().set_values()
+        return super().set_values()
 
     def get_param_multi_company(self, par_name):
         param_string = f"{par_name}_{self.env.company.id}"

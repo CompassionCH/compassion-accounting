@@ -51,9 +51,9 @@
                     </div>
                     <field
                         name="partner_matching_ids"
-                        context="{'default_model_id': active_id}"
+                        context="{'default_model_id': id}"
                     >
-                        <tree editable="top">
+                        <list editable="top">
                             <field name="model_id" column_invisible="1" />
                             <field name="sequence" widget="handle" />
                             <field
@@ -83,7 +83,7 @@
                             />
                             <field name="unique_match" />
                             <field name="is_active" />
-                        </tree>
+                        </list>
                     </field>
                 </page>
             </xpath>

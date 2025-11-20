@@ -14,10 +14,10 @@ class AccountMoveLine(models.Model):
         "reconciliation process.",
     )
 
-    def _search(self, domain, offset=0, limit=None, order=None, access_rights_uid=None):
+    def _search(self, domain, offset=0, limit=None, order=None):
         if self.env.context.get("filter_off_balance"):
             domain.append(("account_id.is_off_balance", "=", False))
-        return super()._search(domain, offset, limit, order, access_rights_uid)
+        return super()._search(domain, offset, limit, order)
 
     def _reconcile_post_hook(self, data):
         super()._reconcile_post_hook(data)

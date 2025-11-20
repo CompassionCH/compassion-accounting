@@ -28,7 +28,7 @@
 # pylint: disable=C8101
 {
     "name": "Account payment line free",
-    "version": "17.0.1.0.0",
+    "version": "18.0.1.0.0",
     "license": "AGPL-3",
     "author": "Compassion Suisse",
     "website": "https://github.com/CompassionCH/compassion-accounting",
@@ -40,5 +40,5 @@
         "views/account_payment_line_view.xml",
         "views/line_free_chatter_template.xml",
     ],
-    'installable': False,
+    "installable": True,
 }

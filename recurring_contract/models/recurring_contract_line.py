@@ -25,6 +25,7 @@ class ContractLine(models.Model):
     def write(self, vals):
         super().write(vals)
         self._updt_invoices_rcl(vals)
+        return True
 
     @api.depends("product_id")
     def _compute_display_name(self):

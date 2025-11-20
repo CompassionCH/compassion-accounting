@@ -29,7 +29,7 @@
 # pylint: disable=C8101
 {
     "name": "Enterprise Bank Statement Import for Compassion",
-    "version": "17.0.1.0.0",
+    "version": "18.0.1.0.0",
     "author": "Compassion CH",
     "license": "AGPL-3",
     "category": "Finance",
@@ -43,5 +43,5 @@
         "account_statement_import_file",
     ],
     "auto_install": False,
-    'installable': False,
+    "installable": True,
 }

@@ -38,6 +38,7 @@ class AccountMove(models.Model):
                 invoice.pricelist_id = pricelist
             else:
                 super(AccountMove, invoice)._compute_pricelist_id()
+        return True
 
     @api.depends("payment_state", "line_ids.full_reconcile_id", "line_ids.reconciled")
     def _compute_last_payment(self):
@@ -94,6 +95,7 @@ class AccountMove(models.Model):
                                     ),
                                 }
                             )
+        return True
 
     def action_register_payment(self):
         """After registering a payment post a message of the bank statement linked"""

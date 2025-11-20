@@ -35,7 +35,7 @@
     "website": "https://github.com/CompassionCH/compassion-accounting",
     "category": "sponsorship and donation",
     "license": "AGPL-3",
-    "version": "17.0.1.1.0",
+    "version": "18.0.1.0.0",
     # any module necessary for this one to work correctly
     "depends": [
         "account",
@@ -46,5 +46,5 @@
         "views/res_config_view.xml",
         "views/account_account_view.xml",
     ],
-    'installable': False,
+    "installable": True,
 }
