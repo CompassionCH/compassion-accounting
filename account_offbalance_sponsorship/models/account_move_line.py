@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from math import copysign
 
 from odoo import fields, models
 
@@ -137,14 +138,17 @@ class AccountMoveLine(models.Model):
         """
         onbalance_amounts_by_account = defaultdict(lambda: defaultdict(float))
         total_offbalance_amount = 0.0
+        income_moves = income_move_lines.move_id
+        already_generated_amounts = defaultdict(float)
+
+        for line in income_moves.line_ids.filtered("is_off_balance_generated"):
+            key = (line.account_id.id, line.product_id.id)
+            already_generated_amounts[key] += line.balance
 
         # Process invoice lines with on-balance accounts
         for invoice_line in invoice_lines.filtered(
             lambda line: line.account_id.on_balance_account_id
         ):
-            on_balance_account = invoice_line.account_id.on_balance_account_id
-            on_balance_product = invoice_line.product_id
-
             # Determine the ratio of the income to distribute
             invoice = invoice_line.move_id
             reconciled_invoice_line = invoice.line_ids.filtered("matching_number")
@@ -169,20 +173,24 @@ class AccountMoveLine(models.Model):
 
             # Calculate remaining amount after deducting already generated amounts
             remaining_amount = invoice_line.balance * ratio
-            income_moves = income_move_lines.move_id
-            already_generated = income_moves.line_ids.filtered(
-                lambda mvl,
-                account=on_balance_account,
-                product=on_balance_product: mvl.is_off_balance_generated
-                and mvl.account_id == account
-                and mvl.product_id == product
+            key = (
+                invoice_line.account_id.on_balance_account_id.id,
+                invoice_line.product_id.id,
             )
-            remaining_amount -= sum(already_generated.mapped("balance"))
+            generated_available = already_generated_amounts[key]
+            if remaining_amount and generated_available:
+                offset_remaining = copysign(
+                    min(abs(remaining_amount), abs(generated_available)),
+                    remaining_amount,
+                )
+                offset_already_generated = copysign(
+                    offset_remaining, generated_available
+                )
+                remaining_amount -= offset_remaining
+                already_generated_amounts[key] -= offset_already_generated
 
             if remaining_amount:
-                onbalance_amounts_by_account[on_balance_account.id][
-                    on_balance_product.id
-                ] += remaining_amount
+                onbalance_amounts_by_account[key[0]][key[1]] += remaining_amount
                 total_offbalance_amount += remaining_amount
 
         return onbalance_amounts_by_account, total_offbalance_amount
