@@ -35,11 +35,12 @@
     "website": "https://github.com/CompassionCH/compassion-accounting",
     "category": "sponsorship and donation",
     "license": "AGPL-3",
-    "version": "17.0.1.1.0",
+    "version": "17.0.1.2.0",
     # any module necessary for this one to work correctly
     "depends": [
         "account",
         "account_payment_order",  # OCA/bank-payment
+        # "recurring_contract"  # Only for migration purpose having last_payment field
     ],
     # always loaded
     "data": [

@@ -1,33 +1,6 @@
-##############################################################################
-#
-#       ______ Releasing children from poverty      _
-#      / ____/___  ____ ___  ____  ____ ___________(_)___  ____
-#     / /   / __ \/ __ `__ \/ __ \/ __ `/ ___/ ___/ / __ \/ __ \
-#    / /___/ /_/ / / / / / / /_/ / /_/ (__  |__  ) / /_/ / / / /
-#    \____/\____/_/ /_/ /_/ .___/\__,_/____/____/_/\____/_/ /_/
-#                        /_/
-#                            in Jesus' name
-#
-#    Copyright (C) 2014-today Compassion CH (http://www.compassion.ch)
-#    @author: David Wulliamoz <dwulliamoz@compassion.ch>
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU Affero General Public License as
-#    published by the Free Software Foundation, either version 3 of the
-#    License, or (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Affero General Public License for more details.
-#
-#    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-##############################################################################
-from odoo.addons.account.tests.common import AccountTestInvoicingCommon
-from odoo.addons.base.tests.common import DISABLED_MAIL_CONTEXT
 from odoo.tests import tagged
+
+from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 
 
 @tagged("-at_install", "post_install")
@@ -42,7 +15,6 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
     @classmethod
     def setUpClass(cls, chart_template_ref=None):
         super().setUpClass(chart_template_ref=chart_template_ref)
-        cls.env = cls.env(context=dict(cls.env.context, **DISABLED_MAIL_CONTEXT))
         cls.Account = cls.env["account.account"]
         cls.AccountMove = cls.env["account.move"]
         cls.AccountMoveLine = cls.env["account.move.line"]
@@ -52,162 +24,147 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         cls.company = cls.env.company
 
         # Setup off-balance products, accounts and journals
-        cls.bank_journal = cls.company_data['default_journal_bank']
+        cls.bank_journal = cls.company_data["default_journal_bank"]
         cls.receivable_account = cls.company_data["default_account_receivable"]
-        cls.receivable_offbalance = cls.copy_account(cls.receivable_account, {
-            "is_off_balance": True,
-            "on_balance_account_id": cls.receivable_account.id
-        })
+        cls.receivable_offbalance = cls.copy_account(
+            cls.receivable_account,
+            {
+                "is_off_balance": True,
+                "on_balance_account_id": cls.receivable_account.id,
+            },
+        )
         cls.on_balance_income_account = cls.company_data["default_account_revenue"]
-        cls.off_balance_income_account = cls.Account.create({
-            "name": "Off-Balance Income",
-            "code": "INCX100",
-            "account_type": "income",
-            "is_off_balance": True,
-            "on_balance_account_id": cls.on_balance_income_account.id,
-            "company_id": cls.company.id,
-        })
-        cls.off_balance_asset_account = cls.Account.create({
-            "name": "Off-Balance Asset",
-            "code": "ASSX100",
-            "account_type": "asset_current",
-            "is_off_balance": True,
-            "company_id": cls.company.id,
-        })
+        cls.off_balance_income_account = cls.Account.create(
+            {
+                "name": "Off-Balance Income",
+                "code": "INCX100",
+                "account_type": "income",
+                "is_off_balance": True,
+                "on_balance_account_id": cls.on_balance_income_account.id,
+                "company_id": cls.company.id,
+            }
+        )
+        cls.off_balance_asset_account = cls.Account.create(
+            {
+                "name": "Off-Balance Asset",
+                "code": "ASSX100",
+                "account_type": "asset_current",
+                "is_off_balance": True,
+                "company_id": cls.company.id,
+            }
+        )
         cls.bank_account = cls.bank_journal.default_account_id
 
-        cls.outstanding_account = cls.copy_account(
-            cls.company.account_journal_payment_debit_account_id)
+        cls.outstanding_account = cls.company.account_journal_payment_debit_account_id
 
         # Set the off-balance asset account on company
         cls.company.off_balance_asset_account_id = cls.off_balance_asset_account
 
         # Update partner's and products accounts
         cls.partner_a.property_account_receivable_id = cls.receivable_offbalance
-        cls.product_o = cls.env['product.product'].create({
-            'name': 'product_o',
-            'uom_id': cls.env.ref('uom.product_uom_unit').id,
-            'uom_po_id': cls.env.ref('uom.product_uom_unit').id,
-            'lst_price': 1000.0,
-            'property_account_income_id': cls.off_balance_income_account.id,
-            'property_account_expense_id': cls.company_data[
-                'default_account_expense'].id,
-            'taxes_id': False,
-        })
+        cls.product_o = cls.env["product.product"].create(
+            {
+                "name": "product_o",
+                "uom_id": cls.env.ref("uom.product_uom_unit").id,
+                "uom_po_id": cls.env.ref("uom.product_uom_unit").id,
+                "lst_price": 1000.0,
+                "property_account_income_id": cls.off_balance_income_account.id,
+                "property_account_expense_id": cls.company_data[
+                    "default_account_expense"
+                ].id,
+                "taxes_id": False,
+            }
+        )
+        cls.product_o_2 = cls.env["product.product"].create(
+            {
+                "name": "product_o_2",
+                "uom_id": cls.env.ref("uom.product_uom_unit").id,
+                "uom_po_id": cls.env.ref("uom.product_uom_unit").id,
+                "lst_price": 200.0,
+                "property_account_income_id": cls.off_balance_income_account.id,
+                "property_account_expense_id": cls.company_data[
+                    "default_account_expense"
+                ].id,
+                "taxes_id": False,
+            }
+        )
 
-    def _create_payment(self, amount, partner=None):
+        cls.inbound_mode = cls.env["account.payment.mode"].create(
+            {
+                "name": "Test Direct Debit of customers",
+                "bank_account_link": "variable",
+                "payment_method_id": cls.env.ref(
+                    "account.account_payment_method_manual_in"
+                ).id,
+                "company_id": cls.company.id,
+            }
+        )
+        cls.currency = cls.company.currency_id
+
+    def _create_payment(self, amounts, partner=None, dst_account_id=None):
         """
         Helper method to create a bank payment entry.
 
-        :param amount: Payment amount (float)
+        :param amounts: Payment amounts (floats)
         :param partner: Partner for the payment (default: self.partner)
+        :param dst_account_id: Destination account for the payment
+            (default: receivable_offbalance)
         :return: Posted payment move (account.move)
         """
         if partner is None:
             partner = self.partner_a
 
-        payment = self.AccountMove.create({
-            "move_type": "entry",
-            "journal_id": self.bank_journal.id,
-            "partner_id": partner.id,
-            "line_ids": [
-                (0, 0, {
-                    "name": "Bank Payment",
-                    "account_id": self.bank_account.id,
-                    "debit": amount,
-                    "credit": 0.0,
-                    "partner_id": partner.id,
-                }),
-                (0, 0, {
-                    "name": "Receivable",
-                    "account_id": self.receivable_offbalance.id,
-                    "debit": 0.0,
-                    "credit": amount,
-                    "partner_id": partner.id,
-                }),
-            ],
-        })
+        payment = self.AccountMove.create(
+            {
+                "move_type": "entry",
+                "journal_id": self.bank_journal.id,
+                "partner_id": partner.id,
+                "line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "name": "Bank Payment",
+                            "account_id": self.bank_account.id,
+                            "debit": sum(amounts),
+                            "credit": 0.0,
+                            "partner_id": partner.id,
+                        },
+                    ),
+                ]
+                + [
+                    (
+                        0,
+                        0,
+                        {
+                            "name": "Receivable",
+                            "account_id": dst_account_id
+                            or self.receivable_offbalance.id,
+                            "debit": 0.0,
+                            "credit": amount,
+                            "partner_id": partner.id,
+                        },
+                    )
+                    for amount in amounts
+                ],
+            }
+        )
         payment.action_post()
         return payment
 
-    def _create_debit_order(self, amount, partner=None):
+    def _create_debit_order(self, invoices):
         """
         Helper method to create a debit order with outstanding account.
 
-        :param amount: Debit order amount (float)
-        :param partner: Partner for the debit order (default: self.partner)
-        :return: Posted debit order move (account.move)
+        :param invoices: Invoice to pay via debit order (account.move)
+        :return: Posted debit order moves (account.move)
         """
-        if partner is None:
-            partner = self.partner
-
-        debit_order = self.AccountMove.create({
-            "move_type": "entry",
-            "journal_id": self.misc_journal.id,
-            "partner_id": partner.id,
-            "line_ids": [
-                (0, 0, {
-                    "name": "Outstanding Debit",
-                    "account_id": self.outstanding_account.id,
-                    "debit": amount,
-                    "credit": 0.0,
-                    "partner_id": partner.id,
-                }),
-                (0, 0, {
-                    "name": "Receivable",
-                    "account_id": self.receivable_account.id,
-                    "debit": 0.0,
-                    "credit": amount,
-                    "partner_id": partner.id,
-                }),
-            ],
-        })
-        debit_order.action_post()
-        return debit_order
-
-    def _create_outstanding_payment(self, amount, partner=None):
-        """
-        Helper method to create a payment on outstanding account.
-
-        :param amount: Payment amount (float)
-        :param partner: Partner for the payment (default: self.partner)
-        :return: Posted payment move (account.move)
-        """
-        if partner is None:
-            partner = self.partner
-
-        payment = self.AccountMove.create({
-            "move_type": "entry",
-            "journal_id": self.bank_journal.id,
-            "partner_id": partner.id,
-            "line_ids": [
-                (0, 0, {
-                    "name": "Bank Payment",
-                    "account_id": self.bank_account.id,
-                    "debit": amount,
-                    "credit": 0.0,
-                    "partner_id": partner.id,
-                }),
-                (0, 0, {
-                    "name": "Outstanding",
-                    "account_id": self.outstanding_account.id,
-                    "debit": 0.0,
-                    "credit": amount,
-                    "partner_id": partner.id,
-                }),
-            ],
-        })
-        payment.action_post()
-        return payment
-
-    def _get_off_balance_generated_lines(self, move):
-        """
-        Helper method to get off-balance generated lines from a move.
-
-        :param move: Account move to check (account.move)
-        :return: Filtered lines with is_off_balance_generated=True (account.move.line recordset)
-        """
-        return move.line_ids.filtered("is_off_balance_generated")
+        payment_order_id = invoices.create_account_payment_line()["res_id"]
+        payment_order = self.env["account.payment.order"].browse(payment_order_id)
+        payment_order.journal_id = self.bank_journal
+        payment_order.draft2open()
+        payment_order.generated2uploaded()
+        return payment_order.move_ids
 
     def _assert_off_balance_lines_created(self, payment, expected_count):
         """
@@ -217,487 +174,438 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         :param expected_count: Expected number of off-balance generated lines (int)
         :return: Off-balance generated lines (account.move.line recordset)
         """
-        off_balance_lines = self._get_off_balance_generated_lines(payment)
+        off_balance_lines = payment.line_ids.filtered("is_off_balance_generated")
         self.assertEqual(
             len(off_balance_lines),
             expected_count,
-            f"Expected {expected_count} off-balance lines, got {len(off_balance_lines)}"
+            f"Expected {expected_count} off-balance lines, "
+            f"got {len(off_balance_lines)}",
         )
         return off_balance_lines
+
+    def _receivable_lines(self, moves):
+        """Return the receivable/off-balance lines for the provided moves."""
+        return moves.line_ids.filtered(
+            lambda mvl: mvl.account_id == self.receivable_offbalance
+        )
+
+    def _outstanding_lines(self, moves):
+        """Return the outstanding-account lines for the provided moves."""
+        return moves.line_ids.filtered(
+            lambda mvl: mvl.account_id == self.outstanding_account
+        )
+
+    def _assert_on_balance_total(self, lines, amount, expected_count=None):
+        """Assert that on-balance income lines sum to the provided amount."""
+        on_balance = lines.filtered(
+            lambda mvl: mvl.account_id == self.on_balance_income_account
+        )
+        if expected_count is not None:
+            self.assertEqual(len(on_balance), expected_count)
+        self.assertAlmostEqual(sum(on_balance.mapped("balance")), -amount, places=2)
+        return on_balance
+
+    def _assert_asset_total(self, lines, amount, expected_count=1):
+        """Assert that off-balance asset lines sum to the provided amount."""
+        asset_lines = lines.filtered(
+            lambda mvl: mvl.account_id == self.off_balance_asset_account
+        )
+        self.assertEqual(len(asset_lines), expected_count)
+        self.assertAlmostEqual(sum(asset_lines.mapped("balance")), amount, places=2)
+        return asset_lines
+
+    def _prepare_indirect_invoices(self, products):
+        """
+        Create invoices configured for indirect reconciliation
+        and return the debit order.
+        """
+        invoices = self.env["account.move"]
+        for product in products:
+            invoice = self.init_invoice("out_invoice", post=True, products=[product])
+            invoice.payment_mode_id = self.inbound_mode
+            invoices |= invoice
+        invoices = invoices.sorted(lambda inv: inv.id)
+        debit_moves = self._create_debit_order(invoices)
+        self.assertSetEqual(set(invoices.mapped("payment_state")), {"in_payment"})
+        self._assert_off_balance_lines_created(debit_moves, 0)
+        return invoices, debit_moves, self._outstanding_lines(debit_moves)
 
     # Direct Reconciliation Tests (Bank Transfer)
 
     def test_direct_one_payment_one_invoice(self):
         """Test: One payment matching an existing invoice (direct reconciliation)."""
-        # Create invoice
+        # Step 1: Prepare invoice and payment
         amount_total = self.product_o.list_price
         invoice = self.init_invoice("out_invoice", post=True, products=[self.product_o])
+        payment = self._create_payment([amount_total])
 
-        # Create payment
-        payment = self._create_payment(amount_total)
+        # Step 2: Reconcile receivable lines
+        (self._receivable_lines(invoice) | self._receivable_lines(payment)).reconcile()
 
-        # Reconcile
-        invoice_line = invoice.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_offbalance
-        )
-        payment_line = payment.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_offbalance
-        )
-        (invoice_line | payment_line).reconcile()
-
-        # Assert off-balance lines were created
-        # Expected: 1 on-balance income line + 1 off-balance asset line = 2 lines
+        # Step 3: Assert generated on/off balance effects
         generated_lines = self._assert_off_balance_lines_created(payment, 2)
+        self._assert_on_balance_total(generated_lines, amount_total, expected_count=1)
+        self._assert_asset_total(generated_lines, amount_total)
 
-        # Verify the on-balance income line
-        on_balance_line = generated_lines.filtered(
-            lambda l: l.account_id == self.on_balance_income_account
+    def test_direct_one_payment_with_additional_amount(self):
+        """Test: One payment with additional amount unreconciled."""
+        # Step 1: Prepare invoice and overpaid payment
+        amount_total = self.product_o.list_price
+        extra_amount = 150.0
+        invoice = self.init_invoice("out_invoice", post=True, products=[self.product_o])
+        payment = self._create_payment([amount_total, extra_amount])
+
+        # Step 2: Reconcile only the invoice amount
+        invoice_line = self._receivable_lines(invoice)
+        payment_lines = self._receivable_lines(payment)
+        invoice_payment_line = payment_lines.filtered(
+            lambda mvl: self.currency.is_zero(mvl.credit - amount_total)
         )
-        self.assertEqual(len(on_balance_line), 1)
-        self.assertAlmostEqual(on_balance_line.balance, -amount_total, places=2)
+        residual_line = payment_lines - invoice_payment_line
+        (invoice_line | invoice_payment_line).reconcile()
 
-        # Verify the off-balance asset line
-        asset_line = generated_lines.filtered(
-            lambda l: l.account_id == self.off_balance_asset_account
-        )
-        self.assertEqual(len(asset_line), 1)
-        self.assertAlmostEqual(asset_line.balance, amount_total, places=2)
-
-    def _test_direct_one_payment_with_additional_amount(self):
-        """Test: One payment with additional amount unreconciled (direct reconciliation)."""
-        # Create invoice
-        invoice = self._create_invoice(100.0)
-
-        # Create payment with extra amount
-        payment = self._create_payment(150.0)
-
-        # Reconcile only the invoice amount
-        invoice_line = invoice.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
-        )
-        payment_line = payment.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
-        )
-        self._reconcile_lines(invoice_line | payment_line)
-
-        # Assert off-balance lines were created for the reconciled amount
+        # Step 3: Assert generated lines cover only the reconciled part
         off_balance_lines = self._assert_off_balance_lines_created(payment, 2)
+        self._assert_on_balance_total(off_balance_lines, amount_total, expected_count=1)
+        self.assertAlmostEqual(invoice_payment_line.amount_residual, 0.0, places=2)
+        self.assertAlmostEqual(residual_line.amount_residual, -extra_amount)
 
-        # Verify the on-balance income line reflects only the reconciled amount
-        on_balance_line = off_balance_lines.filtered(
-            lambda l: l.account_id == self.on_balance_income_account
+        # Step 4: Consume the residual via a new invoice (widget flow)
+        self.product_o.list_price = extra_amount
+        residual_invoice = self.init_invoice(
+            "out_invoice", post=True, products=[self.product_o]
         )
-        self.assertEqual(on_balance_line.balance, -100.0)
-
-        # Verify payment line still has unreconciled amount
-        self.assertEqual(payment_line.amount_residual, 50.0)
-
-    def _test_direct_multiple_payments_one_invoice(self):
-        """Test: Multiple payments reconciling an existing invoice (direct reconciliation)."""
-        # Create invoice
-        invoice = self._create_invoice(100.0)
-
-        # Create first partial payment
-        payment1 = self._create_payment(60.0)
-
-        # Reconcile first payment
-        invoice_line = invoice.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+        self.assert_invoice_outstanding_to_reconcile_widget(
+            residual_invoice, {payment.id: extra_amount}
         )
-        payment1_line = payment1.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+        residual_invoice.js_assign_outstanding_line(residual_line.id)
+        self.assert_invoice_outstanding_reconciled_widget(
+            residual_invoice, {payment.id: extra_amount}
         )
-        self._reconcile_lines(invoice_line | payment1_line)
 
-        # Assert first off-balance lines
+        # Step 5: Off-balance totals now cover both invoices
+        off_balance_lines = self._assert_off_balance_lines_created(payment, 4)
+        self._assert_on_balance_total(
+            off_balance_lines, amount_total + extra_amount, expected_count=2
+        )
+
+    def test_direct_multiple_payments_one_invoice(self):
+        """Test: Multiple payments reconciling an existing invoice."""
+        # Step 1: Prepare invoice and split payments
+        invoice = self.init_invoice("out_invoice", post=True, products=[self.product_o])
+        amount_total = self.product_o.list_price
+        payment_price = amount_total / 3.0
+        payment1 = self._create_payment([payment_price])
+        payment2 = self._create_payment([amount_total - payment_price])
+        invoice_line = self._receivable_lines(invoice)
+
+        # Step 2: Reconcile each payment sequentially
+        payment1_line = self._receivable_lines(payment1)
+        (invoice_line | payment1_line).reconcile()
         off_balance_lines1 = self._assert_off_balance_lines_created(payment1, 2)
-        on_balance_line1 = off_balance_lines1.filtered(
-            lambda l: l.account_id == self.on_balance_income_account
+        self._assert_on_balance_total(
+            off_balance_lines1, payment_price, expected_count=1
         )
-        self.assertEqual(on_balance_line1.balance, -60.0)
 
-        # Create second payment
-        payment2 = self._create_payment(40.0)
+        payment2_line = self._receivable_lines(payment2)
+        (invoice_line | payment2_line).reconcile()
 
-        # Reconcile second payment
-        payment2_line = payment2.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
-        )
-        self._reconcile_lines(invoice_line | payment2_line)
+        # Step 3: All payments combined cover the invoice
+        combined_lines = self._assert_off_balance_lines_created(payment1 + payment2, 4)
+        self._assert_on_balance_total(combined_lines, amount_total, expected_count=2)
+        self.assertAlmostEqual(invoice_line.amount_residual, 0.0)
 
-        # Assert second off-balance lines
-        off_balance_lines2 = self._assert_off_balance_lines_created(payment2, 2)
-        on_balance_line2 = off_balance_lines2.filtered(
-            lambda l: l.account_id == self.on_balance_income_account
-        )
-        self.assertEqual(on_balance_line2.balance, -40.0)
-
-        # Verify invoice is fully reconciled
-        self.assertEqual(invoice_line.amount_residual, 0.0)
-
-    def _test_direct_one_payment_multiple_invoices(self):
+    def test_direct_one_payment_multiple_invoices(self):
         """Test: One payment paying multiple invoices (direct reconciliation)."""
-        # Create two invoices
-        invoice1 = self._create_invoice(60.0, product=self.product1)
-        invoice2 = self._create_invoice(40.0, product=self.product2)
-
-        # Create payment
-        payment = self._create_payment(100.0)
-
-        # Reconcile payment with both invoices
-        invoice1_line = invoice1.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+        # Step 1: Prepare invoices and lump-sum payment
+        invoice1 = self.init_invoice(
+            "out_invoice", post=True, products=[self.product_o]
         )
-        invoice2_line = invoice2.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+        invoice2 = self.init_invoice(
+            "out_invoice", post=True, products=[self.product_o_2]
         )
-        payment_line = payment.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
-        )
-        self._reconcile_lines(invoice1_line | invoice2_line | payment_line)
+        amount_total = self.product_o.list_price + self.product_o_2.list_price
+        payment = self._create_payment([amount_total])
 
-        # Assert off-balance lines were created
-        # Expected: 2 on-balance income lines (one per product) + 1 off-balance asset line = 3 lines
+        # Step 2: Reconcile payment with both invoices
+        invoice_lines = self._receivable_lines(invoice1 + invoice2)
+        payment_line = self._receivable_lines(payment)
+        (invoice_lines | payment_line).reconcile()
+
+        # Step 3: Assert line distributions (two revenues + one asset)
         off_balance_lines = self._assert_off_balance_lines_created(payment, 3)
+        self._assert_on_balance_total(off_balance_lines, amount_total, expected_count=2)
+        self._assert_asset_total(off_balance_lines, amount_total)
 
-        # Verify on-balance income lines for each product
-        on_balance_lines = off_balance_lines.filtered(
-            lambda l: l.account_id == self.on_balance_income_account
+    def test_direct_multiple_payments_multiple_invoices(self):
+        """Test: Multiple payments reconciling multiple invoices
+        with partial reconciles (direct)."""
+        # Step 1: Prepare invoices
+        invoice1 = self.init_invoice(
+            "out_invoice", post=True, products=[self.product_o_2]
         )
-        self.assertEqual(len(on_balance_lines), 2)
-
-        # Verify total on-balance amount
-        total_on_balance = sum(on_balance_lines.mapped("balance"))
-        self.assertEqual(total_on_balance, -100.0)
-
-        # Verify off-balance asset line
-        asset_line = off_balance_lines.filtered(
-            lambda l: l.account_id == self.off_balance_asset_account
+        invoice2 = self.init_invoice(
+            "out_invoice", post=True, products=[self.product_o]
         )
-        self.assertEqual(asset_line.balance, 100.0)
+        invoice1_line = self._receivable_lines(invoice1)
+        invoice2_line = self._receivable_lines(invoice2)
 
-    def _test_direct_multiple_payments_multiple_invoices(self):
-        """Test: Multiple payments reconciling multiple invoices with partial reconciles (direct)."""
-        # Create two invoices
-        invoice1 = self._create_invoice(100.0, product=self.product1)
-        invoice2 = self._create_invoice(150.0, product=self.product2)
-
-        # Create first payment - partially pays invoice1
-        payment1 = self._create_payment(60.0)
-        invoice1_line = invoice1.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
-        )
-        payment1_line = payment1.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
-        )
-        self._reconcile_lines(invoice1_line | payment1_line)
-
-        # Assert first off-balance lines
+        # Step 2: First partial payment on invoice1
+        partial_amount = 160.0
+        payment1 = self._create_payment([partial_amount])
+        payment1_line = self._receivable_lines(payment1)
+        (invoice1_line | payment1_line).reconcile()
         off_balance_lines1 = self._assert_off_balance_lines_created(payment1, 2)
-        on_balance_line1 = off_balance_lines1.filtered(
-            lambda l: l.account_id == self.on_balance_income_account
+        self._assert_on_balance_total(
+            off_balance_lines1, partial_amount, expected_count=1
         )
-        self.assertEqual(on_balance_line1.balance, -60.0)
 
-        # Create second payment - completes invoice1 and partially pays invoice2
-        payment2 = self._create_payment(140.0)
-        invoice2_line = invoice2.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+        # Step 3: Second payment completes invoice1 and partially pays invoice2
+        partial_amount_2 = 200.0
+        payment2 = self._create_payment([partial_amount_2])
+        payment2_line = self._receivable_lines(payment2)
+        (payment2_line | invoice1_line).reconcile()
+        (payment2_line | invoice2_line).reconcile()
+        off_balance_lines2 = self._assert_off_balance_lines_created(
+            payment1 + payment2, 6
         )
-        payment2_line = payment2.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+        self._assert_on_balance_total(
+            off_balance_lines2, partial_amount + partial_amount_2, expected_count=3
         )
-        self._reconcile_lines(invoice1_line | invoice2_line | payment2_line)
 
-        # Assert second off-balance lines
-        # Should have lines for both products
-        off_balance_lines2 = self._assert_off_balance_lines_created(payment2, 3)
-
-        # Create third payment - completes invoice2
-        payment3 = self._create_payment(10.0)
-        payment3_line = payment3.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+        # Step 4: Unreconcile to simulate widget operations, then reconcile together
+        for partial in invoice1_line.mapped("matched_credit_ids"):
+            invoice1.js_remove_outstanding_partial(partial.id)
+        for partial in invoice2_line.mapped("matched_credit_ids"):
+            invoice2.js_remove_outstanding_partial(partial.id)
+        self._assert_off_balance_lines_created(payment1 + payment2, 0)
+        (payment1_line | payment2_line | invoice1_line | invoice2_line).reconcile()
+        reconciled_lines = self._assert_off_balance_lines_created(
+            payment1 + payment2, 3
         )
-        self._reconcile_lines(invoice2_line | payment3_line)
-
-        # Assert third off-balance lines
-        off_balance_lines3 = self._assert_off_balance_lines_created(payment3, 2)
-        on_balance_line3 = off_balance_lines3.filtered(
-            lambda l: l.account_id == self.on_balance_income_account
+        self._assert_on_balance_total(
+            reconciled_lines, partial_amount + partial_amount_2, expected_count=2
         )
-        self.assertEqual(on_balance_line3.balance, -10.0)
 
-        # Verify both invoices are fully reconciled
-        self.assertEqual(invoice1_line.amount_residual, 0.0)
-        self.assertEqual(invoice2_line.amount_residual, 0.0)
+        # Step 5: Final payment closes invoice2
+        remaining_amount = (self.product_o.list_price + self.product_o_2.list_price) - (
+            partial_amount + partial_amount_2
+        )
+        payment3 = self._create_payment([remaining_amount])
+        payment3_line = self._receivable_lines(payment3)
+        (invoice2_line | payment3_line).reconcile()
+        off_balance_lines3 = self._assert_off_balance_lines_created(
+            payment1 + payment2 + payment3, 5
+        )
+        self._assert_on_balance_total(
+            off_balance_lines3,
+            self.product_o.list_price + self.product_o_2.list_price,
+            expected_count=3,
+        )
+        self.assertAlmostEqual(invoice1_line.amount_residual, 0.0)
+        self.assertAlmostEqual(invoice2_line.amount_residual, 0.0)
 
     # Indirect Reconciliation Tests (Direct Debit with Outstanding Account)
 
-    def _test_indirect_one_payment_one_invoice(self):
+    def test_indirect_one_payment_one_invoice(self):
         """Test: One payment matching an existing invoice (indirect via debit order)."""
-        # Create invoice
-        invoice = self._create_invoice(100.0)
-
-        # Create debit order
-        debit_order = self._create_debit_order(100.0)
-
-        # Reconcile invoice with debit order
-        invoice_line = invoice.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+        # Step 1: Prepare indirect invoice and debit order
+        invoices, debit_moves, outstanding_lines = self._prepare_indirect_invoices(
+            [self.product_o]
         )
-        debit_line = debit_order.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
-        )
-        self._reconcile_lines(invoice_line | debit_line)
+        invoice = invoices[0]
+        debit_outstanding_line = outstanding_lines
+        debit_outstanding_line.ensure_one()
 
-        # Create payment on outstanding account
-        payment = self._create_outstanding_payment(100.0)
-
-        # Reconcile payment with debit order outstanding
-        debit_outstanding_line = debit_order.line_ids.filtered(
-            lambda l: l.account_id == self.outstanding_account
+        # Step 2: Create payment on outstanding account
+        payment = self._create_payment(
+            [invoice.amount_total], dst_account_id=self.outstanding_account.id
         )
-        payment_outstanding_line = payment.line_ids.filtered(
-            lambda l: l.account_id == self.outstanding_account
-        )
-        self._reconcile_lines(debit_outstanding_line | payment_outstanding_line)
 
-        # Assert off-balance lines were created on the payment
+        # Step 3: Reconcile payment with outstanding line
+        payment_outstanding_line = self._outstanding_lines(payment)
+        (debit_outstanding_line | payment_outstanding_line).reconcile()
+
+        # Step 4: Assert off-balance outputs
         off_balance_lines = self._assert_off_balance_lines_created(payment, 2)
-
-        # Verify the on-balance income line
-        on_balance_line = off_balance_lines.filtered(
-            lambda l: l.account_id == self.on_balance_income_account
+        self._assert_on_balance_total(
+            off_balance_lines, invoice.amount_total, expected_count=1
         )
-        self.assertEqual(len(on_balance_line), 1)
-        self.assertEqual(on_balance_line.balance, -100.0)
+        self.assertEqual(invoice.payment_state, "paid")
 
-    def _test_indirect_one_payment_with_additional_amount(self):
-        """Test: One payment with additional unreconciled amount (indirect via debit order)."""
-        # Create invoice
-        invoice = self._create_invoice(100.0)
-
-        # Create debit order
-        debit_order = self._create_debit_order(100.0)
-
-        # Reconcile invoice with debit order
-        invoice_line = invoice.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+    def test_indirect_one_payment_with_additional_amount(self):
+        """Test: One payment with additional unreconciled amount."""
+        # Step 1: Prepare indirect invoice
+        invoices, debit_moves, outstanding_lines = self._prepare_indirect_invoices(
+            [self.product_o]
         )
-        debit_line = debit_order.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
-        )
-        self._reconcile_lines(invoice_line | debit_line)
+        invoice = invoices[0]
+        debit_outstanding_line = outstanding_lines
+        debit_outstanding_line.ensure_one()
 
-        # Create payment with extra amount
-        payment = self._create_outstanding_payment(150.0)
-
-        # Reconcile payment with debit order outstanding
-        debit_outstanding_line = debit_order.line_ids.filtered(
-            lambda l: l.account_id == self.outstanding_account
+        # Step 2: Post payment that overpays the outstanding account
+        extra_amount = 150.0
+        payment = self._create_payment(
+            [invoice.amount_total, extra_amount],
+            dst_account_id=self.outstanding_account.id,
         )
-        payment_outstanding_line = payment.line_ids.filtered(
-            lambda l: l.account_id == self.outstanding_account
+        payment_lines = self._outstanding_lines(payment)
+        invoice_payment_line = payment_lines.filtered(
+            lambda mvl: self.currency.is_zero(mvl.credit - invoice.amount_total)
         )
-        self._reconcile_lines(debit_outstanding_line | payment_outstanding_line)
+        residual_line = payment_lines - invoice_payment_line
+        (debit_outstanding_line | invoice_payment_line).reconcile()
 
-        # Assert off-balance lines were created for the reconciled amount
+        # Step 3: Validate off-balance creation and remaining residuals
         off_balance_lines = self._assert_off_balance_lines_created(payment, 2)
-
-        # Verify the on-balance income line reflects only the reconciled amount
-        on_balance_line = off_balance_lines.filtered(
-            lambda l: l.account_id == self.on_balance_income_account
+        self._assert_on_balance_total(
+            off_balance_lines, invoice.amount_total, expected_count=1
         )
-        self.assertEqual(on_balance_line.balance, -100.0)
+        self.assertAlmostEqual(invoice_payment_line.amount_residual, 0.0, places=2)
+        self.assertEqual(len(residual_line), 1)
+        self.assertAlmostEqual(residual_line.amount_residual, -extra_amount, places=2)
 
-        # Verify payment line still has unreconciled amount
-        self.assertEqual(payment_outstanding_line.amount_residual, 50.0)
-
-    def _test_indirect_multiple_payments_one_invoice(self):
-        """Test: Multiple payments reconciling one invoice (indirect via debit order)."""
-        # Create invoice
-        invoice = self._create_invoice(100.0)
-
-        # Create debit order
-        debit_order = self._create_debit_order(100.0)
-
-        # Reconcile invoice with debit order
-        invoice_line = invoice.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+    def test_indirect_multiple_payments_one_invoice(self):
+        """Test: Multiple payments reconciling one invoice."""
+        # Step 1: Prepare indirect invoice and outstanding line
+        invoices, debit_moves, outstanding_lines = self._prepare_indirect_invoices(
+            [self.product_o]
         )
-        debit_line = debit_order.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+        invoice = invoices[0]
+        debit_outstanding_line = outstanding_lines
+        debit_outstanding_line.ensure_one()
+        first_amount = self.currency.round(invoice.amount_total * 0.6)
+        second_amount = self.currency.round(invoice.amount_total - first_amount)
+
+        # Step 2: First partial payment
+        payment1 = self._create_payment(
+            [first_amount], dst_account_id=self.outstanding_account.id
         )
-        self._reconcile_lines(invoice_line | debit_line)
-
-        # Create first partial payment
-        payment1 = self._create_outstanding_payment(60.0)
-
-        # Reconcile first payment
-        debit_outstanding_line = debit_order.line_ids.filtered(
-            lambda l: l.account_id == self.outstanding_account
+        payment1_line = self._outstanding_lines(payment1)
+        (debit_outstanding_line | payment1_line).reconcile()
+        lines1 = self._assert_off_balance_lines_created(payment1, 2)
+        self._assert_on_balance_total(lines1, first_amount, expected_count=1)
+        self.assertAlmostEqual(payment1_line.amount_residual, 0.0, places=2)
+        self.assertAlmostEqual(
+            debit_outstanding_line.amount_residual, second_amount, places=2
         )
-        payment1_outstanding_line = payment1.line_ids.filtered(
-            lambda l: l.account_id == self.outstanding_account
+
+        # Step 3: Second payment completes the invoice
+        payment2 = self._create_payment(
+            [second_amount], dst_account_id=self.outstanding_account.id
         )
-        self._reconcile_lines(debit_outstanding_line | payment1_outstanding_line)
-
-        # Assert first off-balance lines
-        off_balance_lines1 = self._assert_off_balance_lines_created(payment1, 2)
-        on_balance_line1 = off_balance_lines1.filtered(
-            lambda l: l.account_id == self.on_balance_income_account
+        payment2_line = self._outstanding_lines(payment2)
+        (debit_outstanding_line | payment2_line).reconcile()
+        combined_lines = self._assert_off_balance_lines_created(payment1 + payment2, 4)
+        self._assert_on_balance_total(
+            combined_lines, invoice.amount_total, expected_count=2
         )
-        self.assertEqual(on_balance_line1.balance, -60.0)
+        self.assertAlmostEqual(payment2_line.amount_residual, 0.0, places=2)
+        self.assertAlmostEqual(debit_outstanding_line.amount_residual, 0.0, places=2)
 
-        # Create second payment
-        payment2 = self._create_outstanding_payment(40.0)
-
-        # Reconcile second payment
-        payment2_outstanding_line = payment2.line_ids.filtered(
-            lambda l: l.account_id == self.outstanding_account
-        )
-        self._reconcile_lines(debit_outstanding_line | payment2_outstanding_line)
-
-        # Assert second off-balance lines
-        off_balance_lines2 = self._assert_off_balance_lines_created(payment2, 2)
-        on_balance_line2 = off_balance_lines2.filtered(
-            lambda l: l.account_id == self.on_balance_income_account
-        )
-        self.assertEqual(on_balance_line2.balance, -40.0)
-
-        # Verify debit order outstanding is fully reconciled
-        self.assertEqual(debit_outstanding_line.amount_residual, 0.0)
-
-    def _test_indirect_one_payment_multiple_invoices(self):
+    def test_indirect_one_payment_multiple_invoices(self):
         """Test: One payment paying multiple invoices (indirect via debit order)."""
-        # Create two invoices
-        invoice1 = self._create_invoice(60.0, product=self.product1)
-        invoice2 = self._create_invoice(40.0, product=self.product2)
+        # Step 1: Prepare indirect invoices and outstanding lines
+        (
+            invoices,
+            debit_moves,
+            debit_outstanding_lines,
+        ) = self._prepare_indirect_invoices([self.product_o, self.product_o_2])
 
-        # Create debit orders for each invoice
-        debit_order1 = self._create_debit_order(60.0)
-        debit_order2 = self._create_debit_order(40.0)
+        # Step 2: Pay the sum of all invoices on the outstanding account
+        payment = self._create_payment(
+            invoices.mapped("amount_total"), dst_account_id=self.outstanding_account.id
+        )
+        payment_outstanding_lines = self._outstanding_lines(payment)
+        (debit_outstanding_lines | payment_outstanding_lines).reconcile()
 
-        # Reconcile invoices with debit orders
-        invoice1_line = invoice1.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+        # Step 3: Assert on/off balance distributions
+        total_amount = sum(invoices.mapped("amount_total"))
+        off_balance_lines = self._assert_off_balance_lines_created(
+            payment, len(invoices) + 1
         )
-        debit1_line = debit_order1.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+        self._assert_on_balance_total(
+            off_balance_lines, total_amount, expected_count=len(invoices)
         )
-        self._reconcile_lines(invoice1_line | debit1_line)
+        self._assert_asset_total(off_balance_lines, total_amount)
 
-        invoice2_line = invoice2.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+        # Step 4: Ensure no residuals remain
+        self.assertTrue(
+            all(
+                self.currency.is_zero(mvl.amount_residual)
+                for mvl in payment_outstanding_lines
+            )
         )
-        debit2_line = debit_order2.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+        self.assertTrue(
+            all(
+                self.currency.is_zero(mvl.amount_residual)
+                for mvl in debit_outstanding_lines
+            )
         )
-        self._reconcile_lines(invoice2_line | debit2_line)
+        self.assertSetEqual(set(invoices.mapped("payment_state")), {"paid"})
 
-        # Create payment
-        payment = self._create_outstanding_payment(100.0)
+    def test_indirect_multiple_payments_multiple_invoices(self):
+        """Test: Multiple payments reconciling multiple invoices
+        with partial reconciles (indirect)."""
+        # Step 1: Prepare invoices (sorted by amount for readability)
+        invoices, debit_moves, outstanding_lines = self._prepare_indirect_invoices(
+            [self.product_o_2, self.product_o]
+        )
+        invoices = invoices.sorted(lambda inv: inv.amount_total)
+        debit_line = outstanding_lines
+        total_amount = sum(invoices.mapped("amount_total"))
 
-        # Reconcile payment with both debit order outstanding lines
-        debit1_outstanding_line = debit_order1.line_ids.filtered(
-            lambda l: l.account_id == self.outstanding_account
+        # Step 2: First payment covers half of the smallest invoice
+        first_payment_amount = self.currency.round(invoices[0].amount_total * 0.5)
+        payment1 = self._create_payment(
+            [first_payment_amount], dst_account_id=self.outstanding_account.id
         )
-        debit2_outstanding_line = debit_order2.line_ids.filtered(
-            lambda l: l.account_id == self.outstanding_account
-        )
-        payment_outstanding_line = payment.line_ids.filtered(
-            lambda l: l.account_id == self.outstanding_account
-        )
-        self._reconcile_lines(
-            debit1_outstanding_line | debit2_outstanding_line | payment_outstanding_line
-        )
+        payment1_line = self._outstanding_lines(payment1)
+        (debit_line | payment1_line).reconcile()
+        lines1 = self._assert_off_balance_lines_created(payment1, 2)
+        self._assert_on_balance_total(lines1, first_payment_amount, expected_count=1)
+        self.assertAlmostEqual(payment1_line.amount_residual, 0.0, places=2)
 
-        # Assert off-balance lines were created
-        off_balance_lines = self._assert_off_balance_lines_created(payment, 3)
-
-        # Verify on-balance income lines for each product
-        on_balance_lines = off_balance_lines.filtered(
-            lambda l: l.account_id == self.on_balance_income_account
+        # Step 3: Second payment closes invoice1 and partially covers invoice2
+        second_payment_invoice1_part = self.currency.round(
+            invoices[0].amount_total - first_payment_amount
         )
-        self.assertEqual(len(on_balance_lines), 2)
-
-        # Verify total on-balance amount
-        total_on_balance = sum(on_balance_lines.mapped("balance"))
-        self.assertEqual(total_on_balance, -100.0)
-
-    def _test_indirect_multiple_payments_multiple_invoices(self):
-        """Test: Multiple payments reconciling multiple invoices with partial reconciles (indirect)."""
-        # Create two invoices
-        invoice1 = self._create_invoice(100.0, product=self.product1)
-        invoice2 = self._create_invoice(150.0, product=self.product2)
-
-        # Create debit orders for each invoice
-        debit_order1 = self._create_debit_order(100.0)
-        debit_order2 = self._create_debit_order(150.0)
-
-        # Reconcile invoices with debit orders
-        invoice1_line = invoice1.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+        second_payment_invoice2_part = self.currency.round(
+            invoices[1].amount_total * 0.4
         )
-        debit1_line = debit_order1.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+        second_payment_amount = (
+            second_payment_invoice1_part + second_payment_invoice2_part
         )
-        self._reconcile_lines(invoice1_line | debit1_line)
-
-        invoice2_line = invoice2.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+        payment2 = self._create_payment(
+            [second_payment_amount], dst_account_id=self.outstanding_account.id
         )
-        debit2_line = debit_order2.line_ids.filtered(
-            lambda l: l.account_id == self.receivable_account
+        payment2_line = self._outstanding_lines(payment2)
+        (debit_line | payment2_line).reconcile()
+        lines2 = self._assert_off_balance_lines_created(payment1 + payment2, 5)
+        self._assert_on_balance_total(
+            lines2,
+            first_payment_amount + second_payment_amount,
+            expected_count=3,
         )
-        self._reconcile_lines(invoice2_line | debit2_line)
-
-        # Create first payment - partially pays debit order 1
-        payment1 = self._create_outstanding_payment(60.0)
-        debit1_outstanding_line = debit_order1.line_ids.filtered(
-            lambda l: l.account_id == self.outstanding_account
-        )
-        payment1_outstanding_line = payment1.line_ids.filtered(
-            lambda l: l.account_id == self.outstanding_account
-        )
-        self._reconcile_lines(debit1_outstanding_line | payment1_outstanding_line)
-
-        # Assert first off-balance lines
-        off_balance_lines1 = self._assert_off_balance_lines_created(payment1, 2)
-        on_balance_line1 = off_balance_lines1.filtered(
-            lambda l: l.account_id == self.on_balance_income_account
-        )
-        self.assertEqual(on_balance_line1.balance, -60.0)
-
-        # Create second payment - completes debit order 1 and partially pays debit order 2
-        payment2 = self._create_outstanding_payment(140.0)
-        debit2_outstanding_line = debit_order2.line_ids.filtered(
-            lambda l: l.account_id == self.outstanding_account
-        )
-        payment2_outstanding_line = payment2.line_ids.filtered(
-            lambda l: l.account_id == self.outstanding_account
-        )
-        self._reconcile_lines(
-            debit1_outstanding_line | debit2_outstanding_line | payment2_outstanding_line
+        self.assertAlmostEqual(
+            debit_line.amount_residual,
+            total_amount - (first_payment_amount + second_payment_amount),
+            places=2,
         )
 
-        # Assert second off-balance lines
-        off_balance_lines2 = self._assert_off_balance_lines_created(payment2, 3)
-
-        # Create third payment - completes debit order 2
-        payment3 = self._create_outstanding_payment(10.0)
-        payment3_outstanding_line = payment3.line_ids.filtered(
-            lambda l: l.account_id == self.outstanding_account
+        # Step 4: Final payment clears the remaining balance
+        third_payment_amount = self.currency.round(
+            invoices[1].amount_total - second_payment_invoice2_part
         )
-        self._reconcile_lines(debit2_outstanding_line | payment3_outstanding_line)
-
-        # Assert third off-balance lines
-        off_balance_lines3 = self._assert_off_balance_lines_created(payment3, 2)
-        on_balance_line3 = off_balance_lines3.filtered(
-            lambda l: l.account_id == self.on_balance_income_account
+        payment3 = self._create_payment(
+            [third_payment_amount], dst_account_id=self.outstanding_account.id
         )
-        self.assertEqual(on_balance_line3.balance, -10.0)
-
-        # Verify both debit orders are fully reconciled
-        self.assertEqual(debit1_outstanding_line.amount_residual, 0.0)
-        self.assertEqual(debit2_outstanding_line.amount_residual, 0.0)
+        payment3_line = self._outstanding_lines(payment3)
+        (debit_line | payment3_line).reconcile()
+        lines3 = self._assert_off_balance_lines_created(
+            payment1 + payment2 + payment3, 7
+        )
+        self._assert_on_balance_total(lines3, total_amount, expected_count=4)
+        self.assertAlmostEqual(payment3_line.amount_residual, 0.0, places=2)
+        self.assertTrue(self.currency.is_zero(debit_line.amount_residual))
+        self.assertSetEqual(set(invoices.mapped("payment_state")), {"paid"})
