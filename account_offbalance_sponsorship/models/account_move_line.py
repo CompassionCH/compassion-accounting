@@ -78,7 +78,7 @@ class AccountMoveLine(models.Model):
         )
 
         amount_distributed = sum(
-            income_entry.line_ids.filtered("is_off_balance_generated").mapped("balance")
+            income_entry.line_ids.filtered(lambda mvl: mvl.is_off_balance_generated and mvl.account_id.is_off_balance).mapped("balance")
         )
         _logger.info(
             "Created off-balance adjustment for move %s, amount: %s",
