@@ -31,7 +31,7 @@ from odoo.tests.common import TransactionCase
 class TestOffBalanceReconciliationUseCases(TransactionCase):
     """
     Comprehensive tests for off-balance reconciliation use cases.
-    
+
     This test suite covers both direct reconciliation (bank transfer)
     and indirect reconciliation (Direct Debit with outstanding account).
     """
@@ -140,7 +140,14 @@ class TestOffBalanceReconciliationUseCases(TransactionCase):
         })
 
     def _create_invoice(self, amount, product=None, account=None):
-        """Helper method to create an invoice with off-balance account."""
+        """
+        Helper method to create an invoice with off-balance account.
+
+        :param amount: Invoice amount (float)
+        :param product: Product to use (default: self.product1)
+        :param account: Income account to use (default: self.off_balance_income_account)
+        :return: Posted invoice (account.move)
+        """
         if product is None:
             product = self.product1
         if account is None:
@@ -164,7 +171,13 @@ class TestOffBalanceReconciliationUseCases(TransactionCase):
         return invoice
 
     def _create_payment(self, amount, partner=None):
-        """Helper method to create a bank payment entry."""
+        """
+        Helper method to create a bank payment entry.
+
+        :param amount: Payment amount (float)
+        :param partner: Partner for the payment (default: self.partner)
+        :return: Posted payment move (account.move)
+        """
         if partner is None:
             partner = self.partner
 
@@ -193,7 +206,13 @@ class TestOffBalanceReconciliationUseCases(TransactionCase):
         return payment
 
     def _create_debit_order(self, amount, partner=None):
-        """Helper method to create a debit order with outstanding account."""
+        """
+        Helper method to create a debit order with outstanding account.
+
+        :param amount: Debit order amount (float)
+        :param partner: Partner for the debit order (default: self.partner)
+        :return: Posted debit order move (account.move)
+        """
         if partner is None:
             partner = self.partner
 
@@ -222,7 +241,13 @@ class TestOffBalanceReconciliationUseCases(TransactionCase):
         return debit_order
 
     def _create_outstanding_payment(self, amount, partner=None):
-        """Helper method to create a payment on outstanding account."""
+        """
+        Helper method to create a payment on outstanding account.
+
+        :param amount: Payment amount (float)
+        :param partner: Partner for the payment (default: self.partner)
+        :return: Posted payment move (account.move)
+        """
         if partner is None:
             partner = self.partner
 
@@ -251,15 +276,30 @@ class TestOffBalanceReconciliationUseCases(TransactionCase):
         return payment
 
     def _reconcile_lines(self, lines):
-        """Helper method to reconcile account move lines."""
+        """
+        Helper method to reconcile account move lines.
+
+        :param lines: Move lines to reconcile (account.move.line recordset)
+        """
         lines.reconcile()
 
     def _get_off_balance_generated_lines(self, move):
-        """Helper method to get off-balance generated lines from a move."""
+        """
+        Helper method to get off-balance generated lines from a move.
+
+        :param move: Account move to check (account.move)
+        :return: Filtered lines with is_off_balance_generated=True (account.move.line recordset)
+        """
         return move.line_ids.filtered("is_off_balance_generated")
 
     def _assert_off_balance_lines_created(self, payment, expected_count):
-        """Assert that off-balance lines were created."""
+        """
+        Assert that off-balance lines were created.
+
+        :param payment: Payment move to check (account.move)
+        :param expected_count: Expected number of off-balance generated lines (int)
+        :return: Off-balance generated lines (account.move.line recordset)
+        """
         off_balance_lines = self._get_off_balance_generated_lines(payment)
         self.assertEqual(
             len(off_balance_lines),
