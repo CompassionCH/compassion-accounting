@@ -61,7 +61,7 @@ class TestOffBalanceCreditNotes(AccountTestInvoicingCommon):
         cls.off_balance_income_account = cls.Account.create(
             {
                 "name": "Off-Balance Income",
-                "code": "INCX100",
+                "code": "INCXCN100",
                 "account_type": "income",
                 "is_off_balance": True,
                 "on_balance_account_id": cls.on_balance_income_account.id,
@@ -71,7 +71,7 @@ class TestOffBalanceCreditNotes(AccountTestInvoicingCommon):
         cls.off_balance_asset_account = cls.Account.create(
             {
                 "name": "Off-Balance Asset",
-                "code": "ASSX100",
+                "code": "ASSXCN100",
                 "account_type": "asset_current",
                 "is_off_balance": True,
                 "company_id": cls.company.id,

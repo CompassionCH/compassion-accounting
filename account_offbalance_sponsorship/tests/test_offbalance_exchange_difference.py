@@ -71,7 +71,7 @@ class TestOffBalanceExchangeDifference(AccountTestInvoicingCommon):
         cls.off_balance_exchange_account = cls.Account.create(
             {
                 "name": "Off-Balance Exchange Difference",
-                "code": "EXDX100",
+                "code": "EXDXEX100",
                 "account_type": "expense",
                 "is_off_balance": True,
                 "on_balance_account_id": cls.exchange_diff_account.id,
@@ -84,7 +84,7 @@ class TestOffBalanceExchangeDifference(AccountTestInvoicingCommon):
         cls.off_balance_income_account = cls.Account.create(
             {
                 "name": "Off-Balance Income",
-                "code": "INCX200",
+                "code": "INCXEX200",
                 "account_type": "income",
                 "is_off_balance": True,
                 "on_balance_account_id": cls.on_balance_income_account.id,
@@ -96,7 +96,7 @@ class TestOffBalanceExchangeDifference(AccountTestInvoicingCommon):
         cls.off_balance_asset_account = cls.Account.create(
             {
                 "name": "Off-Balance Asset",
-                "code": "ASSX200",
+                "code": "ASSXEX200",
                 "account_type": "asset_current",
                 "is_off_balance": True,
                 "company_id": cls.company.id,
@@ -137,8 +137,8 @@ class TestOffBalanceExchangeDifference(AccountTestInvoicingCommon):
         # Create journal
         cls.journal = cls.env["account.journal"].create(
             {
-                "name": "Test Journal",
-                "code": "TJX",
+                "name": "Test Journal Exchange",
+                "code": "TJEX",
                 "type": "general",
                 "company_id": cls.company.id,
             }
@@ -219,12 +219,14 @@ class TestOffBalanceExchangeDifference(AccountTestInvoicingCommon):
         self.assertIn("line_ids", result["move_values"])
 
         # Find the exchange difference line (should be at position 1 in the list)
-        # Structure is typically: [original line, exchange line]
+        # Structure is: [(0, 0, original_line_vals), (0, 0, exchange_line_vals)]
         line_ids = result["move_values"]["line_ids"]
-        self.assertTrue(len(line_ids) >= 2, "Expected at least 2 lines in the result")
+        self.assertGreaterEqual(
+            len(line_ids), 2, "Expected at least 2 lines in the result"
+        )
 
-        # The exchange line is typically the second line (index 1)
-        # It's a tuple of (0, 0, {values})
+        # The exchange line is the second line (index 1)
+        # Each line is a tuple: (0, 0, {field_values_dict})
         exchange_line_vals = line_ids[1][2]
 
         # Verify that the account is the off-balance exchange account
@@ -310,8 +312,11 @@ class TestOffBalanceExchangeDifference(AccountTestInvoicingCommon):
 
         # Step 4: Verify the result - should use standard exchange account
         line_ids = result["move_values"]["line_ids"]
-        self.assertTrue(len(line_ids) >= 2, "Expected at least 2 lines in the result")
+        self.assertGreaterEqual(
+            len(line_ids), 2, "Expected at least 2 lines in the result"
+        )
 
+        # Each line is a tuple: (0, 0, {field_values_dict})
         exchange_line_vals = line_ids[1][2]
 
         # For on-balance lines, the account should NOT be the off-balance
