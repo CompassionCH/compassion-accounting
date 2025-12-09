@@ -160,9 +160,7 @@ class TestOffBalanceCreditNotes(AccountTestInvoicingCommon):
             lambda mvl: mvl.account_id == self.on_balance_income_account
         )
         self.assertEqual(len(on_balance_income), 1)
-        self.assertAlmostEqual(
-            on_balance_income.balance, -invoice_amount, places=2
-        )
+        self.assertAlmostEqual(on_balance_income.balance, -invoice_amount, places=2)
 
         # Verify off-balance asset line
         asset_line = generated_lines.filtered(
@@ -243,8 +241,7 @@ class TestOffBalanceCreditNotes(AccountTestInvoicingCommon):
 
         # Step 6: Reconcile credit note with refund payment
         (
-            self._receivable_lines(credit_note)
-            | self._receivable_lines(refund_payment)
+            self._receivable_lines(credit_note) | self._receivable_lines(refund_payment)
         ).reconcile()
 
         # Step 7: Verify reversed off-balance lines are created

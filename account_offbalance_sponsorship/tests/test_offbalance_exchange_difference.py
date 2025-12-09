@@ -30,15 +30,7 @@ class TestOffBalanceExchangeDifference(AccountTestInvoicingCommon):
             cls.foreign_currency = cls.env.ref("base.EUR")
 
         # Setup exchange rate account (standard Odoo account for exchange differences)
-        cls.exchange_diff_account = cls.company_data.get(
-            "default_account_expense"
-        ) or cls.Account.search(
-            [
-                ("account_type", "=", "expense"),
-                ("company_id", "=", cls.company.id),
-            ],
-            limit=1,
-        )
+        cls.exchange_diff_account = cls.env.company.expense_currency_exchange_account_id
 
         # Create off-balance version of exchange difference account
         cls.off_balance_exchange_account = cls.Account.create(
