@@ -512,7 +512,7 @@ class ContractGroup(models.Model):
             "pricelist_id": self.pricelist_id.id,
             "payment_mode_id": self.payment_mode_id.id,
             "company_id": self.company_id.id,
-            "partner_bank_id": self.payment_mode_id.fixed_journal_id.bank_account_id
+            "partner_bank_id": self.payment_mode_id.fixed_journal_id.bank_account_id.id
             if self.payment_mode_id.bank_account_link == "fixed"
             else False,
             # Field for the invoice_due_date to be automatically calculated
