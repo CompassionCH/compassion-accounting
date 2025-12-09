@@ -45,7 +45,7 @@ class TestOffBalanceAccountMoveLine(TransactionCase):
                 "name": "On-Balance Income",
                 "code": "OBM100",
                 "account_type": "income",
-                "company_id": cls.company.id,
+                "company_ids": [(4, cls.company.id)],
             }
         )
         cls.off_balance_account = cls.Account.create(
@@ -55,7 +55,7 @@ class TestOffBalanceAccountMoveLine(TransactionCase):
                 "account_type": "income",
                 "is_off_balance": True,
                 "on_balance_account_id": cls.on_balance_account.id,
-                "company_id": cls.company.id,
+                "company_ids": [(4, cls.company.id)],
             }
         )
 

@@ -13,8 +13,8 @@ class TestOffBalanceCreditNotes(AccountTestInvoicingCommon):
     """
 
     @classmethod
-    def setUpClass(cls, chart_template_ref=None):
-        super().setUpClass(chart_template_ref=chart_template_ref)
+    def setUpClass(cls):
+        super().setUpClass()
         cls.Account = cls.env["account.account"]
         cls.AccountMove = cls.env["account.move"]
         cls.AccountMoveLine = cls.env["account.move.line"]
@@ -38,7 +38,7 @@ class TestOffBalanceCreditNotes(AccountTestInvoicingCommon):
                 "account_type": "income",
                 "is_off_balance": True,
                 "on_balance_account_id": cls.on_balance_income_account.id,
-                "company_id": cls.company.id,
+                "company_ids": [(4, cls.company.id)],
             }
         )
         cls.off_balance_asset_account = cls.Account.create(
@@ -47,7 +47,7 @@ class TestOffBalanceCreditNotes(AccountTestInvoicingCommon):
                 "code": "ASSXCN100",
                 "account_type": "asset_current",
                 "is_off_balance": True,
-                "company_id": cls.company.id,
+                "company_ids": [(4, cls.company.id)],
             }
         )
         cls.bank_account = cls.bank_journal.default_account_id
@@ -137,8 +137,9 @@ class TestOffBalanceCreditNotes(AccountTestInvoicingCommon):
         """
         # Step 1: Create invoice
         invoice = self.init_invoice(
-            "out_invoice", post=True, products=[self.product_off_balance]
+            "out_invoice", products=[self.product_off_balance]
         )
+        invoice.action_post()
         invoice_amount = invoice.amount_total
 
         # Step 2: Create payment
@@ -184,8 +185,9 @@ class TestOffBalanceCreditNotes(AccountTestInvoicingCommon):
         """
         # Step 1: Create invoice
         invoice = self.init_invoice(
-            "out_invoice", post=True, products=[self.product_off_balance]
+            "out_invoice", products=[self.product_off_balance]
         )
+        invoice.action_post()
         invoice_amount = invoice.amount_total
 
         # Step 2: Create payment and reconcile
@@ -198,8 +200,9 @@ class TestOffBalanceCreditNotes(AccountTestInvoicingCommon):
 
         # Step 4: Create credit note
         credit_note = self.init_invoice(
-            "out_refund", post=True, products=[self.product_off_balance]
+            "out_refund", products=[self.product_off_balance]
         )
+        credit_note.action_post()
         credit_note_amount = credit_note.amount_total
 
         # Verify amounts match

@@ -15,8 +15,8 @@ class TestOffBalanceExchangeDifference(AccountTestInvoicingCommon):
     """
 
     @classmethod
-    def setUpClass(cls, chart_template_ref=None):
-        super().setUpClass(chart_template_ref=chart_template_ref)
+    def setUpClass(cls):
+        super().setUpClass()
         cls.Account = cls.env["account.account"]
         cls.AccountMove = cls.env["account.move"]
         cls.AccountMoveLine = cls.env["account.move.line"]
@@ -40,7 +40,7 @@ class TestOffBalanceExchangeDifference(AccountTestInvoicingCommon):
                 "account_type": "expense",
                 "is_off_balance": True,
                 "on_balance_account_id": cls.exchange_diff_account.id,
-                "company_id": cls.company.id,
+                "company_ids": [(4, cls.company.id)],
             }
         )
 
@@ -53,7 +53,7 @@ class TestOffBalanceExchangeDifference(AccountTestInvoicingCommon):
                 "account_type": "income",
                 "is_off_balance": True,
                 "on_balance_account_id": cls.on_balance_income_account.id,
-                "company_id": cls.company.id,
+                "company_ids": [(4, cls.company.id)],
             }
         )
 
@@ -64,7 +64,7 @@ class TestOffBalanceExchangeDifference(AccountTestInvoicingCommon):
                 "code": "ASSXEX200",
                 "account_type": "asset_current",
                 "is_off_balance": True,
-                "company_id": cls.company.id,
+                "company_ids": [(4, cls.company.id)],
             }
         )
 
