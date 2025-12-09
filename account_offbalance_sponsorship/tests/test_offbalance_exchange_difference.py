@@ -314,7 +314,8 @@ class TestOffBalanceExchangeDifference(AccountTestInvoicingCommon):
 
         exchange_line_vals = line_ids[1][2]
 
-        # For on-balance lines, the account should NOT be the off-balance exchange account
+        # For on-balance lines, the account should NOT be the off-balance
+        # exchange account
         self.assertNotEqual(
             exchange_line_vals["account_id"],
             self.off_balance_exchange_account.id,
