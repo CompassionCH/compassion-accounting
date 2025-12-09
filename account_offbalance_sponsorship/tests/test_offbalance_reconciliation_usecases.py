@@ -224,8 +224,7 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         """
         invoices = self.env["account.move"]
         for product in products:
-            invoice = self.init_invoice("out_invoice", products=[product])
-            invoice.action_post()
+            invoice = self.init_invoice("out_invoice", products=[product], post=True)
             invoice.payment_mode_id = self.inbound_mode
             invoices |= invoice
         invoices = invoices.sorted(lambda inv: inv.id)
@@ -240,8 +239,7 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         """Test: One payment matching an existing invoice (direct reconciliation)."""
         # Step 1: Prepare invoice and payment
         amount_total = self.product_o.list_price
-        invoice = self.init_invoice("out_invoice", products=[self.product_o])
-        invoice.action_post()
+        invoice = self.init_invoice("out_invoice", products=[self.product_o], post=True)
         payment = self._create_payment([amount_total])
 
         # Step 2: Reconcile receivable lines
@@ -257,8 +255,7 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         # Step 1: Prepare invoice and overpaid payment
         amount_total = self.product_o.list_price
         extra_amount = 150.0
-        invoice = self.init_invoice("out_invoice", products=[self.product_o])
-        invoice.action_post()
+        invoice = self.init_invoice("out_invoice", products=[self.product_o], post=True)
         payment = self._create_payment([amount_total, extra_amount])
 
         # Step 2: Reconcile only the invoice amount
@@ -279,9 +276,8 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         # Step 4: Consume the residual via a new invoice (widget flow)
         self.product_o.list_price = extra_amount
         residual_invoice = self.init_invoice(
-            "out_invoice", products=[self.product_o]
+            "out_invoice", products=[self.product_o], post=True
         )
-        residual_invoice.action_post()
         self.assert_invoice_outstanding_to_reconcile_widget(
             residual_invoice, {payment.id: extra_amount}
         )
@@ -299,8 +295,7 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
     def test_direct_multiple_payments_one_invoice(self):
         """Test: Multiple payments reconciling an existing invoice."""
         # Step 1: Prepare invoice and split payments
-        invoice = self.init_invoice("out_invoice", products=[self.product_o])
-        invoice.action_post()
+        invoice = self.init_invoice("out_invoice", products=[self.product_o], post=True)
         amount_total = self.product_o.list_price
         payment_price = amount_total / 3.0
         payment1 = self._create_payment([payment_price])
@@ -327,13 +322,11 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         """Test: One payment paying multiple invoices (direct reconciliation)."""
         # Step 1: Prepare invoices and lump-sum payment
         invoice1 = self.init_invoice(
-            "out_invoice", products=[self.product_o]
+            "out_invoice", products=[self.product_o], post=True
         )
-        invoice1.action_post()
         invoice2 = self.init_invoice(
-            "out_invoice", products=[self.product_o_2]
+            "out_invoice", products=[self.product_o_2], post=True
         )
-        invoice2.action_post()
         amount_total = self.product_o.list_price + self.product_o_2.list_price
         payment = self._create_payment([amount_total])
 
@@ -352,13 +345,11 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         with partial reconciles (direct)."""
         # Step 1: Prepare invoices
         invoice1 = self.init_invoice(
-            "out_invoice", products=[self.product_o_2]
+            "out_invoice", products=[self.product_o_2], post=True
         )
-        invoice1.action_post()
         invoice2 = self.init_invoice(
-            "out_invoice", products=[self.product_o]
+            "out_invoice", products=[self.product_o], post=True
         )
-        invoice2.action_post()
         invoice1_line = self._receivable_lines(invoice1)
         invoice2_line = self._receivable_lines(invoice2)
 

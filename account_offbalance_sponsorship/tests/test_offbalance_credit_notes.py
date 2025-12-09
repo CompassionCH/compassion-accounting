@@ -137,9 +137,8 @@ class TestOffBalanceCreditNotes(AccountTestInvoicingCommon):
         """
         # Step 1: Create invoice
         invoice = self.init_invoice(
-            "out_invoice", products=[self.product_off_balance]
+            "out_invoice", products=[self.product_off_balance], post=True
         )
-        invoice.action_post()
         invoice_amount = invoice.amount_total
 
         # Step 2: Create payment
@@ -185,9 +184,8 @@ class TestOffBalanceCreditNotes(AccountTestInvoicingCommon):
         """
         # Step 1: Create invoice
         invoice = self.init_invoice(
-            "out_invoice", products=[self.product_off_balance]
+            "out_invoice", products=[self.product_off_balance], post=True
         )
-        invoice.action_post()
         invoice_amount = invoice.amount_total
 
         # Step 2: Create payment and reconcile
@@ -200,9 +198,8 @@ class TestOffBalanceCreditNotes(AccountTestInvoicingCommon):
 
         # Step 4: Create credit note
         credit_note = self.init_invoice(
-            "out_refund", products=[self.product_off_balance]
+            "out_refund", products=[self.product_off_balance], post=True
         )
-        credit_note.action_post()
         credit_note_amount = credit_note.amount_total
 
         # Verify amounts match

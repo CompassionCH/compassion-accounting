@@ -24,7 +24,7 @@ def migrate(cr, version):
             [
                 ("on_balance_account_id", "=", on_balance_account.id),
                 ("is_off_balance", "=", True),
-                ("company_id", "=", line.company_id.id),
+                ("company_ids", "=", line.company_id.id),
                 ("internal_group", "=", "income"),
             ],
             limit=1,
