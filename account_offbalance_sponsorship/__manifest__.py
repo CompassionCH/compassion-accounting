@@ -40,7 +40,8 @@
     "depends": [
         "account",
         "account_payment_order",  # OCA/bank-payment
-        # "recurring_contract"  # Only for migration purpose having last_payment field
+        # TODO remove me after migration
+        "recurring_contract",  # Only for migration purpose having last_payment field
     ],
     # always loaded
     "data": [

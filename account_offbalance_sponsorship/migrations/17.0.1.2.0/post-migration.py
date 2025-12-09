@@ -32,19 +32,19 @@ def migrate(cr, version):
         product_id = line.product_id
         if off_balance_account and product_id:
             # Find related invoice line
-            invoice_line = env["account.move.line"].search(
+            invoice_lines = env["account.move.line"].search(
                 [
-                    ("move_id", "=", line.move_id.id),
                     ("product_id", "=", product_id.id),
                     ("account_id", "=", off_balance_account.id),
                     ("partner_id", "=", line.partner_id.id),
                     ("move_id.payment_state", "in", ["partial", "paid"]),
                     ("last_payment", "=", line.date),
                 ],
-                limit=1,
             )
-            if invoice_line:
+            if invoice_lines:
                 found += 1
-                line.write({"off_balance_line_id": invoice_line.id})
+                line.write(
+                    {"off_balance_line_ids": [(4, line.id) for line in invoice_lines]}
+                )
 
     _logger.info("Associated %s off-balance lines.", found)
