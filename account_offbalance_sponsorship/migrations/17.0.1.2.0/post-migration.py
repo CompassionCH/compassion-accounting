@@ -44,7 +44,11 @@ def migrate(cr, version):
             if invoice_lines:
                 found += 1
                 line.write(
-                    {"off_balance_line_ids": [(4, line.id) for line in invoice_lines]}
+                    {
+                        "off_balance_line_ids": [
+                            (4, invoice_line.id) for invoice_line in invoice_lines
+                        ]
+                    }
                 )
 
     _logger.info("Associated %s off-balance lines.", found)

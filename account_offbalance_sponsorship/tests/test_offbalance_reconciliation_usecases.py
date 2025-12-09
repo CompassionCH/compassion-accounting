@@ -196,22 +196,22 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         )
 
     def _assert_on_balance_total(self, lines, amount, expected_count=None):
-        """Assert that on-balance income lines sum to the provided amount."""
+        """Assert that on-balance income lines credit sum to the provided amount."""
         on_balance = lines.filtered(
             lambda mvl: mvl.account_id == self.on_balance_income_account
         )
         if expected_count is not None:
             self.assertEqual(len(on_balance), expected_count)
-        self.assertAlmostEqual(sum(on_balance.mapped("balance")), -amount, places=2)
+        self.assertAlmostEqual(sum(on_balance.mapped("credit")), amount, places=2)
         return on_balance
 
     def _assert_asset_total(self, lines, amount, expected_count=1):
-        """Assert that off-balance asset lines sum to the provided amount."""
+        """Assert that off-balance asset lines debit sum to the provided amount."""
         asset_lines = lines.filtered(
             lambda mvl: mvl.account_id == self.off_balance_asset_account
         )
         self.assertEqual(len(asset_lines), expected_count)
-        self.assertAlmostEqual(sum(asset_lines.mapped("balance")), amount, places=2)
+        self.assertAlmostEqual(sum(asset_lines.mapped("debit")), amount, places=2)
         return asset_lines
 
     def _prepare_indirect_invoices(self, products):
@@ -268,7 +268,7 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         off_balance_lines = self._assert_off_balance_lines_created(payment, 2)
         self._assert_on_balance_total(off_balance_lines, amount_total, expected_count=1)
         self.assertAlmostEqual(invoice_payment_line.amount_residual, 0.0, places=2)
-        self.assertAlmostEqual(residual_line.amount_residual, -extra_amount)
+        self.assertAlmostEqual(residual_line.credit, extra_amount)
 
         # Step 4: Consume the residual via a new invoice (widget flow)
         self.product_o.list_price = extra_amount
@@ -463,7 +463,7 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         )
         self.assertAlmostEqual(invoice_payment_line.amount_residual, 0.0, places=2)
         self.assertEqual(len(residual_line), 1)
-        self.assertAlmostEqual(residual_line.amount_residual, -extra_amount, places=2)
+        self.assertAlmostEqual(residual_line.credit, extra_amount, places=2)
 
     def test_indirect_multiple_payments_one_invoice(self):
         """Test: Multiple payments reconciling one invoice."""
