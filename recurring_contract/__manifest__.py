@@ -29,7 +29,7 @@
 {
     "name": "Recurring contract",
     "summary": "Contract for recurring invoicing",
-    "version": "17.0.1.0.5",
+    "version": "17.0.1.0.6",
     "license": "AGPL-3",
     "author": "Compassion CH",
     "development_status": "Production/Stable",
