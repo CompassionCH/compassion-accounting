@@ -168,31 +168,47 @@ class AccountMoveLine(models.Model):
         available_income = total_income - total_already_distributed
 
         # Process invoice lines with on-balance accounts
-        for invoice_line in invoice_lines.filtered("account_id.on_balance_account_id"):
-            remaining_amount = invoice_line.price_total
-            if invoice_line.on_balance_line_ids:
-                already_distributed = copysign(
-                    sum(invoice_line.on_balance_line_ids.mapped("balance")),
-                    remaining_amount,
-                )
-                remaining_amount -= already_distributed
-            if invoice_line.currency_id.is_zero(remaining_amount):
-                continue
+        # We group by invoice to compute the distribution ratio once per invoice
+        # This ensures that all lines of the same invoice get the same ratio
+        # based on the available income at the time we start processing that invoice.
+        invoices = invoice_lines.move_id.sorted("amount_total")
 
-            ratio = invoice_line.move_id._compute_invoice_distribution_ratio(
-                available_income
-            )
-            distributed_amount = copysign(
-                min(abs(remaining_amount) * ratio, available_income),
-                invoice_line.balance,
-            )
-            if invoice_line.currency_id.is_zero(distributed_amount):
-                continue
-
-            onbalance_amounts_by_line[invoice_line] = distributed_amount
-            available_income -= abs(distributed_amount)
-            if invoice_line.currency_id.is_zero(available_income):
+        for invoice in invoices:
+            if invoice.currency_id.is_zero(available_income):
                 break
+
+            # Compute ratio based on the available income for this invoice
+            ratio = invoice._compute_invoice_distribution_ratio(available_income)
+
+            # Filter lines for this invoice that need processing
+            lines = invoice_lines.filtered(
+                lambda line, iv=invoice: line.move_id == iv
+                and line.account_id.on_balance_account_id
+            )
+
+            for invoice_line in lines:
+                remaining_amount = invoice_line.price_total
+                if invoice_line.on_balance_line_ids:
+                    already_distributed = copysign(
+                        sum(invoice_line.on_balance_line_ids.mapped("balance")),
+                        remaining_amount,
+                    )
+                    remaining_amount -= already_distributed
+                if invoice_line.currency_id.is_zero(remaining_amount):
+                    continue
+
+                # Use the invoice-level ratio
+                distributed_amount = copysign(
+                    min(abs(remaining_amount) * ratio, available_income),
+                    invoice_line.balance,
+                )
+                if invoice_line.currency_id.is_zero(distributed_amount):
+                    continue
+
+                onbalance_amounts_by_line[invoice_line] = distributed_amount
+                available_income -= abs(distributed_amount)
+                if invoice_line.currency_id.is_zero(available_income):
+                    break
         return onbalance_amounts_by_line
 
     def _create_onbalance_move_lines(
