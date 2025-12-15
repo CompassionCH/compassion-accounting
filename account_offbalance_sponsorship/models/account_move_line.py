@@ -189,8 +189,16 @@ class AccountMoveLine(models.Model):
             for invoice_line in lines:
                 remaining_amount = invoice_line.price_total
                 if invoice_line.on_balance_line_ids:
+                    # When an on-balance line is linked to multiple invoice lines
+                    # (e.g. same product), we must split its amount
+                    # to avoid double counting the distributed amount.
+                    already_distributed_amount = sum(
+                        line.balance / len(line.off_balance_line_ids)
+                        for line in invoice_line.on_balance_line_ids
+                        if line.off_balance_line_ids
+                    )
                     already_distributed = copysign(
-                        sum(invoice_line.on_balance_line_ids.mapped("balance")),
+                        already_distributed_amount,
                         remaining_amount,
                     )
                     remaining_amount -= already_distributed

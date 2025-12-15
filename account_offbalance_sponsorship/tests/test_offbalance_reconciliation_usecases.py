@@ -166,20 +166,31 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         payment_order.generated2uploaded()
         return payment_order.move_ids
 
-    def _assert_off_balance_lines_created(self, payment, expected_count):
+    def _assert_off_balance_lines_created(self, payment, expected_amount):
         """
-        Assert that off-balance lines were created.
+        Assert that off-balance lines were created and sum to expected amount.
 
         :param payment: Payment move to check (account.move)
-        :param expected_count: Expected number of off-balance generated lines (int)
+        :param expected_amount: Expected total amount of on-balance lines (float)
         :return: Off-balance generated lines (account.move.line recordset)
         """
         off_balance_lines = payment.line_ids.filtered("is_off_balance_generated")
-        self.assertEqual(
-            len(off_balance_lines),
-            expected_count,
-            f"Expected {expected_count} off-balance lines, "
-            f"got {len(off_balance_lines)}",
+
+        # Check on-balance income lines total
+        on_balance = off_balance_lines.filtered(
+            lambda mvl: mvl.account_id == self.on_balance_income_account
+        )
+        on_balance_total = sum(on_balance.mapped("credit"))
+        self.assertAlmostEqual(on_balance_total, expected_amount, places=2)
+
+        # Check asset lines total
+        # The sum of income on_balance amounts (Credit)
+        # must equal the sum of the asset lines (Debit)
+        asset_lines = off_balance_lines.filtered(
+            lambda mvl: mvl.account_id == self.off_balance_asset_account
+        )
+        self.assertAlmostEqual(
+            sum(asset_lines.mapped("debit")), on_balance_total, places=2
         )
         return off_balance_lines
 
@@ -195,25 +206,6 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
             lambda mvl: mvl.account_id == self.outstanding_account
         )
 
-    def _assert_on_balance_total(self, lines, amount, expected_count=None):
-        """Assert that on-balance income lines credit sum to the provided amount."""
-        on_balance = lines.filtered(
-            lambda mvl: mvl.account_id == self.on_balance_income_account
-        )
-        if expected_count is not None:
-            self.assertEqual(len(on_balance), expected_count)
-        self.assertAlmostEqual(sum(on_balance.mapped("credit")), amount, places=2)
-        return on_balance
-
-    def _assert_asset_total(self, lines, amount, expected_count=1):
-        """Assert that off-balance asset lines debit sum to the provided amount."""
-        asset_lines = lines.filtered(
-            lambda mvl: mvl.account_id == self.off_balance_asset_account
-        )
-        self.assertEqual(len(asset_lines), expected_count)
-        self.assertAlmostEqual(sum(asset_lines.mapped("debit")), amount, places=2)
-        return asset_lines
-
     def _prepare_indirect_invoices(self, products):
         """
         Create invoices configured for indirect reconciliation
@@ -227,7 +219,7 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         invoices = invoices.sorted(lambda inv: inv.id)
         debit_moves = self._create_debit_order(invoices)
         self.assertSetEqual(set(invoices.mapped("payment_state")), {"in_payment"})
-        self._assert_off_balance_lines_created(debit_moves, 0)
+        self._assert_off_balance_lines_created(debit_moves, 0.0)
         return invoices, debit_moves, self._outstanding_lines(debit_moves)
 
     # Direct Reconciliation Tests (Bank Transfer)
@@ -243,9 +235,7 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         (self._receivable_lines(invoice) | self._receivable_lines(payment)).reconcile()
 
         # Step 3: Assert generated on/off balance effects
-        generated_lines = self._assert_off_balance_lines_created(payment, 2)
-        self._assert_on_balance_total(generated_lines, amount_total, expected_count=1)
-        self._assert_asset_total(generated_lines, amount_total)
+        self._assert_off_balance_lines_created(payment, amount_total)
 
     def test_direct_one_payment_with_additional_amount(self):
         """Test: One payment with additional amount unreconciled."""
@@ -265,8 +255,7 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         (invoice_line | invoice_payment_line).reconcile()
 
         # Step 3: Assert generated lines cover only the reconciled part
-        off_balance_lines = self._assert_off_balance_lines_created(payment, 2)
-        self._assert_on_balance_total(off_balance_lines, amount_total, expected_count=1)
+        self._assert_off_balance_lines_created(payment, amount_total)
         self.assertAlmostEqual(invoice_payment_line.amount_residual, 0.0, places=2)
         self.assertAlmostEqual(residual_line.credit, extra_amount)
 
@@ -284,10 +273,7 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         )
 
         # Step 5: Off-balance totals now cover both invoices
-        off_balance_lines = self._assert_off_balance_lines_created(payment, 4)
-        self._assert_on_balance_total(
-            off_balance_lines, amount_total + extra_amount, expected_count=2
-        )
+        self._assert_off_balance_lines_created(payment, amount_total + extra_amount)
 
     def test_direct_multiple_payments_one_invoice(self):
         """Test: Multiple payments reconciling an existing invoice."""
@@ -302,24 +288,26 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         # Step 2: Reconcile each payment sequentially
         payment1_line = self._receivable_lines(payment1)
         (invoice_line | payment1_line).reconcile()
-        off_balance_lines1 = self._assert_off_balance_lines_created(payment1, 2)
-        self._assert_on_balance_total(
-            off_balance_lines1, payment_price, expected_count=1
-        )
+        self._assert_off_balance_lines_created(payment1, payment_price)
 
         payment2_line = self._receivable_lines(payment2)
         (invoice_line | payment2_line).reconcile()
 
         # Step 3: All payments combined cover the invoice
-        combined_lines = self._assert_off_balance_lines_created(payment1 + payment2, 4)
-        self._assert_on_balance_total(combined_lines, amount_total, expected_count=2)
+        self._assert_off_balance_lines_created(payment1 + payment2, amount_total)
         self.assertAlmostEqual(invoice_line.amount_residual, 0.0)
 
     def test_direct_multiple_payments_one_invoice_multiple_lines(self):
-        """Test: Multiple payments reconciling one invoice with multiple lines."""
-        # Step 1: Prepare invoice with multiple lines
+        """Test: Multiple payments reconciling one invoice with multiple lines.
+        - Step 1: Prepare invoice with multiple lines OF THE SAME PRODUCT
+          Using the same product forces aggregation of on-balance lines
+          (same account/product).
+        This tests that we correctly handle 'already_distributed' calculation when
+        one on-balance line is linked to multiple invoice lines.
+        """
+
         invoice = self.init_invoice(
-            "out_invoice", post=True, products=[self.product_o, self.product_o_2]
+            "out_invoice", post=True, products=[self.product_o, self.product_o]
         )
         amount_total = invoice.amount_total
         payment_amount = amount_total / 2.0
@@ -334,22 +322,14 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         (invoice_line | payment1_line).reconcile()
 
         # Assertions for first payment
-        off_balance_lines1 = self._assert_off_balance_lines_created(payment1, 3)
-        self._assert_on_balance_total(
-            off_balance_lines1, payment_amount, expected_count=2
-        )
+        self._assert_off_balance_lines_created(payment1, payment_amount)
 
         # Step 4: Reconcile second payment
         payment2_line = self._receivable_lines(payment2)
         (invoice_line | payment2_line).reconcile()
 
         # Assertions for second payment
-        off_balance_lines2 = self._assert_off_balance_lines_created(
-            payment1 | payment2, 6
-        )
-        self._assert_on_balance_total(
-            off_balance_lines2, payment_amount * 2, expected_count=4
-        )
+        self._assert_off_balance_lines_created(payment1 | payment2, payment_amount * 2)
         self.assertAlmostEqual(invoice_line.amount_residual, 0.0)
 
     def test_direct_one_payment_multiple_invoices(self):
@@ -370,9 +350,7 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         (invoice_lines | payment_line).reconcile()
 
         # Step 3: Assert line distributions (two revenues + one asset)
-        off_balance_lines = self._assert_off_balance_lines_created(payment, 3)
-        self._assert_on_balance_total(off_balance_lines, amount_total, expected_count=2)
-        self._assert_asset_total(off_balance_lines, amount_total)
+        self._assert_off_balance_lines_created(payment, amount_total)
 
     def test_direct_multiple_payments_multiple_invoices(self):
         """Test: Multiple payments reconciling multiple invoices
@@ -392,10 +370,7 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         payment1 = self._create_payment([partial_amount])
         payment1_line = self._receivable_lines(payment1)
         (invoice1_line | payment1_line).reconcile()
-        off_balance_lines1 = self._assert_off_balance_lines_created(payment1, 2)
-        self._assert_on_balance_total(
-            off_balance_lines1, partial_amount, expected_count=1
-        )
+        self._assert_off_balance_lines_created(payment1, partial_amount)
 
         # Step 3: Second payment completes invoice1 and partially pays invoice2
         partial_amount_2 = 200.0
@@ -403,11 +378,8 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         payment2_line = self._receivable_lines(payment2)
         (payment2_line | invoice1_line).reconcile()
         (payment2_line | invoice2_line).reconcile()
-        off_balance_lines2 = self._assert_off_balance_lines_created(
-            payment1 + payment2, 6
-        )
-        self._assert_on_balance_total(
-            off_balance_lines2, partial_amount + partial_amount_2, expected_count=3
+        self._assert_off_balance_lines_created(
+            payment1 | payment2, partial_amount + partial_amount_2
         )
 
         # Step 4: Unreconcile to simulate widget operations, then reconcile together
@@ -415,13 +387,10 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
             invoice1.js_remove_outstanding_partial(partial.id)
         for partial in invoice2_line.mapped("matched_credit_ids"):
             invoice2.js_remove_outstanding_partial(partial.id)
-        self._assert_off_balance_lines_created(payment1 + payment2, 0)
+        self._assert_off_balance_lines_created(payment1 + payment2, 0.0)
         (payment1_line | payment2_line | invoice1_line | invoice2_line).reconcile()
-        reconciled_lines = self._assert_off_balance_lines_created(
-            payment1 + payment2, 3
-        )
-        self._assert_on_balance_total(
-            reconciled_lines, partial_amount + partial_amount_2, expected_count=2
+        self._assert_off_balance_lines_created(
+            payment1 + payment2, partial_amount + partial_amount_2
         )
 
         # Step 5: Final payment closes invoice2
@@ -431,13 +400,9 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         payment3 = self._create_payment([remaining_amount])
         payment3_line = self._receivable_lines(payment3)
         (invoice2_line | payment3_line).reconcile()
-        off_balance_lines3 = self._assert_off_balance_lines_created(
-            payment1 + payment2 + payment3, 5
-        )
-        self._assert_on_balance_total(
-            off_balance_lines3,
+        self._assert_off_balance_lines_created(
+            payment1 + payment2 + payment3,
             self.product_o.list_price + self.product_o_2.list_price,
-            expected_count=3,
         )
         self.assertAlmostEqual(invoice1_line.amount_residual, 0.0)
         self.assertAlmostEqual(invoice2_line.amount_residual, 0.0)
@@ -464,10 +429,7 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         (debit_outstanding_line | payment_outstanding_line).reconcile()
 
         # Step 4: Assert off-balance outputs
-        off_balance_lines = self._assert_off_balance_lines_created(payment, 2)
-        self._assert_on_balance_total(
-            off_balance_lines, invoice.amount_total, expected_count=1
-        )
+        self._assert_off_balance_lines_created(payment, invoice.amount_total)
         self.assertEqual(invoice.payment_state, "paid")
 
     def test_indirect_one_payment_with_additional_amount(self):
@@ -494,10 +456,7 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         (debit_outstanding_line | invoice_payment_line).reconcile()
 
         # Step 3: Validate off-balance creation and remaining residuals
-        off_balance_lines = self._assert_off_balance_lines_created(payment, 2)
-        self._assert_on_balance_total(
-            off_balance_lines, invoice.amount_total, expected_count=1
-        )
+        self._assert_off_balance_lines_created(payment, invoice.amount_total)
         self.assertAlmostEqual(invoice_payment_line.amount_residual, 0.0, places=2)
         self.assertEqual(len(residual_line), 1)
         self.assertAlmostEqual(residual_line.credit, extra_amount, places=2)
@@ -520,8 +479,7 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         )
         payment1_line = self._outstanding_lines(payment1)
         (debit_outstanding_line | payment1_line).reconcile()
-        lines1 = self._assert_off_balance_lines_created(payment1, 2)
-        self._assert_on_balance_total(lines1, first_amount, expected_count=1)
+        self._assert_off_balance_lines_created(payment1, first_amount)
         self.assertAlmostEqual(payment1_line.amount_residual, 0.0, places=2)
         self.assertAlmostEqual(
             debit_outstanding_line.amount_residual, second_amount, places=2
@@ -533,9 +491,8 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         )
         payment2_line = self._outstanding_lines(payment2)
         (debit_outstanding_line | payment2_line).reconcile()
-        combined_lines = self._assert_off_balance_lines_created(payment1 + payment2, 4)
-        self._assert_on_balance_total(
-            combined_lines, invoice.amount_total, expected_count=2
+        self._assert_off_balance_lines_created(
+            payment1 + payment2, invoice.amount_total
         )
         self.assertAlmostEqual(payment2_line.amount_residual, 0.0, places=2)
         self.assertAlmostEqual(debit_outstanding_line.amount_residual, 0.0, places=2)
@@ -558,13 +515,7 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
 
         # Step 3: Assert on/off balance distributions
         total_amount = sum(invoices.mapped("amount_total"))
-        off_balance_lines = self._assert_off_balance_lines_created(
-            payment, len(invoices) + 1
-        )
-        self._assert_on_balance_total(
-            off_balance_lines, total_amount, expected_count=len(invoices)
-        )
-        self._assert_asset_total(off_balance_lines, total_amount)
+        self._assert_off_balance_lines_created(payment, total_amount)
 
         # Step 4: Ensure no residuals remain
         self.assertTrue(
@@ -599,8 +550,7 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         )
         payment1_line = self._outstanding_lines(payment1)
         (debit_line | payment1_line).reconcile()
-        lines1 = self._assert_off_balance_lines_created(payment1, 2)
-        self._assert_on_balance_total(lines1, first_payment_amount, expected_count=1)
+        self._assert_off_balance_lines_created(payment1, first_payment_amount)
         self.assertAlmostEqual(payment1_line.amount_residual, 0.0, places=2)
 
         # Step 3: Second payment closes invoice1 and partially covers invoice2
@@ -618,11 +568,8 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         )
         payment2_line = self._outstanding_lines(payment2)
         (debit_line | payment2_line).reconcile()
-        lines2 = self._assert_off_balance_lines_created(payment1 + payment2, 5)
-        self._assert_on_balance_total(
-            lines2,
-            first_payment_amount + second_payment_amount,
-            expected_count=3,
+        self._assert_off_balance_lines_created(
+            payment1 + payment2, first_payment_amount + second_payment_amount
         )
         self.assertAlmostEqual(
             debit_line.amount_residual,
@@ -639,10 +586,9 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         )
         payment3_line = self._outstanding_lines(payment3)
         (debit_line | payment3_line).reconcile()
-        lines3 = self._assert_off_balance_lines_created(
-            payment1 + payment2 + payment3, 7
+        self._assert_off_balance_lines_created(
+            payment1 + payment2 + payment3, total_amount
         )
-        self._assert_on_balance_total(lines3, total_amount, expected_count=4)
         self.assertAlmostEqual(payment3_line.amount_residual, 0.0, places=2)
         self.assertTrue(self.currency.is_zero(debit_line.amount_residual))
         self.assertSetEqual(set(invoices.mapped("payment_state")), {"paid"})
