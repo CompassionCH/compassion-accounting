@@ -84,7 +84,7 @@ class AccountMove(models.Model):
         self.ensure_one()
         if not self.amount_total:
             return 0.0
-        if self.payment_state == "paid":
+        if self.payment_state in ("partial", "paid"):
             paid_ratio = (self.amount_total - self.amount_residual) / self.amount_total
             return min(max(paid_ratio, 0.0), 1.0)
         return min(max(available_income / self.amount_total, 0.0), 1.0)
