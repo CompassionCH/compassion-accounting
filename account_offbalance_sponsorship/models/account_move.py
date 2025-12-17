@@ -27,9 +27,26 @@ class AccountMove(models.Model):
         asset_lines = generated_lines.mapped("off_balance_line_ids").filtered(
             "is_off_balance_generated"
         )
-        (generated_lines + asset_lines).with_context(
-            dynamic_unlink=True, force_delete=True
-        ).unlink()
+
+        lines_to_unlink = generated_lines
+        for asset_line in asset_lines:
+            linked_generated = generated_lines.filtered(
+                lambda line, al=asset_line: al in line.off_balance_line_ids
+            )
+            amount_to_remove = sum(linked_generated.mapped("balance"))
+            remaining_balance = asset_line.balance + amount_to_remove
+
+            if asset_line.company_id.currency_id.is_zero(remaining_balance):
+                lines_to_unlink += asset_line
+            else:
+                vals = (
+                    {"debit": remaining_balance, "credit": 0.0}
+                    if remaining_balance > 0
+                    else {"debit": 0.0, "credit": -remaining_balance}
+                )
+                asset_line.with_context(check_move_validity=False).write(vals)
+
+        lines_to_unlink.with_context(dynamic_unlink=True, force_delete=True).unlink()
 
         # 2. Remove payment lines to make the invoice payable again
         reconciled_lines = partial.credit_move_id + partial.debit_move_id
@@ -67,7 +84,7 @@ class AccountMove(models.Model):
         self.ensure_one()
         if not self.amount_total:
             return 0.0
-        if self.payment_state == "paid":
+        if self.payment_state in ("partial", "paid"):
             paid_ratio = (self.amount_total - self.amount_residual) / self.amount_total
             return min(max(paid_ratio, 0.0), 1.0)
         return min(max(available_income / self.amount_total, 0.0), 1.0)

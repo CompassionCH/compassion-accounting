@@ -14,7 +14,6 @@ from dateutil.relativedelta import relativedelta
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
-from odoo.tools.misc import flatten
 
 _logger = logging.getLogger(__name__)
 
@@ -144,6 +143,9 @@ class RecurringContract(models.Model):
         store=True,
         help="Number of unpaid months (in the past)",
     )
+    last_months_due_computed_at = fields.Datetime(
+        store=True, compute="_compute_due_invoices"
+    )
     period_paid = fields.Boolean(
         compute="_compute_period_paid",
         help="Tells if the advance billing period is already paid",
@@ -217,6 +219,7 @@ class RecurringContract(models.Model):
 
     @api.depends("invoice_line_ids", "invoice_line_ids.payment_state")
     def _compute_due_invoices(self):
+        now = fields.Datetime.now()
         for contract in self:
             due_invoices = contract._filter_due_invoices()
             contract.due_invoice_ids = due_invoices
@@ -232,6 +235,7 @@ class RecurringContract(models.Model):
                 idate = invoice.invoice_date_due
                 months.add((idate.month, idate.year))
             contract.months_due = len(months)
+            contract.last_months_due_computed_at = now
 
     def _filter_due_invoices(self):
         # Use SQL for better performance
@@ -245,7 +249,7 @@ class RecurringContract(models.Model):
         """,
             [self.ids, fields.Date.to_string(this_month)],
         )
-        move_ids = flatten(self.env.cr.fetchall())
+        move_ids = [r[0] for r in self.env.cr.fetchall()]
         moves = self.env["account.move"]
         if move_ids:
             moves = moves.browse(move_ids)
