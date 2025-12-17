@@ -228,10 +228,10 @@ class AccountMoveLine(models.Model):
                     continue
 
                 # Use the invoice-level ratio
-                def get_dist_amount(remaining, limit, sign_ref=invoice_line.balance):
+                def get_dist_amount(amount_to_distribute, limit):
                     return copysign(
-                        min(abs(remaining), limit),
-                        sign_ref,
+                        min(abs(amount_to_distribute), limit),
+                        amount_to_distribute,
                     )
 
                 distributed_amount = get_dist_amount(
