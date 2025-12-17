@@ -198,7 +198,7 @@ class AccountMoveLine(models.Model):
             for invoice_line in lines:
                 # Keep track of amounts in company currency and line currency
                 remaining_amount = invoice_line.balance
-                remaining_amount_currency = invoice_line.price_total
+                remaining_amount_currency = invoice_line.amount_currency
                 if invoice_line.on_balance_line_ids:
                     # When an on-balance line is linked to multiple invoice lines
                     # (e.g. same product), we must split its amount
