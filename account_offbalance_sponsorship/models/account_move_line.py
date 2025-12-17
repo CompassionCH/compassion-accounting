@@ -118,6 +118,7 @@ class AccountMoveLine(models.Model):
             and line.account_internal_group == "asset"
             and line.credit
             and not line.payment_id
+            and line.journal_id.type in ("bank", "cash")
         )
 
     def _get_related_invoice_lines(self):
