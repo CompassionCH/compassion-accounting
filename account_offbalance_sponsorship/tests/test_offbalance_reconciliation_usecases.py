@@ -1,3 +1,4 @@
+from odoo import fields
 from odoo.tests import tagged
 
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
@@ -101,7 +102,14 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         )
         cls.currency = cls.company.currency_id
 
-    def _create_payment(self, amounts, partner=None, dst_account_id=None):
+    def _create_payment(
+        self,
+        amounts,
+        partner=None,
+        dst_account_id=None,
+        currency=None,
+        amounts_currency=None,
+    ):
         """
         Helper method to create a bank payment entry.
 
@@ -109,10 +117,45 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         :param partner: Partner for the payment (default: self.partner)
         :param dst_account_id: Destination account for the payment
             (default: receivable_offbalance)
+        :param currency: Currency of the payment (optional)
+        :param amounts_currency: Amounts in currency (optional, must match amounts)
         :return: Posted payment move (account.move)
         """
         if partner is None:
             partner = self.partner_a
+
+        receivable_lines = []
+        for i, amount in enumerate(amounts):
+            vals = {
+                "name": "Receivable",
+                "account_id": dst_account_id or self.receivable_offbalance.id,
+                "debit": 0.0,
+                "credit": amount,
+                "partner_id": partner.id,
+            }
+            if currency and amounts_currency:
+                vals.update(
+                    {
+                        "currency_id": currency.id,
+                        "amount_currency": amounts_currency[i],
+                    }
+                )
+            receivable_lines.append((0, 0, vals))
+
+        bank_vals = {
+            "name": "Bank Payment",
+            "account_id": self.bank_account.id,
+            "debit": sum(amounts),
+            "credit": 0.0,
+            "partner_id": partner.id,
+        }
+        if currency and amounts_currency:
+            bank_vals.update(
+                {
+                    "currency_id": currency.id,
+                    "amount_currency": -sum(amounts_currency),
+                }
+            )
 
         payment = self.AccountMove.create(
             {
@@ -120,33 +163,9 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
                 "journal_id": self.bank_journal.id,
                 "partner_id": partner.id,
                 "line_ids": [
-                    (
-                        0,
-                        0,
-                        {
-                            "name": "Bank Payment",
-                            "account_id": self.bank_account.id,
-                            "debit": sum(amounts),
-                            "credit": 0.0,
-                            "partner_id": partner.id,
-                        },
-                    ),
+                    (0, 0, bank_vals),
                 ]
-                + [
-                    (
-                        0,
-                        0,
-                        {
-                            "name": "Receivable",
-                            "account_id": dst_account_id
-                            or self.receivable_offbalance.id,
-                            "debit": 0.0,
-                            "credit": amount,
-                            "partner_id": partner.id,
-                        },
-                    )
-                    for amount in amounts
-                ],
+                + receivable_lines,
             }
         )
         payment.action_post()
@@ -296,6 +315,71 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         # Step 3: All payments combined cover the invoice
         self._assert_off_balance_lines_created(payment1 + payment2, amount_total)
         self.assertAlmostEqual(invoice_line.amount_residual, 0.0)
+
+    def test_direct_multicurrency_invoice(self):
+        """Test: Invoice in foreign currency with multiple lines."""
+        # Step 1: Setup foreign currency (EUR)
+        currency_eur = self.env.ref("base.EUR")
+        currency_eur.active = True
+        # Rate: 1 Company Currency = 2 EUR (so 1 EUR = 0.5 Company Currency)
+        self.env["res.currency.rate"].create(
+            {
+                "name": fields.Date.today(),
+                "rate": 2.0,
+                "currency_id": currency_eur.id,
+                "company_id": self.company.id,
+            }
+        )
+
+        # Step 2: Create invoice in EUR
+        # product_o: 1000 EUR -> 500 CC
+        # product_o_2: 200 EUR -> 100 CC
+        # Total: 1200 EUR -> 600 CC
+        invoice = self.init_invoice(
+            "out_invoice",
+            post=True,
+            products=[self.product_o, self.product_o_2],
+            currency=currency_eur,
+        )
+        self.assertAlmostEqual(invoice.amount_total, 1200.0)
+        self.assertAlmostEqual(invoice.amount_total_signed, 600.0)
+
+        # Step 3: Create payment in EUR
+        # We pay the full amount 1200 EUR (600 CC)
+        # Receivable line: Credit 600 CC, Amount Currency -1200 EUR
+        payment = self._create_payment(
+            [600.0],
+            currency=currency_eur,
+            amounts_currency=[-1200.0],
+        )
+
+        # Step 4: Reconcile
+        (self._receivable_lines(invoice) | self._receivable_lines(payment)).reconcile()
+
+        # Step 5: Assertions
+        # Check total off-balance amount in company currency (should be 600)
+        off_balance_lines = self._assert_off_balance_lines_created(payment, 600.0)
+
+        # Check amount_currency on the generated income lines
+        # Should sum to -1200 EUR (Credit)
+        income_lines = off_balance_lines.filtered(
+            lambda line: line.account_id == self.on_balance_income_account
+        )
+        self.assertAlmostEqual(sum(income_lines.mapped("amount_currency")), -1200.0)
+        self.assertEqual(income_lines.mapped("currency_id"), currency_eur)
+
+        # Check individual lines distribution
+        # Line 1 (product_o): 1000 EUR -> -1000 EUR amount_currency
+        line_1 = income_lines.filtered(lambda line: line.product_id == self.product_o)
+        self.assertEqual(len(line_1), 1)
+        self.assertAlmostEqual(line_1.amount_currency, -1000.0)
+        self.assertAlmostEqual(line_1.credit, 500.0)
+
+        # Line 2 (product_o_2): 200 EUR -> -200 EUR amount_currency
+        line_2 = income_lines.filtered(lambda line: line.product_id == self.product_o_2)
+        self.assertEqual(len(line_2), 1)
+        self.assertAlmostEqual(line_2.amount_currency, -200.0)
+        self.assertAlmostEqual(line_2.credit, 100.0)
 
     def test_direct_multiple_payments_one_invoice_multiple_lines(self):
         """Test: Multiple payments reconciling one invoice with multiple lines.

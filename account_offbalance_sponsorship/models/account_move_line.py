@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 from math import copysign
 
-from odoo import fields, models
+from odoo import _, fields, models
 
 _logger = logging.getLogger(__name__)
 
@@ -156,16 +156,25 @@ class AccountMoveLine(models.Model):
         """
         Build a dictionary of on-balance amounts grouped by invoice line.
 
+        The amounts are computed in both company currency and the invoice currency.
+
         :param invoice_lines: Invoice lines to process
         :param income_move_lines: Income move lines
-        :return: Dictionary of amounts by invoice line.
+        :return: Dictionary of (amount, amount_currency) by invoice line.
         """
-        onbalance_amounts_by_line = defaultdict(float)
+        onbalance_amounts_by_line = {}
         total_income = abs(sum(income_move_lines.mapped("balance")))
+        total_income_currency = abs(sum(income_move_lines.mapped("amount_currency")))
         total_already_distributed = abs(
             sum(invoice_lines.mapped("on_balance_line_ids.balance"))
         )
+        total_already_distributed_currency = abs(
+            sum(invoice_lines.mapped("on_balance_line_ids.amount_currency"))
+        )
         available_income = total_income - total_already_distributed
+        available_income_currency = (
+            total_income_currency - total_already_distributed_currency
+        )
 
         # Process invoice lines with on-balance accounts
         # We group by invoice to compute the distribution ratio once per invoice
@@ -187,34 +196,61 @@ class AccountMoveLine(models.Model):
             )
 
             for invoice_line in lines:
-                remaining_amount = invoice_line.price_total
+                # Keep track of amounts in company currency and line currency
+                remaining_amount = invoice_line.balance
+                remaining_amount_currency = invoice_line.amount_currency
                 if invoice_line.on_balance_line_ids:
                     # When an on-balance line is linked to multiple invoice lines
                     # (e.g. same product), we must split its amount
                     # to avoid double counting the distributed amount.
-                    already_distributed_amount = sum(
-                        line.balance / len(line.off_balance_line_ids)
-                        for line in invoice_line.on_balance_line_ids
-                        if line.off_balance_line_ids
-                    )
+                    already_distributed_amount = 0.0
+                    already_distributed_amount_currency = 0.0
+                    for line in invoice_line.on_balance_line_ids.filtered(
+                        "off_balance_line_ids"
+                    ):
+                        count = len(line.off_balance_line_ids)
+                        already_distributed_amount += line.balance / count
+                        already_distributed_amount_currency += (
+                            line.amount_currency / count
+                        )
+
                     already_distributed = copysign(
                         already_distributed_amount,
                         remaining_amount,
                     )
+                    already_distributed_currency = copysign(
+                        already_distributed_amount_currency,
+                        remaining_amount_currency,
+                    )
                     remaining_amount -= already_distributed
+                    remaining_amount_currency -= already_distributed_currency
                 if invoice_line.currency_id.is_zero(remaining_amount):
                     continue
 
                 # Use the invoice-level ratio
-                distributed_amount = copysign(
-                    min(abs(remaining_amount) * ratio, available_income),
-                    invoice_line.balance,
+                def get_dist_amount(amount_to_distribute, limit):
+                    return copysign(
+                        min(abs(amount_to_distribute), limit),
+                        amount_to_distribute,
+                    )
+
+                distributed_amount = get_dist_amount(
+                    remaining_amount * ratio, available_income
                 )
+                distributed_amount_currency = get_dist_amount(
+                    remaining_amount_currency * ratio,
+                    available_income_currency,
+                )
+
                 if invoice_line.currency_id.is_zero(distributed_amount):
                     continue
 
-                onbalance_amounts_by_line[invoice_line] = distributed_amount
+                onbalance_amounts_by_line[invoice_line] = (
+                    distributed_amount,
+                    distributed_amount_currency,
+                )
                 available_income -= abs(distributed_amount)
+                available_income_currency -= abs(distributed_amount_currency)
                 if invoice_line.currency_id.is_zero(available_income):
                     break
         return onbalance_amounts_by_line
@@ -227,12 +263,13 @@ class AccountMoveLine(models.Model):
         """
         Create on-balance move lines based on prorated distribution.
 
-        :param onbalance_amounts_by_line: Dict of amounts by invoice line
+        :param onbalance_amounts_by_line: Dict of (amount, amount_currency)
+               by invoice line
         :param income_entry: The income journal entry
         """
         # Prepare line creation
         total_distributed_amount = 0.0
-        currency = income_entry.currency_id
+        total_distributed_amount_currency = 0.0
         lines_to_create = defaultdict(
             lambda: {
                 "move_id": income_entry.id,
@@ -242,6 +279,7 @@ class AccountMoveLine(models.Model):
                 "off_balance_line_ids": [],
                 "debit": 0.0,
                 "credit": 0.0,
+                "amount_currency": 0.0,
             }
         )
 
@@ -250,7 +288,8 @@ class AccountMoveLine(models.Model):
             invoice_line,
             distributed_amount,
         ) in onbalance_amounts_by_line.items():
-            amount = currency.round(abs(distributed_amount))
+            currency = invoice_line.currency_id
+            amount = currency.round(abs(distributed_amount[0]))
             key = (
                 invoice_line.account_id.on_balance_account_id.id,
                 invoice_line.product_id.id or False,
@@ -259,19 +298,24 @@ class AccountMoveLine(models.Model):
                 {
                     "account_id": key[0],
                     "product_id": key[1],
+                    "currency_id": currency.id,
                 }
             )
-            if distributed_amount > 0:
+            if distributed_amount[0] > 0:
                 lines_to_create[key]["debit"] += amount
             else:
                 lines_to_create[key]["credit"] += amount
+            lines_to_create[key]["amount_currency"] += distributed_amount[1]
 
             lines_to_create[key]["off_balance_line_ids"].append((4, invoice_line.id))
-            total_distributed_amount += distributed_amount
+            total_distributed_amount += distributed_amount[0]
+            total_distributed_amount_currency += distributed_amount[1]
 
         # Apply rounding adjustment to the last line
         if lines_to_create:
-            total_offbalance_amount = sum(onbalance_amounts_by_line.values())
+            total_offbalance_amount = sum(
+                am[0] for am in onbalance_amounts_by_line.values()
+            )
             current_total = sum(
                 v["debit"] - v["credit"] for v in lines_to_create.values()
             )
@@ -292,12 +336,21 @@ class AccountMoveLine(models.Model):
             )
 
             # Create the off-balance asset line
+            currency = on_balance_lines.mapped("currency_id")
+            if len(currency) != 1:
+                raise ValueError(
+                    _("All created on-balance lines should have the same currency")
+                )
             self._create_offbalance_asset_line(
-                income_entry, currency, total_distributed_amount, on_balance_lines.ids
+                income_entry,
+                currency,
+                total_distributed_amount,
+                total_distributed_amount_currency,
+                on_balance_lines.ids,
             )
 
     def _create_offbalance_asset_line(
-        self, income_entry, currency, amount, on_balance_line_ids
+        self, income_entry, currency, amount, amount_currency, on_balance_line_ids
     ):
         """
         Create an account move line reflecting the reconciliation amount
@@ -306,6 +359,7 @@ class AccountMoveLine(models.Model):
         :param income_entry: The income journal entry
         :param currency: The currency for rounding
         :param amount: The total distributed amount (negative for income)
+        :param amount_currency: The total distributed amount in currency
         :param on_balance_line_ids: List of created on-balance line IDs
         """
         self.env["account.move.line"].with_context(check_move_validity=False).create(
@@ -315,8 +369,10 @@ class AccountMoveLine(models.Model):
                 "move_id": income_entry.id,
                 "partner_id": income_entry.partner_id.id,
                 "balance": currency.round(-amount),  # Negative to balance the credits
+                "amount_currency": currency.round(-amount_currency),
                 "is_off_balance_generated": True,
                 "on_balance_line_ids": [(6, 0, on_balance_line_ids)],
+                "currency_id": currency.id,
             }
         )
 
