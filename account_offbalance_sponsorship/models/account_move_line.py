@@ -314,7 +314,7 @@ class AccountMoveLine(models.Model):
         # Apply rounding adjustment to the last line
         if lines_to_create:
             total_offbalance_amount = sum(
-                [am[0] for am in onbalance_amounts_by_line.values()]
+                am[0] for am in onbalance_amounts_by_line.values()
             )
             current_total = sum(
                 v["debit"] - v["credit"] for v in lines_to_create.values()
