@@ -209,7 +209,12 @@ class AccountMoveLine(models.Model):
                     for line in invoice_line.on_balance_line_ids.filtered(
                         "off_balance_line_ids"
                     ):
-                        count = len(line.off_balance_line_ids)
+                        count = len(
+                            line.off_balance_line_ids.filtered(
+                                lambda line, ivl=invoice_line: line.account_id
+                                == ivl.account_id
+                            )
+                        )
                         already_distributed_amount += line.balance / count
                         already_distributed_amount_currency += (
                             line.amount_currency / count
