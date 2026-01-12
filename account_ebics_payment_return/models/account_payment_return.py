@@ -102,7 +102,7 @@ class EbicsFile(models.Model):
             [("name", "=", po_name)]
         )
         _logger.info("PAIN002 payment_order: %s", payment_order)
-        if payment_order.state == "generated":
+        if payment_order.state  in ("generated","uploaded"):
             if po_state == "RJCT":
                 _logger.info(
                     "RJCT payment order %s with the folowing err: %s",
@@ -121,13 +121,11 @@ class EbicsFile(models.Model):
                 for t in tx:
                     if t.find("./ns:TxSts", namespaces={"ns": ns}).text == "RJCT":
                         # search for payment line
-                        payment_line_ids = payment_order.bank_line_ids.filtered(
-                            lambda r, transaction=t: r.name
-                            == transaction.find(
-                                "./ns:OrgnlEndToEndId", namespaces={"ns": ns}
-                            ).text
-                        )[0].payment_line_ids
-                        _logger.info("PAIN002 payment_line_ids: %s", payment_line_ids)
+                        endtoend_id=t.find("./ns:OrgnlEndToEndId", namespaces={"ns": ns}).text
+                        payment_id = payment_order.payment_ids.filtered(
+                            lambda l: l.move_id.id == int(endtoend_id))
+                        payment_line_ids = payment_order.payment_line_ids.filtered(lambda l: l.payment_ids.id ==payment_id.id)
+                        _logger.info(f"PAIN002 payment_line_ids: {payment_id.name} with endtoend_id: {endtoend_id}", )
 
                         # free line with message
                         rsn = t.findall(
@@ -136,9 +134,18 @@ class EbicsFile(models.Model):
                         rsn_text = []
                         for r in rsn:
                             rsn_text.append(r.text)
-                        payment_line_ids.free_line(" ".join(rsn_text))
+                        rsn_txt = " ".join(rsn_text)
+                        _logger.info(f"PAIN002 line free: {rsn_txt} for lines {payment_line_ids}", )
+                        for b in payment_line_ids:
+                            try:
+                                b.free_line(rsn_txt)
+                                _logger.info(f"PAIN002 line free: {rsn_txt}" ,)
+                            except Exception as e:
+                                _logger.info(f"error line free: {e}" ,)
 
-                payment_order.generated2uploaded()
+
+                if payment_order.state == "generated":
+                    payment_order.generated2uploaded()
                 self.write({"state": "done", "note_process": err_message})
 
     def _unlink_pain002(self):
