@@ -301,6 +301,7 @@ class AccountMoveLine(models.Model):
             key = (
                 invoice_line.account_id.on_balance_account_id.id,
                 invoice_line.product_id.id or False,
+                invoice_line.partner_id.id,
             )
             lines_to_create[key].update(
                 {
