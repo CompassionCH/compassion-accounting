@@ -71,7 +71,8 @@ class EbicsFile(models.Model):
 
         except Exception as e:
             _logger.info(
-                "[FAIL] import file '%s' to bank Statements", self.name, exc_info=True
+                "[FAIL] import file '%s' to bank Statements",
+                self.name, exc_info=True
             )
             self.env.cr.rollback()
             self.invalidate_cache()
@@ -95,14 +96,15 @@ class EbicsFile(models.Model):
         ).text
         _logger.info("PAIN002 po_name: %s", po_name)
         po_state = root.find(
-            "./ns:CstmrPmtStsRpt/ns:OrgnlGrpInfAndSts/ns:GrpSts", namespaces={"ns": ns}
+            "./ns:CstmrPmtStsRpt/ns:OrgnlGrpInfAndSts/ns:GrpSts",
+            namespaces={"ns": ns}
         ).text
         _logger.info("PAIN002 po_state: %s", po_state)
         payment_order = self.env["account.payment.order"].search(
             [("name", "=", po_name)]
         )
         _logger.info("PAIN002 payment_order: %s", payment_order)
-        if payment_order.state  in ("generated","uploaded"):
+        if payment_order.state  in ("generated", "uploaded"):
             if po_state == "RJCT":
                 _logger.info(
                     "RJCT payment order %s with the folowing err: %s",
@@ -121,11 +123,14 @@ class EbicsFile(models.Model):
                 for t in tx:
                     if t.find("./ns:TxSts", namespaces={"ns": ns}).text == "RJCT":
                         # search for payment line
-                        endtoend_id=t.find("./ns:OrgnlEndToEndId", namespaces={"ns": ns}).text
-                        payment_id = payment_order.payment_ids.filtered(
-                            lambda l: l.move_id.id == int(endtoend_id))
-                        payment_line_ids = payment_order.payment_line_ids.filtered(lambda l: l.payment_ids.id ==payment_id.id)
-                        _logger.info(f"PAIN002 payment_line_ids: {payment_id.name} with endtoend_id: {endtoend_id}", )
+                        endtoend_id=t.find("./ns:OrgnlEndToEndId",
+                                           namespaces={"ns": ns}).text
+                        payment_ids = payment_order.payment_ids.filtered(
+                            lambda l: int(endtoend_id) in l.move_id.mapped("id"))
+                        payment_line_ids = payment_order.payment_line_ids.filtered(
+                            lambda l: payment_ids in l.payment_ids)
+                        _logger.info(f"PAIN002 payments found: {payment_ids.name} "
+                                     f"with endtoend_id: {endtoend_id}", )
 
                         # free line with message
                         rsn = t.findall(
@@ -135,13 +140,14 @@ class EbicsFile(models.Model):
                         for r in rsn:
                             rsn_text.append(r.text)
                         rsn_txt = " ".join(rsn_text)
-                        _logger.info(f"PAIN002 line free: {rsn_txt} for lines {payment_line_ids}", )
+                        _logger.info(f"PAIN002 line free: {rsn_txt} "
+                                     f"for lines {payment_line_ids}")
                         for b in payment_line_ids:
                             try:
                                 b.free_line(rsn_txt)
-                                _logger.info(f"PAIN002 line free: {rsn_txt}" ,)
+                                _logger.info(f"PAIN002 line free: {rsn_txt}")
                             except Exception as e:
-                                _logger.info(f"error line free: {e}" ,)
+                                _logger.error(f"Error freeing line {b.id}: {e}")
 
 
                 if payment_order.state == "generated":
