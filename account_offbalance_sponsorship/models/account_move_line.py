@@ -281,7 +281,6 @@ class AccountMoveLine(models.Model):
         lines_to_create = defaultdict(
             lambda: {
                 "move_id": income_entry.id,
-                "partner_id": income_entry.partner_id.id,
                 "is_off_balance_generated": True,
                 "name": "Off-Balance Adjustment",
                 "off_balance_line_ids": [],
@@ -308,6 +307,7 @@ class AccountMoveLine(models.Model):
                     "account_id": key[0],
                     "product_id": key[1],
                     "currency_id": currency.id,
+                    "partner_id": invoice_line.partner_id.id,
                 }
             )
             if distributed_amount[0] > 0:
