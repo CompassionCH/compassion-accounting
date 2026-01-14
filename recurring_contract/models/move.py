@@ -275,7 +275,9 @@ class AccountMove(models.Model):
         self.ensure_one()
         res = []
         for contract in modified_contracts.filtered(
-            lambda c: c.start_date.date() < self.invoice_date
+            lambda c: c.start_date
+            and c.start_date.date() < self.invoice_date
+            or self.date
         ):
             invoice_lines = self.invoice_line_ids.filtered(
                 lambda invoice_line, c=contract: invoice_line.contract_id == c
