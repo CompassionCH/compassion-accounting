@@ -1,0 +1,92 @@
+<odoo>
+    <record id="reoncile_model_form_matching_rules" model="ir.ui.view">
+        <field
+            name="name"
+        >account.reconcile.model.form.matching.partner.rules</field>
+        <field name="model">account.reconcile.model</field>
+        <field
+            name="inherit_id"
+            ref="account.view_account_reconcile_model_form"
+        />
+        <field name="arch" type="xml">
+            <field name="past_months_limit" position="before">
+                <field
+                    name="matching_account_id"
+                    invisible="rule_type != 'invoice_matching'"
+                />
+                <field
+                    name="only_this_month"
+                    readonly="past_months_limit != 0"
+                    invisible="rule_type != 'invoice_matching'"
+                />
+            </field>
+            <xpath expr="//page[@id='partner_tab']" position="before">
+                <page
+                    name="partner_matching_tab"
+                    string="Partner Matching Rules"
+                    invisible="rule_type == 'writeoff_button'"
+                >
+                    <div class="alert alert-dark" role="alert">
+                            <strong>Configure the Matching Rule Fields:</strong>
+                            <ul>
+                              <li><strong
+                                >Sequence:</strong> Set the order in which the rules should be applied.</li>
+                                <li><strong
+                                >Lookup Field:</strong> Select the field in the partner model or related model to match against the extracted value.</li>
+                                <li><strong
+                                >Search Operator:</strong> Choose the operator for the search (e.g., `=` for exact match, or contains).</li>
+                                <li><strong
+                                >Statement Field:</strong> Select the field from the bank statement or account move that contains the value to be matched.</li>
+                                <li><strong
+                                >Extract Value:</strong> (Optional) Provide a function or custom regex to extract a specific part of the statement field value.</li>
+                                <li><strong
+                                >Custom Regex:</strong> (Optional) Write your regex for extracting the desired value.</li>
+                              <li><strong
+                                >Partner Field:</strong> (Optional) Select the field in the related model that points to the partner.</li>
+                              <li><strong
+                                >Unique Match:</strong> Check this box if only one unique match should be considered valid.</li>
+                              <li><strong
+                                >Active:</strong> Ensure the rule is active by checking this box.</li>
+                            </ul>
+                    </div>
+                    <field
+                        name="partner_matching_ids"
+                        context="{'default_model_id': id}"
+                    >
+                        <list editable="top">
+                            <field name="model_id" column_invisible="1" />
+                            <field name="sequence" widget="handle" />
+                            <field
+                                name="lookup_field_id"
+                                context="{'search_default_ttype': 'char', 'search_default_model_id': partner_model_id}"
+                            />
+                            <field name="search_operator" />
+                            <field name="statement_field_id" />
+                            <field name="predefined_extract" />
+                            <field
+                                name="extract_regex"
+                                invisible="predefined_extract != '_match_custom' "
+                                required="predefined_extract == '_match_custom' "
+                            />
+                            <field
+                                name="partner_model_id"
+                                column_invisible="1"
+                            />
+                            <field name="lookup_model" column_invisible="1" />
+                            <field
+                                name="partner_field_id"
+                                invisible="not lookup_model or lookup_model == 'res.partner'"
+                                domain="[('model_id', '=', lookup_model), ('relation', '=', 'res.partner')]"
+                                required="lookup_model and lookup_model != 'res.partner'"
+                            />
+                            />
+                            />
+                            <field name="unique_match" />
+                            <field name="is_active" />
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
