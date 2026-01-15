@@ -1,0 +1,23 @@
+<odoo>
+    <record id="bank_statement_line_form_reconcile_view" model="ir.ui.view">
+        <field name="name">account.bank.statement.line.reconcile.compassion</field>
+        <field name="model">account.bank.statement.line</field>
+        <field name="inherit_id" ref="account_reconcile_oca.bank_statement_line_form_reconcile_view" />
+        <field name="arch" type="xml">
+            <field name="manual_account_id" position="before">
+                <field name="manual_partner_id" position="move" />
+                <field name="manual_product_id"
+                       string="Product"
+                       modifiers="{'readonly': ['|', '|', '|', ('manual_exchange_counterpart', '=', True),('manual_reference', '=', False), ('is_reconciled', '=', True), ('manual_line_id', '!=', False)]}"
+                />
+            </field>
+            <field name="manual_account_id" position="after">
+                <field name="manual_contract_id"
+                       string="Contract"
+                       modifiers="{'readonly': ['|', '|', '|', ('manual_exchange_counterpart', '=', True),('manual_reference', '=', False), ('is_reconciled', '=', True), ('manual_line_id', '!=', False)]}"
+                       domain="[('state','!=','draft'),'|', ('partner_id', '=', manual_partner_id),('correspondent_id', '=', manual_partner_id)]"
+                />
+            </field>
+        </field>
+    </record>
+</odoo>
