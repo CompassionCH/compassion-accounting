@@ -43,12 +43,8 @@
     "data": [
         "security/ir.model.access.csv",
         "views/account_reconcile_model_view.xml",
+        "views/bank_statement_line.xml",
     ],
-    "assets": {
-        "web.assets_backend": [
-            "account_reconcile_compassion_ce/static/src/components/**/*",
-        ],
-    },
     "excludes": ["account_accountant"],
     "auto_install": False,
     "installable": True,
