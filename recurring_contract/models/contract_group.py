@@ -382,8 +382,9 @@ class ContractGroup(models.Model):
         self.ensure_one()
         active_contracts = self.active_contract_ids
         open_invoices = active_contracts.mapped("open_invoice_ids").filtered(
-            lambda i: i.invoice_date >= invoicing_date
-            and i.invoice_date.year == invoicing_date.year
+            lambda i: i.invoice_date
+            or i.date >= invoicing_date
+            and (i.invoice_date or i.date).year == invoicing_date.year
         )
 
         # invoice already open we complete the move lines
@@ -391,7 +392,7 @@ class ContractGroup(models.Model):
         # Keep invoice from the same month or year
         # (depending on the recurring unit)
         open_invoice = open_invoices.filtered(
-            lambda m: getattr(m.invoice_date, self.recurring_unit)
+            lambda m: getattr(m.invoice_date or m.date, self.recurring_unit)
             == current_rec_unit_date
         )
         if len(open_invoice) > 1:
