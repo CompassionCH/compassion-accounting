@@ -40,8 +40,6 @@ class RecurringContract(models.Model):
         copy=False,
     )
     start_date = fields.Datetime(
-        readonly=True,
-        states={"draft": [("readonly", False)]},
         copy=False,
         tracking=True,
     )
@@ -460,7 +458,11 @@ class RecurringContract(models.Model):
             "SC",
         ):
             raise UserError(_("Please configure contract lines"))
-        self.write({"state": "waiting", "start_date": fields.Datetime.now()})
+        for contract in self:
+            vals = {"state": "waiting"}
+            if not contract.start_date:
+                vals["start_date"] = fields.Datetime.now()
+            contract.write(vals)
         self.generate_invoices()
         return True
 
