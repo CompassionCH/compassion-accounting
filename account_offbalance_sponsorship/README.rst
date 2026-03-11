@@ -70,24 +70,24 @@ account for each off-balance account.
 
 Here is an example of how the off-balance feature works:
 
--  A payment is made involving an off-balance receivable account.
--  The system identifies the off-balance accounts and calculates the
-   prorated amounts for each product line.
--  Additional account move lines are created to reflect the off-balance
-   transactions.
--  The reconciliation process ensures that the off-balance entries are
-   properly managed.
+- A payment is made involving an off-balance receivable account.
+- The system identifies the off-balance accounts and calculates the
+  prorated amounts for each product line.
+- Additional account move lines are created to reflect the off-balance
+  transactions.
+- The reconciliation process ensures that the off-balance entries are
+  properly managed.
 
 Purpose
 =======
 
 The stock off-balance feature cannot be used because:
 
--  It does not support reconcilable off-balance accounts. Instead, the
-   system uses 9xxx accounts and a configuration to define:
+- It does not support reconcilable off-balance accounts. Instead, the
+  system uses 9xxx accounts and a configuration to define:
 
-   -  **Receivable (off-balance)**: A
-   -  **Asset (off-balance)**: B
+  - **Receivable (off-balance)**: A
+  - **Asset (off-balance)**: B
 
 This functionality adds the following entries to the payment move if
 there is an off-balance receivable account (A):
@@ -110,16 +110,16 @@ To use the off-balance feature, you need to:
 
 1. **Configure the Off-Balance Accounts**:
 
-   -  Go to your chart account
-   -  Enable the off-balance feature on the desired accounts
-   -  Define the linked on-balance account where the off-balance entries
-      will be posted once a payment is made.
+   - Go to your chart account
+   - Enable the off-balance feature on the desired accounts
+   - Define the linked on-balance account where the off-balance entries
+     will be posted once a payment is made.
 
 2. **Asset (Off-Balance)**:
 
-   -  In the System parameters, define the asset account (off-balance)
-      that will be used as a counterpart of the on-balance income
-      entries.
+   - In the System parameters, define the asset account (off-balance)
+     that will be used as a counterpart of the on-balance income
+     entries.
 
 Bug Tracker
 ===========

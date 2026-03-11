@@ -55,6 +55,7 @@ class ContractGroup(models.Model):
         "Pricelist",
         check_company=True,
         compute="_compute_pricelist",
+        inverse="_inverse_pricelist",
         precompute=True,
         store=True,
         index=True,
@@ -183,6 +184,13 @@ class ContractGroup(models.Model):
             group.pricelist_id = group.partner_id.with_company(
                 group.company_id
             ).property_product_pricelist
+
+    def _inverse_pricelist(self):
+        # Update contract prices when changing the pricelist on the contract group
+        contracts = self.contract_ids.filtered(
+            lambda c: c.state not in ("cancelled", "terminated")
+        )
+        contracts.contract_line_ids.on_change_product_id()
 
     def _compute_currency(self):
         for group in self:
