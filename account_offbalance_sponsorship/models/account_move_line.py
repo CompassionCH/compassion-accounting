@@ -261,6 +261,25 @@ class AccountMoveLine(models.Model):
                 available_income_currency -= abs(distributed_amount_currency)
                 if invoice_line.currency_id.is_zero(available_income):
                     break
+
+        # Distribute remaining income equally if any gain is made due to exchange rate
+        if (
+            onbalance_amounts_by_line
+            and invoice_lines
+            and not invoice_lines[0].company_currency_id.is_zero(available_income)
+            and invoice_lines[0].currency_id.is_zero(available_income_currency)
+        ):
+            count = len(onbalance_amounts_by_line)
+            split_amount = available_income / count
+            split_amount_currency = available_income_currency / count
+
+            for line, amounts in onbalance_amounts_by_line.items():
+                amt, amt_curr = amounts
+                onbalance_amounts_by_line[line] = (
+                    amt + copysign(split_amount, amt),
+                    amt_curr + copysign(split_amount_currency, amt),
+                )
+
         return onbalance_amounts_by_line
 
     def _create_onbalance_move_lines(
