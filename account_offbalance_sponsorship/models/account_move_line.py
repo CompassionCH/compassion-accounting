@@ -358,6 +358,16 @@ class AccountMoveLine(models.Model):
                     last_line["credit"] -= rounding_adjustment
                 total_distributed_amount += rounding_adjustment
 
+            # Recompute totals from the actual rounded lines_to_create values
+            # to ensure the off-balance asset line exactly counterbalances
+            # the on-balance lines (avoids cumulative rounding mismatches).
+            total_distributed_amount = sum(
+                v["debit"] - v["credit"] for v in lines_to_create.values()
+            )
+            total_distributed_amount_currency = sum(
+                v["amount_currency"] for v in lines_to_create.values()
+            )
+
             # Create the on-balance lines
             on_balance_lines = self.with_context(check_move_validity=False).create(
                 list(lines_to_create.values())
