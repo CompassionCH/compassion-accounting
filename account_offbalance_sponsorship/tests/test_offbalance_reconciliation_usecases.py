@@ -679,3 +679,102 @@ class TestOffBalanceReconciliationUseCases(AccountTestInvoicingCommon):
         self.assertAlmostEqual(payment3_line.amount_residual, 0.0, places=2)
         self.assertTrue(self.currency.is_zero(debit_line.amount_residual))
         self.assertSetEqual(set(invoices.mapped("payment_state")), {"paid"})
+
+    def test_overpayment_distribution(self):
+        """
+        Test that when a gain is made through exchange-rate, the excess amount
+        is distributed equally among the invoice lines' corresponding
+        on-balance lines.
+
+        Scenario:
+        - Invoice created in EUR at rate 2.0 (1 EUR = 0.5 CC)
+          product_o:   1000 EUR -> 500 CC
+          product_o_2:  200 EUR -> 100 CC
+          Total: 1200 EUR -> 600 CC
+
+        - Payment made at a more favorable rate (1 EUR = 0.6 CC)
+          We pay 1200 EUR but it costs 720 CC (gain of 120 CC).
+
+        - The 1200 EUR in currency is fully distributed by the normal logic,
+          but there is 120 CC left over in company currency.
+          This gain should be split equally among the 2 on-balance income lines.
+        """
+        # Step 1: Setup foreign currency (EUR) at invoice time
+        currency_eur = self.env.ref("base.EUR")
+        currency_eur.active = True
+        self.env["res.currency.rate"].create(
+            {
+                "name": fields.Date.today(),
+                "rate": 2.0,  # 1 CC = 2 EUR => 1 EUR = 0.5 CC
+                "currency_id": currency_eur.id,
+                "company_id": self.company.id,
+            }
+        )
+
+        # Step 2: Create invoice in EUR
+        # product_o: 1000 EUR -> 500 CC
+        # product_o_2: 200 EUR -> 100 CC
+        # Total: 1200 EUR -> 600 CC
+        invoice = self.init_invoice(
+            "out_invoice",
+            post=True,
+            products=[self.product_o, self.product_o_2],
+            currency=currency_eur,
+        )
+        self.assertAlmostEqual(invoice.amount_total, 1200.0)
+        self.assertAlmostEqual(invoice.amount_total_signed, 600.0)
+
+        # Step 3: Create payment at a more favorable rate
+        # Payment is for 1200 EUR but at an effective rate where 1 EUR = 0.6 CC
+        # so 1200 EUR = 720 CC (gain of 120 CC compared to 600 CC at invoice rate)
+        payment_cc = 720.0  # company currency amount
+        payment_eur = 1200.0  # foreign currency amount
+        exchange_gain = payment_cc - 600.0  # 120 CC gain
+
+        payment = self._create_payment(
+            [payment_cc],
+            currency=currency_eur,
+            amounts_currency=[-payment_eur],
+        )
+
+        # Step 4: Reconcile
+        (self._receivable_lines(invoice) | self._receivable_lines(payment)).reconcile()
+
+        # Step 5: Verify total off-balance amount includes the gain
+        off_balance_lines = self._assert_off_balance_lines_created(payment, payment_cc)
+
+        # Step 6: Check currency amounts on income lines are fully distributed
+        income_lines = off_balance_lines.filtered(
+            lambda line: line.account_id == self.on_balance_income_account
+        )
+        self.assertAlmostEqual(
+            sum(income_lines.mapped("amount_currency")), -payment_eur
+        )
+        self.assertEqual(income_lines.mapped("currency_id"), currency_eur)
+        self.assertEqual(len(income_lines), 2)
+
+        # Step 7: Verify the exchange-rate gain is distributed equally
+        # Normal distribution (proportional to invoice lines):
+        #   product_o  : 1000/1200 * 720 CC (before gain redistribution)
+        #   product_o_2:  200/1200 * 720 CC (before gain redistribution)
+        # But the currency is fully consumed, so remaining CC gain (120)
+        # is split equally: 60 CC per line.
+        #
+        # Expected per line:
+        #   product_o  : 500 CC (base) + 60 CC (gain share) = 560 CC
+        #   product_o_2: 100 CC (base) + 60 CC (gain share) = 160 CC
+        gain_per_line = exchange_gain / len(income_lines)
+
+        line_product_o = income_lines.filtered(
+            lambda line: line.product_id == self.product_o
+        )
+        self.assertEqual(len(line_product_o), 1)
+        self.assertAlmostEqual(line_product_o.amount_currency, -1000.0)
+        self.assertAlmostEqual(line_product_o.credit, 500.0 + gain_per_line)
+
+        line_product_o_2 = income_lines.filtered(
+            lambda line: line.product_id == self.product_o_2
+        )
+        self.assertEqual(len(line_product_o_2), 1)
+        self.assertAlmostEqual(line_product_o_2.amount_currency, -200.0)
+        self.assertAlmostEqual(line_product_o_2.credit, 100.0 + gain_per_line)

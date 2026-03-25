@@ -261,6 +261,25 @@ class AccountMoveLine(models.Model):
                 available_income_currency -= abs(distributed_amount_currency)
                 if invoice_line.currency_id.is_zero(available_income):
                     break
+
+        # Distribute remaining income equally if any gain is made due to exchange rate
+        if (
+            onbalance_amounts_by_line
+            and invoice_lines
+            and not invoice_lines[0].company_currency_id.is_zero(available_income)
+            and invoice_lines[0].currency_id.is_zero(available_income_currency)
+        ):
+            count = len(onbalance_amounts_by_line)
+            split_amount = available_income / count
+            split_amount_currency = available_income_currency / count
+
+            for line, amounts in onbalance_amounts_by_line.items():
+                amt, amt_curr = amounts
+                onbalance_amounts_by_line[line] = (
+                    amt + copysign(split_amount, amt),
+                    amt_curr + copysign(split_amount_currency, amt),
+                )
+
         return onbalance_amounts_by_line
 
     def _create_onbalance_move_lines(
@@ -338,6 +357,16 @@ class AccountMoveLine(models.Model):
                 else:
                     last_line["credit"] -= rounding_adjustment
                 total_distributed_amount += rounding_adjustment
+
+            # Recompute totals from the actual rounded lines_to_create values
+            # to ensure the off-balance asset line exactly counterbalances
+            # the on-balance lines (avoids cumulative rounding mismatches).
+            total_distributed_amount = sum(
+                v["debit"] - v["credit"] for v in lines_to_create.values()
+            )
+            total_distributed_amount_currency = sum(
+                v["amount_currency"] for v in lines_to_create.values()
+            )
 
             # Create the on-balance lines
             on_balance_lines = self.with_context(check_move_validity=False).create(
