@@ -48,6 +48,12 @@ class AccountMoveLine(models.Model):
         if income_off_balance:
             self._register_off_balance_income()
 
+    def remove_move_reconcile(self):
+        self.filtered("is_off_balance_generated").with_context(
+            force_delete=True
+        ).unlink()
+        return super(AccountMoveLine, self.exists()).remove_move_reconcile()
+
     def _register_off_balance_income(self):
         """
         When an income is reconciled, we look if it was linked to a donation invoiced
