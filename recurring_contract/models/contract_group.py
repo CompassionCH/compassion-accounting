@@ -440,7 +440,8 @@ class ContractGroup(models.Model):
                 )
                 and contract_line not in already_paid_cl
             )
-            open_invoice.with_context(skip_readonly_check=True).write(
+            open_invoice.button_draft()
+            open_invoice.write(
                 {
                     "invoice_line_ids": [
                         (
@@ -455,10 +456,7 @@ class ContractGroup(models.Model):
                     "payment_mode_id": self.payment_mode_id.id,
                 }
             )
-            open_invoice.mapped("invoice_line_ids").filtered(
-                lambda line: line.contract_id in contract_lines_to_inv.contract_id
-            )._create_analytic_lines()
-            open_invoice._compute_amount()
+            open_invoice.action_post()
         else:
             # Building invoices data
             inv_data = self._build_invoice_gen_data(invoicing_date, invoicer)
