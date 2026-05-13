@@ -440,7 +440,7 @@ class ContractGroup(models.Model):
                 )
                 and contract_line not in already_paid_cl
             )
-            open_invoice.write(
+            open_invoice.with_context(skip_readonly_check=True).write(
                 {
                     "invoice_line_ids": [
                         (
