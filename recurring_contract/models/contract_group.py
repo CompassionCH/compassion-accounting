@@ -458,6 +458,7 @@ class ContractGroup(models.Model):
             open_invoice.mapped("invoice_line_ids").filtered(
                 lambda line: line.contract_id in contract_lines_to_inv.contract_id
             )._create_analytic_lines()
+            open_invoice._compute_amount()
         else:
             # Building invoices data
             inv_data = self._build_invoice_gen_data(invoicing_date, invoicer)
