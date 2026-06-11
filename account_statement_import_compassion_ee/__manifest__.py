@@ -35,8 +35,7 @@
     "category": "Finance",
     "website": "https://github.com/CompassionCH/compassion-accounting",
     "depends": [
-        # OCA/queue
-        "queue_job",
+        "queue_job_optional",
         # OCA/bank-statement-import
         "account_bank_statement_import_camt",
         # Odoo/enterprise
