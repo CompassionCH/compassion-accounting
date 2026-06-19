@@ -1,0 +1,162 @@
+# Copyright 2009-2019 Noviat.
+# License LGPL-3 or later (http://www.gnu.org/licenses/lpgl).
+
+import base64
+import logging
+import xml.etree.ElementTree as ET
+
+from odoo import models
+from odoo.exceptions import UserError
+
+_logger = logging.getLogger(__name__)
+
+
+class EbicsFile(models.Model):
+    _inherit = "ebics.file"
+
+    def _file_format_methods(self):
+        """
+        Extend this dictionary in order to add support
+        for extra file formats.
+        """
+        res = {
+            "pain.002.001.03": {
+                "process": self._process_pain002,
+                "unlink": self._unlink_pain002,
+            },
+            "pain.002": {
+                "process": self._process_pain002,
+                "unlink": self._unlink_pain002,
+            },
+        }
+        res.update(super()._file_format_methods())
+
+        return res
+
+    @staticmethod
+    def _process_pain002(self):
+        """convert the file to a record of model payment return."""
+        _logger.info("Start import '%s'", self.name)
+        try:
+            values = {"data_file": self.data, "display_name": self.name}
+            pr_import_obj = self.env["payment.return.import"]
+            pr_wiz_imp = pr_import_obj.create(values)
+            _logger.info("LOG import1 '%s'", pr_wiz_imp)
+            import_result = pr_wiz_imp.import_file()
+            _logger.info("LOG import2 '%s'", import_result)
+
+            payment_return = self.env["payment.return"].browse(import_result["res_id"])
+            # Mark the file as imported, remove binary as it should be
+            # attached to the statement.
+            _logger.info("LOG import3 '%s'", payment_return)
+            self.write(
+                {
+                    "state": "done",
+                    "payment_return_id": payment_return.id,
+                    "payment_order": payment_return.payment_order_id.id,
+                    "error_message": False,
+                }
+            )
+            # Automatically confirm payment returns
+            _logger.info("LOG import '%s'", 4)
+            payment_return.action_confirm()
+            _logger.info("[OK] import file '%s'", self.filename)
+        except UserError as e:
+            # wrong parser used, raise the error to the parent so it's not
+            # catch by the following except Exception
+            _logger.info(
+                "[FAIL] import file '%s' to bank Statements: UserError", self.name
+            )
+            self._on_error_parse_xml_and_cancel(e.name)
+
+        except Exception as e:
+            _logger.info(
+                "[FAIL] import file '%s' to bank Statements",
+                self.name, exc_info=True
+            )
+            self.env.cr.rollback()
+            self.invalidate_cache()
+            # Write the error in the postfinance file
+            if self.state != "error":
+                self.write({"state": "draft", "note": e.args and e.args[0]})
+                # Here we must commit the error message otherwise it
+                # can be unset by a next file producing an error
+                # pylint: disable=invalid-commit
+                self.env.cr.commit()
+            self._on_error_parse_xml_and_cancel(str(e))
+
+    def _on_error_parse_xml_and_cancel(self, err_message):
+        _logger.info("Parsing file with err: %s", err_message)
+        root = ET.fromstring(base64.b64decode(self.data))
+        ns = root.tag[1 : root.tag.index("}")]
+        _logger.info("PAIN002 ns: %s", ns)
+        po_name = root.find(
+            "./ns:CstmrPmtStsRpt/ns:OrgnlGrpInfAndSts/ns:OrgnlMsgId",
+            namespaces={"ns": ns},
+        ).text
+        _logger.info("PAIN002 po_name: %s", po_name)
+        po_state = root.find(
+            "./ns:CstmrPmtStsRpt/ns:OrgnlGrpInfAndSts/ns:GrpSts",
+            namespaces={"ns": ns}
+        ).text
+        _logger.info("PAIN002 po_state: %s", po_state)
+        payment_order = self.env["account.payment.order"].search(
+            [("name", "=", po_name)]
+        )
+        _logger.info("PAIN002 payment_order: %s", payment_order)
+        if payment_order.state  in ("generated", "uploaded"):
+            if po_state == "RJCT":
+                _logger.info(
+                    "RJCT payment order %s with the folowing err: %s",
+                    po_name,
+                    err_message,
+                )
+                payment_order.action_cancel()
+                payment_order.message_post(body=err_message)
+            else:
+                # partially rejected only
+                _logger.info("Check if payment order is PART rjct")
+                tx = root.findall(
+                    "./ns:CstmrPmtStsRpt/ns:OrgnlPmtInfAndSts/ns:TxInfAndSts",
+                    namespaces={"ns": ns},
+                )
+                for t in tx:
+                    if t.find("./ns:TxSts", namespaces={"ns": ns}).text == "RJCT":
+                        # search for payment line
+                        endtoend_id=t.find("./ns:OrgnlEndToEndId",
+                                           namespaces={"ns": ns}).text
+                        payment_ids = payment_order.payment_ids.filtered(
+                            lambda l: int(endtoend_id) in l.move_id.mapped("id"))
+                        payment_line_ids = payment_order.payment_line_ids.filtered(
+                            lambda l: payment_ids in l.payment_ids)
+                        _logger.info(f"PAIN002 payments found: {payment_ids.name} "
+                                     f"with endtoend_id: {endtoend_id}", )
+
+                        # free line with message
+                        rsn = t.findall(
+                            "./ns:StsRsnInf/ns:AddtlInf", namespaces={"ns": ns}
+                        )
+                        rsn_text = []
+                        for r in rsn:
+                            rsn_text.append(r.text)
+                        rsn_txt = " ".join(rsn_text)
+                        _logger.info(f"PAIN002 line free: {rsn_txt} "
+                                     f"for lines {payment_line_ids}")
+                        for b in payment_line_ids:
+                            try:
+                                b.free_line(rsn_txt)
+                                _logger.info(f"PAIN002 line free: {rsn_txt}")
+                            except Exception as e:
+                                _logger.error(f"Error freeing line {b.id}: {e}")
+
+
+                if payment_order.state == "generated":
+                    payment_order.generated2uploaded()
+                self.write({"state": "done", "note_process": err_message})
+
+    def _unlink_pain002(self):
+        """
+        Placeholder for camt053 specific actions before removing the
+        EBICS data file and its related bank statements.
+        """
+        pass
