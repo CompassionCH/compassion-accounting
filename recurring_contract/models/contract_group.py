@@ -265,9 +265,24 @@ class ContractGroup(models.Model):
             # Calculate the initial invoicing date and starting offset
             invoicing_date, starting_offset = group._calculate_start_date_and_offset()
 
-            # Iterate through invoice offsets to generate invoices
+            # Iterate through invoice offsets to generate invoices.
+            # Upper bound = advance_billing_months + month_interval - 1 (exclusive).
+            # This ensures the correct number of invoices for all billing cycles:
+            #
+            #   rec val | rec unit| advance | mo | range          | invoices
+            #   1       | month   |  1      |  1 | range(0,  1, 1)| 1 (curr month)
+            #   1       | month   | 12      |  1 | range(0, 12, 1)| 12 (+11 months)
+            #   1       | year    |  1      | 12 | range(0, 12,12)| 1 (curr year)
+            #   1       | year    | 12      | 12 | range(0, 23,12)| 2 (curr+next yr)
+            #   12      | month   |  1      | 12 | range(0, 12,12)| 1 (curr year)
+            #   12      | month   | 12      | 12 | range(0, 23,12)| 2 (curr+next yr)
+            #
+            # _should_skip_invoice_generation will skip any period already covered
+            # by an existing non-cancelled invoice, so re-running is always safe.
             for invoice_offset in range(
-                starting_offset, group.advance_billing_months + 1, group.month_interval
+                starting_offset,
+                group.advance_billing_months + group.month_interval - 1,
+                group.month_interval,
             ):
                 # Calculate the current invoicing date for this offset
                 current_invoicing_date = invoicing_date + relativedelta(
@@ -320,12 +335,18 @@ class ContractGroup(models.Model):
         start_date = start_date.replace(day=1)
         offset = 0
         # Only apply offset if there are waiting contracts
-        has_waiting_contracts = any(contract.state == 'waiting' for contract in self.active_contract_ids)
-        if has_waiting_contracts and (curr_month != "True" or start_date.day > int(block_day)):
+        has_waiting_contracts = any(
+            contract.state == "waiting" for contract in self.active_contract_ids
+        )
+        if has_waiting_contracts and (
+            curr_month != "True" or start_date.day > int(block_day)
+        ):
             offset = 1
         return start_date, offset
 
-    def _should_skip_invoice_generation(self, invoicing_date, contracts, skip_suspended=True):
+    def _should_skip_invoice_generation(
+        self, invoicing_date, contracts, skip_suspended=True
+    ):
         """Determine if invoice generation should be skipped."""
         self.ensure_one()
         is_suspended = (
@@ -334,14 +355,19 @@ class ContractGroup(models.Model):
         )
         if skip_suspended and is_suspended:
             return True
-        open_invoices = self.env["account.move"].search([
-            ("invoice_date", "=", invoicing_date),
-            ("partner_id", "=", self.partner_id.id),
-            ("move_type", "=", "out_invoice"),
-            ("line_ids.contract_id", "in", contracts.ids),
-            ("line_ids.product_id", "in", contracts.mapped("product_ids").ids),
-        ])
-        has_all_invoices = len(contracts) == len(open_invoices.mapped("line_ids.contract_id"))
+        open_invoices = self.env["account.move"].search(
+            [
+                ("invoice_date", "=", invoicing_date),
+                ("partner_id", "=", self.partner_id.id),
+                ("move_type", "=", "out_invoice"),
+                ("state", "not in", ["cancel"]),
+                ("line_ids.contract_id", "in", contracts.ids),
+                ("line_ids.product_id", "in", contracts.mapped("product_ids").ids),
+            ]
+        )
+        has_all_invoices = len(contracts) == len(
+            open_invoices.mapped("line_ids.contract_id")
+        )
         return has_all_invoices
 
     def _process_invoice_generation(self, invoicer, invoicing_date):
