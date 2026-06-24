@@ -266,22 +266,24 @@ class ContractGroup(models.Model):
             invoicing_date, starting_offset = group._calculate_start_date_and_offset()
 
             # Iterate through invoice offsets to generate invoices.
-            # Upper bound = advance_billing_months + month_interval - 1 (exclusive).
-            # This ensures the correct number of invoices for all billing cycles:
+            # Upper bound (exclusive) = starting_offset + advance_billing_months
+            #   + month_interval - 1. The starting_offset term ensures the same
+            #   number of periods is produced whether offset is 0 or 1:
             #
-            #   rec val | rec unit| advance | mo | range          | invoices
-            #   1       | month   |  1      |  1 | range(0,  1, 1)| 1 (curr month)
-            #   1       | month   | 12      |  1 | range(0, 12, 1)| 12 (+11 months)
-            #   1       | year    |  1      | 12 | range(0, 12,12)| 1 (curr year)
-            #   1       | year    | 12      | 12 | range(0, 23,12)| 2 (curr+next yr)
-            #   12      | month   |  1      | 12 | range(0, 12,12)| 1 (curr year)
-            #   12      | month   | 12      | 12 | range(0, 23,12)| 2 (curr+next yr)
+            #   rec val | rec unit| advance | mo | offset| invoices
+            #   1       | month   |  1      |  1 |   0   | 1 (curr month)
+            #   1       | month   |  1      |  1 |   1   | 1 (next month)
+            #   1       | month   | 12      |  1 |   0   | 12 (+11 months)
+            #   1       | year    | 12      | 12 |   0   | 2 (curr+next yr)
             #
             # _should_skip_invoice_generation will skip any period already covered
             # by an existing non-cancelled invoice, so re-running is always safe.
             for invoice_offset in range(
                 starting_offset,
-                group.advance_billing_months + group.month_interval - 1,
+                starting_offset
+                + group.advance_billing_months
+                + group.month_interval
+                - 1,
                 group.month_interval,
             ):
                 # Calculate the current invoicing date for this offset
