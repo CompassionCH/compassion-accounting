@@ -33,7 +33,6 @@ class EbicsFile(models.Model):
 
         return res
 
-    @staticmethod
     def _process_pain002(self):
         """convert the file to a record of model payment return."""
         _logger.info("Start import '%s'", self.name)
@@ -60,21 +59,21 @@ class EbicsFile(models.Model):
             # Automatically confirm payment returns
             _logger.info("LOG import '%s'", 4)
             payment_return.action_confirm()
-            _logger.info("[OK] import file '%s'", self.filename)
+            _logger.info("[OK] import file '%s'", self.name)
         except UserError as e:
             # wrong parser used, raise the error to the parent so it's not
             # catch by the following except Exception
             _logger.info(
                 "[FAIL] import file '%s' to bank Statements: UserError", self.name
             )
-            self._on_error_parse_xml_and_cancel(e.name)
+            self._on_error_parse_xml_and_cancel(str(e))
 
         except Exception as e:
             _logger.info(
                 "[FAIL] import file '%s' to bank Statements", self.name, exc_info=True
             )
             self.env.cr.rollback()
-            self.invalidate_cache()
+            self.env.invalidate_all() # TODO NiP : or self.invalidate_model()
             # Write the error in the postfinance file
             if self.state != "error":
                 self.write({"state": "draft", "note": e.args and e.args[0]})
