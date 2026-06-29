@@ -49,8 +49,12 @@ class BankStatementLine(models.Model):
 
     def _reconcile_move_line_vals(self, line, move_id=False):
         vals = super()._reconcile_move_line_vals(line, move_id=move_id)
-        vals["product_id"] = line.get("product_id")[0] if line.get("product_id") else False
-        vals["contract_id"] = line.get("contract_id")[0] if line.get("contract_id") else False
+        vals["product_id"] = (
+            line.get("product_id")[0] if line.get("product_id") else False
+        )
+        vals["contract_id"] = (
+            line.get("contract_id")[0] if line.get("contract_id") else False
+        )
         return vals
 
     def _check_line_changed(self, line):
