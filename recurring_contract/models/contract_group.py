@@ -276,6 +276,19 @@ class ContractGroup(models.Model):
     ##########################################################################
     #                             PRIVATE METHODS                            #
     ##########################################################################
+    @api.model
+    def generate_from_cron(self):
+        """Entry point for the daily invoice generation cron."""
+        groups = self.search(
+            [
+                "|",
+                ("invoice_suspended_until", "=", False),
+                ("invoice_suspended_until", "<", fields.Date.today()),
+                ("has_active_contracts", "=", True),
+            ]
+        )
+        groups.generate_invoices()
+
     def generate_invoices(self):
         for group in self:
             group.with_delay(

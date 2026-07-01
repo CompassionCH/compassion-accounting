@@ -319,4 +319,20 @@
         action="action_recurring_contract_form"
         sequence="5"
     />
+
+    <record id="action_invoice_automatic_generation" model="ir.actions.server">
+        <field name="name">Launch invoices generation</field>
+        <field name="model_id" ref="model_recurring_contract_group" />
+        <field name="state">code</field>
+        <field name="code">model.generate_from_cron()</field>
+    </record>
+
+    <menuitem
+        id="menu_invoice_automatic_generation"
+        name="Launch invoices generation"
+        parent="menu_contracts_section"
+        sequence="10"
+        action="action_invoice_automatic_generation"
+        groups="account.group_account_manager"
+    />
 </odoo>

@@ -54,6 +54,7 @@
         "data/balance_product_for_migr.xml",
         "data/recurring_contract_sequence.xml",
         "data/contract_expire_cron.xml",
+        "data/daily_invoice_generation_cron.xml",
         "data/pricelist_item_base_automation.xml",
         "data/utm_data.xml",
         "data/queue_job.xml",
