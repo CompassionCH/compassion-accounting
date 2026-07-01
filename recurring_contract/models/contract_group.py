@@ -242,15 +242,19 @@ class ContractGroup(models.Model):
 
     def button_generate_invoices(self):
         """Immediately generate invoices for the contract group."""
-        invoicer = (
-            self.with_context(queue_job__no_delay=True)
-            .with_company(self.company_id)
-            .generate_invoices()
+        before_invoice_ids = set(
+            self.mapped("active_contract_ids.invoice_line_ids.move_id").ids
+        )
+        self.with_context(queue_job__no_delay=True).with_company(
+            self.company_id
+        ).generate_invoices()
+        after_invoice_ids = set(
+            self.mapped("active_contract_ids.invoice_line_ids.move_id").ids
         )
         notification = {
             "type": "ir.actions.client",
         }
-        if invoicer.invoice_ids:
+        if after_invoice_ids - before_invoice_ids:
             notification["tag"] = "reload"
         else:
             msg = _(
@@ -273,15 +277,13 @@ class ContractGroup(models.Model):
     #                             PRIVATE METHODS                            #
     ##########################################################################
     def generate_invoices(self):
-        invoicer = self.env["recurring.invoicer"].create({})
         for group in self:
             group.with_delay(
                 priority=100,
                 identity_key=self._name + ".generate_invoices." + str(group.id),
-            )._generate_invoices(invoicer)
-        return invoicer
+            )._generate_invoices()
 
-    def _generate_invoices(self, invoicer):
+    def _generate_invoices(self):
         """Checks all contracts and generate invoices if needed.
         Create an invoice per contract group per date.
         """
@@ -318,7 +320,7 @@ class ContractGroup(models.Model):
                 if invoice_key not in processed_invoices:
                     # Process invoice generation if not already processed
                     group.with_company(group.company_id)._process_invoice_generation(
-                        invoicer, current_invoicing_date
+                        current_invoicing_date
                     )
                     # Add the invoice key to the set of processed invoices
                     processed_invoices.add(invoice_key)
@@ -386,7 +388,7 @@ class ContractGroup(models.Model):
         )
         return has_all_invoices
 
-    def _process_invoice_generation(self, invoicer, invoicing_date):
+    def _process_invoice_generation(self, invoicing_date):
         self.ensure_one()
         active_contracts = self.active_contract_ids
         open_invoices = active_contracts.mapped("open_invoice_ids").filtered(
@@ -459,7 +461,7 @@ class ContractGroup(models.Model):
             open_invoice.action_post()
         else:
             # Building invoices data
-            inv_data = self._build_invoice_gen_data(invoicing_date, invoicer)
+            inv_data = self._build_invoice_gen_data(invoicing_date)
             # Creating the actual invoice
             _logger.info(f"Generating invoice : {inv_data}")
             invoice = self.env["account.move"].create(inv_data)
@@ -473,7 +475,7 @@ class ContractGroup(models.Model):
                 )
                 invoice.unlink()
 
-    def _build_invoice_gen_data(self, invoicing_date, invoicer, gift_wizard=False):
+    def _build_invoice_gen_data(self, invoicing_date, gift_wizard=False):
         """Setup a dict with data passed to invoice.create.
         If any custom data is wanted in invoice from contract group, just
         inherit this method.
@@ -516,7 +518,6 @@ class ContractGroup(models.Model):
             "journal_id": journal.id,
             "currency_id": self.currency_id.id,
             "invoice_date": invoicing_date,  # Accountant date
-            "recurring_invoicer_id": invoicer.id,
             "pricelist_id": self.pricelist_id.id,
             "payment_mode_id": self.payment_mode_id.id,
             "company_id": self.company_id.id,

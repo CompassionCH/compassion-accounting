@@ -23,9 +23,6 @@ class AccountMove(models.Model):
     last_payment = fields.Date(
         "Paid on", compute="_compute_last_payment", store=True, tracking=True
     )
-    recurring_invoicer_id = fields.Many2one(
-        "recurring.invoicer", "Invoicer", readonly=False
-    )
 
     @api.depends("partner_id", "company_id")
     def _compute_pricelist_id(self):
