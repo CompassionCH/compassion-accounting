@@ -383,11 +383,12 @@ class RecurringContract(models.Model):
         self.mapped("group_id").generate_invoices()
 
     def cancel_contract_invoices(self):
-        self.with_delay(
+        self.with_delay_sh(
+            "_cancel_invoices",
             channel="root.accounting",
             priority=500,
             identity_key=self._name + ".cancel_contract_invoices." + str(self.ids),
-        )._cancel_invoices()
+        )
 
     @api.onchange("partner_id")
     def on_change_partner_id(self):

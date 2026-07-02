@@ -275,19 +275,26 @@ class ContractGroup(models.Model):
     def generate_invoices(self):
         invoicer = self.env["recurring.invoicer"].create({})
         for group in self:
-            group.with_delay(
+            group.with_delay_sh(
+                "_generate_invoices",
+                invoicer.id,
+                channel="root.accounting",
                 priority=100,
                 identity_key=self._name + ".generate_invoices." + str(group.id),
-            )._generate_invoices(invoicer)
+            )
         return invoicer
 
-    def _generate_invoices(self, invoicer):
+    def _generate_invoices(self, invoicer_id=False):
         """Checks all contracts and generate invoices if needed.
         Create an invoice per contract group per date.
         """
         _logger.info(
             f"Starting generation of invoices for contract groups : {self.ids}"
         )
+        if invoicer_id:
+            invoicer = self.env["recurring.invoicer"].browse(invoicer_id)
+        else:
+            invoicer = self.env["recurring.invoicer"].create({})
 
         # Set to track processed invoices to avoid duplication
         processed_invoices = set()
@@ -326,7 +333,7 @@ class ContractGroup(models.Model):
         # Refresh state to check whether invoices are missing in some contracts
         self.mapped("active_contract_ids")._compute_missing_invoices()
         _logger.info("Process successfully generated invoices")
-        return True
+        return invoicer
 
     def _calculate_start_date_and_offset(self):
         """
