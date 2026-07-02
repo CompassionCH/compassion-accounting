@@ -40,7 +40,7 @@
         "account_payment_order",  # OCA/bank-payment,
         "base_automation",
         "account_payment_partner",  # OCA/bank-payment,
-        "queue_job",  # OCA/queue,
+        "queue_job_optional",
         "utm",
     ],
     "data": [
@@ -57,7 +57,6 @@
         "data/daily_invoice_generation_cron.xml",
         "data/pricelist_item_base_automation.xml",
         "data/utm_data.xml",
-        "data/queue_job.xml",
         "security/ir.model.access.csv",
     ],
     "installable": True,

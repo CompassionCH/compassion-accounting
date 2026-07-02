@@ -291,10 +291,12 @@ class ContractGroup(models.Model):
 
     def generate_invoices(self):
         for group in self:
-            group.with_delay(
+            group.with_delay_sh(
+                "_generate_invoices",
+                channel="root.accounting",
                 priority=100,
                 identity_key=self._name + ".generate_invoices." + str(group.id),
-            )._generate_invoices()
+            )
 
     def _generate_invoices(self):
         """Checks all contracts and generate invoices if needed.
@@ -341,7 +343,6 @@ class ContractGroup(models.Model):
         # Refresh state to check whether invoices are missing in some contracts
         self.mapped("active_contract_ids")._compute_missing_invoices()
         _logger.info("Process successfully generated invoices")
-        return True
 
     def _calculate_start_date_and_offset(self):
         """
