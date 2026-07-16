@@ -384,6 +384,7 @@ class ContractGroup(models.Model):
                 ("invoice_date", "=", invoicing_date),
                 ("partner_id", "=", self.partner_id.id),
                 ("move_type", "=", "out_invoice"),
+                ("state", "not in", ["cancel"]),
                 ("line_ids.contract_id", "in", contracts.ids),
                 ("line_ids.product_id", "in", contracts.mapped("product_ids").ids),
             ]
