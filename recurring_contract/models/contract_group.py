@@ -266,24 +266,23 @@ class ContractGroup(models.Model):
             invoicing_date, starting_offset = group._calculate_start_date_and_offset()
 
             # Iterate through invoice offsets to generate invoices.
-            # Upper bound (exclusive) = starting_offset + advance_billing_months
-            #   + month_interval - 1. The starting_offset term ensures the same
-            #   number of periods is produced whether offset is 0 or 1:
+            # Upper bound (exclusive) = advance_billing_months + 1, independent
+            # of starting_offset: starting_offset only shifts where the range
+            # starts (0 = current month, 1 = skip to next month for a waiting
+            # contract), it must not also shift where it ends, or the number
+            # of invoices generated changes depending on offset.
             #
             #   rec val | rec unit| advance | mo | offset| invoices
-            #   1       | month   |  1      |  1 |   0   | 1 (curr month)
+            #   1       | month   |  1      |  1 |   0   | 2 (curr + next month)
             #   1       | month   |  1      |  1 |   1   | 1 (next month)
-            #   1       | month   | 12      |  1 |   0   | 12 (+11 months)
+            #   1       | month   | 12      |  1 |   0   | 13 (curr + 12 more)
             #   1       | year    | 12      | 12 |   0   | 2 (curr+next yr)
             #
             # _should_skip_invoice_generation will skip any period already covered
             # by an existing non-cancelled invoice, so re-running is always safe.
             for invoice_offset in range(
                 starting_offset,
-                starting_offset
-                + group.advance_billing_months
-                + group.month_interval
-                - 1,
+                group.advance_billing_months + 1,
                 group.month_interval,
             ):
                 # Calculate the current invoicing date for this offset
