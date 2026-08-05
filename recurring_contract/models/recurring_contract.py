@@ -582,7 +582,7 @@ class RecurringContract(models.Model):
         inv_block_day = self.env["res.config.settings"].get_param_multi_company(
             "recurring_contract.invoice_block_day"
         )
-        for contract in self:
+        for contract in self.filtered("end_date"):
             since_date = contract.end_date.date().replace(day=1)
             if inv_block_day and contract.end_date.day >= int(inv_block_day):
                 since_date += relativedelta(months=1)
