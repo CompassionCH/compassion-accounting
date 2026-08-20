@@ -189,7 +189,11 @@ class RecurringContract(models.Model):
             )
             self.group_id.write({"invoice_suspended_until": new_date})
 
-    @api.depends("invoice_line_ids")
+    @api.depends(
+        "invoice_line_ids",
+        "invoice_line_ids.payment_state",
+        "invoice_line_ids.parent_state",
+    )
     def _compute_invoices(self):
         for contract in self:
             contract.open_invoice_ids = contract.mapped(
