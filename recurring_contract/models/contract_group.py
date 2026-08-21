@@ -124,7 +124,7 @@ class ContractGroup(models.Model):
     ##########################################################################
     #                             FIELDS METHODS                             #
     ##########################################################################
-    @api.depends("contract_ids")
+    @api.depends("contract_ids", "contract_ids.state")
     def _compute_active_contracts(self):
         for pay_opt in self:
             pay_opt.active_contract_ids = pay_opt.contract_ids.filtered(
