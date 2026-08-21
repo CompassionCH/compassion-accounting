@@ -27,6 +27,23 @@ class AccountMove(models.Model):
         "recurring.invoicer", "Invoicer", readonly=False
     )
 
+    def _filter_open_invoices(self):
+        """Return the invoices of self that are still open, i.e. not fully paid.
+
+        This is the single definition of "open invoice" used by the stat
+        buttons of recurring.contract and recurring.contract.group, so that
+        both levels always agree. It matches the criterion used by
+        amount_due / months_due (see recurring.contract._filter_due_invoices).
+
+        Not to be confused with recurring.contract.open_invoice_ids, which is
+        stricter on purpose: that field drives invoice generation and the write
+        cascade, which both reset invoices to draft, and button_draft()
+        unreconciles the payments of the invoice.
+        """
+        return self.filtered(
+            lambda i: i.payment_state != "paid" and i.state not in ("cancel", "draft")
+        )
+
     @api.depends("partner_id", "company_id")
     def _compute_pricelist_id(self):
         # Prevent overriding the pricelist_id if it is already set for a new move

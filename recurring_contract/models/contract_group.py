@@ -156,12 +156,17 @@ class ContractGroup(models.Model):
 
     def _compute_invoices(self):
         for pay_opt in self:
-            pay_opt.nb_invoices = len(
-                pay_opt.mapped("active_contract_ids.invoice_line_ids.move_id").filtered(
-                    lambda i: i.state not in ("cancel", "draft")
-                    and i.payment_state != "paid"
-                )
-            )
+            pay_opt.nb_invoices = len(pay_opt._get_open_invoices())
+
+    def _get_open_invoices(self):
+        """Invoices displayed by the "Open invoices" stat button.
+
+        Same contract as recurring.contract._get_open_invoices(): the counter
+        and the list opened by the button both go through this method.
+        """
+        return self.mapped(
+            "active_contract_ids.invoice_line_ids.move_id"
+        )._filter_open_invoices()
 
     @staticmethod
     def day_selection():
@@ -229,15 +234,13 @@ class ContractGroup(models.Model):
     ##########################################################################
     def open_invoices(self):
         self.ensure_one()
-        invoice_ids = self.mapped("active_contract_ids.invoice_line_ids.move_id").ids
         return {
-            "name": _("Contract invoices"),
+            "name": _("Open invoices"),
             "type": "ir.actions.act_window",
             "view_mode": "list,form",
             "res_model": "account.move",
-            "domain": [("id", "in", invoice_ids)],
+            "domain": [("id", "in", self._get_open_invoices().ids)],
             "target": "current",
-            "context": {"search_default_unpaid": 1},
         }
 
     def button_generate_invoices(self):
