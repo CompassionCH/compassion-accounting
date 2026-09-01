@@ -154,6 +154,12 @@ class ContractGroup(models.Model):
                 or [False]
             )
 
+    @api.depends(
+        "contract_ids.state",
+        "contract_ids.invoice_line_ids",
+        "contract_ids.invoice_line_ids.payment_state",
+        "contract_ids.invoice_line_ids.parent_state",
+    )
     def _compute_invoices(self):
         for pay_opt in self:
             pay_opt.nb_invoices = len(pay_opt._get_open_invoices())
