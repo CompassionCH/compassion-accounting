@@ -15,6 +15,7 @@ from dateutil.relativedelta import relativedelta
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools import flatten
+from odoo.tools import html_escape as escape
 
 _logger = logging.getLogger(__name__)
 
@@ -559,6 +560,9 @@ class RecurringContract(models.Model):
             self._filter_paid_invoices_to_cancel()
         )
         skipped |= locked
+        # The paid invoices are cancelled as one block: reconcile_after_clean
+        # matches an open payment against the total of the whole re-opened
+        # group, so cancelling them one by one would break re-reconciliation.
         try:
             with self.env.cr.savepoint():
                 self._cancel_paid_invoices(paid_lines)
@@ -570,12 +574,7 @@ class RecurringContract(models.Model):
             self._filter_open_invoices_to_cancel()
         )
         skipped |= locked
-        try:
-            with self.env.cr.savepoint():
-                self._cancel_open_invoices(open_lines)
-        except UserError as error:
-            self.env.cache.invalidate()
-            failed.append((open_lines.mapped("move_id"), error))
+        failed += self._cancel_open_invoices(open_lines)
 
         self._report_uncancelled_invoices(skipped, failed)
 
@@ -615,62 +614,81 @@ class RecurringContract(models.Model):
         paid_invoices.with_company(self[0].company_id.id).reconcile_after_clean()
 
     def _cancel_open_invoices(self, invoices_lines):
-        # Multi contracts invoices should delete just their lines
-        empty_invoices = self.env["account.move"]
+        """Cancel each open invoice on its own, so that a single invoice Odoo
+        refuses to touch does not keep the others from being cancelled.
+        :return: list of (<account.move>, error) that could not be cancelled
+        """
+        failed = []
         invoices = invoices_lines.mapped("move_id")
-        invoices.button_draft()
-        for inv_line in invoices_lines:
-            invoice = inv_line.move_id
-            # Check if invoice is empty after removing the invoice_lines
-            # of the given contract
-            remaining_lines = invoice.invoice_line_ids.filtered(
-                lambda invl: not invl.contract_id or invl.contract_id not in self
+        for invoice in invoices:
+            lines = invoices_lines.filtered(lambda invl, i=invoice: invl.move_id == i)
+            try:
+                with self.env.cr.savepoint():
+                    self._cancel_open_invoice(invoice, lines)
+            except UserError as error:
+                self.env.cache.invalidate()
+                failed.append((invoice, error))
+        _logger.info(str(len(invoices) - len(failed)) + " invoices cleaned.")
+        return failed
+
+    def _cancel_open_invoice(self, invoice, invoice_lines):
+        invoice.button_draft()
+        # Multi contracts invoices should delete just their lines
+        remaining_lines = invoice.invoice_line_ids.filtered(
+            lambda invl: not invl.contract_id or invl.contract_id not in self
+        )
+        if remaining_lines:
+            invoice.write(
+                {
+                    "invoice_line_ids": [(2, invl.id) for invl in invoice_lines],
+                    "payment_mode_id": invoice.payment_mode_id.id,
+                }
             )
-            if remaining_lines:
-                # We can move or remove the line
-                invoice.write(
-                    {
-                        "invoice_line_ids": [(2, inv_line.id)],
-                        "payment_mode_id": invoice.payment_mode_id.id,
-                    }
-                )
-            else:
-                # The invoice would be empty if we remove the line
-                empty_invoices |= invoice
-        empty_invoices.button_cancel()
-        renew_invs = invoices - empty_invoices
-        if renew_invs:
-            # Invoices to set back in open state
-            renew_invs.action_post()
-        _logger.info(str(len(invoices)) + " invoices cleaned.")
+            # Set back in open state
+            invoice.action_post()
+        else:
+            # The invoice would be empty if we remove the lines
+            invoice.button_cancel()
 
     def _report_uncancelled_invoices(self, skipped, failed):
         """An incomplete cleanup used to abort silently in a queue job and
         leave the sponsor with open invoices: make it visible instead."""
         if not skipped and not failed:
             return
-        notes = []
-        if skipped:
-            notes.append(
-                _("Locked accounting period, left untouched: %s")
-                % ", ".join(skipped.mapped("name"))
-            )
-        for moves, error in failed:
-            notes.append(
-                _("Could not be cancelled (%s): %s")
-                % (error, ", ".join(moves.mapped("name")) or "-")
-            )
-        _logger.warning(
-            "Invoice cleanup incomplete on contracts %s: %s", self.ids, " | ".join(notes)
-        )
-        body = (
-            _("Invoice cleanup incomplete:")
-            + "<ul><li>"
-            + "</li><li>".join(notes)
-            + "</li></ul>"
-        )
-        responsible = self._invoice_cleanup_responsible()
         for contract in self:
+            notes = []
+            own_skipped = contract._own_invoices(skipped)
+            if own_skipped:
+                notes.append(
+                    _("Locked accounting period, left untouched: %s")
+                    % escape(", ".join(own_skipped.mapped("name")))
+                )
+            for moves, error in failed:
+                own_failed = contract._own_invoices(moves)
+                if own_failed:
+                    notes.append(
+                        _("Could not be cancelled (%s): %s")
+                        % (
+                            escape(str(error)),
+                            escape(", ".join(own_failed.mapped("name"))),
+                        )
+                    )
+            if not notes:
+                continue
+            _logger.warning(
+                "Invoice cleanup incomplete on contract %s: %s",
+                contract.id,
+                " | ".join(notes),
+            )
+            body = (
+                _("Invoice cleanup incomplete:")
+                + "<ul><li>"
+                + "</li><li>".join(notes)
+                + "</li></ul>"
+            )
+            responsible = contract.with_company(
+                contract.company_id
+            )._invoice_cleanup_responsible()
             contract.message_post(body=body)
             contract.activity_schedule(
                 "mail.mail_activity_data_todo",
@@ -678,6 +696,11 @@ class RecurringContract(models.Model):
                 note=body,
                 user_id=responsible.id,
             )
+
+    def _own_invoices(self, moves):
+        """The given moves that carry a line of this contract."""
+        self.ensure_one()
+        return moves.filtered(lambda move: self in move.invoice_line_ids.contract_id)
 
     def _invoice_cleanup_responsible(self):
         """Who has to deal with the invoices we could not cancel."""
