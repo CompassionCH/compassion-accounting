@@ -72,6 +72,9 @@ class RecurringContract(models.Model):
         "Related invoice lines",
         copy=False,
     )
+    # Drives invoice generation and the write cascade, which reset invoices to
+    # draft: keep it restricted to invoices without any payment reconciled.
+    # For display, use _get_open_invoices() instead.
     open_invoice_ids = fields.Many2many(
         "account.move", string="Open invoices", compute="_compute_invoices"
     )
@@ -189,13 +192,26 @@ class RecurringContract(models.Model):
             )
             self.group_id.write({"invoice_suspended_until": new_date})
 
-    @api.depends("invoice_line_ids")
+    @api.depends(
+        "invoice_line_ids",
+        "invoice_line_ids.payment_state",
+        "invoice_line_ids.parent_state",
+    )
     def _compute_invoices(self):
         for contract in self:
             contract.open_invoice_ids = contract.mapped(
                 "invoice_line_ids.move_id"
             ).filtered(lambda i: i.payment_state == "not_paid" and i.state != "cancel")
-            contract.nb_invoices = len(contract.open_invoice_ids)
+            contract.nb_invoices = len(contract._get_open_invoices())
+
+    def _get_open_invoices(self):
+        """Invoices displayed by the "Open invoices" stat button.
+
+        The stat button counter and the list opened by the button must always
+        show the same records, so both go through this method. Override it to
+        add or remove invoices from the button, never nb_invoices alone.
+        """
+        return self.mapped("invoice_line_ids.move_id")._filter_open_invoices()
 
     @api.depends(
         "contract_line_ids", "contract_line_ids.amount", "contract_line_ids.quantity"
@@ -405,15 +421,13 @@ class RecurringContract(models.Model):
 
     def open_invoices(self):
         self.ensure_one()
-        invoice_ids = self.mapped("invoice_line_ids.move_id").ids
         return {
-            "name": _("Contract invoices"),
+            "name": _("Open invoices"),
             "type": "ir.actions.act_window",
             "view_mode": "list,form",
             "res_model": "account.move",
-            "domain": [("id", "in", invoice_ids)],
+            "domain": [("id", "in", self._get_open_invoices().ids)],
             "target": "current",
-            "context": {"search_default_unpaid": 1},
         }
 
     def contract_draft(self):

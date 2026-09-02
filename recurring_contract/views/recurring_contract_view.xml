@@ -85,7 +85,7 @@
                             <field
                                 name="nb_invoices"
                                 widget="statinfo"
-                                string="Invoices"
+                                string="Open invoices"
                             />
                         </button>
                     </div>
