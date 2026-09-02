@@ -36,6 +36,13 @@ class MandateStaffNotifSettings(models.TransientModel):
         default="15",
     )
 
+    invoice_cleanup_user_id = fields.Many2one(
+        "res.users",
+        string="Invoice cleanup responsible",
+        help="Who gets the activity when invoices of an ended contract could not "
+        "be cancelled. Defaults to the user running the cleanup.",
+    )
+
     def _day_selection(self):
         return self.env["recurring.contract.group"].day_selection()
 
@@ -49,6 +56,10 @@ class MandateStaffNotifSettings(models.TransientModel):
             self.get_param_multi_company("recurring_contract.do_generate_curr_month")
             == "True"
         )
+        res["invoice_cleanup_user_id"] = int(
+            self.get_param_multi_company("recurring_contract.invoice_cleanup_user_id")
+            or 0
+        )
         return res
 
     def set_values(self):
@@ -58,6 +69,10 @@ class MandateStaffNotifSettings(models.TransientModel):
         self._set_param_multi_company(
             "recurring_contract.do_generate_curr_month",
             str(self.do_generate_curr_month),
+        )
+        self._set_param_multi_company(
+            "recurring_contract.invoice_cleanup_user_id",
+            self.invoice_cleanup_user_id.id or "",
         )
         super().set_values()
 
