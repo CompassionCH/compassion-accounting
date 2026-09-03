@@ -620,8 +620,16 @@ class RecurringContract(models.Model):
         """
         failed = []
         invoices = invoices_lines.mapped("move_id")
-        for invoice in invoices:
-            lines = invoices_lines.filtered(lambda invl, i=invoice: invl.move_id == i)
+        # Group before cancelling anything: reading move_id later would raise
+        # MissingError on the lines deleted in a previous iteration.
+        lines_per_invoice = [
+            (
+                invoice,
+                invoices_lines.filtered(lambda invl, i=invoice: invl.move_id == i),
+            )
+            for invoice in invoices
+        ]
+        for invoice, lines in lines_per_invoice:
             try:
                 with self.env.cr.savepoint():
                     self._cancel_open_invoice(invoice, lines)
