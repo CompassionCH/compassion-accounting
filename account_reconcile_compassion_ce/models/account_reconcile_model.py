@@ -68,3 +68,9 @@ class AccountReconcileModel(models.Model):
         ):
             result["auto_reconcile"] = True
         return result
+
+    def _get_write_off_move_lines_dict(self, residual_balance, partner_id, label=None):
+        vals = super()._get_write_off_move_lines_dict(
+            residual_balance, partner_id, label=label
+        )
+        return vals
