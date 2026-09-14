@@ -44,6 +44,7 @@
         "security/ir.model.access.csv",
         "views/account_reconcile_model_view.xml",
         "views/bank_statement_line.xml",
+        "views/account_move_view.xml",
     ],
     "excludes": ["account_accountant"],
     "auto_install": False,

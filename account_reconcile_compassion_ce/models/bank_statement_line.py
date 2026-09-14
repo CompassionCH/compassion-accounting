@@ -25,13 +25,21 @@ class BankStatementLine(models.Model):
 
     @api.onchange("manual_product_id")
     def on_change_manual_product_id(self):
-        # Only auto-fill the account when no account is already set.
-        # When loading from a reconcile model line, manual_account_id is already
-        # set by _process_manual_reconcile_from_line, so we must not override it.
-        if self.manual_product_id and not self.manual_account_id:
+        if self.manual_product_id:
             self.manual_account_id = (
                 self.manual_product_id.property_account_income_id.id
             )
+            arguments = {
+                "product_id": self.manual_product_id.id,
+                "product_categ_id": self.manual_product_id.categ_id.id,
+                "partner_id": self.partner_id.id,
+                "partner_category_id": self.partner_id.category_id.ids,
+                "account_prefix": self.manual_account_id.code,
+                "company_id": self.company_id.id,
+            }
+            self.analytic_distribution = self.env[
+                "account.analytic.distribution.model"
+            ]._get_distribution(arguments)
 
     @api.onchange("manual_contract_id")
     def on_change_manual_contract_id(self):
