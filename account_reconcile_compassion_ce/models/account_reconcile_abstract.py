@@ -28,8 +28,7 @@ class AccountReconcileAbstract(models.AbstractModel):
                 line.product_id and [line.product_id.id, line.product_id.display_name]
             ) or False
             vals[0]["contract_id"] = (
-                line.contract_id and [line.contract_id.id, line.contract_id.display_name]
+                line.contract_id
+                and [line.contract_id.id, line.contract_id.display_name]
             ) or False
         return vals
-
-
