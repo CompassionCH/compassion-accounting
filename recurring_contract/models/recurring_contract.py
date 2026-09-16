@@ -370,8 +370,33 @@ class RecurringContract(models.Model):
                 vals["reference"] = self.env["ir.sequence"].next_by_code(
                     "recurring.contract.ref"
                 )
+            if not vals.get("group_id") and vals.get("partner_id"):
+                vals["group_id"] = self._default_group(vals["partner_id"]).id
         res = super().create(vals_list)
         return res
+
+    def _default_group(self, partner_id):
+        """Billing group to use when none was picked on the contract (T3411).
+
+        Restricted to groups without a payment mode: no collection method was
+        chosen here, so we must not attach the contract to an existing
+        arrangement (LSV, Permanent Order, ...) the sponsor never agreed to.
+        The mode is set later, once it is.
+        """
+        group_model = self.env["recurring.contract.group"]
+        company = self.env.company
+        group = group_model.search(
+            [
+                ("partner_id", "=", partner_id),
+                ("company_id", "=", company.id),
+                ("payment_mode_id", "=", False),
+            ],
+            order="id desc",
+            limit=1,
+        )
+        return group or group_model.create(
+            {"partner_id": partner_id, "company_id": company.id}
+        )
 
     def write(self, vals):
         """Perform various checks when a contract is modified."""
