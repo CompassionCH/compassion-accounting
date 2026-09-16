@@ -378,13 +378,19 @@ class RecurringContract(models.Model):
     def _default_group(self, partner_id):
         """Billing group to use when none was picked on the contract (T3411).
 
-        The payment mode is left empty on purpose: it is set later, once the
-        collection method is agreed with the sponsor.
+        Restricted to groups without a payment mode: no collection method was
+        chosen here, so we must not attach the contract to an existing
+        arrangement (LSV, Permanent Order, ...) the sponsor never agreed to.
+        The mode is set later, once it is.
         """
         group_model = self.env["recurring.contract.group"]
         company = self.env.company
         group = group_model.search(
-            [("partner_id", "=", partner_id), ("company_id", "=", company.id)],
+            [
+                ("partner_id", "=", partner_id),
+                ("company_id", "=", company.id),
+                ("payment_mode_id", "=", False),
+            ],
             order="id desc",
             limit=1,
         )
