@@ -114,6 +114,8 @@
                                 domain="[('partner_id', '=', partner_id)]"
                                 context="{'default_partner_id': partner_id, 'contract_id': id,}"
                                 options="{'no_quick_create': True}"
+                                required="0"
+                                placeholder="Created automatically if left empty"
                             />
                             <field
                                 name="company_id"
