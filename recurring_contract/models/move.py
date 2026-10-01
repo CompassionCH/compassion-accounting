@@ -69,15 +69,12 @@ class AccountMove(models.Model):
                     payment_lines = line.full_reconcile_id.reconciled_line_ids.filtered(
                         lambda r, _mv_filter=mv_filter: r[_mv_filter]
                     )
-                    # Direct Debit : the payment is not linked
-                    # with a bank statement line
-                    if not payment_lines.move_id.statement_line_id:
-                        # We search for the reconciled
-                        # bank statement lines to get the date
-                        st_lines = payment_lines.mapped(
-                            "move_id.line_ids.full_reconcile_id.reconciled_line_ids"
-                            ".statement_line_id"
-                        )
+                    # Direct Debit : the statement line reconciles the payment
+                    st_lines = payment_lines.mapped(
+                        "move_id.line_ids.full_reconcile_id.reconciled_line_ids"
+                        ".statement_line_id"
+                    )
+                    if st_lines:
                         payment_dates.extend(st_lines.mapped("date"))
                     else:
                         payment_dates.extend(payment_lines.mapped("date"))
