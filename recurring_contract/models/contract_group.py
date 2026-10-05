@@ -589,7 +589,7 @@ class ContractGroup(models.Model):
             contract = contract_line.contract_id
             product = contract_line.product_id.with_company(self.company_id.id)
             line_name = product.name
-            if contract_line.pricelist_item_count:
+            if contract_line.amount_from_pricelist:
                 price = self.pricelist_id._get_product_price(
                     product, qty, date=invoicing_date
                 )

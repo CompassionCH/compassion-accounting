@@ -53,6 +53,10 @@ class ContractLine(models.Model):
     quantity = fields.Integer(default=1, required=True)
     subtotal = fields.Float(compute="_compute_subtotal", store=True)
     pricelist_item_count = fields.Integer(related="product_id.pricelist_item_count")
+    amount_from_pricelist = fields.Boolean(
+        compute="_compute_amount_from_pricelist",
+        help="The invoiced price comes from the pricelist instead of the line price.",
+    )
 
     _sql_constraints = [
         (
@@ -66,6 +70,11 @@ class ContractLine(models.Model):
     def _compute_subtotal(self):
         for contract_line in self:
             contract_line.subtotal = contract_line.amount * contract_line.quantity
+
+    @api.depends("product_id")
+    def _compute_amount_from_pricelist(self):
+        for line in self:
+            line.amount_from_pricelist = line.pricelist_item_count > 0
 
     @api.onchange("product_id")
     def on_change_product_id(self):

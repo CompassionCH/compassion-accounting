@@ -88,7 +88,7 @@ class MoveLine(models.Model):
                 lambda cl, invl=invoice_line: cl.product_id == invl.product_id
             )
             data_dict = {}
-            if contract_line.product_id.pricelist_item_count > 0:
+            if contract_line.amount_from_pricelist:
                 price = modified_contract.pricelist_id._get_product_price(
                     contract_line.product_id,
                     quantity=contract_line.quantity,
