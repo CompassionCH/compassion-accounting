@@ -206,12 +206,8 @@
         <field name="arch" type="xml">
             <list editable="bottom">
                 <field name="product_id" />
-                <field name="pricelist_item_count" column_invisible="1" />
-                <field
-                    name="amount"
-                    force_save="1"
-                    readonly="pricelist_item_count > 0"
-                />
+                <field name="amount_from_pricelist" column_invisible="1" />
+                <field name="amount" force_save="1" readonly="amount_from_pricelist" />
                 <field name="quantity" />
                 <field name="subtotal" />
             </list>
