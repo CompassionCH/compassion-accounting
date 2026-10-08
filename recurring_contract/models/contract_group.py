@@ -113,7 +113,6 @@ class ContractGroup(models.Model):
     has_active_contracts = fields.Boolean(
         compute="_compute_active_contracts",
         search="_search_has_active_contracts",
-        string="Has active contracts",
     )
     current_invoice_date = fields.Date(
         compute="_compute_current_invoice_date",
@@ -312,9 +311,25 @@ class ContractGroup(models.Model):
             # Calculate the initial invoicing date and starting offset
             invoicing_date, starting_offset = group._calculate_start_date_and_offset()
 
-            # Iterate through invoice offsets to generate invoices
+            # Iterate through invoice offsets to generate invoices.
+            # Upper bound (exclusive) = advance_billing_months + 1, independent
+            # of starting_offset: starting_offset only shifts where the range
+            # starts (0 = current month, 1 = skip to next month for a waiting
+            # contract), it must not also shift where it ends, or the number
+            # of invoices generated changes depending on offset.
+            #
+            #   rec val | rec unit| advance | mo | offset| invoices
+            #   1       | month   |  1      |  1 |   0   | 2 (curr + next month)
+            #   1       | month   |  1      |  1 |   1   | 1 (next month)
+            #   1       | month   | 12      |  1 |   0   | 13 (curr + 12 more)
+            #   1       | year    | 12      | 12 |   0   | 2 (curr+next yr)
+            #
+            # _should_skip_invoice_generation will skip any period already covered
+            # by an existing non-cancelled invoice, so re-running is always safe.
             for invoice_offset in range(
-                starting_offset, group.advance_billing_months + 1, group.month_interval
+                starting_offset,
+                group.advance_billing_months + 1,
+                group.month_interval,
             ):
                 # Calculate the current invoicing date for this offset
                 current_invoicing_date = invoicing_date + relativedelta(

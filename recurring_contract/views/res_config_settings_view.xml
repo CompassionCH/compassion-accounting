@@ -39,6 +39,17 @@
                         </div>
                         <field name="inv_block_day" />
                     </setting>
+                    <setting id="cleanup">
+                        <label for="invoice_cleanup_user_id" class="o_form_label" />
+                        <span
+                            class="fa fa-lg fa-building-o"
+                            title="Values set here are company-specific."
+                        />
+                        <div class="text-muted">
+                            Gets an activity when invoices of an ended contract could not be cancelled
+                        </div>
+                        <field name="invoice_cleanup_user_id" />
+                    </setting>
                 </block>
             </block>
         </field>
