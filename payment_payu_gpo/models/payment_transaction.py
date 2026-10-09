@@ -275,6 +275,8 @@ class PaymentTransaction(models.Model):
         """Update state, provider reference and token from PayU data."""
         refund = notification_data.get("refund")
         if refund:
+            if refund.get("refundId"):
+                self.provider_reference = refund["refundId"]
             status = refund.get("status")
             if status == "FINALIZED":
                 self._set_done()

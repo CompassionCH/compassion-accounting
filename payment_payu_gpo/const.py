@@ -42,10 +42,3 @@ STATUS_MAPPING = {
     "done": ("COMPLETED",),
     "canceled": ("CANCELED",),
 }
-
-# PayU payMethod.type -> Odoo payment.method code.
-PAY_METHOD_MAPPING = {
-    "CARD_TOKEN": "card",
-    "BLIK_TOKEN": "blik",
-    "BLIK_AUTHORIZATION_CODE": "blik",
-}

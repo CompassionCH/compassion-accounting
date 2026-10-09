@@ -64,9 +64,10 @@ class PayuGpoController(http.Controller):
     def payu_gpo_return(self, **data):
         """Buyer comes back from the PayU page (continueUrl).
 
-        PayU only appends ?error=... on failure; the real outcome is read from
-        the API so the status page is right even before the webhook arrives
-        (and on dev machines PayU cannot reach).
+        The query string says nothing about the payment: PayU sends
+        statusCode=SUCCESS even when the buyer abandons. The real outcome is
+        read from the API so the status page is right even before the
+        notification arrives.
         """
         _logger.info("Return from PayU with data:\n%s", pprint.pformat(data))
         tx_id = request.session.get(PaymentPostProcessing.MONITORED_TX_ID_KEY)

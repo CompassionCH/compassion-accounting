@@ -418,6 +418,9 @@ Providers</em> and fill in the POS id, the OAuth <tt class="docutils literal">cl
 <tt class="docutils literal">payment_payu_gpo.notify_base_url</tt> to the public URL that forwards
 <tt class="docutils literal">/payment/payu_gpo/webhook</tt> to Odoo; the buyer still returns to the
 base URL.</p>
+<p>Behind a reverse proxy, run Odoo with <tt class="docutils literal">proxy_mode = True</tt>: the buyer’s
+IP address is sent to PayU with card payments (3-D Secure, fraud
+checks).</p>
 </div>
 <div class="section" id="known-issues-roadmap">
 <h1><a class="toc-backref" href="#toc-entry-2">Known issues / Roadmap</a></h1>

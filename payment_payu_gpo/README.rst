@@ -64,6 +64,10 @@ PayU must reach the notification URL. When Odoo's base URL is not public
 ``/payment/payu_gpo/webhook`` to Odoo; the buyer still returns to the
 base URL.
 
+Behind a reverse proxy, run Odoo with ``proxy_mode = True``: the buyer's
+IP address is sent to PayU with card payments (3-D Secure, fraud
+checks).
+
 Known issues / Roadmap
 ======================
 

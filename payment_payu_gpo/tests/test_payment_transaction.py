@@ -238,11 +238,22 @@ class TestPaymentTransaction(PayuGpoCommon):
             refund_tx = tx._send_refund_request(amount_to_refund=10.0)
         self.assertEqual(refund.call_args.args[:2], (self.order_id, "1000"))
         self.assertEqual(refund_tx.state, "pending")
+        # Shape of a sandbox refund notification.
         refund_tx._handle_notification_data(
             "payu_gpo",
             {
                 "orderId": self.order_id,
-                "refund": {"extRefundId": refund_tx.reference, "status": "FINALIZED"},
+                "extOrderId": tx.reference,
+                "refund": {
+                    "refundId": "5001592615",
+                    "extRefundId": refund_tx.reference,
+                    "amount": "1000",
+                    "currencyCode": "PLN",
+                    "status": "FINALIZED",
+                    "reason": "refund",
+                },
             },
         )
         self.assertEqual(refund_tx.state, "done")
+        self.assertEqual(refund_tx.provider_reference, "5001592615")
+        self.assertEqual(tx.provider_reference, self.order_id)
