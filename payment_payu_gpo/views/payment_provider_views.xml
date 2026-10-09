@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="payment_provider_form" model="ir.ui.view">
+        <field name="name">PayU GPO Provider Form</field>
+        <field name="model">payment.provider</field>
+        <field name="inherit_id" ref="payment.payment_provider_form" />
+        <field name="arch" type="xml">
+            <group name="provider_credentials" position="inside">
+                <group invisible="code != 'payu_gpo'">
+                    <field name="payu_gpo_pos_id" required="code == 'payu_gpo' and state != 'disabled'" />
+                    <field name="payu_gpo_client_id" required="code == 'payu_gpo' and state != 'disabled'" />
+                    <field
+                        name="payu_gpo_client_secret"
+                        password="True"
+                        required="code == 'payu_gpo' and state != 'disabled'"
+                    />
+                    <field
+                        name="payu_gpo_second_key"
+                        password="True"
+                        required="code == 'payu_gpo' and state != 'disabled'"
+                    />
+                </group>
+            </group>
+        </field>
+    </record>
+</odoo>
