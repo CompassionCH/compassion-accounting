@@ -148,7 +148,10 @@ class PaymentTransaction(models.Model):
             ),
             "currency": self.currency_id.name,
             "customer_ip": payment_utils.get_customer_ip_address() or None,
-            "notify_url": urls.url_join(base_url, PayuGpoController._webhook_url),
+            "notify_url": urls.url_join(
+                self._payu_gpo_notify_base_url() or base_url,
+                PayuGpoController._webhook_url,
+            ),
             "buyer": {
                 "extCustomerId": self._payu_gpo_ext_customer_id(),
                 "email": self.partner_email,
@@ -163,6 +166,15 @@ class PaymentTransaction(models.Model):
                 base_url, PayuGpoController._return_url
             )
         return values
+
+    def _payu_gpo_notify_base_url(self):
+        """Public URL PayU sends notifications to, when it differs from the
+        base URL (reverse proxy, or a tunnel exposing only the webhook)."""
+        return (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("payment_payu_gpo.notify_base_url")
+        )
 
     def _payu_gpo_ext_customer_id(self):
         """Stable buyer identifier PayU attaches the stored card tokens to."""

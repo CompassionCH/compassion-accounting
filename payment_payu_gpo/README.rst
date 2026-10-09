@@ -58,6 +58,12 @@ Providers* and fill in the POS id, the OAuth ``client_id`` /
 PayU must enable **recurring payments** on the POS (cards), and the
 ``trusted_merchant`` grant used to list the buyer's card tokens.
 
+PayU must reach the notification URL. When Odoo's base URL is not public
+(reverse proxy, development behind a tunnel), set the system parameter
+``payment_payu_gpo.notify_base_url`` to the public URL that forwards
+``/payment/payu_gpo/webhook`` to Odoo; the buyer still returns to the
+base URL.
+
 Known issues / Roadmap
 ======================
 

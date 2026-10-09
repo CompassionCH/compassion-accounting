@@ -33,6 +33,22 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(values["url_params"], {"a": "1"})
         self.assertEqual(tx.provider_reference, self.order_id)
 
+    def test_notify_base_url_parameter(self):
+        """Only the notifications go to the public URL, the buyer returns
+        to the base URL."""
+        tx = self._create_transaction(flow="redirect")
+        base_url = self.provider.get_base_url()
+        values = tx._payu_gpo_order_values(with_continue_url=True)
+        self.assertEqual(values["notify_url"], f"{base_url}/payment/payu_gpo/webhook")
+        self.env["ir.config_parameter"].set_param(
+            "payment_payu_gpo.notify_base_url", "https://hooks.example"
+        )
+        values = tx._payu_gpo_order_values(with_continue_url=True)
+        self.assertEqual(
+            values["notify_url"], "https://hooks.example/payment/payu_gpo/webhook"
+        )
+        self.assertEqual(values["continue_url"], f"{base_url}/payment/payu_gpo/return")
+
     def test_inline_form_values_only_for_cards(self):
         values = json.loads(self.provider._payu_gpo_get_inline_form_values("card"))
         self.assertEqual(values["pos_id"], "300746")
