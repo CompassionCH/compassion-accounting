@@ -1,6 +1,7 @@
 import logging
 
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -102,3 +103,21 @@ class BankStatementLine(models.Model):
             or self.manual_product_id.id != product_id[0]
             or self.manual_contract_id.id != contract_id[0]
         )
+
+    def _do_auto_reconcile(self, models):
+        """Skip lines that fail to reconcile (e.g. sponsorship activation
+        blocked by an unverified partner) instead of rolling back the
+        whole statement import. The line stays open for manual reconcile."""
+        try:
+            with self.env.cr.savepoint():
+                return super()._do_auto_reconcile(models)
+        except UserError as error:
+            _logger.warning(
+                "Auto reconcile skipped for statement line %s: %s", self.id, error
+            )
+            self.move_id.message_post(
+                body=self.env._(
+                    "Automatic reconciliation skipped: %(error)s", error=error
+                )
+            )
+            return False
