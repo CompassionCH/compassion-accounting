@@ -16,6 +16,10 @@ around the _payu_gpo_* helpers below, which map one-to-one onto the new hooks:
     _send_payment_request          -> unchanged (called by _charge_with_token)
 
 Keep business logic in the helpers (or in payu_client) so a port only rewires.
+
+Extension points for other PayU methods (e.g. BLIK recurring, PAYID tokens):
+_payu_gpo_create_direct_order, _payu_gpo_token_values_from_order,
+_payu_gpo_token_payment_values and _payu_gpo_token_values_from_pay_methods.
 """
 
 import logging
@@ -94,14 +98,27 @@ class PaymentTransaction(models.Model):
         :return: the URL where the buyer must authenticate (3DS / CVV), or
                  None when PayU accepted the card right away
         """
-        client = self.provider_id._payu_gpo_client()
         three_ds = {"browser": browser} if browser else {}
         if self.tokenize:
             # Strong authentication when storing the card for monthly charges.
             three_ds.update(challengeRequested="YES", recurring={"frequency": "30"})
-        payload = client.build_order_payload(
+        return self._payu_gpo_create_direct_order(
+            {"type": "CARD_TOKEN", "value": card_token},
             recurring="FIRST" if self.tokenize else None,
-            pay_method={"type": "CARD_TOKEN", "value": card_token},
+            three_ds=three_ds,
+        )
+
+    def _payu_gpo_create_direct_order(self, pay_method, recurring=None, three_ds=None):
+        """Create an order paid with pay_method, the buyer being on the site.
+
+        Extension point for other direct-flow methods (e.g. a BLIK code).
+
+        :return: the URL where the buyer must authenticate, or None
+        """
+        client = self.provider_id._payu_gpo_client()
+        payload = client.build_order_payload(
+            recurring=recurring,
+            pay_method=pay_method,
             three_ds=three_ds,
             **self._payu_gpo_order_values(with_continue_url=True),
         )
@@ -115,19 +132,26 @@ class PaymentTransaction(models.Model):
             # The buyer comes back through the return route after 3DS.
             self._set_pending()
             return response.get("redirectUri")
-        # Only an immediately accepted payment returns the multi-use token.
-        pay_method = response.get("payMethods", {}).get("payMethod", {})
-        if self.tokenize and pay_method.get("value", "").startswith("TOKC_"):
-            self._payu_gpo_tokenize(
-                {
-                    "provider_ref": pay_method["value"],
-                    "payment_details": pay_method.get("card", {}).get("number", "")[
-                        -4:
-                    ],
-                }
-            )
+        if self.tokenize:
+            token_values = self._payu_gpo_token_values_from_order(response)
+            if token_values:
+                self._payu_gpo_tokenize(token_values)
         self._payu_gpo_refresh_from_api()
         return None
+
+    def _payu_gpo_token_values_from_order(self, response):
+        """Token values carried by the order response, or {}.
+
+        Only an immediately accepted card payment returns its multi-use token;
+        otherwise the token is fetched once the order is completed.
+        """
+        pay_method = response.get("payMethods", {}).get("payMethod", {})
+        if not pay_method.get("value", "").startswith("TOKC_"):
+            return {}
+        return {
+            "provider_ref": pay_method["value"],
+            "payment_details": pay_method.get("card", {}).get("number", "")[-4:],
+        }
 
     def _payu_gpo_refresh_from_api(self):
         """Read the order status from PayU (no webhook needed, e.g. on dev)."""
@@ -183,7 +207,7 @@ class PaymentTransaction(models.Model):
     # --- outgoing: merchant-initiated token charge --------------------------
 
     def _send_payment_request(self):
-        """Charge the saved PayU card token, no buyer involvement.
+        """Charge the saved PayU token, no buyer involvement.
 
         Called by my_compassion's off-session cron with operation="offline".
         The outcome arrives asynchronously through the webhook.
@@ -196,8 +220,7 @@ class PaymentTransaction(models.Model):
 
         client = self.provider_id._payu_gpo_client()
         payload = client.build_order_payload(
-            recurring="STANDARD",
-            pay_method={"type": "CARD_TOKEN", "value": self.token_id.provider_ref},
+            **self._payu_gpo_token_payment_values(),
             **self._payu_gpo_order_values(),
         )
         try:
@@ -209,6 +232,16 @@ class PaymentTransaction(models.Model):
             raise UserError(_("PayU: %s", e)) from e
         self.provider_reference = order.get("orderId")
         self._set_pending()
+
+    def _payu_gpo_token_payment_values(self):
+        """recurring and pay_method of a merchant-initiated token charge.
+
+        Extension point for other token types (e.g. BLIK PAYID).
+        """
+        return {
+            "recurring": "STANDARD",
+            "pay_method": {"type": "CARD_TOKEN", "value": self.token_id.provider_ref},
+        }
 
     def _send_refund_request(self, amount_to_refund=None):
         refund_tx = super()._send_refund_request(amount_to_refund=amount_to_refund)
@@ -303,9 +336,7 @@ class PaymentTransaction(models.Model):
     def _payu_gpo_tokenize(self, token_values=None):
         token_values = token_values or self._payu_gpo_extract_token_values()
         if not token_values:
-            _logger.warning(
-                "PayU: no card token found after payment %s", self.reference
-            )
+            _logger.warning("PayU: no token found after payment %s", self.reference)
             return
         token = self.env["payment.token"].create(
             {
@@ -318,24 +349,33 @@ class PaymentTransaction(models.Model):
         self.write({"token_id": token.id, "tokenize": False})
 
     def _payu_gpo_extract_token_values(self):
-        """Fetch the TOKC_ card token PayU stored for this buyer.
+        """Fetch the token PayU stored for this buyer.
 
         Used after 3DS, when the order response did not carry the token.
-        TODO(sandbox): validate that the trusted_merchant grant lists the card
-        stored by a recurring=FIRST payment, and pick the right one when the
-        buyer has several cards.
         """
+        methods = self._payu_gpo_get_buyer_pay_methods()
+        return self._payu_gpo_token_values_from_pay_methods(methods) if methods else {}
+
+    def _payu_gpo_get_buyer_pay_methods(self):
+        """The buyer's stored tokens (cardTokens, blikTokens...), or {}."""
         client = self.provider_id._payu_gpo_client()
         try:
             buyer_token = client.get_trusted_merchant_token(
                 self.partner_email, self._payu_gpo_ext_customer_id()
             )
-            methods = client.get_pay_methods(buyer_token)
+            return client.get_pay_methods(buyer_token)
         except PayuError as e:
-            _logger.warning(
-                "PayU: could not list card tokens for %s: %s", self.reference, e
-            )
+            _logger.warning("PayU: could not list tokens for %s: %s", self.reference, e)
             return {}
+
+    def _payu_gpo_token_values_from_pay_methods(self, methods):
+        """Pick the TOKC_ card token in the buyer's stored methods, or {}.
+
+        Extension point for other token types (e.g. BLIK PAYID).
+        TODO(sandbox): validate that the trusted_merchant grant lists the card
+        stored by a recurring=FIRST payment, and pick the right one when the
+        buyer has several cards.
+        """
         cards = [
             card
             for card in methods.get("cardTokens", [])
