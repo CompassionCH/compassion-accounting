@@ -53,43 +53,13 @@ paymentForm.include({
     // #=== PAYMENT FLOW ===#
 
     /**
-     * Tokenize the card before creating the transaction.
+     * Tokenize the card, pay with the token, and follow PayU to 3DS when the
+     * bank asks for it.
      *
-     * MULTI tokens can be stored for recurring charges, SINGLE ones cannot.
-     *
-     * @override method from @payment/js/payment_form
-     */
-    async _initiatePaymentFlow(
-        providerCode,
-        paymentOptionId,
-        paymentMethodCode,
-        flow,
-    ) {
-        if (providerCode !== "payu_gpo" || flow !== "direct") {
-            await this._super(...arguments);
-            return;
-        }
-        const _super = this._super.bind(this);
-        const result = await this.payuGpoSdks[paymentOptionId].tokenize(
-            this.paymentContext.tokenizationRequested ? "MULTI" : "SINGLE",
-        );
-        if (result.status !== "SUCCESS") {
-            const messages = (result.error?.messages ?? []).map(
-                (error) => error.message,
-            );
-            this._displayErrorDialog(
-                _t("Incorrect payment details"),
-                messages.join("\n"),
-            );
-            this._enableButton();
-            return;
-        }
-        this.payuGpoCardToken = result.body.token;
-        await _super(...arguments);
-    },
-
-    /**
-     * Pay with the card token; follow PayU to 3DS when the bank asks for it.
+     * The card is tokenized once the transaction exists: only the server knows
+     * whether it must be saved (the tokenization checkbox is hidden when the
+     * context requires it). MULTI tokens can be stored for recurring charges,
+     * SINGLE ones cannot.
      *
      * @override method from @payment/js/payment_form
      */
@@ -103,11 +73,25 @@ paymentForm.include({
             await this._super(...arguments);
             return;
         }
+        const tokenization = await this.payuGpoSdks[paymentOptionId].tokenize(
+            processingValues.should_tokenize ? "MULTI" : "SINGLE",
+        );
+        if (tokenization.status !== "SUCCESS") {
+            const messages = (tokenization.error?.messages ?? []).map(
+                (error) => error.message,
+            );
+            this._displayErrorDialog(
+                _t("Incorrect payment details"),
+                messages.join("\n"),
+            );
+            this._enableButton();
+            return;
+        }
         try {
             const result = await rpc("/payment/payu_gpo/card_payment", {
                 reference: processingValues.reference,
                 access_token: processingValues.payu_gpo_access_token,
-                card_token: this.payuGpoCardToken,
+                card_token: tokenization.body.token,
                 browser: this._payuGpoBrowserData(),
             });
             window.location = result.redirect_url || "/payment/status";
