@@ -43,6 +43,13 @@ _logger = logging.getLogger(__name__)
 class PaymentTransaction(models.Model):
     _inherit = "payment.transaction"
 
+    payu_gpo_token_retry_date = fields.Datetime(
+        string="PayU card save retried on",
+        readonly=True,
+        copy=False,
+        help="Last time the cron tried to save the card of this payment.",
+    )
+
     # --- outgoing: hosted payment page (BLIK, bank transfers) ----------------
 
     def _get_specific_rendering_values(self, processing_values):
@@ -370,18 +377,32 @@ class PaymentTransaction(models.Model):
         After 3DS the token is read from PayU once the order is completed; if
         that call fails, nothing else would try again. Give up after a few
         days: the donor must then enter the card again.
+
+        Works in batches committed by the cron (progress API), oldest attempt
+        first, so a PayU outage neither loses saved cards nor starves the
+        other payments.
         """
+        now = fields.Datetime.now()
+        retry_before = now - timedelta(minutes=const.TOKENIZATION_RETRY_DELAY_MINUTES)
+        domain = [
+            ("provider_code", "=", const.PROVIDER_CODE),
+            ("state", "=", "done"),
+            ("tokenize", "=", True),
+            ("token_id", "=", False),
+            "|",
+            ("payu_gpo_token_retry_date", "=", False),
+            ("payu_gpo_token_retry_date", "<", retry_before),
+        ]
+        total = self.search_count(domain)
         txs = self.search(
-            [
-                ("provider_code", "=", const.PROVIDER_CODE),
-                ("state", "=", "done"),
-                ("tokenize", "=", True),
-                ("token_id", "=", False),
-            ]
+            domain,
+            order="payu_gpo_token_retry_date asc nulls first, id",
+            limit=const.TOKENIZATION_RETRY_BATCH,
         )
-        limit = fields.Datetime.now() - timedelta(days=const.TOKENIZATION_RETRY_DAYS)
+        give_up_before = now - timedelta(days=const.TOKENIZATION_RETRY_DAYS)
         for tx in txs:
-            if tx.last_state_change < limit:
+            tx.payu_gpo_token_retry_date = now
+            if tx.last_state_change < give_up_before:
                 _logger.error(
                     "PayU: gave up saving the card of %s; the donor must enter"
                     " it again.",
@@ -390,6 +411,7 @@ class PaymentTransaction(models.Model):
                 tx.tokenize = False
             else:
                 tx._payu_gpo_tokenize()
+        self.env["ir.cron"]._notify_progress(done=len(txs), remaining=total - len(txs))
 
     def _payu_gpo_extract_token_values(self):
         """Fetch the token PayU stored for this buyer.

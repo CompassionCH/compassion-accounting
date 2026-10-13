@@ -34,6 +34,10 @@ CARD_PAYMENT_METHOD_CODES = {"card", "visa", "mastercard", "maestro"}
 
 # Days during which the cron retries saving the card of a completed payment.
 TOKENIZATION_RETRY_DAYS = 3
+# Transactions per cron batch (committed one by one), and the minimal delay
+# before the same transaction is tried again.
+TOKENIZATION_RETRY_BATCH = 10
+TOKENIZATION_RETRY_DELAY_MINUTES = 30
 
 # Secure Form SDK, loaded by the browser from PayU.
 SDK_PATH = "/javascript/sdk"

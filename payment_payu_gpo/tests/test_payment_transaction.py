@@ -5,6 +5,7 @@ from odoo.tests import tagged
 
 from odoo.addons.payment import utils as payment_utils
 
+from .. import const
 from ..payu_client import PayuError
 from .common import PayuGpoCommon
 
@@ -261,6 +262,33 @@ class TestPaymentTransaction(PayuGpoCommon):
         get.assert_not_called()
         self.assertFalse(tx.tokenize)
         self.assertFalse(tx.token_id)
+
+    def test_cron_retries_in_batches(self):
+        """A failing payment is tried once per run and never starves the others."""
+        txs = self.env["payment.transaction"]
+        for i in range(3):
+            txs |= self._create_transaction(
+                flow="redirect",
+                tokenize=True,
+                state="done",
+                reference=f"payu-batch-{i}",
+            )
+        with (
+            patch.object(const, "TOKENIZATION_RETRY_BATCH", 2),
+            patch(
+                f"{CLIENT}.get_trusted_merchant_token", side_effect=PayuError("down")
+            ) as get,
+        ):
+            txs._cron_payu_gpo_retry_tokenization()
+            self.assertEqual(get.call_count, 2)
+            # Next batch: only the payment not tried yet.
+            txs._cron_payu_gpo_retry_tokenization()
+            self.assertEqual(get.call_count, 3)
+            # All tried in this run: nothing left until the retry delay.
+            txs._cron_payu_gpo_retry_tokenization()
+            self.assertEqual(get.call_count, 3)
+        self.assertTrue(all(txs.mapped("payu_gpo_token_retry_date")))
+        self.assertTrue(all(txs.mapped("tokenize")))
 
     def test_offline_token_charge(self):
         token = self._create_token(provider_ref="TOKC_ABC")
