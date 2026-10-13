@@ -21,6 +21,7 @@
         "views/payment_provider_views.xml",
         "views/payment_payu_gpo_templates.xml",
         "data/payment_provider_data.xml",
+        "data/ir_cron_data.xml",
     ],
     "assets": {
         "web.assets_frontend": [

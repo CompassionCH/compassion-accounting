@@ -32,6 +32,9 @@ DEFAULT_PAYMENT_METHOD_CODES = {"card", "blik", "visa", "mastercard"}
 # hosted page: PayU only stores a card for recurring charges from a form token.
 CARD_PAYMENT_METHOD_CODES = {"card", "visa", "mastercard", "maestro"}
 
+# Days during which the cron retries saving the card of a completed payment.
+TOKENIZATION_RETRY_DAYS = 3
+
 # Secure Form SDK, loaded by the browser from PayU.
 SDK_PATH = "/javascript/sdk"
 

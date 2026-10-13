@@ -381,6 +381,8 @@ the first payment is sent with <tt class="docutils literal">recurring: FIRST</tt
 <li>Merchant-initiated charges: <tt class="docutils literal">_send_payment_request()</tt> charges the
 token with <tt class="docutils literal">recurring: STANDARD</tt>, so any off-session charge (cron,
 subscription) works with the standard payment API.</li>
+<li>When the card of a completed payment cannot be read from PayU (e.g.
+after 3DS), an hourly cron retries saving it for three days.</li>
 <li>Signed notifications (<tt class="docutils literal"><span class="pre">OpenPayu-Signature</span></tt>, POS second key) for
 orders and refunds.</li>
 <li>Partial and full refunds.</li>

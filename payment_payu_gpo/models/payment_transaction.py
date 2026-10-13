@@ -23,11 +23,12 @@ _payu_gpo_token_payment_values and _payu_gpo_token_values_from_pay_methods.
 """
 
 import logging
+from datetime import timedelta
 from urllib.parse import parse_qsl, urlsplit
 
 from werkzeug import urls
 
-from odoo import _, api, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
 from odoo.addons.payment import utils as payment_utils
@@ -340,6 +341,14 @@ class PaymentTransaction(models.Model):
             self._set_error(_("PayU: received data with invalid status: %s", status))
 
     def _payu_gpo_tokenize(self, token_values=None):
+        # The return route, the webhook and the retry cron may race: lock the
+        # transaction and re-read it so only one of them saves the card.
+        self.env.cr.execute(
+            "SELECT 1 FROM payment_transaction WHERE id = %s FOR UPDATE", [self.id]
+        )
+        self.invalidate_recordset(["token_id", "tokenize"])
+        if self.token_id or not self.tokenize:
+            return
         token_values = token_values or self._payu_gpo_extract_token_values()
         if not token_values:
             _logger.warning("PayU: no token found after payment %s", self.reference)
@@ -353,6 +362,34 @@ class PaymentTransaction(models.Model):
             }
         )
         self.write({"token_id": token.id, "tokenize": False})
+
+    @api.model
+    def _cron_payu_gpo_retry_tokenization(self):
+        """Save the cards that completed payments could not save.
+
+        After 3DS the token is read from PayU once the order is completed; if
+        that call fails, nothing else would try again. Give up after a few
+        days: the donor must then enter the card again.
+        """
+        txs = self.search(
+            [
+                ("provider_code", "=", const.PROVIDER_CODE),
+                ("state", "=", "done"),
+                ("tokenize", "=", True),
+                ("token_id", "=", False),
+            ]
+        )
+        limit = fields.Datetime.now() - timedelta(days=const.TOKENIZATION_RETRY_DAYS)
+        for tx in txs:
+            if tx.last_state_change < limit:
+                _logger.error(
+                    "PayU: gave up saving the card of %s; the donor must enter"
+                    " it again.",
+                    tx.reference,
+                )
+                tx.tokenize = False
+            else:
+                tx._payu_gpo_tokenize()
 
     def _payu_gpo_extract_token_values(self):
         """Fetch the token PayU stored for this buyer.

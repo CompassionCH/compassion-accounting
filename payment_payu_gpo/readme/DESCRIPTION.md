@@ -8,6 +8,8 @@ Not to be confused with PayU India (`payu.in`).
 - Merchant-initiated charges: `_send_payment_request()` charges the token
   with `recurring: STANDARD`, so any off-session charge (cron, subscription)
   works with the standard payment API.
+- When the card of a completed payment cannot be read from PayU (e.g. after
+  3DS), an hourly cron retries saving it for three days.
 - Signed notifications (`OpenPayu-Signature`, POS second key) for orders and
   refunds.
 - Partial and full refunds.

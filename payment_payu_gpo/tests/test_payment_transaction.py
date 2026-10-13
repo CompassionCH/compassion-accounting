@@ -227,6 +227,41 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(tx.token_id.provider_ref, "TOKC_NEW")
         self.assertEqual(tx.token_id.payment_details, "4242")
 
+    def test_cron_retries_failed_tokenization(self):
+        tx = self._create_transaction(flow="redirect", tokenize=True)
+        with patch(
+            f"{CLIENT}.get_trusted_merchant_token", side_effect=PayuError("down")
+        ):
+            tx._handle_notification_data(
+                "payu_gpo", self._order_notification("COMPLETED")
+            )
+        self.assertEqual(tx.state, "done")
+        self.assertFalse(tx.token_id)
+        pay_methods = {
+            "cardTokens": [
+                {"value": "TOKC_NEW", "status": "ACTIVE", "cardNumberMasked": "4242"}
+            ]
+        }
+        with (
+            patch(f"{CLIENT}.get_trusted_merchant_token", return_value="BUYER"),
+            patch(f"{CLIENT}.get_pay_methods", return_value=pay_methods) as get,
+        ):
+            tx._cron_payu_gpo_retry_tokenization()
+            self.assertEqual(tx.token_id.provider_ref, "TOKC_NEW")
+            self.assertFalse(tx.tokenize)
+            # Idempotent: a saved card is never fetched again.
+            tx._cron_payu_gpo_retry_tokenization()
+        self.assertEqual(get.call_count, 1)
+
+    def test_cron_gives_up_tokenization(self):
+        tx = self._create_transaction(flow="redirect", tokenize=True, state="done")
+        tx.last_state_change = "2020-01-01 00:00:00"
+        with patch(f"{CLIENT}.get_pay_methods") as get:
+            tx._cron_payu_gpo_retry_tokenization()
+        get.assert_not_called()
+        self.assertFalse(tx.tokenize)
+        self.assertFalse(tx.token_id)
+
     def test_offline_token_charge(self):
         token = self._create_token(provider_ref="TOKC_ABC")
         tx = self._create_transaction(
