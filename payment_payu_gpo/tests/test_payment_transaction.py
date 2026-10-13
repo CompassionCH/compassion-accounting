@@ -115,6 +115,31 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(tx.token_id.provider_ref, "TOKC_NEW")
         self.assertEqual(tx.token_id.payment_details, "1111")
 
+    def test_card_token_accepted_survives_failed_refresh(self):
+        """The accepted order keeps its reference and token; the webhook settles it."""
+        tx = self._create_transaction(flow="direct", tokenize=True)
+        with (
+            patch(
+                f"{CLIENT}.create_order",
+                return_value={
+                    "orderId": self.order_id,
+                    "status": {"statusCode": "SUCCESS"},
+                    "payMethods": {
+                        "payMethod": {
+                            "type": "CARD_TOKEN",
+                            "value": "TOKC_NEW",
+                            "card": {"number": "444433******1111"},
+                        }
+                    },
+                },
+            ),
+            patch(f"{CLIENT}.get_order", side_effect=PayuError("timeout")),
+        ):
+            self.assertIsNone(tx._payu_gpo_pay_with_card_token("TOK_ONCE"))
+        self.assertEqual(tx.state, "pending")
+        self.assertEqual(tx.provider_reference, self.order_id)
+        self.assertEqual(tx.token_id.provider_ref, "TOKC_NEW")
+
     def test_card_token_without_tokenization(self):
         tx = self._create_transaction(flow="direct")
         with (

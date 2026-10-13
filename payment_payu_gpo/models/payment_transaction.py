@@ -136,7 +136,13 @@ class PaymentTransaction(models.Model):
             token_values = self._payu_gpo_token_values_from_order(response)
             if token_values:
                 self._payu_gpo_tokenize(token_values)
-        self._payu_gpo_refresh_from_api()
+        # PayU accepted the order: a failed status read must not roll back its
+        # reference and token. The notification will settle it.
+        self._set_pending()
+        try:
+            self._payu_gpo_refresh_from_api()
+        except PayuError as e:
+            _logger.warning("PayU: could not refresh %s: %s", self.reference, e)
         return None
 
     def _payu_gpo_token_values_from_order(self, response):

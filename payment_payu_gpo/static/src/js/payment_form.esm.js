@@ -21,8 +21,7 @@ paymentForm.include({
         flow,
     ) {
         if (providerCode !== "payu_gpo") {
-            this._super(...arguments);
-            return;
+            return this._super(...arguments);
         }
         const radio = document.querySelector(
             'input[name="o_payment_radio"]:checked',
