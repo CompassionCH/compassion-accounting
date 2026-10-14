@@ -1,4 +1,5 @@
 import logging
+import re
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError
@@ -89,6 +90,38 @@ class BankStatementLine(models.Model):
         vals["product_id"] = product_id or False
         vals["contract_id"] = contract_id or False
         return vals
+
+    def _reconcile_data_by_model(self, data, reconcile_model, reconcile_auxiliary_id):
+        new_data, reconcile_auxiliary_id = super()._reconcile_data_by_model(
+            data, reconcile_model, reconcile_auxiliary_id
+        )
+        contract = self._get_contract_from_reference()
+        if contract:
+            nb_kept_lines = len([line for line in data if line["kind"] != "suspense"])
+            for line in new_data[nb_kept_lines:]:
+                if not line.get("contract_id"):
+                    line["contract_id"] = [contract.id, contract.display_name]
+        return new_data, reconcile_auxiliary_id
+
+    def _get_contract_from_reference(self):
+        """Find the sponsorship of a gift QRR reference, built as
+        9 digits + partner ref (7) + commitment number (5) + gift type + ..."""
+        contract_obj = self.env["recurring.contract"]
+        ref = (self.payment_ref or "").strip()
+        if not re.fullmatch(r"\d{27}", ref):
+            return contract_obj
+        partner_ref = ref[9:16].lstrip("0")
+        contracts = contract_obj.search(
+            [
+                ("commitment_number", "=", int(ref[16:21])),
+                ("state", "!=", "draft"),
+                ("company_id", "=", self.company_id.id),
+                "|",
+                ("partner_id.ref", "=", partner_ref),
+                ("correspondent_id.ref", "=", partner_ref),
+            ]
+        ).filtered(lambda c: c.gift_partner_id.ref == partner_ref)
+        return contracts if len(contracts) == 1 else contract_obj
 
     def _check_line_changed(self, line):
         res = super()._check_line_changed(line)
