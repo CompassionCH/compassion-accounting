@@ -105,10 +105,12 @@ class BankStatementLine(models.Model):
 
     def _get_contract_from_reference(self):
         """Find the sponsorship of a gift QRR reference, built as
-        9 digits + partner ref (7) + commitment number (5) + gift type + ..."""
+        9 digits + partner ref (7) + commitment number (5) + gift type (1-6)
+        + 0000 + check digit. Type 0 (sponsorship) and fund donations (type 6
+        followed by the fund id) reuse the same layout, so they are skipped."""
         contract_obj = self.env["recurring.contract"]
         ref = (self.payment_ref or "").strip()
-        if not re.fullmatch(r"\d{27}", ref):
+        if not re.fullmatch(r"\d{21}[1-6]0000\d", ref):
             return contract_obj
         partner_ref = ref[9:16].lstrip("0")
         contracts = contract_obj.search(
@@ -121,6 +123,12 @@ class BankStatementLine(models.Model):
                 ("correspondent_id.ref", "=", partner_ref),
             ]
         ).filtered(lambda c: c.gift_partner_id.ref == partner_ref)
+        # Ended contracts don't block their commitment number from being reused
+        current = contracts.filtered(
+            lambda c: c.state not in ("terminated", "cancelled")
+        )
+        if len(current) == 1:
+            return current
         return contracts if len(contracts) == 1 else contract_obj
 
     def _check_line_changed(self, line):
