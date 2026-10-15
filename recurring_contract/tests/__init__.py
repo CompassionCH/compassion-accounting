@@ -9,3 +9,4 @@
 
 from . import test_recurring_contract
 from . import test_locked_invoices
+from . import test_res_config_settings

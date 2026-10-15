@@ -56,10 +56,13 @@ class MandateStaffNotifSettings(models.TransientModel):
             self.get_param_multi_company("recurring_contract.do_generate_curr_month")
             == "True"
         )
-        res["invoice_cleanup_user_id"] = int(
-            self.get_param_multi_company("recurring_contract.invoice_cleanup_user_id")
-            or 0
+        # Unset for a new company: a 0 id would break the settings form.
+        user_id = self.get_param_multi_company(
+            "recurring_contract.invoice_cleanup_user_id"
         )
+        res["invoice_cleanup_user_id"] = (
+            user_id and self.env["res.users"].browse(int(user_id)).exists().id
+        ) or False
         return res
 
     def set_values(self):
