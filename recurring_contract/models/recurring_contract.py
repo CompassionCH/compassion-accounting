@@ -586,7 +586,8 @@ class RecurringContract(models.Model):
         """Split invoice lines between the ones we may modify and the moves
         lying in a locked accounting period, which Odoo refuses to touch."""
         locked = invoice_lines.mapped("move_id").filtered(
-            lambda move: move.date <= move.company_id._get_user_fiscal_lock_date()
+            lambda move: move.date
+            <= move.company_id._get_user_fiscal_lock_date(move.journal_id)
         )
         return (
             invoice_lines.filtered(lambda line: line.move_id not in locked),
