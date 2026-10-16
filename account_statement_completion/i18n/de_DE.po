@@ -1,0 +1,137 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* account_statement_completion
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 14.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-16 18:52+0000\n"
+"PO-Revision-Date: 2026-10-16 18:52+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: account_statement_completion
+#: model:ir.model.fields,help:account_statement_completion.field_account_statement_completion_rule__python_completion_rule
+msgid ""
+"\n"
+"# Available variables:\n"
+"#-------------------------------\n"
+"# stmts_vals: Values of the statements as a list of dict\n"
+"# stmt_line: Values of the statement line as a dict\n"
+"# env: environment\n"
+"# re.search, re.findall: regex functions for finding values in strings\n"
+"\n"
+"# Available compute variables:\n"
+"#-------------------------------\n"
+"# result: True if the reconcilation rule found any relevant data.\n"
+"#         This will prevent any subsequent rule to be executed on the same line.\n"
+"\n"
+"# Example:\n"
+"#-------------------------------\n"
+"# result = True\n"
+"                    "
+msgstr ""
+
+#. module: account_statement_completion
+#: model:ir.model,name:account_statement_completion.model_account_statement_completion_rule
+msgid "Account Statement Completion Rule"
+msgstr ""
+
+#. module: account_statement_completion
+#: model:ir.actions.act_window,name:account_statement_completion.action_st_completion_rule
+#: model:ir.model.fields,field_description:account_statement_completion.field_account_journal__completion_rules
+#: model:ir.ui.menu,name:account_statement_completion.menu_action_st_completion_rule_tree_menu
+#: model_terms:ir.ui.view,arch_db:account_statement_completion.view_account_journal_completion_rule_form
+msgid "Completion Rules"
+msgstr ""
+
+#. module: account_statement_completion
+#: model_terms:ir.ui.view,arch_db:account_statement_completion.statement_st_completion_rule_view_form
+msgid "Completion rule"
+msgstr ""
+
+#. module: account_statement_completion
+#: model:ir.model.fields,field_description:account_statement_completion.field_account_statement_completion_rule__create_uid
+msgid "Created by"
+msgstr "Angelegt von"
+
+#. module: account_statement_completion
+#: model:ir.model.fields,field_description:account_statement_completion.field_account_statement_completion_rule__create_date
+msgid "Created on"
+msgstr "Angelegt am"
+
+#. module: account_statement_completion
+#: model:ir.model.fields,field_description:account_statement_completion.field_account_journal__display_name
+#: model:ir.model.fields,field_description:account_statement_completion.field_account_statement_completion_rule__display_name
+#: model:ir.model.fields,field_description:account_statement_completion.field_account_statement_import__display_name
+msgid "Display Name"
+msgstr "Angezeigter Name"
+
+#. module: account_statement_completion
+#: model:ir.model.fields,field_description:account_statement_completion.field_account_journal__id
+#: model:ir.model.fields,field_description:account_statement_completion.field_account_statement_completion_rule__id
+#: model:ir.model.fields,field_description:account_statement_completion.field_account_statement_import__id
+msgid "ID"
+msgstr ""
+
+#. module: account_statement_completion
+#: model:ir.model,name:account_statement_completion.model_account_statement_import
+msgid "Import Bank Statement Files"
+msgstr ""
+
+#. module: account_statement_completion
+#: model:ir.model,name:account_statement_completion.model_account_journal
+msgid "Journal"
+msgstr ""
+
+#. module: account_statement_completion
+#: model:ir.model.fields,field_description:account_statement_completion.field_account_journal____last_update
+#: model:ir.model.fields,field_description:account_statement_completion.field_account_statement_completion_rule____last_update
+#: model:ir.model.fields,field_description:account_statement_completion.field_account_statement_import____last_update
+msgid "Last Modified on"
+msgstr "Zuletzt geändert am"
+
+#. module: account_statement_completion
+#: model:ir.model.fields,field_description:account_statement_completion.field_account_statement_completion_rule__write_uid
+msgid "Last Updated by"
+msgstr "Zuletzt aktualisiert durch"
+
+#. module: account_statement_completion
+#: model:ir.model.fields,field_description:account_statement_completion.field_account_statement_completion_rule__write_date
+msgid "Last Updated on"
+msgstr "Zuletzt aktualisiert am"
+
+#. module: account_statement_completion
+#: model:ir.model.fields,help:account_statement_completion.field_account_statement_completion_rule__sequence
+msgid "Lower means parsed first."
+msgstr ""
+
+#. module: account_statement_completion
+#: model:ir.model.fields,field_description:account_statement_completion.field_account_statement_completion_rule__name
+msgid "Name"
+msgstr ""
+
+#. module: account_statement_completion
+#: model:ir.model.fields,field_description:account_statement_completion.field_account_statement_completion_rule__python_completion_rule
+msgid "Python Code"
+msgstr ""
+
+#. module: account_statement_completion
+#: model:ir.model.fields,field_description:account_statement_completion.field_account_statement_completion_rule__journal_ids
+msgid "Related statement journal"
+msgstr ""
+
+#. module: account_statement_completion
+#: model:ir.model.fields,field_description:account_statement_completion.field_account_statement_completion_rule__sequence
+msgid "Sequence"
+msgstr "Reihenfolge"
+
+#. module: account_statement_completion
+#: model_terms:ir.ui.view,arch_db:account_statement_completion.statement_st_completion_rule_view_tree
+msgid "Statement Completion Rule"
+msgstr ""

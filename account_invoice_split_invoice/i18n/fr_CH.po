@@ -1,21 +1,19 @@
-# Translation of OpenERP Server.
+# Translation of Odoo Server.
 # This file contains the translation of the following modules:
 # 	* account_invoice_split_invoice
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: OpenERP Server 7.0-20140602-231022\n"
+"Project-Id-Version: Odoo Server 14.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-05-09 19:13+0000\n"
-"PO-Revision-Date: 2024-05-09 21:13+0200\n"
-"Last-Translator: Emanuel Cino <ecino@compassion.ch>\n"
+"POT-Creation-Date: 2026-10-16 18:51+0000\n"
+"PO-Revision-Date: 2026-10-16 18:51+0000\n"
+"Last-Translator: \n"
 "Language-Team: \n"
-"Language: fr_CH\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.4.2\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
 
 #. module: account_invoice_split_invoice
 #: model_terms:ir.ui.view,arch_db:account_invoice_split_invoice.view_invoice_split_wizard_form
@@ -37,17 +35,17 @@ msgstr "Créé le"
 #. module: account_invoice_split_invoice
 #: model:ir.model.fields,field_description:account_invoice_split_invoice.field_account_invoice_split_wizard__display_name
 msgid "Display Name"
-msgstr ""
+msgstr "Nom affiché"
 
 #. module: account_invoice_split_invoice
 #: model:ir.model.fields,field_description:account_invoice_split_invoice.field_account_invoice_split_wizard__id
 msgid "ID"
-msgstr "ID"
+msgstr "Identifiant"
 
 #. module: account_invoice_split_invoice
 #: model:ir.model.fields,field_description:account_invoice_split_invoice.field_account_invoice_split_wizard__invoice_line_ids
 msgid "Invoice lines"
-msgstr "Lignes de facture"
+msgstr "Lignes de factures"
 
 #. module: account_invoice_split_invoice
 #: model_terms:ir.ui.view,arch_db:account_invoice_split_invoice.view_invoice_split_wizard_form
@@ -56,19 +54,18 @@ msgstr "Scission de facture"
 
 #. module: account_invoice_split_invoice
 #: model:ir.model.fields,field_description:account_invoice_split_invoice.field_account_invoice_split_wizard____last_update
-#| msgid "Last Updated on"
 msgid "Last Modified on"
-msgstr ""
+msgstr "Dernière modification le"
 
 #. module: account_invoice_split_invoice
 #: model:ir.model.fields,field_description:account_invoice_split_invoice.field_account_invoice_split_wizard__write_uid
 msgid "Last Updated by"
-msgstr "Modifé par"
+msgstr "Dernière mise à jour par"
 
 #. module: account_invoice_split_invoice
 #: model:ir.model.fields,field_description:account_invoice_split_invoice.field_account_invoice_split_wizard__write_date
 msgid "Last Updated on"
-msgstr "Modifié le"
+msgstr "Dernière mise à jour le"
 
 #. module: account_invoice_split_invoice
 #: model:ir.model.fields,field_description:account_invoice_split_invoice.field_account_invoice_split_wizard__move_id
@@ -77,7 +74,6 @@ msgstr ""
 
 #. module: account_invoice_split_invoice
 #: model:ir.model,name:account_invoice_split_invoice.model_account_invoice_split_wizard
-#| msgid "Split invoice"
 msgid "Split Invoice Wizard"
 msgstr ""
 
@@ -86,18 +82,3 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:account_invoice_split_invoice.view_invoice_split_wizard_form
 msgid "Split invoice"
 msgstr "Scindre la facture"
-
-#~ msgid "Invoice Line"
-#~ msgstr "Ligne de facture"
-
-#~ msgid "Put line into new invoice"
-#~ msgstr "Ligne à déplacer"
-
-#~ msgid "Select lines you wish to put in a new invoice."
-#~ msgstr "Sélectionnez les lignes à déplacer vers nouvelle facture"
-
-#~ msgid "account.invoice.split.wizard"
-#~ msgstr "account.invoice.split.wizard"
-
-#~ msgid "Choose how to separate invoice"
-#~ msgstr "Séparation d'une facture"
