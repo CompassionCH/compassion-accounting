@@ -53,24 +53,24 @@ msgstr "Attivo"
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_group_contract_form
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
 msgid "Active Contracts"
-msgstr ""
+msgstr "Contratti attivi"
 
 #. module: recurring_contract
 #. odoo-python
 #: code:addons/recurring_contract/models/recurring_contract.py:0
 msgid "Active contract cannot be put to draft"
-msgstr ""
+msgstr "Un contratto attivo non può essere riportato in bozza"
 
 #. module: recurring_contract
 #. odoo-python
 #: code:addons/recurring_contract/models/recurring_contract.py:0
 msgid "Active contract cannot be put to waiting"
-msgstr ""
+msgstr "Un contratto attivo non può essere messo in attesa"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__active_contract_ids
 msgid "Active contracts"
-msgstr ""
+msgstr "Contratti attivi"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_ids
@@ -95,7 +95,7 @@ msgstr "Icona Tipo di attività"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__additional_notes
 msgid "Additional Notes"
-msgstr ""
+msgstr "Note aggiuntive"
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract_group__advance_billing_months
@@ -104,11 +104,14 @@ msgid ""
 " can generate the invoices for each month of the year and send them to the "
 "customer in january."
 msgstr ""
+"La fatturazione anticipata permette di generare le fatture in anticipo. Ad "
+"esempio, puoi generare le fatture di ogni mese dell'anno e inviarle al "
+"cliente a gennaio."
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__advance_billing_months
 msgid "Advance billing months"
-msgstr ""
+msgstr "Mesi di fatturazione anticipata"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__amount_due
@@ -118,7 +121,7 @@ msgstr "Amount due"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__amount_from_pricelist
 msgid "Amount From Pricelist"
-msgstr ""
+msgstr "Importo dal listino prezzi"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_attachment_count
@@ -129,17 +132,17 @@ msgstr "Numero allegati"
 #. module: recurring_contract
 #: model:ir.model.fields.selection,name:recurring_contract.selection__utm_medium__type__automatic
 msgid "Automatic"
-msgstr ""
+msgstr "Automatico"
 
 #. module: recurring_contract
 #: model:ir.actions.act_window,name:recurring_contract.action_invoice_automatic_generation
 msgid "Automatic invoice generation from contracts"
-msgstr ""
+msgstr "Generazione automatica delle fatture dai contratti"
 
 #. module: recurring_contract
 #: model:product.template,name:recurring_contract.product_balance_migr_product_template
 msgid "Balance"
-msgstr ""
+msgstr "Saldo"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__campaign_id
@@ -155,7 +158,7 @@ msgstr "Annulla"
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_invoicer_form
 msgid "Cancel invoices"
-msgstr ""
+msgstr "Annulla le fatture"
 
 #. module: recurring_contract
 #: model:ir.model.fields.selection,name:recurring_contract.selection__recurring_contract__state__cancelled
@@ -165,7 +168,7 @@ msgstr "Annullato"
 #. module: recurring_contract
 #: model_terms:ir.actions.act_window,help:recurring_contract.action_recurring_contract_form
 msgid "Click to add a contract."
-msgstr ""
+msgstr "Clicca per aggiungere un contratto."
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__comment
@@ -192,18 +195,18 @@ msgstr "Contratto"
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
 msgid "Contract Details"
-msgstr ""
+msgstr "Dettagli del contratto"
 
 #. module: recurring_contract
 #. odoo-python
 #: code:addons/recurring_contract/models/product_pricelist_item.py:0
 msgid "Contract Line Prices Updated"
-msgstr ""
+msgstr "Prezzi delle righe di contratto aggiornati"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_product_product__contract_line_ids
 msgid "Contract Lines"
-msgstr ""
+msgstr "Righe di contratto"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_activate_sponsorship
@@ -214,12 +217,14 @@ msgstr "Attivazione del contratto"
 #: model:base.automation,name:recurring_contract.automated_action
 msgid "Contract line update on pricelist item end date"
 msgstr ""
+"Aggiornamento delle righe di contratto alla data di fine dell'elemento del "
+"listino"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__contract_line_ids
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
 msgid "Contract lines"
-msgstr ""
+msgstr "Righe di contratto"
 
 #. module: recurring_contract
 #: model:ir.actions.act_window,name:recurring_contract.action_recurring_contract_form
@@ -234,7 +239,7 @@ msgstr "Contratti"
 #. odoo-python
 #: code:addons/recurring_contract/models/recurring_contract.py:0
 msgid "Could not be cancelled (%(error)s): %(invoices)s"
-msgstr ""
+msgstr "Impossibile annullare (%(error)s): %(invoices)s"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__country_id
@@ -244,7 +249,7 @@ msgstr "Nazione"
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
 msgid "Created automatically if left empty"
-msgstr ""
+msgstr "Creato automaticamente se lasciato vuoto"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__create_uid
@@ -279,17 +284,18 @@ msgstr "Valuta"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__current_invoice_date
 msgid "Current Invoice Date"
-msgstr ""
+msgstr "Data della fattura corrente"
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract_group__invoice_suspended_until
 msgid "Date at which the sponsor should receive invoices again."
 msgstr ""
+"Data a partire dalla quale il sostenitore deve ricevere di nuovo le fatture."
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
 msgid "Dates"
-msgstr ""
+msgstr "Date"
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_reformat_all_phonenumbers__do_generate_curr_month
@@ -299,17 +305,24 @@ msgid ""
 "next month.Ticked means we generate the current month and next month by "
 "default"
 msgstr ""
+"Definisce se le fatture devono generare per impostazione predefinita il mese"
+" corrente o il mese successivo. Se spuntato, vengono generati per "
+"impostazione predefinita il mese corrente e il successivo."
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.notification_settings
 msgid ""
 "Define if we start generating invoices from current month or next month only"
 msgstr ""
+"Definisci se iniziare a generare le fatture dal mese corrente o solo dal "
+"mese successivo"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.notification_settings
 msgid "Define the day that we want to suspend contract invoices on creation"
 msgstr ""
+"Definisci il giorno in cui sospendere le fatture del contratto alla "
+"creazione"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__display_name
@@ -332,7 +345,7 @@ msgstr "Bozza"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_account_move_line__due_date
 msgid "Due Date"
-msgstr ""
+msgstr "Data di scadenza"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__end_date
@@ -343,23 +356,23 @@ msgstr "Data di fine"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__end_reason_id
 msgid "End Reason"
-msgstr ""
+msgstr "Motivo della fine"
 
 #. module: recurring_contract
 #: model:ir.actions.act_window,name:recurring_contract.action_end_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.end_contract_view
 msgid "End contract"
-msgstr ""
+msgstr "Termina il contratto"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
 msgid "End date"
-msgstr ""
+msgstr "Data di fine"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__end_reason_id
 msgid "End reason"
-msgstr ""
+msgstr "Motivo della fine"
 
 #. module: recurring_contract
 #: model:ir.actions.server,name:recurring_contract.action_pricelist_item_update
@@ -397,7 +410,7 @@ msgstr "Icona font awesome ad esempio fa-tasks"
 #. module: recurring_contract
 #: model:ir.actions.act_window,name:recurring_contract.action_activate_contract
 msgid "Force activation"
-msgstr ""
+msgstr "Forza l'attivazione"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.recurring_invoicer_wizard_view
@@ -408,18 +421,18 @@ msgstr "Generare"
 #: model:ir.model.fields,field_description:recurring_contract.field_reformat_all_phonenumbers__do_generate_curr_month
 #: model:ir.model.fields,field_description:recurring_contract.field_res_config_settings__do_generate_curr_month
 msgid "Generate current month ?"
-msgstr ""
+msgstr "Generare il mese corrente?"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__recurring_value
 msgid "Generate every"
-msgstr ""
+msgstr "Genera ogni"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_group_contract_form
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
 msgid "Generate invoices"
-msgstr ""
+msgstr "Genera le fatture"
 
 #. module: recurring_contract
 #: model:ir.actions.act_window,name:recurring_contract.action_recurring_invoicer_form
@@ -438,13 +451,15 @@ msgstr "Generation date"
 #. odoo-python
 #: code:addons/recurring_contract/models/contract_group.py:0
 msgid "Generation of Invoices"
-msgstr ""
+msgstr "Generazione delle fatture"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.notification_settings
 msgid ""
 "Gets an activity when invoices of an ended contract could not be cancelled"
 msgstr ""
+"Riceve un'attività quando le fatture di un contratto terminato non possono "
+"essere annullate"
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract_group__current_invoice_date
@@ -452,6 +467,8 @@ msgid ""
 "Gives the current invoice date for the contract group, either the current "
 "month or the next one depending the settings."
 msgstr ""
+"Indica la data della fattura corrente per il gruppo di contratti, il mese "
+"corrente oppure il successivo a seconda delle impostazioni."
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
@@ -461,13 +478,13 @@ msgstr "Gruppo di..."
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__has_active_contracts
 msgid "Has Active Contracts"
-msgstr ""
+msgstr "Ha contratti attivi"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__has_message
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__has_message
 msgid "Has Message"
-msgstr ""
+msgstr "Ha un messaggio"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__id
@@ -479,7 +496,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer__id
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer_wizard__id
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_exception_icon
@@ -514,45 +531,49 @@ msgid ""
 "one month after. Changes made to a contract after this day will apply only "
 "on the next month."
 msgstr ""
+"Se impostato, i contratti creati dopo questo giorno avranno la prima fattura"
+" un mese più tardi. I contratti terminati dopo questo giorno annulleranno le"
+" fatture pagate un mese più tardi. Le modifiche apportate a un contratto "
+"dopo questo giorno si applicheranno solo dal mese successivo."
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__invoice_suspended_until
 msgid "Invoice Suspended Until"
-msgstr ""
+msgstr "Fatture sospese fino al"
 
 #. module: recurring_contract
 #. odoo-python
 #: code:addons/recurring_contract/models/recurring_contract.py:0
 msgid "Invoice cleanup incomplete"
-msgstr ""
+msgstr "Pulizia delle fatture incompleta"
 
 #. module: recurring_contract
 #. odoo-python
 #: code:addons/recurring_contract/models/recurring_contract.py:0
 msgid "Invoice cleanup incomplete:"
-msgstr ""
+msgstr "Pulizia delle fatture incompleta:"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_reformat_all_phonenumbers__invoice_cleanup_user_id
 #: model:ir.model.fields,field_description:recurring_contract.field_res_config_settings__invoice_cleanup_user_id
 msgid "Invoice cleanup responsible"
-msgstr ""
+msgstr "Responsabile della pulizia delle fatture"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.recurring_invoicer_wizard_view
 msgid "Invoice generation"
-msgstr ""
+msgstr "Generazione delle fatture"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.recurring_invoicer_wizard_view
 msgid "Invoice generation from contracts"
-msgstr ""
+msgstr "Generazione delle fatture dai contratti"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_account_bank_statement_line__recurring_invoicer_id
 #: model:ir.model.fields,field_description:recurring_contract.field_account_move__recurring_invoicer_id
 msgid "Invoicer"
-msgstr ""
+msgstr "Generatore di fatture"
 
 #. module: recurring_contract
 #. odoo-python
@@ -564,7 +585,7 @@ msgstr "Fatture"
 #: model:ir.model.fields,field_description:recurring_contract.field_reformat_all_phonenumbers__inv_block_day
 #: model:ir.model.fields,field_description:recurring_contract.field_res_config_settings__inv_block_day
 msgid "Invoices Blocked Day"
-msgstr ""
+msgstr "Giorno di blocco delle fatture"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_is_follower
@@ -585,7 +606,7 @@ msgstr "Articolo di giornale"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__last_months_due_computed_at
 msgid "Last Months Due Computed At"
-msgstr ""
+msgstr "Ultimo calcolo dei mesi dovuti il"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__last_paid_invoice_date
@@ -619,7 +640,7 @@ msgstr "Ultima modifica il"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__last_paid_invoice_date
 msgid "Last paid invoice date"
-msgstr ""
+msgstr "Data dell'ultima fattura pagata"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__due_invoice_ids
@@ -629,7 +650,7 @@ msgstr "Due invoice ids"
 #. module: recurring_contract
 #: model:ir.actions.server,name:recurring_contract.recurring_invoicer_cron_ir_actions_server
 msgid "Launch daily invoice generation"
-msgstr ""
+msgstr "Avvia la generazione giornaliera delle fatture"
 
 #. module: recurring_contract
 #: model:ir.ui.menu,name:recurring_contract.menu_invoice_automatic_generation
@@ -640,22 +661,23 @@ msgstr "Avvia la generazione delle fatture"
 #. odoo-python
 #: code:addons/recurring_contract/models/recurring_contract.py:0
 msgid "Locked accounting period, left untouched: %s"
-msgstr ""
+msgstr "Periodo contabile bloccato, lasciato invariato: %s"
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_account_move_line__reconciled_contract_lines
 msgid "Lookup for all related reconciled move lines attached to a contract."
 msgstr ""
+"Cerca tutte le righe di movimento riconciliate collegate a un contratto."
 
 #. module: recurring_contract
 #: model:ir.model.fields.selection,name:recurring_contract.selection__utm_medium__type__manual
 msgid "Manual"
-msgstr ""
+msgstr "Manuale"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
 msgid "Marketing Information"
-msgstr ""
+msgstr "Informazioni di marketing"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__medium_id
@@ -677,17 +699,17 @@ msgstr "Messaggi"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__missing_invoices
 msgid "Missing Invoices"
-msgstr ""
+msgstr "Fatture mancanti"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__month_interval
 msgid "Month Interval"
-msgstr ""
+msgstr "Intervallo in mesi"
 
 #. module: recurring_contract
 #: model:ir.model.fields.selection,name:recurring_contract.selection__recurring_contract_group__recurring_unit__month
 msgid "Month(s)"
-msgstr ""
+msgstr "Mese/i"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__months_due
@@ -718,7 +740,7 @@ msgstr "Nb invoices"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_calendar_event_id
 msgid "Next Activity Calendar Event"
-msgstr ""
+msgstr "Evento calendario della prossima attività"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_date_deadline
@@ -739,13 +761,13 @@ msgstr "Tipo Prossima Attività"
 #. odoo-python
 #: code:addons/recurring_contract/models/contract_group.py:0
 msgid "No sale journal found for company %s"
-msgstr ""
+msgstr "Nessun giornale di vendita trovato per l'azienda %s"
 
 #. module: recurring_contract
 #. odoo-python
 #: code:addons/recurring_contract/models/move.py:0
 msgid "Notes from bank statement"
-msgstr ""
+msgstr "Note dell'estratto conto bancario"
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__months_paid
@@ -753,6 +775,8 @@ msgid ""
 "Number indicating up to which month the contract is paid (<1=prev. "
 "year,1=Jan,12=December,>12=next year)"
 msgstr ""
+"Numero che indica fino a quale mese il contratto è pagato (<1=anno prec., "
+"1=gennaio, 12=dicembre, >12=anno successivo)"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_needaction_counter
@@ -770,7 +794,7 @@ msgstr "Numero di errori"
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__message_needaction_counter
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract_group__message_needaction_counter
 msgid "Number of messages requiring action"
-msgstr ""
+msgstr "Numero di messaggi che richiedono un'azione"
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__message_has_error_counter
@@ -781,7 +805,7 @@ msgstr "Numero di messaggi con errore di consegna"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__pricelist_item_count
 msgid "Number of price rules"
-msgstr ""
+msgstr "Numero di regole di prezzo"
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__months_due
@@ -792,13 +816,13 @@ msgstr "Numero di mesi non retribuiti (in passato)"
 #. odoo-python
 #: code:addons/recurring_contract/models/recurring_contract.py:0
 msgid "Only cancelled contracts can be set back to draft."
-msgstr ""
+msgstr "Solo i contratti annullati possono essere riportati in bozza."
 
 #. module: recurring_contract
 #. odoo-python
 #: code:addons/recurring_contract/models/recurring_contract.py:0
 msgid "Only validated contracts can be activated."
-msgstr ""
+msgstr "Solo i contratti convalidati possono essere attivati."
 
 #. module: recurring_contract
 #. odoo-python
@@ -808,12 +832,12 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_group_contract_form
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
 msgid "Open invoices"
-msgstr ""
+msgstr "Fatture aperte"
 
 #. module: recurring_contract
 #: model_terms:ir.actions.act_window,help:recurring_contract.action_recurring_contract_form
 msgid "OpenERP helps you to generate recurrent invoices."
-msgstr ""
+msgstr "OpenERP ti aiuta a generare fatture ricorrenti."
 
 #. module: recurring_contract
 #. odoo-javascript
@@ -822,29 +846,29 @@ msgstr ""
 #: model:ir.model.fields,field_description:recurring_contract.field_account_move__last_payment
 #: model:ir.model.fields,field_description:recurring_contract.field_account_move_line__last_payment
 msgid "Paid on"
-msgstr ""
+msgstr "Pagato il"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__partner_id
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__partner_id
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
 msgid "Partner"
-msgstr ""
+msgstr "Partner"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
 msgid "Payment Information"
-msgstr ""
+msgstr "Informazioni di pagamento"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__group_id
 msgid "Payment Options"
-msgstr ""
+msgstr "Opzioni di pagamento"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_account_move_line__payment_state
 msgid "Payment Status"
-msgstr ""
+msgstr "Stato del pagamento"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__payment_mode_id
@@ -856,7 +880,7 @@ msgstr "Metodo di pagamento"
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
 msgid "Payment term"
-msgstr ""
+msgstr "Termine di pagamento"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__period_paid
@@ -867,7 +891,7 @@ msgstr "Period paid"
 #. odoo-python
 #: code:addons/recurring_contract/models/recurring_contract.py:0
 msgid "Please configure contract lines"
-msgstr ""
+msgstr "Configura le righe del contratto"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__amount
@@ -878,7 +902,7 @@ msgstr "Prezzo"
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__pricelist_id
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__pricelist_id
 msgid "Pricelist"
-msgstr ""
+msgstr "Listino prezzi"
 
 #. module: recurring_contract
 #: model:ir.model,name:recurring_contract.model_product_pricelist_item
@@ -905,12 +929,12 @@ msgstr "Quantità"
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__rating_ids
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__rating_ids
 msgid "Ratings"
-msgstr ""
+msgstr "Valutazioni"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_account_move_line__reconciled_contract_lines
 msgid "Reconciled Contract Lines"
-msgstr ""
+msgstr "Righe di contratto riconciliate"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__recurring_unit
@@ -930,7 +954,7 @@ msgstr "recurring.contract.activate.wizard"
 #. module: recurring_contract
 #: model:ir.model,name:recurring_contract.model_recurring_contract_end_reason
 msgid "Recurring contract end reason"
-msgstr ""
+msgstr "Motivo di fine del contratto ricorrente"
 
 #. module: recurring_contract
 #: model:ir.model,name:recurring_contract.model_end_contract_wizard
@@ -945,7 +969,7 @@ msgstr "A contract line"
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.notification_settings
 msgid "Recurring contracts"
-msgstr ""
+msgstr "Contratti ricorrenti"
 
 #. module: recurring_contract
 #: model:ir.model,name:recurring_contract.model_recurring_invoicer
@@ -967,13 +991,13 @@ msgstr "Riferimento"
 #. module: recurring_contract
 #: model:ir.model.constraint,message:recurring_contract.constraint_recurring_contract_unique_ref
 msgid "Reference must be unique!"
-msgstr ""
+msgstr "Il riferimento deve essere univoco!"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__invoice_line_ids
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
 msgid "Related invoice lines"
-msgstr ""
+msgstr "Righe di fattura collegate"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_user_id
@@ -989,17 +1013,17 @@ msgstr "Errore di consegna degli SMS"
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
 msgid "Search contract"
-msgstr ""
+msgstr "Cerca un contratto"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
 msgid "Set back to draft"
-msgstr ""
+msgstr "Riporta in bozza"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_invoicer_form
 msgid "Show invoices"
-msgstr ""
+msgstr "Mostra le fatture"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__source_id
@@ -1009,7 +1033,7 @@ msgstr "Origine"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_account_move_line__contract_id
 msgid "Source contract"
-msgstr ""
+msgstr "Contratto di origine"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__start_date
@@ -1019,7 +1043,7 @@ msgstr "Start date"
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
 msgid "Start date"
-msgstr ""
+msgstr "Data di inizio"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__state
@@ -1052,22 +1076,22 @@ msgstr "Subtotale"
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__missing_invoices
 msgid "Tells if invoices have not been generated yet"
-msgstr ""
+msgstr "Indica se le fatture non sono ancora state generate"
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__period_paid
 msgid "Tells if the advance billing period is already paid"
-msgstr ""
+msgstr "Indica se il periodo di fatturazione anticipata è già pagato"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
 msgid "Terminate"
-msgstr ""
+msgstr "Termina"
 
 #. module: recurring_contract
 #: model:ir.model.fields.selection,name:recurring_contract.selection__recurring_contract__state__terminated
 msgid "Terminated"
-msgstr ""
+msgstr "Terminato"
 
 #. module: recurring_contract
 #. odoo-python
@@ -1076,11 +1100,15 @@ msgid ""
 "The generation didn't created any new invoices. This could be because the "
 "sponsorship already have the correct invoices open."
 msgstr ""
+"La generazione non ha creato nuove fatture. Potrebbe essere perché il "
+"sostegno ha già le fatture corrette aperte."
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract_line__amount_from_pricelist
 msgid "The invoiced price comes from the pricelist instead of the line price."
 msgstr ""
+"Il prezzo fatturato proviene dal listino prezzi invece che dal prezzo della "
+"riga."
 
 #. module: recurring_contract
 #. odoo-python
@@ -1089,6 +1117,8 @@ msgid ""
 "The prices of the contract lines associated with this pricelist item have "
 "been updated."
 msgstr ""
+"I prezzi delle righe di contratto associate a questo elemento del listino "
+"sono stati aggiornati."
 
 #. module: recurring_contract
 #. odoo-python
@@ -1097,6 +1127,8 @@ msgid ""
 "The suspension of invoices has to be in the future ! (Invoice Suspended "
 "Until field)"
 msgstr ""
+"La sospensione delle fatture deve essere nel futuro! (campo Fatture sospese "
+"fino al)"
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__campaign_id
@@ -1168,12 +1200,12 @@ msgstr "Convalida"
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
 msgid "Waiting"
-msgstr ""
+msgstr "In attesa"
 
 #. module: recurring_contract
 #: model:ir.model.fields.selection,name:recurring_contract.selection__recurring_contract__state__waiting
 msgid "Waiting Payment"
-msgstr ""
+msgstr "In attesa di pagamento"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__website_message_ids
@@ -1194,28 +1226,31 @@ msgid ""
 "Who gets the activity when invoices of an ended contract could not be "
 "cancelled. Defaults to the user running the cleanup."
 msgstr ""
+"Chi riceve l'attività quando le fatture di un contratto terminato non "
+"possono essere annullate. Per impostazione predefinita è l'utente che avvia "
+"la pulizia."
 
 #. module: recurring_contract
 #. odoo-javascript
 #: code:addons/recurring_contract/static/src/components/account_payment.xml:0
 msgid "Withdrawn on"
-msgstr ""
+msgstr "Ritirato il"
 
 #. module: recurring_contract
 #: model:ir.model.fields.selection,name:recurring_contract.selection__recurring_contract_group__recurring_unit__year
 msgid "Year(s)"
-msgstr ""
+msgstr "Anno/i"
 
 #. module: recurring_contract
 #. odoo-python
 #: code:addons/recurring_contract/models/recurring_contract.py:0
 msgid "You cannot delete a validated contract."
-msgstr ""
+msgstr "Non puoi eliminare un contratto convalidato."
 
 #. module: recurring_contract
 #: model:ir.model.constraint,message:recurring_contract.constraint_recurring_contract_line_unique_product_per_contract
 msgid "You cannot set two lines with the same product."
-msgstr ""
+msgstr "Non puoi inserire due righe con lo stesso prodotto."
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.recurring_invoicer_wizard_view

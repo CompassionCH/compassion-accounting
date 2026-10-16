@@ -19,7 +19,7 @@ msgstr ""
 #. odoo-python
 #: code:addons/account_payment_line_free/models/account_move.py:0
 msgid "Freed invoices"
-msgstr ""
+msgstr "Freigegebene Rechnungen"
 
 #. module: account_payment_line_free
 #: model:ir.model,name:account_payment_line_free.model_account_move
@@ -29,19 +29,19 @@ msgstr "Journalbuchung"
 #. module: account_payment_line_free
 #: model:ir.model.fields,field_description:account_payment_line_free.field_account_payment_line__returned
 msgid "Move unlinked"
-msgstr ""
+msgstr "Verschoben gelöst"
 
 #. module: account_payment_line_free
 #. odoo-python
 #: code:addons/account_payment_line_free/models/account_move.py:0
 msgid "No invoice(s) unlinked"
-msgstr ""
+msgstr "Keine Rechnung(en) gelöst"
 
 #. module: account_payment_line_free
 #. odoo-python
 #: code:addons/account_payment_line_free/models/account_move.py:0
 msgid "No payment line found !"
-msgstr ""
+msgstr "Keine Zahlungszeile gefunden!"
 
 #. module: account_payment_line_free
 #: model:ir.model,name:account_payment_line_free.model_account_payment_line
@@ -52,40 +52,42 @@ msgstr "Zahlungsposition"
 #. odoo-python
 #: code:addons/account_payment_line_free/models/account_payment_line.py:0
 msgid "Payment is reconciled and cannot be cancelled."
-msgstr ""
+msgstr "Die Zahlung ist abgestimmt und kann nicht storniert werden."
 
 #. module: account_payment_line_free
 #: model_terms:ir.ui.view,arch_db:account_payment_line_free.message_payment_line_unlinked
 msgid "The invoice"
-msgstr ""
+msgstr "Die Rechnung"
 
 #. module: account_payment_line_free
 #: model_terms:ir.ui.view,arch_db:account_payment_line_free.account_payment_line_cancel_view
 msgid "This button unlink the invoice with the payment line"
-msgstr ""
+msgstr "Diese Schaltfläche löst die Rechnung von der Zahlungszeile"
 
 #. module: account_payment_line_free
 #: model:ir.model.fields,help:account_payment_line_free.field_account_payment_line__returned
 msgid ""
 "This field indicates if the invoice is still linked with the payment line"
 msgstr ""
+"Dieses Feld gibt an, ob die Rechnung noch mit der Zahlungszeile verknüpft "
+"ist"
 
 #. module: account_payment_line_free
 #: model:ir.actions.server,name:account_payment_line_free.action_server_account_invoice_free
 msgid "Unlink from Payment/Debit Order"
-msgstr ""
+msgstr "Von Zahlungs-/Lastschriftauftrag lösen"
 
 #. module: account_payment_line_free
 #: model:ir.actions.server,name:account_payment_line_free.action_server_payment_order_free_inv
 msgid "Unlink unpaid invoices"
-msgstr ""
+msgstr "Unbezahlte Rechnungen lösen"
 
 #. module: account_payment_line_free
 #: model_terms:ir.ui.view,arch_db:account_payment_line_free.message_payment_line_unlinked
 msgid "has been marked as returned and freed from"
-msgstr ""
+msgstr "wurde als zurückgewiesen markiert und freigegeben von"
 
 #. module: account_payment_line_free
 #: model_terms:ir.ui.view,arch_db:account_payment_line_free.message_payment_order_unlinked
 msgid "has been unlinked from the line:"
-msgstr ""
+msgstr "wurde von der Zeile gelöst:"

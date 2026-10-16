@@ -21,17 +21,21 @@ msgid ""
 "/&gt;\n"
 "                            /&gt;"
 msgstr ""
+"/&gt;\n"
+"                            /&gt;"
 
 #. module: account_reconcile_compassion_ce
 #: model_terms:ir.ui.view,arch_db:account_reconcile_compassion_ce.reoncile_model_form_matching_rules
 msgid ""
 "<strong>Active:</strong> Ensure the rule is active by checking this box."
 msgstr ""
+"<strong>Aktiv:</strong> Stelle sicher, dass die Regel aktiv ist, indem du "
+"dieses Kästchen aktivierst."
 
 #. module: account_reconcile_compassion_ce
 #: model_terms:ir.ui.view,arch_db:account_reconcile_compassion_ce.reoncile_model_form_matching_rules
 msgid "<strong>Configure the Matching Rule Fields:</strong>"
-msgstr ""
+msgstr "<strong>Felder der Zuordnungsregel konfigurieren:</strong>"
 
 #. module: account_reconcile_compassion_ce
 #: model_terms:ir.ui.view,arch_db:account_reconcile_compassion_ce.reoncile_model_form_matching_rules
@@ -39,6 +43,8 @@ msgid ""
 "<strong>Custom Regex:</strong> (Optional) Write your regex for extracting "
 "the desired value."
 msgstr ""
+"<strong>Eigener regulärer Ausdruck:</strong> (Optional) Schreibe deinen "
+"regulären Ausdruck, um den gewünschten Wert zu extrahieren."
 
 #. module: account_reconcile_compassion_ce
 #: model_terms:ir.ui.view,arch_db:account_reconcile_compassion_ce.reoncile_model_form_matching_rules
@@ -46,6 +52,9 @@ msgid ""
 "<strong>Extract Value:</strong> (Optional) Provide a function or custom "
 "regex to extract a specific part of the statement field value."
 msgstr ""
+"<strong>Wert extrahieren:</strong> (Optional) Gib eine Funktion oder einen "
+"eigenen regulären Ausdruck an, um einen bestimmten Teil des "
+"Kontoauszugsfeldwerts zu extrahieren."
 
 #. module: account_reconcile_compassion_ce
 #: model_terms:ir.ui.view,arch_db:account_reconcile_compassion_ce.reoncile_model_form_matching_rules
@@ -53,6 +62,8 @@ msgid ""
 "<strong>Lookup Field:</strong> Select the field in the partner model or "
 "related model to match against the extracted value."
 msgstr ""
+"<strong>Suchfeld:</strong> Wähle das Feld im Partnermodell oder in einem "
+"verknüpften Modell, das mit dem extrahierten Wert abgeglichen werden soll."
 
 #. module: account_reconcile_compassion_ce
 #: model_terms:ir.ui.view,arch_db:account_reconcile_compassion_ce.reoncile_model_form_matching_rules
@@ -60,6 +71,8 @@ msgid ""
 "<strong>Partner Field:</strong> (Optional) Select the field in the related "
 "model that points to the partner."
 msgstr ""
+"<strong>Partnerfeld:</strong> (Optional) Wähle das Feld im verknüpften "
+"Modell, das auf den Partner verweist."
 
 #. module: account_reconcile_compassion_ce
 #: model_terms:ir.ui.view,arch_db:account_reconcile_compassion_ce.reoncile_model_form_matching_rules
@@ -67,6 +80,8 @@ msgid ""
 "<strong>Search Operator:</strong> Choose the operator for the search (e.g., "
 "`=` for exact match, or contains)."
 msgstr ""
+"<strong>Suchoperator:</strong> Wähle den Operator für die Suche (z. B. `=` "
+"für eine exakte Übereinstimmung oder enthält)."
 
 #. module: account_reconcile_compassion_ce
 #: model_terms:ir.ui.view,arch_db:account_reconcile_compassion_ce.reoncile_model_form_matching_rules
@@ -74,6 +89,8 @@ msgid ""
 "<strong>Sequence:</strong> Set the order in which the rules should be "
 "applied."
 msgstr ""
+"<strong>Reihenfolge:</strong> Lege die Reihenfolge fest, in der die Regeln "
+"angewendet werden."
 
 #. module: account_reconcile_compassion_ce
 #: model_terms:ir.ui.view,arch_db:account_reconcile_compassion_ce.reoncile_model_form_matching_rules
@@ -81,6 +98,8 @@ msgid ""
 "<strong>Statement Field:</strong> Select the field from the bank statement "
 "or account move that contains the value to be matched."
 msgstr ""
+"<strong>Kontoauszugsfeld:</strong> Wähle das Feld aus dem Kontoauszug oder "
+"der Buchung, das den abzugleichenden Wert enthält."
 
 #. module: account_reconcile_compassion_ce
 #: model_terms:ir.ui.view,arch_db:account_reconcile_compassion_ce.reoncile_model_form_matching_rules
@@ -88,6 +107,8 @@ msgid ""
 "<strong>Unique Match:</strong> Check this box if only one unique match "
 "should be considered valid."
 msgstr ""
+"<strong>Eindeutige Übereinstimmung:</strong> Aktiviere dieses Kästchen, wenn"
+" nur eine eindeutige Übereinstimmung als gültig gelten soll."
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model,name:account_reconcile_compassion_ce.model_account_reconcile_abstract
@@ -103,7 +124,7 @@ msgstr "Aktiv"
 #. odoo-python
 #: code:addons/account_reconcile_compassion_ce/models/bank_statement_line.py:0
 msgid "Automatic reconciliation skipped: %(error)s"
-msgstr ""
+msgstr "Automatischer Kontenabgleich übersprungen: %(error)s"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model,name:account_reconcile_compassion_ce.model_account_bank_statement_line
@@ -113,7 +134,7 @@ msgstr "Bankauszug Buchungen"
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,help:account_reconcile_compassion_ce.field_account_reconcile_model__only_this_month
 msgid "Check to search only from the start of the month"
-msgstr ""
+msgstr "Aktivieren, um nur ab dem Monatsanfang zu suchen"
 
 #. module: account_reconcile_compassion_ce
 #: model_terms:ir.ui.view,arch_db:account_reconcile_compassion_ce.bank_statement_line_form_reconcile_view
@@ -133,7 +154,7 @@ msgstr "Angelegt am"
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__extract_regex
 msgid "Custom Regex"
-msgstr ""
+msgstr "Eigener regulärer Ausdruck"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__display_name
@@ -143,23 +164,23 @@ msgstr "Anzeigename"
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__predefined_extract
 msgid "Extract Value"
-msgstr ""
+msgstr "Wert extrahieren"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__id
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,help:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__unique_match
 msgid "If unchecked, the first matching partner will be assigned"
-msgstr ""
+msgstr "Wenn nicht aktiviert, wird der erste passende Partner zugewiesen"
 
 #. module: account_reconcile_compassion_ce
 #. odoo-python
 #: code:addons/account_reconcile_compassion_ce/models/account_reconcile_model_partner_matching.py:0
 msgid "Invalid regex: %s"
-msgstr ""
+msgstr "Ungültiger regulärer Ausdruck: %s"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__write_uid
@@ -174,22 +195,22 @@ msgstr "Zuletzt aktualisiert am"
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__lookup_field_id
 msgid "Lookup Field"
-msgstr ""
+msgstr "Suchfeld"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_bank_statement_line__manual_contract_id
 msgid "Manual Contract"
-msgstr ""
+msgstr "Manueller Vertrag"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_bank_statement_line__manual_product_id
 msgid "Manual Product"
-msgstr ""
+msgstr "Manuelles Produkt"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model__matching_account_id
 msgid "Matching Account"
-msgstr ""
+msgstr "Zuordnungskonto"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__lookup_model
@@ -199,28 +220,28 @@ msgstr "Modell"
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model__only_this_month
 msgid "Only This Month"
-msgstr ""
+msgstr "Nur dieser Monat"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__partner_field_id
 msgid "Partner Field"
-msgstr ""
+msgstr "Partnerfeld"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model__partner_matching_ids
 #: model_terms:ir.ui.view,arch_db:account_reconcile_compassion_ce.reoncile_model_form_matching_rules
 msgid "Partner Matching Rules"
-msgstr ""
+msgstr "Partner-Zuordnungsregeln"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__partner_model_id
 msgid "Partner Model"
-msgstr ""
+msgstr "Partnermodell"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model,name:account_reconcile_compassion_ce.model_account_reconcile_model_partner_matching
 msgid "Partner matching rule for reconciliation models"
-msgstr ""
+msgstr "Partner-Zuordnungsregel für Abstimmungsmodelle"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model,name:account_reconcile_compassion_ce.model_account_reconcile_model
@@ -242,16 +263,18 @@ msgid ""
 "Provide a function used to extract the value from the statement field.Use "
 "'custom' for giving a custom regex"
 msgstr ""
+"Funktion zum Extrahieren des Werts aus dem Kontoauszugsfeld. Verwende "
+"«custom», um einen eigenen regulären Ausdruck anzugeben"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__model_id
 msgid "Reconcile Model"
-msgstr ""
+msgstr "Abstimmungsmodell"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,help:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__extract_regex
 msgid "Regular expression to extract the value from the statement field"
-msgstr ""
+msgstr "Regulärer Ausdruck zum Extrahieren des Werts aus dem Kontoauszugsfeld"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model,name:account_reconcile_compassion_ce.model_account_reconcile_model_line
@@ -261,7 +284,7 @@ msgstr "Regeln für den Kontenabgleich"
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__search_operator
 msgid "Search Operator"
-msgstr ""
+msgstr "Suchoperator"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__sequence
@@ -271,14 +294,14 @@ msgstr "Reihenfolge"
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__statement_field_id
 msgid "Statement Field"
-msgstr ""
+msgstr "Kontoauszugsfeld"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__unique_match
 msgid "Unique Match"
-msgstr ""
+msgstr "Eindeutige Übereinstimmung"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields.selection,name:account_reconcile_compassion_ce.selection__account_reconcile_model_partner_matching__search_operator__ilike
 msgid "contains"
-msgstr ""
+msgstr "enthält"
