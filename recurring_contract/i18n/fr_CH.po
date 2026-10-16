@@ -80,7 +80,7 @@ msgstr "Activités"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_exception_decoration
 msgid "Activity Exception Decoration"
-msgstr ""
+msgstr "Activité d'exception de décoration"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_state
@@ -90,7 +90,7 @@ msgstr "Status de l'Activité"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_type_icon
 msgid "Activity Type Icon"
-msgstr ""
+msgstr "Icône de type d'activité"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__additional_notes
@@ -139,7 +139,7 @@ msgstr "Génération de facture automatique à partir de contrats"
 #. module: recurring_contract
 #: model:product.template,name:recurring_contract.product_balance_migr_product_template
 msgid "Balance"
-msgstr ""
+msgstr "Différence"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__campaign_id
@@ -239,7 +239,7 @@ msgstr ""
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__country_id
 msgid "Country"
-msgstr ""
+msgstr "Pays"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
@@ -274,7 +274,7 @@ msgstr "Créé le"
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__currency_id
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__currency_id
 msgid "Currency"
-msgstr ""
+msgstr "Devise"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__current_invoice_date
@@ -332,7 +332,7 @@ msgstr "Brouillon"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_account_move_line__due_date
 msgid "Due Date"
-msgstr ""
+msgstr "Date d'échéance"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__end_date
@@ -370,7 +370,7 @@ msgstr "Exécuter le code"
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__failed_message_ids
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__failed_message_ids
 msgid "Failed Messages"
-msgstr ""
+msgstr "Messages échoués"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
@@ -392,7 +392,7 @@ msgstr "Abonnés (Partenaires)"
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__activity_type_icon
 msgid "Font awesome icon e.g. fa-tasks"
-msgstr ""
+msgstr "Icône Font Awesome e.g. fa-tasks"
 
 #. module: recurring_contract
 #: model:ir.actions.act_window,name:recurring_contract.action_activate_contract
@@ -484,12 +484,12 @@ msgstr "Identifiant"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_exception_icon
 msgid "Icon"
-msgstr ""
+msgstr "Icône"
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__activity_exception_icon
 msgid "Icon to indicate an exception activity."
-msgstr ""
+msgstr "Icône indiquant une activité d'exception."
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__message_needaction
@@ -558,7 +558,7 @@ msgstr "Générateur de facture"
 #. odoo-python
 #: code:addons/recurring_contract/models/recurring_invoicer.py:0
 msgid "Invoices"
-msgstr ""
+msgstr "Factures"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_reformat_all_phonenumbers__inv_block_day
@@ -660,7 +660,7 @@ msgstr ""
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__medium_id
 msgid "Medium"
-msgstr ""
+msgstr "Moyen"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_has_error
@@ -702,7 +702,7 @@ msgstr "Months paid"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__my_activity_date_deadline
 msgid "My Activity Deadline"
-msgstr ""
+msgstr "Mon délai d'activité"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_end_reason__name
@@ -984,7 +984,7 @@ msgstr "Responsable"
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_has_sms_error
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__message_has_sms_error
 msgid "SMS Delivery error"
-msgstr ""
+msgstr "Erreur d'envoi de SMS"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
@@ -1004,7 +1004,7 @@ msgstr ""
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__source_id
 msgid "Source"
-msgstr ""
+msgstr "Origine"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_account_move_line__contract_id
@@ -1140,12 +1140,12 @@ msgstr ""
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_utm_medium__type
 msgid "Type"
-msgstr ""
+msgstr "Type d'origine"
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__activity_exception_decoration
 msgid "Type of the exception activity on record."
-msgstr ""
+msgstr "Type de l'activité d'exception enregistrée."
 
 #. module: recurring_contract
 #: model:ir.model,name:recurring_contract.model_utm_medium
@@ -1156,7 +1156,7 @@ msgstr "Canaux"
 #. odoo-python
 #: code:addons/recurring_contract/models/move_line.py:0
 msgid "Unexpected error while updating contract invoices."
-msgstr ""
+msgstr "Erreur inattendue lors de la mise à jour des factures des contrats."
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form

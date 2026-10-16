@@ -36,7 +36,7 @@ msgstr "Azione Necessaria"
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_activate_sponsorship
 msgid "Activate"
-msgstr ""
+msgstr "Attivare"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activation_date
@@ -47,7 +47,7 @@ msgstr "Activation date"
 #: model:ir.model.fields.selection,name:recurring_contract.selection__recurring_contract__state__active
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
 msgid "Active"
-msgstr ""
+msgstr "Attivo"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_group_contract_form
@@ -80,17 +80,17 @@ msgstr "Attività"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_exception_decoration
 msgid "Activity Exception Decoration"
-msgstr ""
+msgstr "Attività Eccezione Decorazione"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_state
 msgid "Activity State"
-msgstr ""
+msgstr "Stato di attività"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_type_icon
 msgid "Activity Type Icon"
-msgstr ""
+msgstr "Icona Tipo di attività"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__additional_notes
@@ -150,7 +150,7 @@ msgstr "Campagna"
 #: model_terms:ir.ui.view,arch_db:recurring_contract.end_contract_view
 #: model_terms:ir.ui.view,arch_db:recurring_contract.recurring_invoicer_wizard_view
 msgid "Cancel"
-msgstr ""
+msgstr "Annulla"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_invoicer_form
@@ -160,7 +160,7 @@ msgstr ""
 #. module: recurring_contract
 #: model:ir.model.fields.selection,name:recurring_contract.selection__recurring_contract__state__cancelled
 msgid "Cancelled"
-msgstr ""
+msgstr "Annullato"
 
 #. module: recurring_contract
 #: model_terms:ir.actions.act_window,help:recurring_contract.action_recurring_contract_form
@@ -170,7 +170,7 @@ msgstr ""
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__comment
 msgid "Comment"
-msgstr ""
+msgstr "Commento"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__company_id
@@ -187,7 +187,7 @@ msgstr "Impostazioni di configurazione"
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__contract_id
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
 msgid "Contract"
-msgstr ""
+msgstr "Contratto"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
@@ -208,7 +208,7 @@ msgstr ""
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_activate_sponsorship
 msgid "Contract activation"
-msgstr ""
+msgstr "Attivazione del contratto"
 
 #. module: recurring_contract
 #: model:base.automation,name:recurring_contract.automated_action
@@ -239,7 +239,7 @@ msgstr ""
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__country_id
 msgid "Country"
-msgstr ""
+msgstr "Nazione"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
@@ -274,7 +274,7 @@ msgstr "Creato il"
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__currency_id
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__currency_id
 msgid "Currency"
-msgstr ""
+msgstr "Valuta"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__current_invoice_date
@@ -327,7 +327,7 @@ msgstr "Visualizza Nome"
 #: model:ir.model.fields.selection,name:recurring_contract.selection__recurring_contract__state__draft
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
 msgid "Draft"
-msgstr ""
+msgstr "Bozza"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_account_move_line__due_date
@@ -370,18 +370,18 @@ msgstr "Esegui codice"
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__failed_message_ids
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__failed_message_ids
 msgid "Failed Messages"
-msgstr ""
+msgstr "Messaggi non riusciti"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
 msgid "Finished"
-msgstr ""
+msgstr "Finito"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_follower_ids
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__message_follower_ids
 msgid "Followers"
-msgstr ""
+msgstr "Seguaci"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_partner_ids
@@ -392,7 +392,7 @@ msgstr "Followers (Partner)"
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__activity_type_icon
 msgid "Font awesome icon e.g. fa-tasks"
-msgstr ""
+msgstr "Icona font awesome ad esempio fa-tasks"
 
 #. module: recurring_contract
 #: model:ir.actions.act_window,name:recurring_contract.action_activate_contract
@@ -402,7 +402,7 @@ msgstr ""
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.recurring_invoicer_wizard_view
 msgid "Generate"
-msgstr ""
+msgstr "Generare"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_reformat_all_phonenumbers__do_generate_curr_month
@@ -426,7 +426,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer__invoice_ids
 #: model:ir.ui.menu,name:recurring_contract.menu_recurring_invoicer_form
 msgid "Generated invoices"
-msgstr ""
+msgstr "Fatture generate"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer__generation_date
@@ -456,7 +456,7 @@ msgstr ""
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
 msgid "Group By..."
-msgstr ""
+msgstr "Gruppo di..."
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__has_active_contracts
@@ -484,12 +484,12 @@ msgstr ""
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_exception_icon
 msgid "Icon"
-msgstr ""
+msgstr "Icona"
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__activity_exception_icon
 msgid "Icon to indicate an exception activity."
-msgstr ""
+msgstr "Icona per indicare un'attività di eccezione."
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__message_needaction
@@ -558,7 +558,7 @@ msgstr ""
 #. odoo-python
 #: code:addons/recurring_contract/models/recurring_invoicer.py:0
 msgid "Invoices"
-msgstr ""
+msgstr "Fatture"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_reformat_all_phonenumbers__inv_block_day
@@ -634,7 +634,7 @@ msgstr ""
 #. module: recurring_contract
 #: model:ir.ui.menu,name:recurring_contract.menu_invoice_automatic_generation
 msgid "Launch invoices generation"
-msgstr ""
+msgstr "Avvia la generazione delle fatture"
 
 #. module: recurring_contract
 #. odoo-python
@@ -702,7 +702,7 @@ msgstr "Months paid"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__my_activity_date_deadline
 msgid "My Activity Deadline"
-msgstr ""
+msgstr "La mia attività Scadenza"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_end_reason__name
@@ -984,7 +984,7 @@ msgstr "Utente responsabile"
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__message_has_sms_error
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__message_has_sms_error
 msgid "SMS Delivery error"
-msgstr ""
+msgstr "Errore di consegna degli SMS"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
@@ -1029,7 +1029,7 @@ msgstr "Stato"
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
 msgid "Status"
-msgstr ""
+msgstr "Stato"
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__activity_state
@@ -1127,6 +1127,8 @@ msgid ""
 "This will mark the contract as Active, even if the partner has made no "
 "payment. Please be sure that you want to do this."
 msgstr ""
+"Questo segnerà il contratto come attivo, anche se il partner non ha "
+"effettuato alcun pagamento. Assicurati di volerlo fare."
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__total_amount
@@ -1142,7 +1144,7 @@ msgstr "Tipo"
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__activity_exception_decoration
 msgid "Type of the exception activity on record."
-msgstr ""
+msgstr "Tipo di attività di eccezione registrata."
 
 #. module: recurring_contract
 #: model:ir.model,name:recurring_contract.model_utm_medium
@@ -1154,11 +1156,12 @@ msgstr "Canali"
 #: code:addons/recurring_contract/models/move_line.py:0
 msgid "Unexpected error while updating contract invoices."
 msgstr ""
+"Errore imprevisto durante l'aggiornamento delle fatture dei contratti."
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
 msgid "Validate"
-msgstr ""
+msgstr "Convalida"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter
@@ -1215,4 +1218,4 @@ msgstr ""
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.recurring_invoicer_wizard_view
 msgid "or"
-msgstr ""
+msgstr "o"

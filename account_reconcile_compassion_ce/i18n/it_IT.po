@@ -97,7 +97,7 @@ msgstr "Sintesi riconciliazione contabile"
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__is_active
 msgid "Active"
-msgstr ""
+msgstr "Attivo"
 
 #. module: account_reconcile_compassion_ce
 #. odoo-python
@@ -118,17 +118,17 @@ msgstr ""
 #. module: account_reconcile_compassion_ce
 #: model_terms:ir.ui.view,arch_db:account_reconcile_compassion_ce.bank_statement_line_form_reconcile_view
 msgid "Contract"
-msgstr ""
+msgstr "Contratto"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__create_uid
 msgid "Created by"
-msgstr ""
+msgstr "Creato da"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__create_date
 msgid "Created on"
-msgstr ""
+msgstr "Creato il"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__extract_regex
@@ -138,7 +138,7 @@ msgstr ""
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__display_name
 msgid "Display Name"
-msgstr ""
+msgstr "Visualizza Nome"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__predefined_extract
@@ -164,12 +164,12 @@ msgstr ""
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__write_uid
 msgid "Last Updated by"
-msgstr ""
+msgstr "Ultima modifica di"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__write_date
 msgid "Last Updated on"
-msgstr ""
+msgstr "Ultima modifica il"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__lookup_field_id
@@ -194,7 +194,7 @@ msgstr ""
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__lookup_model
 msgid "Model"
-msgstr ""
+msgstr "Modello"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model__only_this_month
@@ -234,7 +234,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_line__product_id
 #: model_terms:ir.ui.view,arch_db:account_reconcile_compassion_ce.bank_statement_line_form_reconcile_view
 msgid "Product"
-msgstr ""
+msgstr "Prodotto"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,help:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__predefined_extract
@@ -266,7 +266,7 @@ msgstr ""
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__sequence
 msgid "Sequence"
-msgstr ""
+msgstr "Sequenza"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__statement_field_id
