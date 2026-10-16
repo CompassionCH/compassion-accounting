@@ -130,7 +130,7 @@ msgstr "Lettrage automatique ignoré : %(error)s"
 #. module: account_reconcile_compassion_ce
 #: model:ir.model,name:account_reconcile_compassion_ce.model_account_bank_statement_line
 msgid "Bank Statement Line"
-msgstr "Importer Relevé"
+msgstr "Ligne de relevé bancaire"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,help:account_reconcile_compassion_ce.field_account_reconcile_model__only_this_month

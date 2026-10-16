@@ -139,7 +139,7 @@ msgstr "Aktivieren, um nur ab dem Monatsanfang zu suchen"
 #. module: account_reconcile_compassion_ce
 #: model_terms:ir.ui.view,arch_db:account_reconcile_compassion_ce.bank_statement_line_form_reconcile_view
 msgid "Contract"
-msgstr "Contratto"
+msgstr "Vertrag"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__create_uid

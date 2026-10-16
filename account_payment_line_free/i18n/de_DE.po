@@ -24,7 +24,7 @@ msgstr "Freigegebene Rechnungen"
 #. module: account_payment_line_free
 #: model:ir.model,name:account_payment_line_free.model_account_move
 msgid "Journal Entry"
-msgstr "Journalbuchung"
+msgstr "Buchungssatz"
 
 #. module: account_payment_line_free
 #: model:ir.model.fields,field_description:account_payment_line_free.field_account_payment_line__returned

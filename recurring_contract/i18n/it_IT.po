@@ -41,7 +41,7 @@ msgstr "Attivare"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activation_date
 msgid "Activation Date"
-msgstr "Activation date"
+msgstr "Data di attivazione"
 
 #. module: recurring_contract
 #: model:ir.model.fields.selection,name:recurring_contract.selection__recurring_contract__state__active
@@ -116,7 +116,7 @@ msgstr "Mesi di fatturazione anticipata"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__amount_due
 msgid "Amount Due"
-msgstr "Amount due"
+msgstr "Importo dovuto"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__amount_from_pricelist
@@ -445,7 +445,7 @@ msgstr "Fatture generate"
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer__generation_date
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_invoicer_wizard__generation_date
 msgid "Generation Date"
-msgstr "Generation date"
+msgstr "Data di generazione"
 
 #. module: recurring_contract
 #. odoo-python
@@ -596,12 +596,12 @@ msgstr "E' Follower"
 #. module: recurring_contract
 #: model:ir.model,name:recurring_contract.model_account_move
 msgid "Journal Entry"
-msgstr "Diario di bordo"
+msgstr "Registrazione contabile"
 
 #. module: recurring_contract
 #: model:ir.model,name:recurring_contract.model_account_move_line
 msgid "Journal Item"
-msgstr "Articolo di giornale"
+msgstr "Movimento contabile"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__last_months_due_computed_at
@@ -611,7 +611,7 @@ msgstr "Ultimo calcolo dei mesi dovuti il"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__last_paid_invoice_date
 msgid "Last Paid Invoice Date"
-msgstr "Last paid invoice date"
+msgstr "Data dell'ultima fattura pagata"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_end_contract_wizard__write_uid
@@ -714,12 +714,12 @@ msgstr "Mese/i"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__months_due
 msgid "Months Due"
-msgstr "Months due"
+msgstr "Mesi dovuti"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__months_paid
 msgid "Months Paid"
-msgstr "Months paid"
+msgstr "Mesi pagati"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__my_activity_date_deadline
@@ -735,7 +735,7 @@ msgstr "Nome"
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__nb_invoices
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__nb_invoices
 msgid "Nb Invoices"
-msgstr "Nb invoices"
+msgstr "N. fatture"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_calendar_event_id
@@ -885,7 +885,7 @@ msgstr "Termine di pagamento"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__period_paid
 msgid "Period Paid"
-msgstr "Period paid"
+msgstr "Periodo pagato"
 
 #. module: recurring_contract
 #. odoo-python
@@ -939,7 +939,7 @@ msgstr "Righe di contratto riconciliate"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__recurring_unit
 msgid "Recurrence"
-msgstr "Reccurency"
+msgstr "Ricorrenza"
 
 #. module: recurring_contract
 #: model:ir.model,name:recurring_contract.model_recurring_contract
@@ -949,7 +949,7 @@ msgstr "Contratto ricorrente"
 #. module: recurring_contract
 #: model:ir.model,name:recurring_contract.model_recurring_contract_activate_wizard
 msgid "Recurring contract activation wizard"
-msgstr "recurring.contract.activate.wizard"
+msgstr "Procedura guidata di attivazione del contratto ricorrente"
 
 #. module: recurring_contract
 #: model:ir.model,name:recurring_contract.model_recurring_contract_end_reason
@@ -975,12 +975,12 @@ msgstr "Contratti ricorrenti"
 #: model:ir.model,name:recurring_contract.model_recurring_invoicer
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_invoicer_form
 msgid "Recurring invoicer"
-msgstr "recurring.invoicer"
+msgstr "Generatore di fatture ricorrenti"
 
 #. module: recurring_contract
 #: model:ir.model,name:recurring_contract.model_recurring_invoicer_wizard
 msgid "Recurring invoicer wizard"
-msgstr "recurring.invoicer.wizard"
+msgstr "Procedura guidata del generatore di fatture ricorrenti"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__reference
@@ -1038,7 +1038,7 @@ msgstr "Contratto di origine"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__start_date
 msgid "Start Date"
-msgstr "Start date"
+msgstr "Data di inizio"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_filter

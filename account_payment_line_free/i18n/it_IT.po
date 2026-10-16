@@ -24,7 +24,7 @@ msgstr "Fatture liberate"
 #. module: account_payment_line_free
 #: model:ir.model,name:account_payment_line_free.model_account_move
 msgid "Journal Entry"
-msgstr "Diario di bordo"
+msgstr "Registrazione contabile"
 
 #. module: account_payment_line_free
 #: model:ir.model.fields,field_description:account_payment_line_free.field_account_payment_line__returned

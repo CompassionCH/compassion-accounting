@@ -24,7 +24,7 @@ msgstr "Factures libérées"
 #. module: account_payment_line_free
 #: model:ir.model,name:account_payment_line_free.model_account_move
 msgid "Journal Entry"
-msgstr "Entrée de journal"
+msgstr "Écriture comptable"
 
 #. module: account_payment_line_free
 #: model:ir.model.fields,field_description:account_payment_line_free.field_account_payment_line__returned
