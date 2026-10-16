@@ -1112,7 +1112,8 @@ msgstr ""
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__medium_id
 msgid "This is the method of delivery, e.g. Postcard, Email, or Banner Ad"
-msgstr "This is the method of delivery.Ex: Postcard, Email, or Banner Ad"
+msgstr ""
+"Dies ist die Art der Zustellung, z.B. Postkarte, E-Mail oder Bannerwerbung"
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__source_id
@@ -1120,8 +1121,8 @@ msgid ""
 "This is the source of the link, e.g. Search Engine, another domain, or name "
 "of email list"
 msgstr ""
-"This is the source of the link Ex:Search Engine, another domain,or name of "
-"email list"
+"Dies ist die Quelle des Links, z. B. eine Suchmaschine, eine andere Domain "
+"oder der Name einer E-Mail-Liste"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_activate_sponsorship
