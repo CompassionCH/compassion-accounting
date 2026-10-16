@@ -104,14 +104,14 @@ msgid ""
 " can generate the invoices for each month of the year and send them to the "
 "customer in january."
 msgstr ""
-"La facturation anticipée permet de générer les factures à l'avance. Par "
-"exemple, vous pouvez générer les factures de chaque mois de l'année et les "
-"envoyer au client en janvier."
+"La facturation en avance vous permet de générer plusieurs factures en "
+"avance. Par exemple, vous pouvez générer des factures pour chaque mois de "
+"l'année et les envoyer au client au mois de janvier."
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__advance_billing_months
 msgid "Advance billing months"
-msgstr "Mois de facturation anticipée"
+msgstr "Facturation à l'avance (mois)"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__amount_due
@@ -224,7 +224,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__contract_line_ids
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
 msgid "Contract lines"
-msgstr "Lignes de contrat"
+msgstr "Contract lines"
 
 #. module: recurring_contract
 #: model:ir.actions.act_window,name:recurring_contract.action_recurring_contract_form
@@ -409,7 +409,7 @@ msgstr "Icône Font Awesome e.g. fa-tasks"
 #. module: recurring_contract
 #: model:ir.actions.act_window,name:recurring_contract.action_activate_contract
 msgid "Force activation"
-msgstr "Forcer l'activation"
+msgstr "Force activation"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.recurring_invoicer_wizard_view
@@ -425,7 +425,7 @@ msgstr "Générer le mois en cours ?"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__recurring_value
 msgid "Generate every"
-msgstr "Générer tous les"
+msgstr "Générer chaque"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_group_contract_form
@@ -639,7 +639,7 @@ msgstr "Dernière mise à jour le"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_group__last_paid_invoice_date
 msgid "Last paid invoice date"
-msgstr "Date de la dernière facture payée"
+msgstr "Dernière facture payée"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__due_invoice_ids
@@ -862,7 +862,7 @@ msgstr "Informations de paiement"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__group_id
 msgid "Payment Options"
-msgstr "Options de paiement"
+msgstr "Conditions de paiement"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_account_move_line__payment_state
