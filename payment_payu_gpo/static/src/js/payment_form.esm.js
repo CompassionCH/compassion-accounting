@@ -72,6 +72,18 @@ paymentForm.include({
             await this._super(...arguments);
             return;
         }
+        const cardholderInput = this._getInlineForm(
+            document.querySelector('input[name="o_payment_radio"]:checked'),
+        )?.querySelector('[name="o_payu_gpo_cardholder_name"]');
+        const cardholderName = (cardholderInput?.value || "").trim();
+        if (cardholderInput && !cardholderName) {
+            this._displayErrorDialog(
+                _t("Incorrect payment details"),
+                _t("Please enter the name on the card."),
+            );
+            this._enableButton();
+            return;
+        }
         const tokenization = await this.payuGpoSdks[paymentOptionId].tokenize(
             processingValues.should_tokenize ? "MULTI" : "SINGLE",
         );
@@ -92,6 +104,7 @@ paymentForm.include({
                 access_token: processingValues.payu_gpo_access_token,
                 card_token: tokenization.body.token,
                 browser: this._payuGpoBrowserData(),
+                cardholder_name: cardholderName,
             });
             window.location = result.redirect_url || "/payment/status";
         } catch (error) {

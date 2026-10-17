@@ -15,12 +15,28 @@
             t-set="payu_gpo_values"
             t-value="provider_sudo._payu_gpo_get_inline_form_values(pm_sudo.code)"
         />
-        <div
-            t-if="payu_gpo_values"
-            name="o_payu_gpo_card_container"
-            t-attf-id="o_payu_gpo_card_{{pm_sudo.id}}"
-            class="mt-2"
-            t-att-data-payu-gpo-inline-form-values="payu_gpo_values"
-        />
+        <t t-if="payu_gpo_values">
+            <!-- The Secure Form asks no name: 3DS and the receipt need it. -->
+            <div class="mt-2">
+                <label
+                    t-attf-for="o_payu_gpo_cardholder_{{pm_sudo.id}}"
+                    class="form-label"
+                >Name on card</label>
+                <input
+                    type="text"
+                    name="o_payu_gpo_cardholder_name"
+                    t-attf-id="o_payu_gpo_cardholder_{{pm_sudo.id}}"
+                    class="form-control"
+                    autocomplete="cc-name"
+                    maxlength="100"
+                />
+            </div>
+            <div
+                name="o_payu_gpo_card_container"
+                t-attf-id="o_payu_gpo_card_{{pm_sudo.id}}"
+                class="mt-2"
+                t-att-data-payu-gpo-inline-form-values="payu_gpo_values"
+            />
+        </t>
     </template>
 </odoo>

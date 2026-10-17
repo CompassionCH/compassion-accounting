@@ -118,6 +118,33 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(tx.token_id.provider_ref, "TOKC_NEW")
         self.assertEqual(tx.token_id.payment_details, "1111")
 
+    def test_card_token_sends_cardholder_name(self):
+        """The name typed next to the Secure Form goes to 3DS and the buyer."""
+        tx = self._create_transaction(flow="direct", tokenize=False)
+        with (
+            patch(
+                f"{CLIENT}.create_order",
+                return_value={
+                    "orderId": self.order_id,
+                    "status": {"statusCode": "SUCCESS"},
+                },
+            ) as create_order,
+            patch(
+                f"{CLIENT}.get_order",
+                return_value={
+                    "orders": [self._order_notification("COMPLETED")["order"]]
+                },
+            ),
+        ):
+            tx._payu_gpo_pay_with_card_token("TOK_ONCE", None, "  Anna   Nowak ")
+        payload = create_order.call_args.args[0]
+        self.assertEqual(
+            payload["threeDsAuthentication"], {"cardholder": {"name": "Anna Nowak"}}
+        )
+        self.assertEqual(payload["buyer"]["firstName"], "Anna")
+        self.assertEqual(payload["buyer"]["lastName"], "Nowak")
+        self.assertEqual(tx.payu_gpo_cardholder_name, "Anna Nowak")
+
     def test_card_token_accepted_survives_failed_refresh(self):
         """The accepted order keeps its reference and token; the webhook settles it."""
         tx = self._create_transaction(flow="direct", tokenize=True)

@@ -43,6 +43,13 @@ _logger = logging.getLogger(__name__)
 class PaymentTransaction(models.Model):
     _inherit = "payment.transaction"
 
+    payu_gpo_cardholder_name = fields.Char(
+        string="PayU cardholder name",
+        readonly=True,
+        copy=False,
+        help="Name on the card, as typed in the card form: sent to PayU for 3-D"
+        " Secure and as the buyer's name.",
+    )
     payu_gpo_sync_date = fields.Datetime(
         string="PayU status read on",
         readonly=True,
@@ -103,16 +110,26 @@ class PaymentTransaction(models.Model):
             ),
         }
 
-    def _payu_gpo_pay_with_card_token(self, card_token, browser=None):
+    def _payu_gpo_pay_with_card_token(
+        self, card_token, browser=None, cardholder_name=None
+    ):
         """Charge the TOK_ token the Secure Form returned.
 
         :param dict browser: threeDsAuthentication.browser data; without it
                              PayU can only attempt 3DS, which issuers refuse
                              for a first recurring payment
+        :param str cardholder_name: name on the card typed by the buyer (the
+                             Secure Form does not ask it): 3DS data, and the
+                             buyer's name PayU sends back in its notification
         :return: the URL where the buyer must authenticate (3DS / CVV), or
                  None when PayU accepted the card right away
         """
+        cardholder_name = " ".join((cardholder_name or "").split())[:100]
+        if cardholder_name:
+            self.payu_gpo_cardholder_name = cardholder_name
         three_ds = {"browser": browser} if browser else {}
+        if cardholder_name:
+            three_ds["cardholder"] = {"name": cardholder_name}
         if self.tokenize:
             # Strong authentication when storing the card for monthly charges.
             three_ds.update(challengeRequested="YES", recurring={"frequency": "30"})
@@ -181,8 +198,9 @@ class PaymentTransaction(models.Model):
 
     def _payu_gpo_order_values(self, with_continue_url=False):
         base_url = self.provider_id.get_base_url()
+        # The name on the card, when the buyer typed one, is the payer's name.
         first_name, last_name = payment_utils.split_partner_name(
-            self.partner_name or ""
+            self.payu_gpo_cardholder_name or self.partner_name or ""
         )
         values = {
             "ext_order_id": self.reference,

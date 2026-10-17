@@ -30,11 +30,14 @@ class PayuGpoController(http.Controller):
     _card_payment_url = "/payment/payu_gpo/card_payment"
 
     @http.route(_card_payment_url, type="json", auth="public")
-    def payu_gpo_card_payment(self, reference, access_token, card_token, browser=None):
+    def payu_gpo_card_payment(
+        self, reference, access_token, card_token, browser=None, cardholder_name=None
+    ):
         """Pay a direct-flow transaction with the Secure Form token.
 
         :param dict browser: screen/timezone/language data collected by the
                              browser; HTTP headers and IP are added here
+        :param str cardholder_name: name on the card, typed next to the form
 
         :return: {"redirect_url": 3DS/CVV page to send the buyer to, or None}
         """
@@ -58,7 +61,11 @@ class PayuGpoController(http.Controller):
                 "userAgent": headers.get("User-Agent", ""),
                 "requestIP": payment_utils.get_customer_ip_address(),
             }
-        return {"redirect_url": tx._payu_gpo_pay_with_card_token(card_token, browser)}
+        return {
+            "redirect_url": tx._payu_gpo_pay_with_card_token(
+                card_token, browser, cardholder_name
+            )
+        }
 
     @http.route(_return_url, type="http", methods=["GET"], auth="public")
     def payu_gpo_return(self, **data):
