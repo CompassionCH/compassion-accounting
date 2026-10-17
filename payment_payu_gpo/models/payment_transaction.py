@@ -198,10 +198,7 @@ class PaymentTransaction(models.Model):
 
     def _payu_gpo_order_values(self, with_continue_url=False):
         base_url = self.provider_id.get_base_url()
-        # The name on the card, when the buyer typed one, is the payer's name.
-        first_name, last_name = payment_utils.split_partner_name(
-            self.payu_gpo_cardholder_name or self.partner_name or ""
-        )
+        first_name, last_name = self._payu_gpo_buyer_names()
         values = {
             "ext_order_id": self.reference,
             "description": self.reference,
@@ -228,6 +225,17 @@ class PaymentTransaction(models.Model):
                 base_url, PayuGpoController._return_url
             )
         return values
+
+    def _payu_gpo_buyer_names(self):
+        """First and last name of the buyer sent to PayU: the name on the
+        card when the buyer typed one, else the partner's name.
+
+        Extension point: a module whose partners can be known by email only
+        returns ("", "") for them, so that PayU asks the name instead of
+        showing a placeholder (empty values are not sent).
+        """
+        name = (self.payu_gpo_cardholder_name or self.partner_name or "").strip()
+        return payment_utils.split_partner_name(name) if name else ("", "")
 
     def _payu_gpo_notify_base_url(self):
         """Public URL PayU sends notifications to, when it differs from the

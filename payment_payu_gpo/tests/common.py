@@ -12,9 +12,9 @@ class PayuGpoCommon(PaymentCommon):
         # _prepare_provider copies an existing PayU provider into the test
         # company: one published on another company's website (e.g. the
         # Polish one) would carry that website along and be refused.
-        cls.env["payment.provider"].search(
-            [("code", "=", "payu_gpo")]
-        ).website_id = False
+        providers = cls.env["payment.provider"].search([("code", "=", "payu_gpo")])
+        if "website_id" in providers._fields:
+            providers.website_id = False
         cls.provider = cls._prepare_provider(
             "payu_gpo",
             update_values={

@@ -41,6 +41,10 @@ class TestPaymentTransaction(PayuGpoCommon):
         to the base URL."""
         tx = self._create_transaction(flow="redirect")
         base_url = self.provider.get_base_url()
+        # A database may already have one set (a dev tunnel).
+        self.env["ir.config_parameter"].set_param(
+            "payment_payu_gpo.notify_base_url", False
+        )
         values = tx._payu_gpo_order_values(with_continue_url=True)
         self.assertEqual(values["notify_url"], f"{base_url}/payment/payu_gpo/webhook")
         self.env["ir.config_parameter"].set_param(
@@ -117,6 +121,20 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(tx.state, "done")
         self.assertEqual(tx.token_id.provider_ref, "TOKC_NEW")
         self.assertEqual(tx.token_id.payment_details, "1111")
+
+    def test_buyer_names_extension_point(self):
+        """Empty buyer names are left out of the order, not sent blank."""
+        tx = self._create_transaction(flow="redirect")
+        self.assertEqual(
+            tx._payu_gpo_buyer_names(),
+            payment_utils.split_partner_name(tx.partner_name),
+        )
+        client = tx.provider_id._payu_gpo_client()
+        with patch.object(type(tx), "_payu_gpo_buyer_names", return_value=("", "")):
+            payload = client.build_order_payload(**tx._payu_gpo_order_values())
+        self.assertNotIn("firstName", payload["buyer"])
+        self.assertNotIn("lastName", payload["buyer"])
+        self.assertEqual(payload["buyer"]["email"], tx.partner_email)
 
     def test_card_token_sends_cardholder_name(self):
         """The name typed next to the Secure Form goes to 3DS and the buyer."""
