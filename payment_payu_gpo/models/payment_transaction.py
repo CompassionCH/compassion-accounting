@@ -43,6 +43,12 @@ _logger = logging.getLogger(__name__)
 class PaymentTransaction(models.Model):
     _inherit = "payment.transaction"
 
+    payu_gpo_sync_date = fields.Datetime(
+        string="PayU status read on",
+        readonly=True,
+        copy=False,
+        help="Last time the cron read the status of this pending payment.",
+    )
     payu_gpo_token_retry_date = fields.Datetime(
         string="PayU card save retried on",
         readonly=True,
@@ -371,6 +377,45 @@ class PaymentTransaction(models.Model):
         self.write({"token_id": token.id, "tokenize": False})
 
     @api.model
+    def _cron_payu_gpo_sync_pending(self):
+        """Read from PayU the status of the payments still pending.
+
+        The final status of a payment comes with PayU's notification; a
+        payment charged with a saved card has no return from PayU at all. If
+        the notification is lost (Odoo down or not reachable), the payment
+        would stay pending although PayU completed or cancelled it.
+
+        Same batches and progress API as the tokenization retry: each payment
+        is read at most once per delay, the least recently read first.
+        """
+        now = fields.Datetime.now()
+        delay = timedelta(minutes=const.SYNC_PENDING_DELAY_MINUTES)
+        domain = [
+            ("provider_code", "=", const.PROVIDER_CODE),
+            ("state", "=", "pending"),
+            ("provider_reference", "!=", False),
+            ("last_state_change", "<", now - delay),
+            ("last_state_change", ">", now - timedelta(days=const.SYNC_PENDING_DAYS)),
+            "|",
+            ("payu_gpo_sync_date", "=", False),
+            ("payu_gpo_sync_date", "<", now - delay),
+        ]
+        total = self.search_count(domain)
+        txs = self.search(
+            domain,
+            order="payu_gpo_sync_date asc nulls first, id",
+            limit=const.SYNC_PENDING_BATCH,
+        )
+        for tx in txs:
+            tx.payu_gpo_sync_date = now
+            try:
+                tx._payu_gpo_refresh_from_api()
+            except PayuError as e:
+                _logger.warning(
+                    "PayU: could not read the status of %s: %s", tx.reference, e
+                )
+        self.env["ir.cron"]._notify_progress(done=len(txs), remaining=total - len(txs))
+
     def _cron_payu_gpo_retry_tokenization(self):
         """Save the cards that completed payments could not save.
 

@@ -39,6 +39,13 @@ TOKENIZATION_RETRY_DAYS = 3
 TOKENIZATION_RETRY_BATCH = 10
 TOKENIZATION_RETRY_DELAY_MINUTES = 30
 
+# Pending payments read again from PayU when their notification did not come
+# (lost, or Odoo not reachable): after this delay, during these days, by
+# batches, each one at most once per delay.
+SYNC_PENDING_DELAY_MINUTES = 10
+SYNC_PENDING_DAYS = 2
+SYNC_PENDING_BATCH = 20
+
 # Secure Form SDK, loaded by the browser from PayU.
 SDK_PATH = "/javascript/sdk"
 

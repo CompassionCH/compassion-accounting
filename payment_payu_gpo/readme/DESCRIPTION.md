@@ -10,6 +10,9 @@ Not to be confused with PayU India (`payu.in`).
   works with the standard payment API.
 - When the card of a completed payment cannot be read from PayU (e.g. after
   3DS), an hourly cron retries saving it for three days.
+- When PayU's notification of a payment is lost (Odoo down or not reachable),
+  a cron reads the status of the payments still pending every 15 minutes, for
+  two days.
 - Signed notifications (`OpenPayu-Signature`, POS second key) for orders and
   refunds.
 - Partial and full refunds.

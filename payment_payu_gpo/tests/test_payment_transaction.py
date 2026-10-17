@@ -1,6 +1,8 @@
 import json
+from datetime import timedelta
 from unittest.mock import patch
 
+from odoo import fields
 from odoo.tests import tagged
 
 from odoo.addons.payment import utils as payment_utils
@@ -289,6 +291,40 @@ class TestPaymentTransaction(PayuGpoCommon):
             self.assertEqual(get.call_count, 3)
         self.assertTrue(all(txs.mapped("payu_gpo_token_retry_date")))
         self.assertTrue(all(txs.mapped("tokenize")))
+
+    def test_cron_syncs_pending_without_notification(self):
+        """A pending payment whose notification never came is read from PayU."""
+        tx = self._create_transaction(
+            flow="token", state="pending", provider_reference=self.order_id
+        )
+        tx.last_state_change = fields.Datetime.now() - timedelta(minutes=30)
+        order = {"orders": [self._order_notification("COMPLETED")["order"]]}
+        with patch(f"{CLIENT}.get_order", return_value=order) as get:
+            tx._cron_payu_gpo_sync_pending()
+            self.assertEqual(tx.state, "done")
+            # Done: never read again.
+            tx._cron_payu_gpo_sync_pending()
+        self.assertEqual(get.call_count, 1)
+
+    def test_cron_sync_pending_skips_recent_old_and_failing(self):
+        recent = self._create_transaction(
+            flow="token", state="pending", provider_reference="R", reference="r1"
+        )
+        old = self._create_transaction(
+            flow="token", state="pending", provider_reference="O", reference="o1"
+        )
+        old.last_state_change = "2020-01-01 00:00:00"
+        failing = self._create_transaction(
+            flow="token", state="pending", provider_reference="F", reference="f1"
+        )
+        failing.last_state_change = fields.Datetime.now() - timedelta(minutes=30)
+        with patch(f"{CLIENT}.get_order", side_effect=PayuError("down")) as get:
+            (recent | old | failing)._cron_payu_gpo_sync_pending()
+            # Only the failing one is read; not again before the delay.
+            (recent | old | failing)._cron_payu_gpo_sync_pending()
+        self.assertEqual(get.call_count, 1)
+        self.assertEqual(failing.state, "pending")
+        self.assertTrue(failing.payu_gpo_sync_date)
 
     def test_offline_token_charge(self):
         token = self._create_token(provider_ref="TOKC_ABC")
