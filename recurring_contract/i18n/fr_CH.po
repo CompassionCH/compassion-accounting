@@ -10,10 +10,10 @@ msgstr ""
 "PO-Revision-Date: 2026-10-16 19:13+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
+"Language: fr_CH\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: \n"
-"Plural-Forms: \n"
+"Content-Transfer-Encoding: 8bit\n"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.notification_settings
@@ -80,7 +80,7 @@ msgstr "Activités"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_exception_decoration
 msgid "Activity Exception Decoration"
-msgstr "Activité d'exception de décoration"
+msgstr "Indicateur d'exception d'activité"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__activity_state
@@ -224,7 +224,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__contract_line_ids
 #: model_terms:ir.ui.view,arch_db:recurring_contract.view_recurring_contract_form
 msgid "Contract lines"
-msgstr "Contract lines"
+msgstr "Lignes de contrat"
 
 #. module: recurring_contract
 #: model:ir.actions.act_window,name:recurring_contract.action_recurring_contract_form
@@ -409,7 +409,7 @@ msgstr "Icône Font Awesome e.g. fa-tasks"
 #. module: recurring_contract
 #: model:ir.actions.act_window,name:recurring_contract.action_activate_contract
 msgid "Force activation"
-msgstr "Force activation"
+msgstr "Forcer l'activation"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.recurring_invoicer_wizard_view
@@ -595,7 +595,7 @@ msgstr "Est un abonné"
 #. module: recurring_contract
 #: model:ir.model,name:recurring_contract.model_account_move
 msgid "Journal Entry"
-msgstr "Écriture comptable"
+msgstr "Entrée de journal"
 
 #. module: recurring_contract
 #: model:ir.model,name:recurring_contract.model_account_move_line
@@ -644,7 +644,7 @@ msgstr "Dernière facture payée"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__due_invoice_ids
 msgid "Late invoices"
-msgstr "Factures dûes"
+msgstr "Factures en retard"
 
 #. module: recurring_contract
 #: model:ir.actions.server,name:recurring_contract.recurring_invoicer_cron_ir_actions_server
@@ -660,7 +660,7 @@ msgstr "Générer les factures"
 #. odoo-python
 #: code:addons/recurring_contract/models/recurring_contract.py:0
 msgid "Locked accounting period, left untouched: %s"
-msgstr "Période comptable verrouillée, laissé inchangé : %s"
+msgstr "Période comptable verrouillée, laissée inchangée : %s"
 
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_account_move_line__reconciled_contract_lines
@@ -713,7 +713,7 @@ msgstr "Mois"
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__months_due
 msgid "Months Due"
-msgstr "Mois dûs"
+msgstr "Mois dus"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__months_paid
@@ -809,7 +809,7 @@ msgstr "Nombre de règles de prix"
 #. module: recurring_contract
 #: model:ir.model.fields,help:recurring_contract.field_recurring_contract__months_due
 msgid "Number of unpaid months (in the past)"
-msgstr "Nombre de mois non rémunérés (dans le passé)"
+msgstr "Nombre de mois impayés (dans le passé)"
 
 #. module: recurring_contract
 #. odoo-python
@@ -912,12 +912,12 @@ msgstr "Élément de la liste de prix"
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract__product_ids
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__product_id
 msgid "Product"
-msgstr "Article"
+msgstr "Produit"
 
 #. module: recurring_contract
 #: model:ir.model,name:recurring_contract.model_product_product
 msgid "Product Variant"
-msgstr "Produit"
+msgstr "Variante de produit"
 
 #. module: recurring_contract
 #: model:ir.model.fields,field_description:recurring_contract.field_recurring_contract_line__quantity
@@ -963,7 +963,7 @@ msgstr "Assistant de fin du contrat récurrent"
 #. module: recurring_contract
 #: model:ir.model,name:recurring_contract.model_recurring_contract_line
 msgid "Recurring contract line"
-msgstr "A contract line"
+msgstr "Ligne de contrat récurrente"
 
 #. module: recurring_contract
 #: model_terms:ir.ui.view,arch_db:recurring_contract.notification_settings
