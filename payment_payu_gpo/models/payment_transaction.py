@@ -403,6 +403,33 @@ class PaymentTransaction(models.Model):
         self.write({"token_id": token.id, "tokenize": False})
 
     @api.model
+    def _payu_gpo_refresh_if_due(self):
+        """Read the status of a pending payment from PayU, for the payment
+        status page: PayU's notification may be late or lost (Odoo restarted,
+        tunnel down), and the page would then poll forever. At most once
+        every SYNC_POLL_SECONDS per payment; an API error is only logged, the
+        page simply asks again.
+        """
+        self.ensure_one()
+        now = fields.Datetime.now()
+        due = not self.payu_gpo_sync_date or (
+            self.payu_gpo_sync_date < now - timedelta(seconds=const.SYNC_POLL_SECONDS)
+        )
+        if (
+            self.provider_code != const.PROVIDER_CODE
+            or self.state != "pending"
+            or not self.provider_reference
+            or not due
+        ):
+            return
+        self.payu_gpo_sync_date = now
+        try:
+            self._payu_gpo_refresh_from_api()
+        except PayuError as e:
+            _logger.warning(
+                "PayU: could not read the status of %s: %s", self.reference, e
+            )
+
     def _cron_payu_gpo_sync_pending(self):
         """Read from PayU the status of the payments still pending.
 

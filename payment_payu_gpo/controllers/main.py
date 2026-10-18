@@ -24,6 +24,17 @@ from ..payu_client import PayuError, verify_signature
 _logger = logging.getLogger(__name__)
 
 
+class PayuGpoPostProcessing(PaymentPostProcessing):
+    @http.route()
+    def poll_status(self, **kwargs):
+        """Ask PayU about a payment still pending before reporting its state:
+        without the notification the status page would never end."""
+        tx = self._get_monitored_transaction()
+        if tx:
+            tx._payu_gpo_refresh_if_due()
+        return super().poll_status(**kwargs)
+
+
 class PayuGpoController(http.Controller):
     _return_url = "/payment/payu_gpo/return"
     _webhook_url = "/payment/payu_gpo/webhook"

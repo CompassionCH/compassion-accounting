@@ -45,6 +45,9 @@ TOKENIZATION_RETRY_DELAY_MINUTES = 30
 SYNC_PENDING_DELAY_MINUTES = 10
 SYNC_PENDING_DAYS = 2
 SYNC_PENDING_BATCH = 20
+# The payment status page asks PayU itself, at most this often per payment,
+# while the payment is pending (the notification may be late or lost).
+SYNC_POLL_SECONDS = 10
 
 # Secure Form SDK, loaded by the browser from PayU.
 SDK_PATH = "/javascript/sdk"

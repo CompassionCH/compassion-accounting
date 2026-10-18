@@ -337,6 +337,24 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertTrue(all(txs.mapped("payu_gpo_token_retry_date")))
         self.assertTrue(all(txs.mapped("tokenize")))
 
+    def test_status_page_reads_a_pending_payment(self):
+        """The status page asks PayU itself, at most every few seconds."""
+        tx = self._create_transaction(
+            flow="redirect", state="pending", provider_reference=self.order_id
+        )
+        order = {"orders": [self._order_notification("CANCELED")["order"]]}
+        with patch(f"{CLIENT}.get_order", side_effect=PayuError("slow")) as get:
+            tx._payu_gpo_refresh_if_due()
+            tx._payu_gpo_refresh_if_due()  # too soon: not asked again
+        self.assertEqual(get.call_count, 1)
+        self.assertEqual(tx.state, "pending")
+        tx.payu_gpo_sync_date = fields.Datetime.now() - timedelta(minutes=1)
+        with patch(f"{CLIENT}.get_order", return_value=order) as get:
+            tx._payu_gpo_refresh_if_due()
+            self.assertEqual(tx.state, "cancel")
+            tx._payu_gpo_refresh_if_due()  # final: never asked again
+        self.assertEqual(get.call_count, 1)
+
     def test_cron_syncs_pending_without_notification(self):
         """A pending payment whose notification never came is read from PayU."""
         tx = self._create_transaction(
