@@ -374,17 +374,31 @@ ul.auto-toc {
 v2.1). Not to be confused with PayU India (<tt class="docutils literal">payu.in</tt>).</p>
 <ul class="simple">
 <li>Hosted payment page (redirect) for BLIK and other non-card methods.</li>
-<li>Card payments through the PayU Secure Form, with card tokenization:
-the first payment is sent with <tt class="docutils literal">recurring: FIRST</tt>; once
-<tt class="docutils literal">COMPLETED</tt>, the multi-use <tt class="docutils literal">TOKC_</tt> token is stored as a
-<tt class="docutils literal">payment.token</tt>.</li>
+<li>Card payments through the PayU Secure Form, with a “Name on card”
+field next to it (the Secure Form asks none): sent to PayU as 3-D
+Secure cardholder data and as the buyer’s name, so the payer’s name
+comes back in PayU’s notification.</li>
+<li>Card tokenization: a card saved on payment is a card on file
+(<tt class="docutils literal">cardOnFile: FIRST</tt>), or a card for scheduled recurring charges
+(<tt class="docutils literal">recurring: FIRST</tt>) when <tt class="docutils literal">_payu_gpo_card_is_recurring()</tt> says
+so. The multi-use <tt class="docutils literal">TOKC_</tt> token PayU returns with the order is
+saved as a <tt class="docutils literal">payment.token</tt> once the order is <tt class="docutils literal">COMPLETED</tt>.</li>
 <li>Merchant-initiated charges: <tt class="docutils literal">_send_payment_request()</tt> charges the
-token with <tt class="docutils literal">recurring: STANDARD</tt>, so any off-session charge (cron,
+token without the buyer (<tt class="docutils literal">recurring: STANDARD</tt>, or
+<tt class="docutils literal">cardOnFile: STANDARD_MERCHANT</tt>), so any off-session charge (cron,
 subscription) works with the standard payment API.</li>
-<li>When the card of a completed payment cannot be read from PayU (e.g.
-after 3DS), an hourly cron retries saving it for three days.</li>
+<li>A request PayU did not answer (timeout, 5xx) leaves the payment
+pending, never failed: the order may exist, and its notification
+settles it.</li>
+<li>When the card of a completed payment cannot be read from PayU, an
+hourly cron retries saving it for three days.</li>
+<li>When PayU’s notification of a payment is lost (Odoo down or not
+reachable), a cron reads the status of the payments still pending
+every 15 minutes, for two days, and the payment status page reads it
+while the buyer waits.</li>
 <li>Signed notifications (<tt class="docutils literal"><span class="pre">OpenPayu-Signature</span></tt>, POS second key) for
-orders and refunds.</li>
+orders and refunds, checked against the payment (PayU order, amount,
+currency).</li>
 <li>Partial and full refunds.</li>
 </ul>
 <div class="admonition important">
@@ -413,8 +427,15 @@ Only for development or testing purpose, do not use in production.
 Providers</em> and fill in the POS id, the OAuth <tt class="docutils literal">client_id</tt> /
 <tt class="docutils literal">client_secret</tt> and the second key from the PayU merchant panel. State
 <em>Test</em> uses the sandbox (<tt class="docutils literal">secure.snd.payu.com</tt>).</p>
-<p>PayU must enable <strong>recurring payments</strong> on the POS (cards), and the
-<tt class="docutils literal">trusted_merchant</tt> grant used to list the buyer’s card tokens.</p>
+<p>PayU must enable on the POS:</p>
+<ul class="simple">
+<li><strong>automatic collection</strong> (auto-receive) for every payment method: the
+module does not capture payments, and PayU cancels an uncaptured one
+(<tt class="docutils literal">WAITING_FOR_CONFIRMATION</tt>) after a few days;</li>
+<li><strong>card tokens</strong>: recurring payments (<tt class="docutils literal">recurring</tt>) and/or cards on
+file (<tt class="docutils literal">cardOnFile</tt>), and the <tt class="docutils literal">trusted_merchant</tt> grant used to
+list the buyer’s card tokens.</li>
+</ul>
 <p>PayU must reach the notification URL. When Odoo’s base URL is not public
 (reverse proxy, development behind a tunnel), set the system parameter
 <tt class="docutils literal">payment_payu_gpo.notify_base_url</tt> to the public URL that forwards
@@ -423,12 +444,29 @@ base URL.</p>
 <p>Behind a reverse proxy, run Odoo with <tt class="docutils literal">proxy_mode = True</tt>: the buyer’s
 IP address is sent to PayU with card payments (3-D Secure, fraud
 checks).</p>
+<p>A neutralized copy of the database (<tt class="docutils literal"><span class="pre">odoo-bin</span> neutralize</tt>) has its
+PayU keys wiped, and a disabled provider never calls PayU.</p>
 </div>
 <div class="section" id="known-issues-roadmap">
 <h1><a class="toc-backref" href="#toc-entry-2">Known issues / Roadmap</a></h1>
 <ul class="simple">
 <li>Validate the notification payloads (order, refund) against production
 data.</li>
+<li>Not supported yet:<ul>
+<li>saving a card without paying (card validation): PayU needs a
+zero-amount order, enabled on a POS on request;</li>
+<li>paying with a saved card while the buyer is on the site
+(<tt class="docutils literal">cardOnFile: STANDARD_CARDHOLDER</tt> and the 3DS / CVV redirects):
+saved PayU cards are only charged without the buyer;</li>
+<li>the CVV that PayU may ask for a card (<tt class="docutils literal">WARNING_CONTINUE_CVV</tt>,
+through the Secure Form <tt class="docutils literal">sendCvv</tt>): the payment is refused with
+a clear message;</li>
+<li>manual capture (<tt class="docutils literal">WAITING_FOR_CONFIRMATION</tt>, <tt class="docutils literal">authorized</tt>
+state);</li>
+<li>refunds made in the PayU panel, and reading the status of a refund
+whose notification was lost.</li>
+</ul>
+</li>
 <li>BLIK recurring (PAYID token, model “O”, 2000 PLN cap) needs a
 contract annex with PayU; it is Poland-specific and belongs in a
 separate module.</li>

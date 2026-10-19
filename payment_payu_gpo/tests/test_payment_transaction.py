@@ -3,21 +3,47 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from odoo import fields
+from odoo.exceptions import UserError
 from odoo.tests import tagged
+from odoo.tools import mute_logger
 
 from odoo.addons.payment import utils as payment_utils
 
 from .. import const
-from ..payu_client import PayuError
+from ..payu_client import PayuError, PayuUnknownOutcome
 from .common import PayuGpoCommon
 
 CLIENT = "odoo.addons.payment_payu_gpo.payu_client.PayuClient"
+TX = "odoo.addons.payment_payu_gpo.models.payment_transaction.PaymentTransaction"
 
 
 @tagged("post_install", "-at_install")
 class TestPaymentTransaction(PayuGpoCommon):
+    def _card_response(self, status="SUCCESS", token="TOKC_NEW", **extra):
+        response = {
+            "orderId": self.order_id,
+            "status": {"statusCode": status},
+            **extra,
+        }
+        if token:
+            response["payMethods"] = {
+                "payMethod": {
+                    "type": "CARD_TOKEN",
+                    "value": token,
+                    "card": {"number": "444433******1111"},
+                }
+            }
+        return response
+
+    def _completed(self):
+        return {"orders": [self._order_notification("COMPLETED")["order"]]}
+
+    # --- hosted page ----------------------------------------------------
+
     def test_redirect_creates_hosted_page_order(self):
-        """The hosted page cannot store cards: no recurring flag there."""
+        """The hosted page cannot store cards: no recurring flag there. Once
+        PayU has the order, the payment is pending: the status reads watch
+        it, and nothing takes it for an abandoned draft."""
         tx = self._create_transaction(flow="redirect", tokenize=True)
         with patch(
             f"{CLIENT}.create_order",
@@ -29,12 +55,14 @@ class TestPaymentTransaction(PayuGpoCommon):
             values = tx._get_specific_rendering_values(None)
         payload = create_order.call_args.args[0]
         self.assertNotIn("recurring", payload)
+        self.assertNotIn("cardOnFile", payload)
         self.assertNotIn("payMethods", payload)
         self.assertEqual(payload["totalAmount"], "111111")
         self.assertEqual(payload["currencyCode"], "PLN")
         self.assertEqual(payload["extOrderId"], tx.reference)
         self.assertEqual(values["url_params"], {"a": "1"})
         self.assertEqual(tx.provider_reference, self.order_id)
+        self.assertEqual(tx.state, "pending")
 
     def test_notify_base_url_parameter(self):
         """Only the notifications go to the public URL, the buyer returns
@@ -56,13 +84,20 @@ class TestPaymentTransaction(PayuGpoCommon):
         )
         self.assertEqual(values["continue_url"], f"{base_url}/payment/payu_gpo/return")
 
+    def test_ext_customer_id_is_stable_and_per_partner(self):
+        tx = self._create_transaction(flow="redirect")
+        db_uuid = self.env["ir.config_parameter"].get_param("database.uuid")
+        self.assertEqual(
+            tx._payu_gpo_ext_customer_id(), f"odoo-{db_uuid}-{tx.partner_id.id}"
+        )
+
     def test_inline_form_values_only_for_cards(self):
         values = json.loads(self.provider._payu_gpo_get_inline_form_values("card"))
         self.assertEqual(values["pos_id"], "300746")
         self.assertTrue(values["sdk_url"].endswith("/javascript/sdk"))
         self.assertFalse(self.provider._payu_gpo_get_inline_form_values("blik"))
 
-    def test_direct_flow_access_token(self):
+    def test_direct_flow_access_token_not_logged(self):
         tx = self._create_transaction(flow="direct")
         with patch(
             "odoo.addons.payment.utils.generate_access_token",
@@ -74,43 +109,29 @@ class TestPaymentTransaction(PayuGpoCommon):
                     values["payu_gpo_access_token"], tx.reference
                 )
             )
+        self.assertIn("payu_gpo_access_token", tx._get_specific_secret_keys())
 
-    def test_card_token_accepted_stores_multi_use_token(self):
+    # --- card payments ----------------------------------------------------
+
+    def test_saved_card_is_a_card_on_file_by_default(self):
+        """Saving a card is not a subscription: cardOnFile, no recurring."""
         tx = self._create_transaction(flow="direct", tokenize=True)
         with (
             patch(
-                f"{CLIENT}.create_order",
-                return_value={
-                    "orderId": self.order_id,
-                    "status": {"statusCode": "SUCCESS"},
-                    "payMethods": {
-                        "payMethod": {
-                            "type": "CARD_TOKEN",
-                            "value": "TOKC_NEW",
-                            "card": {"number": "444433******1111"},
-                        }
-                    },
-                },
+                f"{CLIENT}.create_order", return_value=self._card_response()
             ) as create_order,
-            patch(
-                f"{CLIENT}.get_order",
-                return_value={
-                    "orders": [self._order_notification("COMPLETED")["order"]]
-                },
-            ),
+            patch(f"{CLIENT}.get_order", return_value=self._completed()),
+            patch(f"{CLIENT}.get_pay_methods") as get_pay_methods,
         ):
             redirect_url = tx._payu_gpo_pay_with_card_token(
                 "TOK_ONCE", {"screenWidth": 1920}
             )
         payload = create_order.call_args.args[0]
-        self.assertEqual(payload["recurring"], "FIRST")
+        self.assertEqual(payload["cardOnFile"], "FIRST")
+        self.assertNotIn("recurring", payload)
         self.assertEqual(
             payload["threeDsAuthentication"],
-            {
-                "browser": {"screenWidth": 1920},
-                "challengeRequested": "YES",
-                "recurring": {"frequency": "30"},
-            },
+            {"browser": {"screenWidth": 1920}, "challengeRequested": "YES"},
         )
         self.assertEqual(
             payload["payMethods"]["payMethod"],
@@ -121,6 +142,28 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(tx.state, "done")
         self.assertEqual(tx.token_id.provider_ref, "TOKC_NEW")
         self.assertEqual(tx.token_id.payment_details, "1111")
+        self.assertFalse(tx.token_id.payu_gpo_recurring)
+        get_pay_methods.assert_not_called()
+
+    def test_recurring_card(self):
+        """The calling module says the card is for scheduled charges."""
+        tx = self._create_transaction(flow="direct", tokenize=True)
+        with (
+            patch(f"{TX}._payu_gpo_card_is_recurring", return_value=True),
+            patch(
+                f"{CLIENT}.create_order", return_value=self._card_response()
+            ) as create_order,
+            patch(f"{CLIENT}.get_order", return_value=self._completed()),
+        ):
+            tx._payu_gpo_pay_with_card_token("TOK_ONCE")
+        payload = create_order.call_args.args[0]
+        self.assertEqual(payload["recurring"], "FIRST")
+        self.assertNotIn("cardOnFile", payload)
+        self.assertEqual(
+            payload["threeDsAuthentication"],
+            {"challengeRequested": "YES", "recurring": {"frequency": "30"}},
+        )
+        self.assertTrue(tx.token_id.payu_gpo_recurring)
 
     def test_buyer_names_extension_point(self):
         """Empty buyer names are left out of the order, not sent blank."""
@@ -142,17 +185,9 @@ class TestPaymentTransaction(PayuGpoCommon):
         with (
             patch(
                 f"{CLIENT}.create_order",
-                return_value={
-                    "orderId": self.order_id,
-                    "status": {"statusCode": "SUCCESS"},
-                },
+                return_value=self._card_response(token=None),
             ) as create_order,
-            patch(
-                f"{CLIENT}.get_order",
-                return_value={
-                    "orders": [self._order_notification("COMPLETED")["order"]]
-                },
-            ),
+            patch(f"{CLIENT}.get_order", return_value=self._completed()),
         ):
             tx._payu_gpo_pay_with_card_token("TOK_ONCE", None, "  Anna   Nowak ")
         payload = create_order.call_args.args[0]
@@ -163,74 +198,111 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(payload["buyer"]["lastName"], "Nowak")
         self.assertEqual(tx.payu_gpo_cardholder_name, "Anna Nowak")
 
-    def test_card_token_accepted_survives_failed_refresh(self):
-        """The accepted order keeps its reference and token; the webhook settles it."""
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_card_accepted_keeps_its_token_until_completed(self):
+        """An accepted order whose status read fails keeps its reference and
+        token, but saves no card before PayU completes it."""
         tx = self._create_transaction(flow="direct", tokenize=True)
         with (
-            patch(
-                f"{CLIENT}.create_order",
-                return_value={
-                    "orderId": self.order_id,
-                    "status": {"statusCode": "SUCCESS"},
-                    "payMethods": {
-                        "payMethod": {
-                            "type": "CARD_TOKEN",
-                            "value": "TOKC_NEW",
-                            "card": {"number": "444433******1111"},
-                        }
-                    },
-                },
-            ),
+            patch(f"{CLIENT}.create_order", return_value=self._card_response()),
             patch(f"{CLIENT}.get_order", side_effect=PayuError("timeout")),
         ):
             self.assertIsNone(tx._payu_gpo_pay_with_card_token("TOK_ONCE"))
         self.assertEqual(tx.state, "pending")
         self.assertEqual(tx.provider_reference, self.order_id)
+        self.assertFalse(tx.token_id)
+        self.assertEqual(tx.payu_gpo_card_token, "TOKC_NEW")
+        tx._handle_notification_data("payu_gpo", self._order_notification("COMPLETED"))
         self.assertEqual(tx.token_id.provider_ref, "TOKC_NEW")
+
+    def test_canceled_first_payment_saves_no_card(self):
+        tx = self._create_transaction(flow="direct", tokenize=True)
+        with (
+            patch(f"{CLIENT}.create_order", return_value=self._card_response()),
+            patch(
+                f"{CLIENT}.get_order",
+                return_value={
+                    "orders": [self._order_notification("CANCELED")["order"]]
+                },
+            ),
+        ):
+            tx._payu_gpo_pay_with_card_token("TOK_ONCE")
+        self.assertEqual(tx.state, "cancel")
+        self.assertFalse(tx.token_id)
 
     def test_card_token_without_tokenization(self):
         tx = self._create_transaction(flow="direct")
         with (
             patch(
                 f"{CLIENT}.create_order",
-                return_value={
-                    "orderId": self.order_id,
-                    "status": {"statusCode": "SUCCESS"},
-                },
+                return_value=self._card_response(token=None),
             ) as create_order,
-            patch(
-                f"{CLIENT}.get_order",
-                return_value={
-                    "orders": [self._order_notification("COMPLETED")["order"]]
-                },
-            ),
+            patch(f"{CLIENT}.get_order", return_value=self._completed()),
         ):
             tx._payu_gpo_pay_with_card_token("TOK_ONCE")
         self.assertNotIn("recurring", create_order.call_args.args[0])
+        self.assertNotIn("cardOnFile", create_order.call_args.args[0])
         self.assertNotIn("threeDsAuthentication", create_order.call_args.args[0])
         self.assertEqual(tx.state, "done")
         self.assertFalse(tx.token_id)
 
-    def test_card_token_3ds_redirects_buyer(self):
+    def test_3ds_saves_the_card_of_the_order(self):
+        """After 3DS, the card saved is the one PayU returned with the order,
+        never another card of the buyer, even a preferred one."""
         tx = self._create_transaction(flow="direct", tokenize=True)
         with patch(
             f"{CLIENT}.create_order",
-            return_value={
-                "orderId": self.order_id,
-                "status": {"statusCode": "WARNING_CONTINUE_3DS"},
-                "redirectUri": "https://3ds.example/",
-            },
+            return_value=self._card_response(
+                "WARNING_CONTINUE_3DS", redirectUri="https://3ds.example/"
+            ),
         ):
             redirect_url = tx._payu_gpo_pay_with_card_token("TOK_ONCE")
         self.assertEqual(redirect_url, "https://3ds.example/")
         self.assertEqual(tx.state, "pending")
         self.assertFalse(tx.token_id)
+        with patch(f"{CLIENT}.get_pay_methods") as get_pay_methods:
+            tx._handle_notification_data(
+                "payu_gpo", self._order_notification("COMPLETED")
+            )
+        self.assertEqual(tx.token_id.provider_ref, "TOKC_NEW")
+        get_pay_methods.assert_not_called()
 
     def test_card_token_refused(self):
         tx = self._create_transaction(flow="direct")
         with patch(f"{CLIENT}.create_order", side_effect=PayuError("declined")):
             self.assertIsNone(tx._payu_gpo_pay_with_card_token("TOK_ONCE"))
         self.assertEqual(tx.state, "error")
+
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_no_answer_is_not_a_refusal(self):
+        """A timeout may hide an accepted order: the payment stays pending,
+        and PayU's notification (found by reference) settles it."""
+        tx = self._create_transaction(flow="direct")
+        with patch(f"{CLIENT}.create_order", side_effect=PayuUnknownOutcome("slow")):
+            self.assertIsNone(tx._payu_gpo_pay_with_card_token("TOK_ONCE"))
+        self.assertEqual(tx.state, "pending")
+        self.assertFalse(tx.provider_reference)
+        self.assertIn("did not answer", tx.state_message)
+        tx._handle_notification_data("payu_gpo", self._order_notification("COMPLETED"))
+        self.assertEqual(tx.state, "done")
+        self.assertEqual(tx.provider_reference, self.order_id)
+
+    def test_cvv_request_is_a_clear_failure(self):
+        """The CVV redirectUri is an API URL, not a page for the buyer."""
+        tx = self._create_transaction(flow="direct")
+        with patch(
+            f"{CLIENT}.create_order",
+            return_value=self._card_response(
+                "WARNING_CONTINUE_CVV",
+                token=None,
+                redirectUri="https://secure.payu.com/api/v2/token/token.json?refReqId=1",
+            ),
+        ):
+            self.assertIsNone(tx._payu_gpo_pay_with_card_token("TOK_ONCE"))
+        self.assertEqual(tx.state, "error")
+        self.assertIn("CVV", tx.state_message)
+
+    # --- notifications ------------------------------------------------------
 
     def test_order_statuses(self):
         tx = self._create_transaction(flow="redirect")
@@ -240,43 +312,99 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(tx.state, "done")
         self.assertEqual(tx.provider_reference, self.order_id)
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_waiting_for_confirmation_tells_why(self):
+        tx = self._create_transaction(flow="redirect")
+        tx._handle_notification_data(
+            "payu_gpo", self._order_notification("WAITING_FOR_CONFIRMATION")
+        )
+        self.assertEqual(tx.state, "pending")
+        self.assertIn("automatic collection", tx.state_message)
+
     def test_canceled_order(self):
         tx = self._create_transaction(flow="redirect")
         tx._handle_notification_data("payu_gpo", self._order_notification("CANCELED"))
         self.assertEqual(tx.state, "cancel")
 
-    def test_tokenization_after_completed_payment(self):
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_notification_of_another_payment_is_rejected(self):
+        """Amount, currency and PayU order must be this payment's."""
+        for change in (
+            {"totalAmount": "100"},
+            {"currencyCode": "EUR"},
+            {"orderId": "ANOTHER-ORDER"},
+        ):
+            tx = self._create_transaction(
+                flow="redirect",
+                state="pending",
+                provider_reference=self.order_id,
+                reference=f"payu-mismatch-{next(iter(change))}",
+            )
+            notification = self._order_notification("COMPLETED", tx.reference)
+            notification["order"].update(change)
+            tx._handle_notification_data("payu_gpo", notification)
+            self.assertEqual(tx.state, "error", change)
+
+    def test_tokenization_matches_the_card_number(self):
+        """Without a token in the order, the card is found by its number among
+        the buyer's cards, never by PayU's "preferred" flag."""
         tx = self._create_transaction(flow="redirect", tokenize=True)
+        tx.payu_gpo_card_mask = "424242******4242"
+        pay_methods = {
+            "cardTokens": [
+                {
+                    "value": "TOKC_OLD",
+                    "status": "ACTIVE",
+                    "preferred": True,
+                    "cardNumberMasked": "444433******1111",
+                },
+                {
+                    "value": "TOKC_NEW",
+                    "status": "ACTIVE",
+                    "cardNumberMasked": "424242******4242",
+                },
+            ]
+        }
         with (
             patch(f"{CLIENT}.get_trusted_merchant_token", return_value="BUYER"),
-            patch(
-                f"{CLIENT}.get_pay_methods",
-                return_value={
-                    "cardTokens": [
-                        {
-                            "value": "TOKC_OLD",
-                            "status": "ACTIVE",
-                            "cardNumberMasked": "4444",
-                        },
-                        {
-                            "value": "TOKC_NEW",
-                            "status": "ACTIVE",
-                            "preferred": True,
-                            "cardNumberMasked": "424242******4242",
-                        },
-                    ]
-                },
-            ),
+            patch(f"{CLIENT}.get_pay_methods", return_value=pay_methods),
         ):
             tx._handle_notification_data(
                 "payu_gpo", self._order_notification("COMPLETED")
             )
-        self.assertTrue(tx.token_id)
         self.assertEqual(tx.token_id.provider_ref, "TOKC_NEW")
         self.assertEqual(tx.token_id.payment_details, "4242")
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_tokenization_without_a_match_saves_nothing(self):
+        tx = self._create_transaction(flow="redirect", tokenize=True)
+        pay_methods = {
+            "cardTokens": [
+                {
+                    "value": "TOKC_OLD",
+                    "status": "ACTIVE",
+                    "preferred": True,
+                    "cardNumberMasked": "444433******1111",
+                }
+            ]
+        }
+        with (
+            patch(f"{CLIENT}.get_trusted_merchant_token", return_value="BUYER"),
+            patch(f"{CLIENT}.get_pay_methods", return_value=pay_methods),
+        ):
+            tx._handle_notification_data(
+                "payu_gpo", self._order_notification("COMPLETED")
+            )
+        self.assertEqual(tx.state, "done")
+        self.assertFalse(tx.token_id)
+        self.assertTrue(tx.tokenize, "the cron tries again")
+
+    # --- crons --------------------------------------------------------------
+
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_cron_retries_failed_tokenization(self):
         tx = self._create_transaction(flow="redirect", tokenize=True)
+        tx.payu_gpo_card_mask = "424242******4242"
         with patch(
             f"{CLIENT}.get_trusted_merchant_token", side_effect=PayuError("down")
         ):
@@ -287,7 +415,11 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertFalse(tx.token_id)
         pay_methods = {
             "cardTokens": [
-                {"value": "TOKC_NEW", "status": "ACTIVE", "cardNumberMasked": "4242"}
+                {
+                    "value": "TOKC_NEW",
+                    "status": "ACTIVE",
+                    "cardNumberMasked": "424242******4242",
+                }
             ]
         }
         with (
@@ -301,15 +433,21 @@ class TestPaymentTransaction(PayuGpoCommon):
             tx._cron_payu_gpo_retry_tokenization()
         self.assertEqual(get.call_count, 1)
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_cron_gives_up_tokenization(self):
         tx = self._create_transaction(flow="redirect", tokenize=True, state="done")
         tx.last_state_change = "2020-01-01 00:00:00"
-        with patch(f"{CLIENT}.get_pay_methods") as get:
+        with (
+            patch(f"{CLIENT}.get_pay_methods") as get,
+            patch(f"{TX}._payu_gpo_on_tokenization_abandoned") as abandoned,
+        ):
             tx._cron_payu_gpo_retry_tokenization()
         get.assert_not_called()
+        abandoned.assert_called_once()
         self.assertFalse(tx.tokenize)
         self.assertFalse(tx.token_id)
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_cron_retries_in_batches(self):
         """A failing payment is tried once per run and never starves the others."""
         txs = self.env["payment.transaction"]
@@ -320,6 +458,7 @@ class TestPaymentTransaction(PayuGpoCommon):
                 state="done",
                 reference=f"payu-batch-{i}",
             )
+        txs.payu_gpo_card_mask = "424242******4242"
         with (
             patch.object(const, "TOKENIZATION_RETRY_BATCH", 2),
             patch(
@@ -337,6 +476,45 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertTrue(all(txs.mapped("payu_gpo_token_retry_date")))
         self.assertTrue(all(txs.mapped("tokenize")))
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_cron_error_does_not_stop_the_batch(self):
+        """Any error is logged; the other payments of the batch are handled."""
+        txs = self.env["payment.transaction"]
+        for i in range(2):
+            tx = self._create_transaction(
+                flow="token",
+                state="pending",
+                provider_reference=f"O{i}",
+                reference=f"payu-crash-{i}",
+            )
+            tx.last_state_change = fields.Datetime.now() - timedelta(minutes=30)
+            txs |= tx
+        with patch(
+            f"{CLIENT}.get_order", side_effect=[ValueError("bug"), {"orders": []}]
+        ) as get:
+            txs._cron_payu_gpo_sync_pending()
+        self.assertEqual(get.call_count, 2)
+        self.assertTrue(all(txs.mapped("payu_gpo_sync_date")))
+
+    def test_cron_stops_at_its_time_budget(self):
+        txs = self.env["payment.transaction"]
+        for i in range(2):
+            tx = self._create_transaction(
+                flow="token",
+                state="pending",
+                provider_reference=f"T{i}",
+                reference=f"payu-budget-{i}",
+            )
+            tx.last_state_change = fields.Datetime.now() - timedelta(minutes=30)
+            txs |= tx
+        with (
+            patch.object(const, "CRON_TIME_BUDGET_SECONDS", -1),
+            patch(f"{CLIENT}.get_order") as get,
+        ):
+            txs._cron_payu_gpo_sync_pending()
+        get.assert_not_called()
+
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_status_page_reads_a_pending_payment(self):
         """The status page asks PayU itself, at most every few seconds."""
         tx = self._create_transaction(
@@ -361,14 +539,14 @@ class TestPaymentTransaction(PayuGpoCommon):
             flow="token", state="pending", provider_reference=self.order_id
         )
         tx.last_state_change = fields.Datetime.now() - timedelta(minutes=30)
-        order = {"orders": [self._order_notification("COMPLETED")["order"]]}
-        with patch(f"{CLIENT}.get_order", return_value=order) as get:
+        with patch(f"{CLIENT}.get_order", return_value=self._completed()) as get:
             tx._cron_payu_gpo_sync_pending()
             self.assertEqual(tx.state, "done")
             # Done: never read again.
             tx._cron_payu_gpo_sync_pending()
         self.assertEqual(get.call_count, 1)
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_cron_sync_pending_skips_recent_old_and_failing(self):
         recent = self._create_transaction(
             flow="token", state="pending", provider_reference="R", reference="r1"
@@ -389,24 +567,51 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(failing.state, "pending")
         self.assertTrue(failing.payu_gpo_sync_date)
 
-    def test_offline_token_charge(self):
-        token = self._create_token(provider_ref="TOKC_ABC")
+    # --- disabled provider (neutralized database) ---------------------------
+
+    def test_disabled_provider_never_calls_payu(self):
         tx = self._create_transaction(
-            flow="token", operation="offline", token_id=token.id
+            flow="token", state="pending", provider_reference=self.order_id
         )
-        with patch(
-            f"{CLIENT}.create_order", return_value={"orderId": "O2"}
-        ) as create_order:
-            tx._send_payment_request()
-        payload = create_order.call_args.args[0]
-        self.assertEqual(payload["recurring"], "STANDARD")
-        self.assertEqual(
-            payload["payMethods"]["payMethod"],
-            {"type": "CARD_TOKEN", "value": "TOKC_ABC"},
-        )
-        self.assertNotIn("continueUrl", payload)
-        self.assertEqual(tx.state, "pending")
-        self.assertEqual(tx.provider_reference, "O2")
+        tx.last_state_change = fields.Datetime.now() - timedelta(minutes=30)
+        self.provider.state = "disabled"
+        with patch(f"{CLIENT}.get_order") as get:
+            tx._cron_payu_gpo_sync_pending()
+            with self.assertRaises(PayuError):
+                self.provider._payu_gpo_client()
+        get.assert_not_called()
+
+    # --- token charges ------------------------------------------------------
+
+    def test_offline_token_charge(self):
+        for recurring, expected in (
+            (True, {"recurring": "STANDARD"}),
+            (False, {"cardOnFile": "STANDARD_MERCHANT"}),
+        ):
+            token = self._create_token(
+                provider_ref=f"TOKC_{recurring}", payu_gpo_recurring=recurring
+            )
+            tx = self._create_transaction(
+                flow="token",
+                operation="offline",
+                token_id=token.id,
+                reference=f"payu-offline-{recurring}",
+            )
+            with patch(
+                f"{CLIENT}.create_order", return_value={"orderId": "O2"}
+            ) as create_order:
+                tx._send_payment_request()
+            payload = create_order.call_args.args[0]
+            for key, value in expected.items():
+                self.assertEqual(payload[key], value)
+            self.assertEqual(len({"recurring", "cardOnFile"} & set(payload)), 1)
+            self.assertEqual(
+                payload["payMethods"]["payMethod"],
+                {"type": "CARD_TOKEN", "value": f"TOKC_{recurring}"},
+            )
+            self.assertNotIn("continueUrl", payload)
+            self.assertEqual(tx.state, "pending")
+            self.assertEqual(tx.provider_reference, "O2")
 
     def test_offline_charge_error_does_not_raise(self):
         token = self._create_token(provider_ref="TOKC_ABC")
@@ -417,14 +622,72 @@ class TestPaymentTransaction(PayuGpoCommon):
             tx._send_payment_request()
         self.assertEqual(tx.state, "error")
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_offline_charge_without_answer_stays_pending(self):
+        """Never "failed" while PayU may have charged: no second charge."""
+        token = self._create_token(provider_ref="TOKC_ABC")
+        tx = self._create_transaction(
+            flow="token", operation="offline", token_id=token.id
+        )
+        with patch(f"{CLIENT}.create_order", side_effect=PayuUnknownOutcome("slow")):
+            tx._send_payment_request()
+        self.assertEqual(tx.state, "pending")
+
+    def test_saved_card_not_charged_with_the_buyer_present(self):
+        token = self._create_token(provider_ref="TOKC_ABC")
+        tx = self._create_transaction(
+            flow="token", operation="online_token", token_id=token.id
+        )
+        with (
+            patch(f"{CLIENT}.create_order") as create_order,
+            self.assertRaises(UserError),
+        ):
+            tx._send_payment_request()
+        create_order.assert_not_called()
+        self.assertFalse(
+            self.env["payment.token"]._get_available_tokens(
+                self.provider.ids, token.partner_id.id
+            )
+        )
+        self.assertEqual(
+            self.env["payment.token"]._get_available_tokens(
+                self.provider.ids, token.partner_id.id, is_validation=True
+            ),
+            token,
+        )
+
+    def test_no_card_validation(self):
+        """Saving a card without paying would need a zero-amount order."""
+        args = (self.company.id, self.partner.id, 0.0)
+        self.assertNotIn(
+            self.provider,
+            self.env["payment.provider"]._get_compatible_providers(
+                *args, is_validation=True
+            ),
+        )
+        self.assertIn(
+            self.provider,
+            self.env["payment.provider"]._get_compatible_providers(
+                self.company.id,
+                self.partner.id,
+                self.amount,
+                currency_id=self.currency.id,
+            ),
+        )
+
+    # --- refunds ------------------------------------------------------------
+
     def test_refund(self):
         tx = self._create_transaction(
             flow="redirect", state="done", provider_reference=self.order_id
         )
-        with patch(f"{CLIENT}.refund", return_value={}) as refund:
+        with patch(
+            f"{CLIENT}.refund", return_value={"refund": {"refundId": "5001592615"}}
+        ) as refund:
             refund_tx = tx._send_refund_request(amount_to_refund=10.0)
         self.assertEqual(refund.call_args.args[:2], (self.order_id, "1000"))
         self.assertEqual(refund_tx.state, "pending")
+        self.assertEqual(refund_tx.provider_reference, "5001592615")
         # Shape of a sandbox refund notification.
         refund_tx._handle_notification_data(
             "payu_gpo",
@@ -444,3 +707,12 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(refund_tx.state, "done")
         self.assertEqual(refund_tx.provider_reference, "5001592615")
         self.assertEqual(tx.provider_reference, self.order_id)
+
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_refund_without_answer_stays_pending(self):
+        tx = self._create_transaction(
+            flow="redirect", state="done", provider_reference=self.order_id
+        )
+        with patch(f"{CLIENT}.refund", side_effect=PayuUnknownOutcome("slow")):
+            refund_tx = tx._send_refund_request(amount_to_refund=10.0)
+        self.assertEqual(refund_tx.state, "pending")

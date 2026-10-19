@@ -24,6 +24,9 @@ class PayuGpoCommon(PaymentCommon):
                 "payu_gpo_second_key": SECOND_KEY,
             },
         )
+        # Only this provider's payments for the crons, whatever the database
+        # holds (e.g. a copy of production).
+        (providers - cls.provider).state = "disabled"
         cls.payment_method_id = cls.env.ref("payment.payment_method_card").id
         cls.order_id = "WZHF5FFDRJ140731GUEST000P01"
 

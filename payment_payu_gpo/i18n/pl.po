@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-17 20:09+0000\n"
+"POT-Creation-Date: 2026-10-19 17:11+0000\n"
 "PO-Revision-Date: 2026-10-17 20:09+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -25,14 +25,36 @@ msgid "Incorrect payment details"
 msgstr "Nieprawidłowe dane płatności"
 
 #. module: payment_payu_gpo
-#: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_sync_date
-msgid "Last time the cron read the status of this pending payment."
-msgstr "Ostatni raz, kiedy cron odczytał status tej oczekującej płatności."
-
-#. module: payment_payu_gpo
 #: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_token_retry_date
 msgid "Last time the cron tried to save the card of this payment."
 msgstr "Ostatni raz, kiedy cron próbował zapisać kartę tej płatności."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_sync_date
+msgid ""
+"Last time the status of this pending payment was read from PayU (cron or "
+"payment status page)."
+msgstr ""
+"Ostatni odczyt statusu tej oczekującej płatności z PayU (zadanie cykliczne "
+"lub strona statusu płatności)."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_card_mask
+msgid ""
+"Masked number of the card of this payment, used to find its token among the "
+"buyer's cards when PayU did not return it."
+msgstr ""
+"Zamaskowany numer karty tej płatności, używany do odnalezienia jej tokenu "
+"wśród kart kupującego, gdy PayU go nie zwróciło."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_card_token
+msgid ""
+"Multi-use TOKC_ token PayU returned for the card of this payment; saved as a"
+" payment token once the payment is completed."
+msgstr ""
+"Wielokrotny token TOKC_ zwrócony przez PayU dla karty tej płatności; "
+"zapisywany jako token płatności po zakończeniu płatności."
 
 #. module: payment_payu_gpo
 #: model_terms:ir.ui.view,arch_db:payment_payu_gpo.inline_form
@@ -86,13 +108,30 @@ msgstr "PayU GPO: zapisz karty zakończonych płatności"
 #. module: payment_payu_gpo
 #. odoo-python
 #: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU asked for the cardholder (%s): the charge will fail."
+msgstr ""
+"PayU wymaga obecności posiadacza karty (%s): obciążenie się nie powiedzie."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
 msgid "PayU canceled the refund."
 msgstr "PayU anulowało zwrot."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_card_mask
+msgid "PayU card number"
+msgstr "Numer karty PayU"
 
 #. module: payment_payu_gpo
 #: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_token_retry_date
 msgid "PayU card save retried on"
 msgstr "Ponowna próba zapisu karty PayU"
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_card_token
+msgid "PayU card token"
+msgstr "Token karty PayU"
 
 #. module: payment_payu_gpo
 #: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_cardholder_name
@@ -102,8 +141,52 @@ msgstr "Imię i nazwisko posiadacza karty (PayU)"
 #. module: payment_payu_gpo
 #. odoo-python
 #: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid ""
+"PayU did not answer (%s). The payment may have been made: PayU's "
+"notification will update it."
+msgstr ""
+"PayU nie odpowiedziało (%s). Płatność mogła zostać zrealizowana: "
+"powiadomienie PayU ją zaktualizuje."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
 msgid "PayU did not return a payment page."
 msgstr "PayU nie zwróciło strony płatności."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid ""
+"PayU holds this payment until it is captured: automatic collection must be "
+"enabled on the PayU point of sale."
+msgstr ""
+"PayU wstrzymuje tę płatność do jej odebrania: w punkcie płatności PayU musi "
+"być włączony automatyczny odbiór."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_token__payu_gpo_recurring
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_recurring
+msgid "PayU recurring card"
+msgstr "Karta cykliczna PayU"
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU reported %(payu)s, this payment is %(ours)s."
+msgstr "PayU zgłosiło %(payu)s, ta płatność to %(ours)s."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU reported the amount %s (in minor units)."
+msgstr "PayU zgłosiło kwotę %s (w groszach)."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU reported the currency %s."
+msgstr "PayU zgłosiło walutę %s."
 
 #. module: payment_payu_gpo
 #: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_sync_date
@@ -115,6 +198,18 @@ msgstr "Status PayU odczytany"
 #: code:addons/payment_payu_gpo/models/payment_transaction.py:0
 msgid "PayU: %s"
 msgstr "PayU: %s"
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU: a saved card can only be charged without the buyer."
+msgstr "PayU: zapisaną kartę można obciążyć tylko bez udziału kupującego."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/controllers/main.py:0
+msgid "PayU: invalid card token."
+msgstr "PayU: nieprawidłowy token karty."
 
 #. module: payment_payu_gpo
 #. odoo-python
@@ -153,9 +248,20 @@ msgid "PayU: this payment was already processed."
 msgstr "PayU: ta płatność została już przetworzona."
 
 #. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/controllers/main.py:0
+msgid "PayU: unknown payment."
+msgstr "PayU: nieznana płatność."
+
+#. module: payment_payu_gpo
 #: model:ir.model,name:payment_payu_gpo.model_payment_provider
 msgid "Payment Provider"
 msgstr "Dostawca płatności"
+
+#. module: payment_payu_gpo
+#: model:ir.model,name:payment_payu_gpo.model_payment_token
+msgid "Payment Token"
+msgstr "Token płatności"
 
 #. module: payment_payu_gpo
 #: model:ir.model,name:payment_payu_gpo.model_payment_transaction
@@ -175,9 +281,40 @@ msgid "Please enter the name on the card."
 msgstr "Wpisz imię i nazwisko widniejące na karcie."
 
 #. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_token__payu_gpo_recurring
+msgid ""
+"Saved for scheduled recurring charges (recurring=STANDARD); other cards are "
+"charged as cards on file (cardOnFile=STANDARD_MERCHANT)."
+msgstr ""
+"Zapisana do zaplanowanych obciążeń cyklicznych (recurring=STANDARD); "
+"pozostałe karty są obciążane jako karty zapisane "
+"(cardOnFile=STANDARD_MERCHANT)."
+
+#. module: payment_payu_gpo
 #: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_provider__payu_gpo_second_key
 msgid "Second key (MD5)"
 msgstr "Drugi klucz (MD5)"
+
+#. module: payment_payu_gpo
+#. odoo-javascript
+#: code:addons/payment_payu_gpo/static/src/js/payment_form.esm.js:0
+msgid "The card could not be read. Please try again."
+msgstr "Nie udało się odczytać karty. Spróbuj ponownie."
+
+#. module: payment_payu_gpo
+#. odoo-javascript
+#: code:addons/payment_payu_gpo/static/src/js/payment_form.esm.js:0
+msgid "The card form of PayU could not be loaded. Please reload the page."
+msgstr "Nie udało się załadować formularza karty PayU. Odśwież stronę."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_recurring
+msgid ""
+"The card is saved for scheduled recurring charges (recurring=FIRST) rather "
+"than as a card on file."
+msgstr ""
+"Karta jest zapisana do zaplanowanych obciążeń cyklicznych (recurring=FIRST),"
+" a nie jako karta zapisana."
 
 #. module: payment_payu_gpo
 #: model:ir.model.fields,help:payment_payu_gpo.field_payment_provider__code
@@ -188,6 +325,16 @@ msgstr "Kod techniczny tego dostawcy płatności."
 #: model:ir.model.fields,help:payment_payu_gpo.field_payment_provider__payu_gpo_second_key
 msgid "Used to verify the OpenPayu-Signature of notifications."
 msgstr "Służy do weryfikacji podpisu OpenPayu-Signature powiadomień."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid ""
+"Your bank asks for the security code (CVV) of the card, which this payment "
+"form cannot send yet. Please pay with another card."
+msgstr ""
+"Twój bank wymaga kodu bezpieczeństwa (CVV) karty, którego ten formularz "
+"płatności nie może jeszcze przesłać. Zapłać inną kartą."
 
 #. module: payment_payu_gpo
 #: model_terms:payment.provider,auth_msg:payment_payu_gpo.payment_provider_payu_gpo

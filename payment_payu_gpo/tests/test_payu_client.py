@@ -1,14 +1,17 @@
 import hashlib
 from unittest.mock import MagicMock
 
+import requests
+
 from odoo.tests import BaseCase, tagged
 
+from .. import payu_client
 from ..payu_client import (
     SANDBOX_HOST,
     PayuClient,
     PayuError,
+    PayuUnknownOutcome,
     parse_signature_header,
-    to_minor_units,
     verify_signature,
 )
 
@@ -23,9 +26,21 @@ def _response(status_code, payload):
 class TestPayuClient(BaseCase):
     """Plain-Python tests: no database, valid unchanged across Odoo versions."""
 
-    def test_minor_units(self):
-        self.assertEqual(to_minor_units(12.5), "1250")
-        self.assertEqual(to_minor_units(0.1 + 0.2), "30")
+    def setUp(self):
+        super().setUp()
+        payu_client._TOKEN_CACHE.clear()
+        self.addCleanup(payu_client._TOKEN_CACHE.clear)
+
+    def _client(self, request=None, auth=None):
+        session = MagicMock()
+        session.post.return_value = auth or _response(
+            200, {"access_token": "T", "expires_in": 43199}
+        )
+        if isinstance(request, Exception):
+            session.request.side_effect = request
+        else:
+            session.request.return_value = request
+        return PayuClient("1", "1", "s", sandbox=True, session=session), session
 
     def test_signature_header_parsing(self):
         parts = parse_signature_header(
@@ -79,9 +94,9 @@ class TestPayuClient(BaseCase):
                 "orderId": "O1",
             },
         )
-        client = PayuClient("1", "1", "s", sandbox=True, session=session)
-        client.create_order({})
-        client.create_order({})
+        # One client per API call, as the provider creates them.
+        PayuClient("1", "1", "s", sandbox=True, session=session).create_order({})
+        PayuClient("1", "1", "s", sandbox=True, session=session).create_order({})
         self.assertEqual(session.post.call_count, 1, "OAuth token must be cached")
         method, url = session.request.call_args.args
         self.assertEqual((method, url), ("POST", SANDBOX_HOST + "/api/v2_1/orders"))
@@ -99,3 +114,47 @@ class TestPayuClient(BaseCase):
         with self.assertRaises(PayuError) as ctx:
             client.get_order("O1")
         self.assertEqual(ctx.exception.payu_status, "ERROR_VALUE_INVALID")
+
+    def test_expired_token_asked_again_after_401(self):
+        client, session = self._client(
+            _response(401, {"status": {"statusCode": "UNAUTHORIZED"}})
+        )
+        with self.assertRaises(PayuError):
+            client.get_order("O1")
+        session.request.return_value = _response(200, {"orders": []})
+        client.get_order("O1")
+        self.assertEqual(session.post.call_count, 2)
+
+    def test_unknown_outcome(self):
+        """No answer is not a refusal: the order may exist at PayU."""
+        for failure in (
+            requests.exceptions.ReadTimeout("slow"),
+            requests.exceptions.ConnectionError("reset"),
+            _response(503, {}),
+        ):
+            client, _session = self._client(failure)
+            with self.assertRaises(PayuUnknownOutcome) as ctx:
+                client.create_order({})
+            self.assertFalse(ctx.exception.definitive)
+
+    def test_definitive_errors(self):
+        """PayU refused, or the request never left: nothing happened there."""
+        for failure in (
+            requests.exceptions.ConnectTimeout("unreachable"),
+            _response(400, {"status": {"statusCode": "ERROR_VALUE_INVALID"}}),
+        ):
+            client, _session = self._client(failure)
+            with self.assertRaises(PayuError) as ctx:
+                client.create_order({})
+            self.assertTrue(ctx.exception.definitive)
+
+    def test_invalid_authentication_answers_are_payu_errors(self):
+        """Only PayuError leaves the client, whatever PayU sends back."""
+        html = _response(200, None)
+        html.json.side_effect = ValueError("not JSON")
+        for auth in (html, _response(200, {"expires_in": 100})):
+            client, session = self._client(_response(200, {}), auth=auth)
+            with self.assertRaises(PayuError) as ctx:
+                client.get_order("O1")
+            self.assertTrue(ctx.exception.definitive)
+            session.request.assert_not_called()

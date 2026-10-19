@@ -7,10 +7,10 @@
 ##############################################################################
 import json
 
-from odoo import fields, models
+from odoo import api, fields, models
 
 from .. import const
-from ..payu_client import PRODUCTION_HOST, SANDBOX_HOST, PayuClient
+from ..payu_client import PRODUCTION_HOST, SANDBOX_HOST, PayuClient, PayuError
 
 
 class PaymentProvider(models.Model):
@@ -63,9 +63,28 @@ class PaymentProvider(models.Model):
             return codes
         return const.DEFAULT_PAYMENT_METHOD_CODES
 
+    @api.model
+    def _get_compatible_providers(self, *args, is_validation=False, **kwargs):
+        """PayU stores a card only with a payment: a card validation (saving a
+        card without paying) needs a zero-amount order, which PayU enables on
+        a POS only on request, and is not implemented."""
+        providers = super()._get_compatible_providers(
+            *args, is_validation=is_validation, **kwargs
+        )
+        if is_validation:
+            providers = providers.filtered(lambda p: p.code != const.PROVIDER_CODE)
+        return providers
+
     def _payu_gpo_client(self):
-        """The plain-Python API client configured for this provider."""
+        """The plain-Python API client configured for this provider.
+
+        A disabled provider never calls PayU: on a neutralized copy of the
+        production database, its keys are wiped, and the crons, status reads
+        and refunds must not reach the production API anyway.
+        """
         self.ensure_one()
+        if self.state == "disabled":
+            raise PayuError(f"the payment provider {self.name} is disabled")
         return PayuClient(
             pos_id=self.payu_gpo_pos_id,
             client_id=self.payu_gpo_client_id,
@@ -86,6 +105,6 @@ class PaymentProvider(models.Model):
                 + const.SDK_PATH,
                 # The SDK refuses plain http outside its dev mode (localhost).
                 "dev": sandbox,
-                "lang": (self.env.lang or "pl")[:2],
+                "lang": (self.env.lang or "en")[:2],
             }
         )

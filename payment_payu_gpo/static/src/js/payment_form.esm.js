@@ -41,12 +41,58 @@ paymentForm.include({
             return;
         }
         const values = JSON.parse(container.dataset.payuGpoInlineFormValues);
-        await loadJS(values.sdk_url);
-        const payu = PayU(values.pos_id, { dev: values.dev });
-        payu.secureForms({ lang: values.lang })
-            .add("card")
-            .render(`#${container.id}`);
-        this.payuGpoSdks[paymentOptionId] = payu;
+        try {
+            await loadJS(values.sdk_url);
+            const payu = PayU(values.pos_id, { dev: values.dev });
+            payu.secureForms({ lang: values.lang })
+                .add("card")
+                .render(`#${container.id}`);
+            this.payuGpoSdks[paymentOptionId] = payu;
+        } catch {
+            // E.g. PayU's script blocked by a browser extension.
+            this._displayErrorDialog(
+                _t("Payment processing failed"),
+                _t(
+                    "The card form of PayU could not be loaded. Please reload the page.",
+                ),
+            );
+        }
+    },
+
+    /**
+     * Check the name on the card before the transaction is created: a
+     * transaction left in draft blocks what it pays until it is cleaned up.
+     *
+     * @override method from @payment/js/payment_form
+     */
+    async _initiatePaymentFlow(
+        providerCode,
+        paymentOptionId,
+        paymentMethodCode,
+        flow,
+    ) {
+        if (providerCode === "payu_gpo" && flow === "direct") {
+            if (!this.payuGpoSdks?.[paymentOptionId]) {
+                this._displayErrorDialog(
+                    _t("Payment processing failed"),
+                    _t(
+                        "The card form of PayU could not be loaded. Please reload the page.",
+                    ),
+                );
+                this._enableButton();
+                return;
+            }
+            const cardholderInput = this._payuGpoCardholderInput();
+            if (cardholderInput && !cardholderInput.value.trim()) {
+                this._displayErrorDialog(
+                    _t("Incorrect payment details"),
+                    _t("Please enter the name on the card."),
+                );
+                this._enableButton();
+                return;
+            }
+        }
+        return await this._super(...arguments);
     },
 
     // #=== PAYMENT FLOW ===#
@@ -72,28 +118,25 @@ paymentForm.include({
             await this._super(...arguments);
             return;
         }
-        const cardholderInput = this._getInlineForm(
-            document.querySelector('input[name="o_payment_radio"]:checked'),
-        )?.querySelector('[name="o_payu_gpo_cardholder_name"]');
-        const cardholderName = (cardholderInput?.value || "").trim();
-        if (cardholderInput && !cardholderName) {
-            this._displayErrorDialog(
-                _t("Incorrect payment details"),
-                _t("Please enter the name on the card."),
+        const cardholderName = (
+            this._payuGpoCardholderInput()?.value || ""
+        ).trim();
+        let tokenization = null;
+        try {
+            tokenization = await this.payuGpoSdks[paymentOptionId].tokenize(
+                processingValues.should_tokenize ? "MULTI" : "SINGLE",
             );
-            this._enableButton();
-            return;
+        } catch {
+            tokenization = { status: "ERROR" };
         }
-        const tokenization = await this.payuGpoSdks[paymentOptionId].tokenize(
-            processingValues.should_tokenize ? "MULTI" : "SINGLE",
-        );
         if (tokenization.status !== "SUCCESS") {
             const messages = (tokenization.error?.messages ?? []).map(
                 (error) => error.message,
             );
             this._displayErrorDialog(
                 _t("Incorrect payment details"),
-                messages.join("\n"),
+                messages.join("\n") ||
+                    _t("The card could not be read. Please try again."),
             );
             this._enableButton();
             return;
@@ -105,6 +148,7 @@ paymentForm.include({
                 card_token: tokenization.body.token,
                 browser: this._payuGpoBrowserData(),
                 cardholder_name: cardholderName,
+                card_mask: tokenization.body.mask,
             });
             window.location = result.redirect_url || "/payment/status";
         } catch (error) {
@@ -118,6 +162,18 @@ paymentForm.include({
                 return Promise.reject(error);
             }
         }
+    },
+
+    /**
+     * The "Name on card" input of the selected card option, if any.
+     *
+     * @private
+     * @returns {HTMLInputElement|null}
+     */
+    _payuGpoCardholderInput() {
+        return this._getInlineForm(
+            document.querySelector('input[name="o_payment_radio"]:checked'),
+        )?.querySelector('[name="o_payu_gpo_cardholder_name"]');
     },
 
     /**

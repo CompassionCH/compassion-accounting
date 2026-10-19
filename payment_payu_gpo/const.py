@@ -24,8 +24,8 @@ SUPPORTED_CURRENCIES = [
     "SEK",
 ]
 
-# Payment methods activated with the provider. Recurrence is card-only for now;
-# BLIK recurring (PAYID tokens, model "O") needs a contract annex - phase 2.
+# Payment methods activated with the provider. Recurrence is card-only: BLIK
+# recurring (PAYID tokens, model "O") needs a contract annex with PayU.
 DEFAULT_PAYMENT_METHOD_CODES = {"card", "blik", "visa", "mastercard"}
 
 # Payment methods paid through the Secure Form (direct flow) instead of the
@@ -48,12 +48,17 @@ SYNC_PENDING_BATCH = 20
 # The payment status page asks PayU itself, at most this often per payment,
 # while the payment is pending (the notification may be late or lost).
 SYNC_POLL_SECONDS = 10
+# A cron batch stops after this time, well before Odoo's limit_time_real kills
+# it: what is left goes to the next batch.
+CRON_TIME_BUDGET_SECONDS = 60
 
 # Secure Form SDK, loaded by the browser from PayU.
 SDK_PATH = "/javascript/sdk"
 
 # PayU order status -> Odoo transaction state.
 # See https://developers.payu.com/europe/docs/get-started/integration-overview/#order-statuses
+# WAITING_FOR_CONFIRMATION (authorized, not captured) only happens when
+# automatic collection is off on the POS: it stays pending, with a warning.
 STATUS_MAPPING = {
     "pending": ("NEW", "PENDING", "WAITING_FOR_CONFIRMATION"),
     "done": ("COMPLETED",),

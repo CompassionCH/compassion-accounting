@@ -40,7 +40,13 @@ SIGNATURE_ALGORITHMS = {
 
 
 class PayuError(Exception):
-    """Raised when PayU cannot be reached or refuses a request."""
+    """Anything that goes wrong talking to PayU: the client raises nothing else.
+
+    definitive: PayU answered and refused the request, so nothing happened on
+    its side. Otherwise the outcome is unknown (see PayuUnknownOutcome).
+    """
+
+    definitive = True
 
     def __init__(self, message, status_code=None, payu_status=None):
         super().__init__(message)
@@ -48,13 +54,11 @@ class PayuError(Exception):
         self.payu_status = payu_status
 
 
-def to_minor_units(amount, decimals=2):
-    """PayU expects amounts as strings of integer minor units (grosze)."""
-    return str(round(amount * 10**decimals))
+class PayuUnknownOutcome(PayuError):
+    """PayU did not answer (timeout, connection lost) or failed (5xx): the
+    request may have been carried out all the same, e.g. an order created."""
 
-
-def from_minor_units(value, decimals=2):
-    return int(value) / 10**decimals
+    definitive = False
 
 
 def parse_signature_header(header):
@@ -88,8 +92,13 @@ def verify_signature(raw_body, header, second_key):
     return hmac.compare_digest(computed, expected.lower())
 
 
+# OAuth client_credentials tokens, per process: (host, client_id, secret) ->
+# (token, expiry). A client is created for every API call.
+_TOKEN_CACHE = {}
+
+
 class PayuClient:
-    """Stateless apart from the cached OAuth access token."""
+    """Stateless apart from the OAuth access tokens cached per process."""
 
     def __init__(self, pos_id, client_id, client_secret, sandbox=False, session=None):
         self.pos_id = str(pos_id)
@@ -97,15 +106,14 @@ class PayuClient:
         self.client_secret = client_secret
         self.host = SANDBOX_HOST if sandbox else PRODUCTION_HOST
         self.session = session or requests
-        self._token = None
-        self._token_expiry = 0
 
     # --- authentication --------------------------------------------------
 
-    def get_access_token(self, force=False):
+    def get_access_token(self):
         """OAuth client_credentials token, cached until shortly before expiry."""
-        if not force and self._token and time.time() < self._token_expiry - 60:
-            return self._token
+        token, expiry = _TOKEN_CACHE.get(self._cache_key, (None, 0))
+        if token and time.time() < expiry - 60:
+            return token
         data = self._post_form(
             "/pl/standard/user/oauth/authorize",
             {
@@ -114,9 +122,16 @@ class PayuClient:
                 "client_secret": self.client_secret,
             },
         )
-        self._token = data["access_token"]
-        self._token_expiry = time.time() + int(data.get("expires_in", 0))
-        return self._token
+        token = self._access_token(data)
+        _TOKEN_CACHE[self._cache_key] = (
+            token,
+            time.time() + int(data.get("expires_in") or 0),
+        )
+        return token
+
+    @property
+    def _cache_key(self):
+        return (self.host, self.client_id, self.client_secret)
 
     def get_trusted_merchant_token(self, email, ext_customer_id):
         """OAuth token scoped to one buyer, required to list their card tokens.
@@ -134,6 +149,12 @@ class PayuClient:
                 "ext_customer_id": ext_customer_id,
             },
         )
+        return self._access_token(data)
+
+    @staticmethod
+    def _access_token(data):
+        if not isinstance(data, dict) or not data.get("access_token"):
+            raise PayuError("PayU sent no access token")
         return data["access_token"]
 
     # --- orders ------------------------------------------------------------
@@ -181,14 +202,22 @@ class PayuClient:
         continue_url=None,
         buyer=None,
         recurring=None,
+        card_on_file=None,
         pay_method=None,
         three_ds=None,
     ):
-        """Assemble an order. recurring is None, "FIRST" or "STANDARD".
+        """Assemble an order.
+
+        recurring is None, "FIRST" or "STANDARD" (scheduled recurring
+        charges); card_on_file is None, "FIRST", "STANDARD_CARDHOLDER" or
+        "STANDARD_MERCHANT" (a card saved without a schedule). PayU refuses
+        an order with both.
 
         pay_method is e.g. {"type": "CARD_TOKEN", "value": "TOKC_..."} for a
         merchant-initiated charge.
         """
+        if recurring and card_on_file:
+            raise ValueError("an order is either recurring or card on file")
         payload = {
             "notifyUrl": notify_url,
             "customerIp": customer_ip or "127.0.0.1",
@@ -207,6 +236,8 @@ class PayuClient:
             payload["buyer"] = {k: v for k, v in buyer.items() if v}
         if recurring:
             payload["recurring"] = recurring
+        if card_on_file:
+            payload["cardOnFile"] = card_on_file
         if pay_method:
             payload["payMethods"] = {"payMethod": pay_method}
         if three_ds:
@@ -216,6 +247,8 @@ class PayuClient:
     # --- transport ---------------------------------------------------------
 
     def _post_form(self, path, data):
+        # Authentication only: whatever fails, the request it was for has not
+        # been sent yet.
         try:
             response = self.session.post(self.host + path, data=data, timeout=TIMEOUT)
         except requests.exceptions.RequestException as e:
@@ -225,7 +258,10 @@ class PayuClient:
                 f"PayU authentication failed ({response.status_code})",
                 status_code=response.status_code,
             )
-        return response.json()
+        try:
+            return response.json()
+        except ValueError as e:
+            raise PayuError("PayU sent an invalid response") from e
 
     def _request(self, method, path, json=None, ok=(200, 201), token=None):
         headers = {"Authorization": f"Bearer {token or self.get_access_token()}"}
@@ -238,8 +274,23 @@ class PayuClient:
                 timeout=TIMEOUT,
                 allow_redirects=False,
             )
-        except requests.exceptions.RequestException as e:
+        except (
+            requests.exceptions.ConnectTimeout,
+            requests.exceptions.SSLError,
+        ) as e:
+            # The request never reached PayU.
             raise PayuError(f"Could not reach PayU: {e}") from e
+        except requests.exceptions.RequestException as e:
+            # Timeout or connection lost while PayU may be processing it.
+            raise PayuUnknownOutcome(f"PayU did not answer: {e}") from e
+        if response.status_code == 401 and not token:
+            # Revoked or expired before its announced expiry: ask a new one
+            # next time.
+            _TOKEN_CACHE.pop(self._cache_key, None)
+        if response.status_code >= 500:
+            raise PayuUnknownOutcome(
+                f"PayU error {response.status_code}", status_code=response.status_code
+            )
         try:
             data = response.json()
         except ValueError:

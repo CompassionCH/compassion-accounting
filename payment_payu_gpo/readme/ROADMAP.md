@@ -1,4 +1,15 @@
 - Validate the notification payloads (order, refund) against production data.
+- Not supported yet:
+  - saving a card without paying (card validation): PayU needs a
+    zero-amount order, enabled on a POS on request;
+  - paying with a saved card while the buyer is on the site
+    (`cardOnFile: STANDARD_CARDHOLDER` and the 3DS / CVV redirects): saved
+    PayU cards are only charged without the buyer;
+  - the CVV that PayU may ask for a card (`WARNING_CONTINUE_CVV`, through
+    the Secure Form `sendCvv`): the payment is refused with a clear message;
+  - manual capture (`WAITING_FOR_CONFIRMATION`, `authorized` state);
+  - refunds made in the PayU panel, and reading the status of a refund whose
+    notification was lost.
 - BLIK recurring (PAYID token, model "O", 2000 PLN cap) needs a contract
   annex with PayU; it is Poland-specific and belongs in a separate module.
 - PayU does not retry declined merchant-initiated charges: the retry policy
