@@ -20,6 +20,7 @@ import logging
 import time
 
 import requests
+from urllib3.exceptions import NewConnectionError
 
 _logger = logging.getLogger(__name__)
 
@@ -280,6 +281,12 @@ class PayuClient:
         ) as e:
             # The request never reached PayU.
             raise PayuError(f"Could not reach PayU: {e}") from e
+        except requests.exceptions.ConnectionError as e:
+            # Refused or unresolved: no connection, so nothing was sent.
+            reason = getattr(e.args[0] if e.args else None, "reason", None)
+            if isinstance(reason, NewConnectionError):
+                raise PayuError(f"Could not reach PayU: {e}") from e
+            raise PayuUnknownOutcome(f"PayU did not answer: {e}") from e
         except requests.exceptions.RequestException as e:
             # Timeout or connection lost while PayU may be processing it.
             raise PayuUnknownOutcome(f"PayU did not answer: {e}") from e

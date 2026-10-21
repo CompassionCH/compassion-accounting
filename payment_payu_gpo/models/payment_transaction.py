@@ -276,6 +276,8 @@ class PaymentTransaction(models.Model):
 
     def _payu_gpo_refresh_from_api(self):
         """Read the order status from PayU (no webhook needed, e.g. on dev)."""
+        if not self.provider_reference:
+            return
         order = self.provider_id._payu_gpo_client().get_order(self.provider_reference)
         for payu_order in order.get("orders", []):
             self._handle_notification_data(const.PROVIDER_CODE, {"order": payu_order})
@@ -632,6 +634,7 @@ class PaymentTransaction(models.Model):
         Each payment is read at most once per delay, the least recently read
         first, by batches committed through the progress API.
         """
+        self._payu_gpo_fail_unconfirmed()
         now = fields.Datetime.now()
         delay = timedelta(minutes=const.SYNC_PENDING_DELAY_MINUTES)
         domain = self._payu_gpo_cron_domain() + [
@@ -654,6 +657,31 @@ class PaymentTransaction(models.Model):
             "payu_gpo_sync_date",
             lambda tx: tx._payu_gpo_refresh_from_api(),
         )
+
+    def _payu_gpo_fail_unconfirmed(self):
+        """Fail the payments and refunds PayU never confirmed: sent without
+        an answer, they have no PayU id, and no notification came.
+
+        Charges Odoo makes on its own with a saved card are skipped: the
+        module that started them decides when they fail."""
+        before = fields.Datetime.now() - timedelta(days=const.UNCONFIRMED_FAIL_DAYS)
+        txs = self.search(
+            self._payu_gpo_cron_domain()
+            + [
+                ("state", "=", "pending"),
+                ("provider_reference", "=", False),
+                ("operation", "!=", "offline"),
+                ("last_state_change", "<", before),
+            ]
+        )
+        for tx in txs:
+            tx._set_error(
+                _(
+                    "PayU never confirmed %s. Check the PayU panel for this"
+                    " reference before trying again.",
+                    tx.reference,
+                )
+            )
 
     def _cron_payu_gpo_retry_tokenization(self):
         """Save the cards that completed payments could not save.
