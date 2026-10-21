@@ -330,11 +330,13 @@ msgstr "Służy do weryfikacji podpisu OpenPayu-Signature powiadomień."
 #. odoo-python
 #: code:addons/payment_payu_gpo/models/payment_transaction.py:0
 msgid ""
-"Your bank asks for the security code (CVV) of the card, which this payment "
-"form cannot send yet. Please pay with another card."
+"Your bank asked for an extra security check (CVV code) that this payment "
+"form can't handle yet. No money has been taken. Please try again, and if it "
+"happens again, contact us."
 msgstr ""
-"Twój bank wymaga kodu bezpieczeństwa (CVV) karty, którego ten formularz "
-"płatności nie może jeszcze przesłać. Zapłać inną kartą."
+"Twój bank poprosił o dodatkową weryfikację (kod CVV), której ten formularz "
+"płatności jeszcze nie obsługuje. Nie pobrano żadnych pieniędzy. Spróbuj "
+"ponownie, a jeśli to się powtórzy, skontaktuj się z nami."
 
 #. module: payment_payu_gpo
 #: model_terms:payment.provider,auth_msg:payment_payu_gpo.payment_provider_payu_gpo

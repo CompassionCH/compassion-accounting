@@ -223,9 +223,10 @@ class PaymentTransaction(models.Model):
             # Without it the order is never paid, and PayU cancels it.
             self._set_error(
                 _(
-                    "Your bank asks for the security code (CVV) of the card,"
-                    " which this payment form cannot send yet. Please pay with"
-                    " another card."
+                    "Your bank asked for an extra security check (CVV code)"
+                    " that this payment form can't handle yet. No money has"
+                    " been taken. Please try again, and if it happens again,"
+                    " contact us."
                 )
             )
             return None
