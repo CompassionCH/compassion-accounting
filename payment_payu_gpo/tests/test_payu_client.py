@@ -2,6 +2,7 @@ import hashlib
 from unittest.mock import MagicMock
 
 import requests
+from urllib3.exceptions import MaxRetryError, NewConnectionError
 
 from odoo.tests import BaseCase, tagged
 
@@ -147,6 +148,16 @@ class TestPayuClient(BaseCase):
             with self.assertRaises(PayuError) as ctx:
                 client.create_order({})
             self.assertTrue(ctx.exception.definitive)
+
+    def test_connection_never_made_is_definitive(self):
+        """Refused or unresolved (urllib3 NewConnectionError): nothing sent."""
+        failure = requests.exceptions.ConnectionError(
+            MaxRetryError(None, "/api", reason=NewConnectionError(None, "refused"))
+        )
+        client, _session = self._client(failure)
+        with self.assertRaises(PayuError) as ctx:
+            client.create_order({})
+        self.assertTrue(ctx.exception.definitive)
 
     def test_invalid_authentication_answers_are_payu_errors(self):
         """Only PayuError leaves the client, whatever PayU sends back."""

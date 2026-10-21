@@ -321,6 +321,18 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(tx.state, "pending")
         self.assertIn("automatic collection", tx.state_message)
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_waiting_for_confirmation_on_a_pending_payment(self):
+        """The usual case: the payment is pending since PayU has the order."""
+        tx = self._create_transaction(
+            flow="redirect", state="pending", provider_reference=self.order_id
+        )
+        tx._handle_notification_data(
+            "payu_gpo", self._order_notification("WAITING_FOR_CONFIRMATION")
+        )
+        self.assertEqual(tx.state, "pending")
+        self.assertIn("automatic collection", tx.state_message)
+
     def test_canceled_order(self):
         tx = self._create_transaction(flow="redirect")
         tx._handle_notification_data("payu_gpo", self._order_notification("CANCELED"))
@@ -566,6 +578,54 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(get.call_count, 1)
         self.assertEqual(failing.state, "pending")
         self.assertTrue(failing.payu_gpo_sync_date)
+
+    def test_cron_fails_payments_payu_never_received(self):
+        """No PayU id and no notification after a day: PayU never got it.
+        Charges without the buyer, recent payments and payments PayU has
+        are left alone."""
+        day_ago = fields.Datetime.now() - timedelta(
+            days=const.UNCONFIRMED_FAIL_DAYS, hours=1
+        )
+        unsent = self._create_transaction(
+            flow="direct", state="pending", reference="payu-unsent"
+        )
+        token = self._create_token(provider_ref="TOKC_ABC")
+        offline = self._create_transaction(
+            flow="token",
+            operation="offline",
+            token_id=token.id,
+            state="pending",
+            reference="payu-unsent-offline",
+        )
+        known = self._create_transaction(
+            flow="direct",
+            state="pending",
+            provider_reference=self.order_id,
+            reference="payu-known",
+        )
+        (unsent | offline | known).last_state_change = day_ago
+        recent = self._create_transaction(
+            flow="direct", state="pending", reference="payu-unsent-recent"
+        )
+        with patch(f"{CLIENT}.get_order", return_value={"orders": []}):
+            self.env["payment.transaction"]._cron_payu_gpo_sync_pending()
+        self.assertEqual(unsent.state, "error")
+        self.assertIn("never confirmed", unsent.state_message)
+        for tx in offline | known | recent:
+            self.assertEqual(tx.state, "pending", tx.reference)
+
+    def test_cron_sync_pending_skips_refunds(self):
+        """A refund's reference is a refund id: never read as an order."""
+        tx = self._create_transaction(
+            flow="redirect", state="done", provider_reference=self.order_id
+        )
+        with patch(f"{CLIENT}.refund", return_value={"refund": {"refundId": "R1"}}):
+            refund_tx = tx._send_refund_request(amount_to_refund=10.0)
+        refund_tx.last_state_change = fields.Datetime.now() - timedelta(minutes=30)
+        with patch(f"{CLIENT}.get_order") as get:
+            self.env["payment.transaction"]._cron_payu_gpo_sync_pending()
+        get.assert_not_called()
+        self.assertEqual(refund_tx.state, "pending")
 
     # --- disabled provider (neutralized database) ---------------------------
 
