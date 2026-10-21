@@ -644,6 +644,8 @@ class PaymentTransaction(models.Model):
         domain = self._payu_gpo_cron_domain() + [
             ("state", "=", "pending"),
             ("provider_reference", "!=", False),
+            # A refund's reference is a refund id, not an order id.
+            ("operation", "!=", "refund"),
             ("last_state_change", "<", now - delay),
             ("last_state_change", ">", now - timedelta(days=const.SYNC_PENDING_DAYS)),
             "|",
