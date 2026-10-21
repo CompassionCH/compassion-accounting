@@ -495,12 +495,15 @@ class PaymentTransaction(models.Model):
                 " (auto-receive) for its payment method on the POS.",
                 self.reference,
             )
-            self._set_pending(
-                _(
-                    "PayU holds this payment until it is captured: automatic"
-                    " collection must be enabled on the PayU point of sale."
-                )
+            message = _(
+                "PayU holds this payment until it is captured: automatic"
+                " collection must be enabled on the PayU point of sale."
             )
+            if self.state == "pending":
+                # _set_pending only leaves draft: it would drop the message.
+                self.state_message = message
+            else:
+                self._set_pending(message)
         elif status in const.STATUS_MAPPING["pending"]:
             self._set_pending()
         elif status in const.STATUS_MAPPING["done"]:
