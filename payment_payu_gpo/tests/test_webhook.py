@@ -272,6 +272,32 @@ class TestWebhook(PayuGpoCommon, PaymentHttpCommon):
             self.assertEqual(tx.state, "cancel")
             self.assertEqual(tx.state_message, "This donation is already paid.")
 
+    @mute_logger("odoo.addons.payment_payu_gpo.controllers.main")
+    def test_refused_card_submission_leaves_nothing_of_the_check(self):
+        """The check runs in a savepoint: what it wrote before refusing is
+        undone, while the draft is still cancelled and the reason returned."""
+        tx = self._create_transaction(flow="direct")
+        refusal = ValidationError("This donation is already paid.")
+
+        def write_then_refuse(transaction):
+            transaction.payu_gpo_cardholder_name = "Written by the check"
+            raise refusal
+
+        with (
+            patch(
+                f"{TX}._payu_gpo_check_card_submission",
+                autospec=True,
+                side_effect=write_then_refuse,
+            ),
+            patch(f"{CLIENT}.create_order") as create_order,
+        ):
+            result = self._pay_card(tx)
+        create_order.assert_not_called()
+        self.assertEqual(result["error"], "This donation is already paid.")
+        tx.invalidate_recordset()
+        self.assertEqual(tx.state, "cancel")
+        self.assertFalse(tx.payu_gpo_cardholder_name)
+
     def test_card_submission_check_is_a_no_op_by_default(self):
         tx = self._create_transaction(flow="direct")
         with (
