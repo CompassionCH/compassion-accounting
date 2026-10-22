@@ -126,7 +126,7 @@ class BankStatementLine(models.Model):
         if not self._get_contract_from_reference():
             return model_obj
         gift_type = self.env["sponsorship.gift.type"].browse(
-            int(self.payment_ref.strip()[21])
+            int(self._get_gift_reference()[21])
         )
         if not gift_type.exists() or not gift_type.product_id:
             return model_obj
@@ -139,14 +139,22 @@ class BankStatementLine(models.Model):
             limit=1,
         )
 
+    def _get_gift_reference(self):
+        """Gift QRR reference, built as 9 digits + partner ref (7) + commitment
+        number (5) + gift type (1-6) + 0000 + check digit. Type 0 (sponsorship)
+        and fund donations (type 6 followed by the fund id) reuse the same
+        layout, so they are skipped. The bank puts it in the label, or in the
+        move ref when the donor wrote a message."""
+        for ref in (self.ref, self.payment_ref):
+            ref = (ref or "").strip()
+            if re.fullmatch(r"\d{21}[1-6]0000\d", ref):
+                return ref
+        return ""
+
     def _get_contract_from_reference(self):
-        """Find the sponsorship of a gift QRR reference, built as
-        9 digits + partner ref (7) + commitment number (5) + gift type (1-6)
-        + 0000 + check digit. Type 0 (sponsorship) and fund donations (type 6
-        followed by the fund id) reuse the same layout, so they are skipped."""
         contract_obj = self.env["recurring.contract"]
-        ref = (self.payment_ref or "").strip()
-        if not re.fullmatch(r"\d{21}[1-6]0000\d", ref):
+        ref = self._get_gift_reference()
+        if not ref:
             return contract_obj
         partner_ref = ref[9:16].lstrip("0")
         contracts = contract_obj.search(
