@@ -1265,11 +1265,39 @@ class TestPaymentTransaction(PayuGpoCommon):
             flow="redirect", state="pending", reference="payu-unsent-hosted"
         )
         hosted.last_state_change = too_old
-        with patch(f"{CLIENT}.get_order", return_value={"orders": []}):
+        done = self._create_transaction(
+            flow="redirect",
+            state="done",
+            provider_reference=self.order_id,
+            reference="payu-unsent-refunded",
+        )
+        with (
+            patch(f"{CLIENT}.refund", side_effect=PayuUnknownOutcome("slow")),
+            self.assertLogs(LOGGER, "WARNING"),
+        ):
+            refund = done._send_refund_request(amount_to_refund=1.0)
+        refund.last_state_change = too_old
+        Transaction = type(self.env["payment.transaction"])
+        with (
+            patch(f"{CLIENT}.get_order", return_value={"orders": []}),
+            patch.object(Transaction, "_log_message_on_linked_documents") as chatter,
+            self.assertLogs(LOGGER, "WARNING"),
+        ):
             self.env["payment.transaction"]._cron_payu_gpo_sync_pending()
         self.assertEqual(unsent.state, "error")
-        self.assertIn("never confirmed", unsent.state_message)
         self.assertTrue(unsent.payu_gpo_unconfirmed)
+        # The buyer reads a plain sentence; staff get what to check.
+        self.assertIn("has not confirmed this payment", unsent.state_message)
+        self.assertNotIn("PayU panel", unsent.state_message)
+        self.assertTrue(
+            any(
+                "never confirmed payu-unsent." in c.args[0]
+                for c in chatter.call_args_list
+            )
+        )
+        self.assertEqual(refund.state, "error")
+        self.assertTrue(refund.payu_gpo_unconfirmed)
+        self.assertIn("never confirmed", refund.state_message)
         # Never on the PayU page: nothing paid, nothing unconfirmed.
         self.assertEqual(hosted.state, "error")
         self.assertFalse(hosted.payu_gpo_unconfirmed)
@@ -1312,7 +1340,8 @@ class TestPaymentTransaction(PayuGpoCommon):
         tx.last_state_change = fields.Datetime.now() - timedelta(
             days=const.UNCONFIRMED_FAIL_DAYS, hours=1
         )
-        self.env["payment.transaction"]._payu_gpo_fail_unconfirmed()
+        with self.assertLogs(LOGGER, "WARNING"):
+            self.env["payment.transaction"]._payu_gpo_fail_unconfirmed()
         self.assertEqual(tx.state, "error")
         self.assertTrue(tx.payu_gpo_unconfirmed)
         return tx

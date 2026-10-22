@@ -995,13 +995,21 @@ class PaymentTransaction(models.Model):
                         # Never on PayU's page: nothing can have been paid.
                         tx._payu_gpo_set_no_payment_page()
                         continue
+                    staff_message = _(
+                        "PayU never confirmed %s. Check the PayU panel for"
+                        " this reference before trying again.",
+                        tx.reference,
+                    )
+                    tx._payu_gpo_log_detail(staff_message)
                     # Set first: whatever reacts to the error reads it.
                     tx.payu_gpo_unconfirmed = True
                     tx._set_error(
-                        _(
-                            "PayU never confirmed %s. Check the PayU panel for"
-                            " this reference before trying again.",
-                            tx.reference,
+                        tx._payu_gpo_state_message(
+                            staff_message,
+                            _(
+                                "PayU has not confirmed this payment. Please"
+                                " contact us before paying again."
+                            ),
                         )
                     )
             except Exception:
