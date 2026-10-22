@@ -71,6 +71,16 @@ msgstr ""
 " potrzeby 3-D Secure i jako dane kupującego."
 
 #. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid ""
+"No usable answer from PayU (%s). The payment may have been made: PayU's "
+"notification will update it."
+msgstr ""
+"Brak użytecznej odpowiedzi od PayU (%s). Płatność mogła zostać "
+"zrealizowana: powiadomienie PayU ją zaktualizuje."
+
+#. module: payment_payu_gpo
 #: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_provider__payu_gpo_client_id
 msgid "OAuth client_id"
 msgstr "OAuth client_id"
@@ -112,6 +122,12 @@ msgid "PayU canceled the refund."
 msgstr "PayU anulowało zwrot."
 
 #. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU canceled this payment: no money was taken."
+msgstr "PayU anulowało tę płatność: nie pobrano żadnych pieniędzy."
+
+#. module: payment_payu_gpo
 #: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_card_mask
 msgid "PayU card number"
 msgstr "Numer karty PayU"
@@ -130,22 +146,6 @@ msgstr "Token karty PayU"
 #: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_cardholder_name
 msgid "PayU cardholder name"
 msgstr "Imię i nazwisko posiadacza karty (PayU)"
-
-#. module: payment_payu_gpo
-#. odoo-python
-#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
-msgid ""
-"PayU did not answer (%s). The payment may have been made: PayU's "
-"notification will update it."
-msgstr ""
-"PayU nie odpowiedziało (%s). Płatność mogła zostać zrealizowana: "
-"powiadomienie PayU ją zaktualizuje."
-
-#. module: payment_payu_gpo
-#. odoo-python
-#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
-msgid "PayU did not return a payment page."
-msgstr "PayU nie zwróciło strony płatności."
 
 #. module: payment_payu_gpo
 #. odoo-python
