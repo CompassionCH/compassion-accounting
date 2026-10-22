@@ -40,7 +40,10 @@ v2.1). Not to be confused with PayU India (``payu.in``).
   ``cardOnFile: STANDARD_MERCHANT``), so any off-session charge (cron,
   subscription) works with the standard payment API. A charge the bank
   refuses (PayU cancels the order, or asks for the cardholder) is set to
-  error, not cancelled: nobody gave it up.
+  error, not cancelled: nobody gave it up. One PayU cancels after
+  holding it for a capture (``WAITING_FOR_CONFIRMATION``, automatic
+  collection off on the POS) is in error too, its message saying it was
+  never captured.
 - A request PayU did not answer (timeout, 5xx), or answered in a way
   that can't be used, leaves the payment pending with any PayU id it
   gave: the order may exist, and its notification or a status read
@@ -60,9 +63,19 @@ v2.1). Not to be confused with PayU India (``payu.in``).
   while the buyer waits.
 - Signed notifications (``OpenPayu-Signature``, POS second key) for
   orders and refunds, checked against the payment (PayU order, amount,
-  currency). Data that does not match, from a notification or a status
-  read, is not applied: the payment stays pending, with the discrepancy
-  on it and in the log.
+  currency; an amount or currency PayU sends must be valid). Data that
+  does not match, from a notification or a status read, is not applied:
+  a draft or pending payment stays pending and is flagged
+  ``payu_gpo_held``, the discrepancy going to the log and to the
+  documents the payment is for; a payment in another state is left as it
+  is.
+- A buyer reads plain messages (status page, portal); the technical
+  detail goes to the log and to the documents the payment is for.
+  Offline charges and refunds keep the staff wording in their message.
+- For staff, the PayU transaction form shows the last status PayU
+  reported (``payu_gpo_status``) and the two flags, and the transaction
+  search has the filters "Unconfirmed by PayU" and "Held for a PayU
+  check".
 - Partial and full refunds.
 
 .. IMPORTANT::

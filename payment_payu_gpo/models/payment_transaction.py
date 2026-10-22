@@ -195,10 +195,10 @@ class PaymentTransaction(models.Model):
         sends nothing to PayU, cancels the draft and shows the message on
         the payment form.
 
-        It runs as superuser (the route's transaction is sudo) inside a
-        savepoint: the locks it takes are kept when it passes, so that what
-        it checked holds until the request ends, and released with its
-        writes when it refuses.
+        It runs on the route's sudo transaction, so in sudo mode with the
+        request's user (often the public user), inside a savepoint: the locks
+        it takes are kept when it passes, so that what it checked holds until
+        the request ends, and released with its writes when it refuses.
         """
 
     def _payu_gpo_pay_with_card_token(
