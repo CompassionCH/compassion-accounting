@@ -821,6 +821,25 @@ class TestPaymentTransaction(PayuGpoCommon):
             ),
         )
 
+    def test_card_validation_refused_before_calling_payu(self):
+        """A page that picks the provider itself, without asking for the
+        compatible ones, still never sends PayU a zero-amount order."""
+        tx = self._create_transaction(
+            flow="redirect", operation="validation", amount=0.0, tokenize=True
+        )
+        with (
+            patch(
+                f"{CLIENT}.create_order",
+                return_value={
+                    "orderId": self.order_id,
+                    "redirectUri": "https://pay.example/",
+                },
+            ) as create_order,
+            self.assertRaises(UserError),
+        ):
+            tx._get_processing_values()
+        create_order.assert_not_called()
+
     # --- refunds ------------------------------------------------------------
 
     def test_refund(self):

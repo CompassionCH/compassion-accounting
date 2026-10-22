@@ -108,6 +108,7 @@ class PaymentTransaction(models.Model):
         res = super()._get_specific_rendering_values(processing_values)
         if self.provider_code != const.PROVIDER_CODE:
             return res
+        self._payu_gpo_refuse_validation()
 
         client = self.provider_id._payu_gpo_client()
         payload = client.build_order_payload(
@@ -135,16 +136,25 @@ class PaymentTransaction(models.Model):
 
     def _get_specific_processing_values(self, processing_values):
         res = super()._get_specific_processing_values(processing_values)
-        if (
-            self.provider_code != const.PROVIDER_CODE
-            or self.operation != "online_direct"
-        ):
+        if self.provider_code != const.PROVIDER_CODE:
+            return res
+        # Before the redirect form, whose rendering calls PayU.
+        self._payu_gpo_refuse_validation()
+        if self.operation != "online_direct":
             return res
         return {
             "payu_gpo_access_token": payment_utils.generate_access_token(
                 self.reference
             ),
         }
+
+    def _payu_gpo_refuse_validation(self):
+        """PayU stores a card only with a payment: a validation (saving a card
+        without paying) would send PayU a zero-amount order. Refused whatever
+        page created the transaction, even one that did not ask
+        payment.provider._get_compatible_providers."""
+        if self.operation == "validation":
+            raise UserError(_("PayU: a card can only be saved with a payment."))
 
     def _payu_gpo_pay_with_card_token(
         self, card_token, browser=None, cardholder_name=None, card_mask=None
