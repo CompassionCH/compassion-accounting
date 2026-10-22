@@ -740,20 +740,35 @@ class PaymentTransaction(models.Model):
 
     def _payu_gpo_mismatch(self, data, payu_id, amount, amount_key="amount"):
         """Why the order or refund PayU reports is not this transaction's, or
-        "" when it is: the signature proves who sent it, not what about."""
+        "" when it is: the signature proves who sent it, not what about.
+
+        A currency or amount PayU leaves out is not checked, but one it sends
+        must be valid and equal to this transaction's: 0, null or "" is no
+        match."""
         if payu_id and self.provider_reference and payu_id != self.provider_reference:
             return _(
                 "PayU reported %(payu)s, this payment is %(ours)s.",
                 payu=payu_id,
                 ours=self.provider_reference,
             )
-        currency = data.get("currencyCode")
-        if currency and currency != self.currency_id.name:
-            return _("PayU reported the currency %s.", currency)
-        payu_amount = data.get(amount_key)
-        if payu_amount and str(payu_amount) != self._payu_gpo_minor(amount):
-            return _("PayU reported the amount %s (in minor units).", payu_amount)
+        if "currencyCode" in data and data["currencyCode"] != self.currency_id.name:
+            return _("PayU reported the currency %s.", data["currencyCode"])
+        if amount_key in data and not self._payu_gpo_is_amount(
+            data[amount_key], amount
+        ):
+            return _("PayU reported the amount %s (in minor units).", data[amount_key])
         return ""
+
+    def _payu_gpo_is_amount(self, payu_amount, amount):
+        """Whether payu_amount, in minor units as PayU writes it, is amount."""
+        if isinstance(payu_amount, bool) or not isinstance(payu_amount, int | str):
+            return False
+        text = str(payu_amount)
+        return (
+            text.isascii()
+            and text.isdigit()
+            and int(text) == int(self._payu_gpo_minor(amount))
+        )
 
     def _payu_gpo_hold(self, reason, payu_id):
         """PayU reported an order or refund that does not match this

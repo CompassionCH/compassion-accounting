@@ -690,6 +690,58 @@ class TestPaymentTransaction(PayuGpoCommon):
             self.assertIn("does not match", tx.state_message, change)
             self.assertEqual(tx.provider_reference, self.order_id, change)
 
+    def test_supplied_but_unusable_values_are_held(self):
+        """A value PayU sends must be a valid one equal to the payment's: an
+        amount of 0, null, "", false or [] (or such a currency) settles
+        nothing, from a notification, a status read or for a refund."""
+        unusable = (0, None, "", False, [])
+        for i, value in enumerate(unusable):
+            for key in ("totalAmount", "currencyCode"):
+                tx = self._create_transaction(
+                    flow="redirect",
+                    state="pending",
+                    provider_reference=self.order_id,
+                    reference=f"payu-unusable-{key}-{i}",
+                )
+                notification = self._order_notification("COMPLETED", tx.reference)
+                notification["order"][key] = value
+                with self.assertLogs(LOGGER, "WARNING"):
+                    tx._handle_notification_data("payu_gpo", notification)
+                self.assertEqual(tx.state, "pending", (key, value))
+        read = self._create_transaction(
+            flow="token",
+            state="pending",
+            provider_reference=self.order_id,
+            reference="payu-unusable-read",
+        )
+        read.last_state_change = fields.Datetime.now() - timedelta(minutes=30)
+        order = {**self._completed()["orders"][0], "totalAmount": 0}
+        with (
+            patch(f"{CLIENT}.get_order", return_value={"orders": [order]}),
+            self.assertLogs(LOGGER, "WARNING"),
+        ):
+            read._cron_payu_gpo_sync_pending()
+        self.assertEqual(read.state, "pending")
+        done = self._create_transaction(
+            flow="redirect",
+            state="done",
+            provider_reference=self.order_id,
+            reference="payu-unusable-refunded",
+        )
+        for i, value in enumerate(unusable):
+            with patch(f"{CLIENT}.refund", return_value={}):
+                refund_tx = done._send_refund_request(amount_to_refund=1.0)
+            refund = {
+                "refundId": f"50015926{i}",
+                "extRefundId": refund_tx.reference,
+                "amount": value,
+                "currencyCode": "PLN",
+                "status": "FINALIZED",
+            }
+            with self.assertLogs(LOGGER, "WARNING"):
+                refund_tx._handle_notification_data("payu_gpo", {"refund": refund})
+            self.assertEqual(refund_tx.state, "pending", value)
+
     def test_held_notification_keeps_a_payu_id_that_fits(self):
         """A payment without a PayU id yet takes the one of data it holds."""
         tx = self._create_transaction(flow="direct", state="pending")
