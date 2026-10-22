@@ -138,6 +138,7 @@ paymentForm.include({
                 messages.join("\n") ||
                     _t("The card could not be read. Please try again."),
             );
+            await this._payuGpoCancelDraft(processingValues);
             this._enableButton();
             return;
         }
@@ -161,6 +162,26 @@ paymentForm.include({
             } else {
                 return Promise.reject(error);
             }
+        }
+    },
+
+    /**
+     * Cancel the transaction of a card the Secure Form refused, before the
+     * buyer tries again: nothing reached PayU, and a draft left behind blocks
+     * what it pays until it is cleaned up.
+     *
+     * @private
+     * @param {Object} processingValues
+     * @returns {Promise}
+     */
+    async _payuGpoCancelDraft(processingValues) {
+        try {
+            await rpc("/payment/payu_gpo/cancel", {
+                reference: processingValues.reference,
+                access_token: processingValues.payu_gpo_access_token,
+            });
+        } catch {
+            // Best effort: the draft is then cleaned up later.
         }
     },
 

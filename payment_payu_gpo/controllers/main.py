@@ -59,6 +59,35 @@ class PayuGpoController(http.Controller):
     _return_url = "/payment/payu_gpo/return"
     _webhook_url = "/payment/payu_gpo/webhook"
     _card_payment_url = "/payment/payu_gpo/card_payment"
+    _cancel_url = "/payment/payu_gpo/cancel"
+
+    @staticmethod
+    def _payu_gpo_lock_transaction(reference, access_token):
+        """The PayU transaction of reference, checked against the access token
+        of its processing values and locked until the end of the request.
+
+        The card and cancel requests of a payment then never overlap, and a
+        notification of the payment waits: on a conflict Odoo retries the
+        notification, never these requests, which a replay would find
+        already processed.
+        """
+        if not payment_utils.check_access_token(access_token, reference):
+            raise ValidationError(_("PayU: received tampered payment request data."))
+        tx = (
+            request.env["payment.transaction"]
+            .sudo()
+            .search(
+                [("reference", "=", reference), ("provider_code", "=", PROVIDER_CODE)],
+                limit=1,
+            )
+        )
+        if not tx:
+            raise ValidationError(_("PayU: unknown payment."))
+        request.env.cr.execute(
+            "SELECT 1 FROM payment_transaction WHERE id = %s FOR NO KEY UPDATE",
+            [tx.id],
+        )
+        return tx
 
     @http.route(_card_payment_url, type="json", auth="public")
     def payu_gpo_card_payment(
@@ -80,27 +109,9 @@ class PayuGpoController(http.Controller):
 
         :return: {"redirect_url": 3DS page to send the buyer to, or None}
         """
-        if not payment_utils.check_access_token(access_token, reference):
-            raise ValidationError(_("PayU: received tampered payment request data."))
+        tx = self._payu_gpo_lock_transaction(reference, access_token)
         if not isinstance(card_token, str) or not card_token.startswith("TOK_"):
             raise ValidationError(_("PayU: invalid card token."))
-        tx = (
-            request.env["payment.transaction"]
-            .sudo()
-            .search(
-                [("reference", "=", reference), ("provider_code", "=", PROVIDER_CODE)],
-                limit=1,
-            )
-        )
-        if not tx:
-            raise ValidationError(_("PayU: unknown payment."))
-        # Locked before calling PayU: a notification of the same payment waits
-        # and is the request Odoo retries, never this one, which a replay
-        # would otherwise find already processed.
-        request.env.cr.execute(
-            "SELECT 1 FROM payment_transaction WHERE id = %s FOR NO KEY UPDATE",
-            [tx.id],
-        )
         if tx.state != "draft":
             if tx.provider_reference:
                 # Already sent to PayU (e.g. a replayed request): the status
@@ -125,6 +136,19 @@ class PayuGpoController(http.Controller):
                 card_mask if isinstance(card_mask, str) else None,
             )
         }
+
+    @http.route(_cancel_url, type="json", auth="public")
+    def payu_gpo_cancel(self, reference, access_token):
+        """Cancel a card payment whose card the Secure Form refused (a typo,
+        an expired card), before the buyer tries again: nothing reached PayU,
+        and a draft left behind blocks what it pays until it is cleaned up.
+
+        Only a draft is cancelled: the card route moves the payments it sends
+        to PayU to pending or error, under the same lock.
+        """
+        tx = self._payu_gpo_lock_transaction(reference, access_token)
+        if tx.state == "draft":
+            tx._set_canceled()
 
     @http.route(_return_url, type="http", methods=["GET"], auth="public")
     def payu_gpo_return(self, **data):

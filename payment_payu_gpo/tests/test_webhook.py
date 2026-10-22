@@ -35,6 +35,16 @@ class TestWebhook(PayuGpoCommon, PaymentHttpCommon):
             },
         )
 
+    def _cancel(self, tx, access_token=None):
+        return self.make_jsonrpc_request(
+            self._build_url(PayuGpoController._cancel_url),
+            {
+                "reference": tx.reference,
+                "access_token": access_token
+                or self._generate_test_access_token(tx.reference),
+            },
+        )
+
     @mute_logger("odoo.addons.payment_payu_gpo.controllers.main")
     def test_signed_notification_updates_transaction(self):
         tx = self._create_transaction(flow="redirect")
@@ -96,3 +106,28 @@ class TestWebhook(PayuGpoCommon, PaymentHttpCommon):
             flow="direct", state="pending", provider_reference=self.order_id
         )
         self.assertEqual(self._pay_card(tx), {"redirect_url": None})
+
+    def test_refused_card_cancels_its_draft(self):
+        """The Secure Form refused the card: nothing reached PayU, and the
+        draft would block what it pays until it is cleaned up."""
+        tx = self._create_transaction(flow="direct")
+        self._cancel(tx)
+        tx.invalidate_recordset()
+        self.assertEqual(tx.state, "cancel")
+
+    @mute_logger("odoo.http")
+    def test_cancel_needs_the_access_token(self):
+        tx = self._create_transaction(flow="direct")
+        with self.assertRaises(JsonRpcException):
+            self._cancel(tx, access_token="x")
+        tx.invalidate_recordset()
+        self.assertEqual(tx.state, "draft")
+
+    def test_cancel_leaves_a_payment_sent_to_payu(self):
+        """Only a draft is cancelled: PayU has the others."""
+        tx = self._create_transaction(
+            flow="direct", state="pending", provider_reference=self.order_id
+        )
+        self._cancel(tx)
+        tx.invalidate_recordset()
+        self.assertEqual(tx.state, "pending")
