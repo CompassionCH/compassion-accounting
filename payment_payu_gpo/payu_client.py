@@ -61,8 +61,10 @@ class PayuError(Exception):
 
 
 class PayuUnknownOutcome(PayuError):
-    """PayU did not answer (timeout, connection lost) or failed (5xx): the
-    request may have been carried out all the same, e.g. an order created."""
+    """The request may have been carried out all the same, e.g. an order
+    created: PayU did not answer (timeout, connection lost), failed (5xx), or
+    accepted it with an answer that can't be read or has no known status.
+    data, when PayU sent any, may still hold the id of what it created."""
 
     definitive = False
 
@@ -333,14 +335,17 @@ class PayuClient:
             # Revoked or expired before its announced expiry: ask a new one
             # next time.
             _TOKEN_CACHE.pop(self._cache_key, None)
-        if response.status_code >= 500:
-            raise PayuUnknownOutcome(
-                f"PayU error {response.status_code}", status_code=response.status_code
-            )
+        # Read first: even a failure (5xx) may say what PayU created.
         try:
             data = response.json()
         except ValueError:
             data = None
+        if response.status_code >= 500:
+            raise PayuUnknownOutcome(
+                f"PayU error {response.status_code}",
+                status_code=response.status_code,
+                data=data,
+            )
         if response.status_code not in ok:
             status = data.get("status") if isinstance(data, dict) else None
             status = status if isinstance(status, dict) else {}

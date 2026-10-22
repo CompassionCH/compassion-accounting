@@ -198,6 +198,28 @@ class TestPaymentTransaction(PayuGpoCommon):
             self.assertEqual(tx.state, "pending", tx.reference)
             self.assertEqual(tx.provider_reference, payu_id, tx.reference)
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_server_error_keeps_the_payu_id(self):
+        """Through the real client: PayU failed (5xx) after creating the
+        order or the refund, and said which: the id is kept."""
+        token = self._create_token(provider_ref="TOKC_ABC")
+        offline = self._create_transaction(
+            flow="token", operation="offline", token_id=token.id
+        )
+        with self._payu_answers((500, {"orderId": "O5"})):
+            offline._send_payment_request()
+        done = self._create_transaction(
+            flow="redirect",
+            state="done",
+            provider_reference=self.order_id,
+            reference="payu-5xx-refunded",
+        )
+        with self._payu_answers((503, {"refund": {"refundId": "5001592616"}})):
+            refund = done._send_refund_request(amount_to_refund=10.0)
+        for tx, payu_id in ((offline, "O5"), (refund, "5001592616")):
+            self.assertEqual(tx.state, "pending", tx.reference)
+            self.assertEqual(tx.provider_reference, payu_id, tx.reference)
+
     def test_notify_base_url_parameter(self):
         """Only the notifications go to the public URL, the buyer returns
         to the base URL."""

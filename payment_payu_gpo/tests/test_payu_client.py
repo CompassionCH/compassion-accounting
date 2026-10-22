@@ -140,6 +140,19 @@ class TestPayuClient(BaseCase):
                 client.create_order({})
             self.assertFalse(ctx.exception.definitive)
 
+    def test_server_error_carries_the_answer(self):
+        """A 5xx answer may still say which order PayU created."""
+        html = _response(502, None)
+        html.json.side_effect = ValueError("not JSON")
+        for answer, data in (
+            (_response(500, {"orderId": "O5"}), {"orderId": "O5"}),
+            (html, None),
+        ):
+            client, _session = self._client(answer)
+            with self.assertRaises(PayuUnknownOutcome) as ctx:
+                client.create_order({})
+            self.assertEqual(ctx.exception.data, data)
+
     def test_definitive_errors(self):
         """PayU refused, or the request never left: nothing happened there."""
         for failure in (
