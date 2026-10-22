@@ -189,6 +189,15 @@ msgstr ""
 #. odoo-python
 #: code:addons/payment_payu_gpo/models/payment_transaction.py:0
 msgid ""
+"PayU has not confirmed this payment. Please contact us before paying again."
+msgstr ""
+"PayU nie potwierdziło tej płatności. Skontaktuj się z nami, zanim zapłacisz "
+"ponownie."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid ""
 "PayU has not confirmed this refund yet: it will be updated as soon as PayU "
 "does."
 msgstr ""
