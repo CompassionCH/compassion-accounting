@@ -45,8 +45,10 @@ TOKENIZATION_RETRY_DELAY_MINUTES = 30
 SYNC_PENDING_DELAY_MINUTES = 10
 SYNC_PENDING_DAYS = 2
 SYNC_PENDING_BATCH = 20
-# Days after which a payment PayU never confirmed is set to error.
-UNCONFIRMED_FAIL_DAYS = 1
+# Days after which a payment PayU never confirmed is set to error: longer than
+# PayU's last notification retry (72 hours), so that no notification can still
+# come. Its outcome stays unknown (payment.transaction.payu_gpo_unconfirmed).
+UNCONFIRMED_FAIL_DAYS = 4
 # The payment status page asks PayU itself, at most this often per payment,
 # while the payment is pending (the notification may be late or lost).
 SYNC_POLL_SECONDS = 10

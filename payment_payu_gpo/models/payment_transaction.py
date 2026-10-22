@@ -81,6 +81,14 @@ class PaymentTransaction(models.Model):
         copy=False,
         help="Last time the cron tried to save the card of this payment.",
     )
+    payu_gpo_unconfirmed = fields.Boolean(
+        string="PayU outcome unknown",
+        readonly=True,
+        copy=False,
+        help="PayU never confirmed this payment: it was set to error after"
+        " PayU's notification retries, but PayU may have carried it out. Check"
+        " the PayU panel before asking the buyer to pay again.",
+    )
 
     def _get_specific_secret_keys(self):
         """The access token of the card route is never logged."""
@@ -665,8 +673,14 @@ class PaymentTransaction(models.Model):
         )
 
     def _payu_gpo_fail_unconfirmed(self):
-        """Fail the payments and refunds PayU never confirmed: sent without
-        an answer, they have no PayU id, and no notification came.
+        """Give up on the payments and refunds PayU never confirmed: sent
+        without an answer, they have no PayU id, and no notification came
+        while PayU retries them.
+
+        They are set to error and flagged payu_gpo_unconfirmed: PayU may have
+        carried them out all the same, so this is not a refusal. Each one is
+        handled in a savepoint: a failing one is logged and never stops the
+        others.
 
         Charges Odoo makes on its own with a saved card are skipped: the
         module that started them decides when they fail."""
@@ -681,13 +695,19 @@ class PaymentTransaction(models.Model):
             ]
         )
         for tx in txs:
-            tx._set_error(
-                _(
-                    "PayU never confirmed %s. Check the PayU panel for this"
-                    " reference before trying again.",
-                    tx.reference,
-                )
-            )
+            try:
+                with self.env.cr.savepoint():
+                    # Set first: whatever reacts to the error reads it.
+                    tx.payu_gpo_unconfirmed = True
+                    tx._set_error(
+                        _(
+                            "PayU never confirmed %s. Check the PayU panel for"
+                            " this reference before trying again.",
+                            tx.reference,
+                        )
+                    )
+            except Exception:
+                _logger.exception("PayU: could not give up on %s", tx.reference)
 
     def _cron_payu_gpo_retry_tokenization(self):
         """Save the cards that completed payments could not save.

@@ -579,11 +579,12 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(failing.state, "pending")
         self.assertTrue(failing.payu_gpo_sync_date)
 
-    def test_cron_fails_payments_payu_never_received(self):
-        """No PayU id and no notification after a day: PayU never got it.
-        Charges without the buyer, recent payments and payments PayU has
-        are left alone."""
-        day_ago = fields.Datetime.now() - timedelta(
+    def test_cron_gives_up_on_payments_payu_never_confirmed(self):
+        """No PayU id and no notification after PayU's last retry (72 hours):
+        the payment is set to error, flagged as an unknown outcome. Charges
+        without the buyer, payments PayU may still notify and payments PayU
+        has are left alone."""
+        too_old = fields.Datetime.now() - timedelta(
             days=const.UNCONFIRMED_FAIL_DAYS, hours=1
         )
         unsent = self._create_transaction(
@@ -603,16 +604,49 @@ class TestPaymentTransaction(PayuGpoCommon):
             provider_reference=self.order_id,
             reference="payu-known",
         )
-        (unsent | offline | known).last_state_change = day_ago
-        recent = self._create_transaction(
-            flow="direct", state="pending", reference="payu-unsent-recent"
+        (unsent | offline | known).last_state_change = too_old
+        retried = self._create_transaction(
+            flow="direct", state="pending", reference="payu-unsent-retried"
         )
+        retried.last_state_change = fields.Datetime.now() - timedelta(hours=72)
         with patch(f"{CLIENT}.get_order", return_value={"orders": []}):
             self.env["payment.transaction"]._cron_payu_gpo_sync_pending()
         self.assertEqual(unsent.state, "error")
         self.assertIn("never confirmed", unsent.state_message)
-        for tx in offline | known | recent:
+        self.assertTrue(unsent.payu_gpo_unconfirmed)
+        for tx in offline | known | retried:
             self.assertEqual(tx.state, "pending", tx.reference)
+            self.assertFalse(tx.payu_gpo_unconfirmed, tx.reference)
+
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_cron_gives_up_on_each_unconfirmed_payment_on_its_own(self):
+        """A payment that can't be set to error (e.g. a chatter post failing
+        on a linked document) never stops the others."""
+        txs = self.env["payment.transaction"]
+        for i in range(2):
+            txs |= self._create_transaction(
+                flow="direct", state="pending", reference=f"payu-unsent-{i}"
+            )
+        txs.last_state_change = fields.Datetime.now() - timedelta(
+            days=const.UNCONFIRMED_FAIL_DAYS, hours=1
+        )
+        Transaction = type(self.env["payment.transaction"])
+        set_error = Transaction._set_error
+
+        def failing_set_error(tx, *args, **kwargs):
+            res = set_error(tx, *args, **kwargs)
+            if tx == txs[0]:
+                raise ValueError("chatter")
+            return res
+
+        with patch.object(
+            Transaction, "_set_error", autospec=True, side_effect=failing_set_error
+        ):
+            self.env["payment.transaction"]._payu_gpo_fail_unconfirmed()
+        self.assertEqual(txs[0].state, "pending")
+        self.assertFalse(txs[0].payu_gpo_unconfirmed)
+        self.assertEqual(txs[1].state, "error")
+        self.assertTrue(txs[1].payu_gpo_unconfirmed)
 
     def test_cron_sync_pending_skips_refunds(self):
         """A refund's reference is a refund id: never read as an order."""
