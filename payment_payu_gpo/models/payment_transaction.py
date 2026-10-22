@@ -801,9 +801,10 @@ class PaymentTransaction(models.Model):
     def _payu_gpo_hold(self, reason, payu_id):
         """PayU reported an order or refund that does not match this
         transaction: nothing is applied, and nothing is concluded either, as
-        PayU may have charged. The transaction stays pending, the discrepancy
-        is logged and told on it, and its PayU id is kept when it has none
-        yet."""
+        PayU may have charged. A draft or pending transaction stays pending,
+        flagged payu_gpo_held; its PayU id is kept when it has none yet. The
+        discrepancy is logged and told on the linked documents, once per
+        hold."""
         if not self.provider_reference and self._payu_gpo_is_payu_id(payu_id):
             self.provider_reference = payu_id
         staff_message = _(
@@ -818,6 +819,10 @@ class PaymentTransaction(models.Model):
                 " once the check is done."
             ),
         )
+        if self.payu_gpo_held and self.state_message == message:
+            # Held for this already: the status page and the cron read the
+            # payment again and again.
+            return
         _logger.warning(
             "PayU: data for %s not applied, it does not match: %s",
             self.reference,

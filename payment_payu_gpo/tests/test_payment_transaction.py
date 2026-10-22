@@ -793,6 +793,25 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertNotIn("PayU reported", online.state_message)
         self.assertIn("PayU reported the amount 100", offline.state_message)
 
+    def test_same_hold_is_told_once(self):
+        """The status page and the cron read a held payment again and again:
+        the same discrepancy is noted and logged once."""
+        tx = self._create_transaction(
+            flow="direct", state="pending", provider_reference=self.order_id
+        )
+        order = {**self._completed()["orders"][0], "currencyCode": "EUR"}
+        Transaction = type(self.env["payment.transaction"])
+        with (
+            patch(f"{CLIENT}.get_order", return_value={"orders": [order]}),
+            patch.object(Transaction, "_log_message_on_linked_documents") as chatter,
+            self.assertLogs(LOGGER, "WARNING") as logs,
+        ):
+            tx._payu_gpo_refresh_from_api()
+            tx._payu_gpo_refresh_from_api()
+        self.assertEqual(chatter.call_count, 1)
+        self.assertEqual(len(logs.output), 1)
+        self.assertTrue(tx.payu_gpo_held)
+
     def test_held_payment_is_flagged_until_settled(self):
         """Staff find the held payments; PayU's matching final answer settles
         the payment and clears the flag."""
