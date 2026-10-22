@@ -134,6 +134,42 @@ class TestPaymentTransaction(PayuGpoCommon):
             offline._send_payment_request()
         self.assertEqual(offline.state, "pending")
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_unreadable_answer_keeps_the_payu_id(self):
+        """Through the real client: what PayU answered can't be used, but the
+        PayU id it holds is kept, for the status page and the cron to read
+        the payment. A value that is no PayU id is not kept."""
+        card = self._create_transaction(flow="direct", reference="payu-keep-card")
+        with self._payu_answers((201, {"orderId": self.order_id, "status": "SUCCESS"})):
+            card._payu_gpo_pay_with_card_token("TOK_ONCE")
+        token = self._create_token(provider_ref="TOKC_ABC")
+        offline = self._create_transaction(
+            flow="token", operation="offline", token_id=token.id
+        )
+        with self._payu_answers((201, {"orderId": "O2", "status": {"statusCode": ""}})):
+            offline._send_payment_request()
+        hosted = self._create_transaction(flow="redirect", reference="payu-keep-no")
+        with self._payu_answers((302, {"orderId": "<b>O3</b>", "status": None})):
+            hosted._get_specific_rendering_values(None)
+        done = self._create_transaction(
+            flow="redirect",
+            state="done",
+            provider_reference=self.order_id,
+            reference="payu-keep-refunded",
+        )
+        with self._payu_answers(
+            (200, {"refund": {"refundId": "5001592615"}, "status": {"statusCode": 0}})
+        ):
+            refund = done._send_refund_request(amount_to_refund=10.0)
+        for tx, payu_id in (
+            (card, self.order_id),
+            (offline, "O2"),
+            (hosted, False),
+            (refund, "5001592615"),
+        ):
+            self.assertEqual(tx.state, "pending", tx.reference)
+            self.assertEqual(tx.provider_reference, payu_id, tx.reference)
+
     def test_notify_base_url_parameter(self):
         """Only the notifications go to the public URL, the buyer returns
         to the base URL."""

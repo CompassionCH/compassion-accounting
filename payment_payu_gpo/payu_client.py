@@ -47,14 +47,17 @@ class PayuError(Exception):
     definitive: PayU refused the request, or the request never reached it, so
     nothing happened on its side. Otherwise the outcome is unknown (see
     PayuUnknownOutcome).
+
+    data: what PayU answered, as parsed from JSON (anything, or None).
     """
 
     definitive = True
 
-    def __init__(self, message, status_code=None, payu_status=None):
+    def __init__(self, message, status_code=None, payu_status=None, data=None):
         super().__init__(message)
         self.status_code = status_code
         self.payu_status = payu_status
+        self.data = data
 
 
 class PayuUnknownOutcome(PayuError):
@@ -345,13 +348,16 @@ class PayuClient:
                 status.get("statusDesc") or f"PayU error {response.status_code}",
                 status_code=response.status_code,
                 payu_status=status.get("statusCode"),
+                data=data,
             )
         # Accepted: anything but a known success is an unknown outcome, never
         # a refusal, as the request may have been carried out all the same.
         # Some answers (e.g. reads) carry no status at all.
         if not isinstance(data, dict):
             raise PayuUnknownOutcome(
-                "PayU sent an unreadable answer", status_code=response.status_code
+                "PayU sent an unreadable answer",
+                status_code=response.status_code,
+                data=data,
             )
         status = data.get("status", {"statusCode": "SUCCESS"})
         status_code = status.get("statusCode") if isinstance(status, dict) else None
@@ -360,5 +366,6 @@ class PayuClient:
                 f"PayU sent an unexpected status: {status_code!r:.40}",
                 status_code=response.status_code,
                 payu_status=status_code,
+                data=data,
             )
         return data

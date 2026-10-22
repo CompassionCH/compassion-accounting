@@ -5,6 +5,7 @@
 #    The licence is in the file __manifest__.py
 #
 ##############################################################################
+import re
 
 PROVIDER_CODE = "payu_gpo"
 
@@ -36,6 +37,10 @@ CARD_PAYMENT_METHOD_CODES = {"card", "visa", "mastercard", "maestro"}
 # one-off payment (SINGLE). The card route takes nothing else, never a saved
 # card's TOKC_ token.
 SECURE_FORM_TOKEN_PREFIXES = ("TOK_", "TOKD_")
+
+# What a PayU order or refund id looks like (e.g. WZHF5FFDRJ140731GUEST000P01,
+# 5001592615): only such a value is kept as a provider reference.
+PAYU_ID_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,64}")
 
 # Days during which the cron retries saving the card of a completed payment.
 TOKENIZATION_RETRY_DAYS = 3

@@ -281,6 +281,7 @@ class PaymentTransaction(models.Model):
         if error.definitive:
             self._set_error(_("PayU: %s", error))
         else:
+            self._payu_gpo_keep_payu_id(error.data)
             _logger.warning(
                 "PayU: no usable answer for %s, waiting for its notification: %s",
                 self.reference,
@@ -316,12 +317,31 @@ class PaymentTransaction(models.Model):
             for key, value in values.items()
             if value and isinstance(value, str)
         }
-        if "orderId" in values:
-            self.provider_reference = values["orderId"]
+        if not self._payu_gpo_is_payu_id(values.get("orderId")):
+            values.pop("orderId", None)
+        self._payu_gpo_keep_payu_id(answer)
         missing = [key for key in required if key not in values]
         if missing:
             raise PayuUnknownOutcome(f"PayU's answer has no {', '.join(missing)}")
         return values
+
+    def _payu_gpo_keep_payu_id(self, answer):
+        """Keep the PayU id an answer holds as the provider reference, when it
+        is a valid one: the order id, or the refund id of a refund. Even an
+        answer that can't be used otherwise may hold it, and the status
+        reads then find the payment."""
+        if self.operation == "refund":
+            answer = answer.get("refund") if isinstance(answer, dict) else None
+            key = "refundId"
+        else:
+            key = "orderId"
+        payu_id = answer.get(key) if isinstance(answer, dict) else None
+        if self._payu_gpo_is_payu_id(payu_id):
+            self.provider_reference = payu_id
+
+    @staticmethod
+    def _payu_gpo_is_payu_id(value):
+        return isinstance(value, str) and bool(const.PAYU_ID_PATTERN.fullmatch(value))
 
     def _payu_gpo_store_card_token(self, response):
         """Keep the multi-use token PayU returns with the order, 3DS or not.
@@ -496,10 +516,7 @@ class PaymentTransaction(models.Model):
         except PayuError as e:
             refund_tx._payu_gpo_set_failed(e)
             return refund_tx
-        refund = response.get("refund")
-        refund_id = refund.get("refundId") if isinstance(refund, dict) else None
-        if refund_id and isinstance(refund_id, str):
-            refund_tx.provider_reference = refund_id
+        refund_tx._payu_gpo_keep_payu_id(response)
         # The refund notification (refund.status FINALIZED) settles it.
         refund_tx._set_pending()
         return refund_tx
