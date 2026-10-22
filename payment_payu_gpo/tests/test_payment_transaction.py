@@ -77,7 +77,7 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(values, {"api_url": "/payment/status", "url_params": {}})
         self.assertEqual(tx.state, "pending")
         self.assertFalse(tx.provider_reference)
-        self.assertIn("usable answer", tx.state_message)
+        self.assertIn("not confirmed", tx.state_message)
 
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_hosted_order_with_an_incomplete_answer_is_kept(self):
@@ -102,7 +102,7 @@ class TestPaymentTransaction(PayuGpoCommon):
             self.assertEqual(values, {"api_url": "/payment/status", "url_params": {}})
             self.assertEqual(tx.state, "pending")
             self.assertEqual(tx.provider_reference or None, order_id)
-            self.assertIn("usable answer", tx.state_message)
+            self.assertIn("not confirmed", tx.state_message)
 
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_malformed_payment_page_is_an_unknown_outcome(self):
@@ -521,7 +521,49 @@ class TestPaymentTransaction(PayuGpoCommon):
             self.assertEqual(tx.state, "pending", i)
             self.assertEqual(tx.provider_reference or None, order_id, i)
             if i < 3:
-                self.assertIn("usable answer", tx.state_message, i)
+                self.assertIn("not confirmed", tx.state_message, i)
+
+    def test_messages_for_the_buyer_are_plain(self):
+        """The buyer reads a plain sentence, a refund its own one; what PayU
+        answered goes to the log."""
+        done = self._create_transaction(
+            flow="redirect",
+            state="done",
+            provider_reference=self.order_id,
+            reference="payu-plain-refunded",
+        )
+        for i, (error, state, message) in enumerate(
+            (
+                (
+                    PayuError("ERROR_VALUE_INVALID card.number"),
+                    "error",
+                    "no money was taken",
+                ),
+                (
+                    PayuUnknownOutcome("HTTPSConnectionPool: Read timed out"),
+                    "pending",
+                    "not confirmed this payment",
+                ),
+            )
+        ):
+            tx = self._create_transaction(flow="direct", reference=f"payu-plain-{i}")
+            with (
+                patch(f"{CLIENT}.create_order", side_effect=error),
+                self.assertLogs(LOGGER, "INFO") as logs,
+            ):
+                tx._payu_gpo_pay_with_card_token("TOK_ONCE")
+            self.assertEqual(tx.state, state)
+            self.assertIn(message, tx.state_message)
+            self.assertNotIn(str(error), tx.state_message)
+            self.assertIn(str(error), "\n".join(logs.output))
+            with (
+                patch(f"{CLIENT}.refund", side_effect=error),
+                self.assertLogs(LOGGER, "INFO"),
+            ):
+                refund = done._send_refund_request(amount_to_refund=1.0)
+            self.assertEqual(refund.state, state)
+            self.assertIn("refund", refund.state_message)
+            self.assertNotIn(str(error), refund.state_message)
 
     def test_card_token_refused(self):
         tx = self._create_transaction(flow="direct")
@@ -538,7 +580,7 @@ class TestPaymentTransaction(PayuGpoCommon):
             self.assertIsNone(tx._payu_gpo_pay_with_card_token("TOK_ONCE"))
         self.assertEqual(tx.state, "pending")
         self.assertFalse(tx.provider_reference)
-        self.assertIn("usable answer", tx.state_message)
+        self.assertIn("not confirmed", tx.state_message)
         tx._handle_notification_data("payu_gpo", self._order_notification("COMPLETED"))
         self.assertEqual(tx.state, "done")
         self.assertEqual(tx.provider_reference, self.order_id)
@@ -1264,7 +1306,7 @@ class TestPaymentTransaction(PayuGpoCommon):
             tx._send_payment_request()
         self.assertEqual(tx.state, "pending")
         self.assertFalse(tx.provider_reference)
-        self.assertIn("usable answer", tx.state_message)
+        self.assertIn("not confirmed", tx.state_message)
 
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_offline_charge_without_answer_stays_pending(self):

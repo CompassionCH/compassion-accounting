@@ -119,7 +119,13 @@ class PaymentTransaction(models.Model):
             values = self._payu_gpo_accepted_order(order, "orderId", "redirectUri")
         except PayuError as e:
             if e.definitive:
-                raise ValidationError(_("PayU: %s", e)) from e
+                _logger.info("PayU: %s: %s", self.reference, e)
+                raise ValidationError(
+                    _(
+                        "PayU could not start the payment. Please try again"
+                        " later, or choose another payment method."
+                    )
+                ) from e
             # PayU may have the order: keep the payment, so that its
             # notification finds it and the next attempt gets another
             # reference (PayU refuses a second order with the same one).
@@ -286,24 +292,45 @@ class PaymentTransaction(models.Model):
         return None
 
     def _payu_gpo_set_failed(self, error):
-        """A request to create an order failed: a refusal when PayU says so,
-        otherwise the order may exist and its notification will settle it."""
+        """A request to create an order or a refund failed.
+
+        Definitive (PayU refused it, or it never reached PayU): nothing
+        happened at PayU, the transaction is in error. Otherwise PayU may have
+        carried it out: the transaction keeps the PayU id the answer may hold
+        and stays pending, for PayU's notification or a status read.
+
+        The buyer reads a plain message, a refund its own; what PayU answered
+        goes to the log and to the documents the transaction is for.
+        """
+        refund = self.operation == "refund"
         if error.definitive:
-            self._set_error(_("PayU: %s", error))
+            self._payu_gpo_log_detail(error, logging.INFO)
+            self._set_error(
+                _("The refund did not go through at PayU: nothing was refunded.")
+                if refund
+                else _("The payment did not go through at PayU: no money was taken.")
+            )
         else:
             self._payu_gpo_keep_payu_id(error.data)
-            _logger.warning(
-                "PayU: no usable answer for %s, waiting for its notification: %s",
-                self.reference,
-                error,
-            )
+            self._payu_gpo_log_detail(error)
             self._set_pending(
                 _(
-                    "No usable answer from PayU (%s). The payment may have been"
-                    " made: PayU's notification will update it.",
-                    error,
+                    "PayU has not confirmed this refund yet: it will be updated"
+                    " as soon as PayU does."
+                )
+                if refund
+                else _(
+                    "PayU has not confirmed this payment yet. It may have gone"
+                    " through: it will be updated as soon as PayU confirms it."
                 )
             )
+
+    def _payu_gpo_log_detail(self, detail, level=logging.WARNING):
+        """What PayU answered, for staff: in the log, and in the chatter of
+        the documents the transaction is for. The buyer only reads a plain
+        state message."""
+        _logger.log(level, "PayU: %s: %s", self.reference, detail)
+        self._log_message_on_linked_documents(_("PayU: %s", detail))
 
     def _payu_gpo_accepted_order(self, answer, *required):
         """The usable values of PayU's answer to a new order: orderId and
@@ -502,11 +529,11 @@ class PaymentTransaction(models.Model):
         if status_code.startswith("WARNING"):
             # The bank wants the cardholder (3DS, CVV), who is not there: a
             # refusal. PayU cancels the order later.
+            self._payu_gpo_log_detail(status_code, logging.INFO)
             self._set_error(
                 _(
-                    "PayU: the bank refused the charge, it asked for the"
-                    " cardholder (%s).",
-                    status_code,
+                    "The bank refused the charge: it asked for the cardholder,"
+                    " who is not there for an automatic charge."
                 )
             )
             return
