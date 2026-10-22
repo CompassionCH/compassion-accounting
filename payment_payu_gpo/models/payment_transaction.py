@@ -160,6 +160,16 @@ class PaymentTransaction(models.Model):
         if self.operation == "validation":
             raise UserError(_("PayU: a card can only be saved with a payment."))
 
+    def _payu_gpo_check_card_submission(self):
+        """Last check before the card of this payment is sent to PayU, run by
+        the card route once the payment is locked and known to be a draft.
+
+        Extension point: raise a ValidationError or UserError to refuse the
+        payment (e.g. what it pays is paid already). The card route then
+        sends nothing to PayU, cancels the draft and shows the message on
+        the payment form.
+        """
+
     def _payu_gpo_pay_with_card_token(
         self, card_token, browser=None, cardholder_name=None, card_mask=None
     ):

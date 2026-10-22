@@ -12,7 +12,7 @@ import pprint
 from werkzeug.exceptions import BadRequest, Forbidden, NotFound
 
 from odoo import _, http
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 from odoo.http import request
 
 from odoo.addons.payment import utils as payment_utils
@@ -107,7 +107,9 @@ class PayuGpoController(http.Controller):
         :param str cardholder_name: name on the card, typed next to the form
         :param str card_mask: masked card number returned by the Secure Form
 
-        :return: {"redirect_url": 3DS page to send the buyer to, or None}
+        :return: {"redirect_url": 3DS page to send the buyer to, or None}, and
+                 "error": the reason, when the payment was refused before
+                 reaching PayU (_payu_gpo_check_card_submission)
         """
         tx = self._payu_gpo_lock_transaction(reference, access_token)
         if not isinstance(card_token, str) or not card_token.startswith(
@@ -120,6 +122,16 @@ class PayuGpoController(http.Controller):
                 # page tells the outcome.
                 return {"redirect_url": None}
             raise ValidationError(_("PayU: this payment was already processed."))
+        try:
+            with request.env.cr.savepoint():
+                tx._payu_gpo_check_card_submission()
+        except (UserError, ValidationError) as e:
+            # Refused before PayU got anything: the draft must not block what
+            # it pays. The reason is returned, not raised, so that the
+            # cancellation is kept.
+            _logger.info("PayU: %s refused before sending the card: %s", reference, e)
+            tx._set_canceled(str(e))
+            return {"redirect_url": None, "error": str(e)}
         if isinstance(browser, dict):
             headers = request.httprequest.headers
             browser = {

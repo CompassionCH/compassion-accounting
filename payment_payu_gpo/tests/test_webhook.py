@@ -1,7 +1,8 @@
 import hashlib
 import json
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
+from odoo.exceptions import UserError, ValidationError
 from odoo.tests import tagged
 from odoo.tests.common import JsonRpcException
 from odoo.tools import mute_logger
@@ -204,3 +205,69 @@ class TestWebhook(PayuGpoCommon, PaymentHttpCommon):
         tx.invalidate_recordset()
         self.assertEqual(tx.state, "pending")
         self.assertFalse(tx.provider_reference)
+
+    def _accepted_card_order(self):
+        return {"orderId": self.order_id, "status": {"statusCode": "SUCCESS"}}
+
+    def test_card_submission_is_checked_before_payu(self):
+        """The calling module's check runs once the payment is locked, before
+        the card reaches PayU; when it passes, the payment goes on."""
+        calls = Mock()
+        tx = self._create_transaction(flow="direct")
+        with (
+            patch(f"{TX}._payu_gpo_check_card_submission", calls.check),
+            patch(
+                f"{CLIENT}.create_order",
+                calls.create_order,
+            ),
+            patch(f"{CLIENT}.get_order", return_value={"orders": []}),
+        ):
+            calls.create_order.return_value = self._accepted_card_order()
+            self.assertEqual(self._pay_card(tx), {"redirect_url": None})
+        self.assertEqual(
+            [name for name, _args, _kwargs in calls.mock_calls],
+            ["check", "create_order"],
+        )
+        tx.invalidate_recordset()
+        self.assertEqual(tx.state, "pending")
+
+    @mute_logger("odoo.addons.payment_payu_gpo.controllers.main")
+    def test_refused_card_submission_cancels_the_draft(self):
+        """The check refuses: nothing reaches PayU, the draft is cancelled
+        so that it blocks nothing, and the payment form shows why."""
+        for i, error in enumerate(
+            (
+                ValidationError("This donation is already paid."),
+                UserError("This donation is already paid."),
+            )
+        ):
+            tx = self._create_transaction(
+                flow="direct", reference=f"payu-refused-submission-{i}"
+            )
+            with (
+                patch(f"{TX}._payu_gpo_check_card_submission", side_effect=error),
+                patch(f"{CLIENT}.create_order") as create_order,
+            ):
+                result = self._pay_card(tx)
+            create_order.assert_not_called()
+            self.assertEqual(
+                result,
+                {"redirect_url": None, "error": "This donation is already paid."},
+            )
+            tx.invalidate_recordset()
+            self.assertEqual(tx.state, "cancel")
+            self.assertEqual(tx.state_message, "This donation is already paid.")
+
+    def test_card_submission_check_is_a_no_op_by_default(self):
+        tx = self._create_transaction(flow="direct")
+        with (
+            patch(
+                f"{CLIENT}.create_order", return_value=self._accepted_card_order()
+            ) as create_order,
+            patch(f"{CLIENT}.get_order", return_value={"orders": []}),
+        ):
+            self.assertEqual(self._pay_card(tx), {"redirect_url": None})
+        create_order.assert_called_once()
+        tx.invalidate_recordset()
+        self.assertEqual(tx.state, "pending")
+        self.assertEqual(tx.provider_reference, self.order_id)

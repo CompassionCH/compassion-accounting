@@ -151,6 +151,15 @@ paymentForm.include({
                 cardholder_name: cardholderName,
                 card_mask: tokenization.body.mask,
             });
+            if (result.error) {
+                // Refused before reaching PayU: the server cancelled the draft.
+                this._displayErrorDialog(
+                    _t("Payment processing failed"),
+                    result.error,
+                );
+                this._enableButton();
+                return;
+            }
             window.location = result.redirect_url || "/payment/status";
         } catch (error) {
             if (error instanceof RPCError) {
