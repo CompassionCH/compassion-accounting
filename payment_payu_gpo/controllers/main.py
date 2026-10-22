@@ -66,10 +66,13 @@ class PayuGpoController(http.Controller):
         """The PayU transaction of reference, checked against the access token
         of its processing values and locked until the end of the request.
 
-        The card and cancel requests of a payment then never overlap, and a
-        notification of the payment waits: on a conflict Odoo retries the
-        notification, never these requests, which a replay would find
-        already processed.
+        The card and cancel requests of one payment never run at the same
+        time: the later one waits for the lock. If the earlier one changed the
+        payment, the later one then fails on a serialization error and Odoo
+        retries it; this happens on the lock, before any call to PayU, and
+        the retry sees the payment as the earlier one left it (no longer a
+        draft). A notification of the payment waits and is retried the same
+        way.
         """
         if not payment_utils.check_access_token(access_token, reference):
             raise ValidationError(_("PayU: received tampered payment request data."))

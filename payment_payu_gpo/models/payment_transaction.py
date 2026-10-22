@@ -186,6 +186,11 @@ class PaymentTransaction(models.Model):
         payment (e.g. what it pays is paid already). The card route then
         sends nothing to PayU, cancels the draft and shows the message on
         the payment form.
+
+        It runs as superuser (the route's transaction is sudo) inside a
+        savepoint: the locks it takes are kept when it passes, so that what
+        it checked holds until the request ends, and released with its
+        writes when it refuses.
         """
 
     def _payu_gpo_pay_with_card_token(
@@ -643,6 +648,12 @@ class PaymentTransaction(models.Model):
         previous_status = self.payu_gpo_status
         if status in const.ORDER_STATUSES:
             self.payu_gpo_status = status
+        was_given_up = self.payu_gpo_unconfirmed
+        if was_given_up and status in (
+            const.STATUS_MAPPING["done"] + const.STATUS_MAPPING["canceled"]
+        ):
+            # PayU's final answer came after all: the outcome is known.
+            self.payu_gpo_unconfirmed = False
         if status == "WAITING_FOR_CONFIRMATION":
             # Authorized, waiting to be captured: only happens when automatic
             # collection is off for this payment method, and PayU then cancels
@@ -664,7 +675,6 @@ class PaymentTransaction(models.Model):
         elif status in const.STATUS_MAPPING["pending"]:
             self._set_pending()
         elif status in const.STATUS_MAPPING["done"]:
-            self._payu_gpo_clear_unconfirmed()
             self._set_done()
             if self.tokenize and not self.token_id:
                 self._payu_gpo_tokenize()
@@ -685,7 +695,7 @@ class PaymentTransaction(models.Model):
                 self._set_error(
                     never_captured or _("PayU: the bank refused the charge.")
                 )
-            elif self._payu_gpo_clear_unconfirmed():
+            elif was_given_up:
                 # Given up already: Odoo keeps the error, which PayU's answer
                 # now explains.
                 self.state_message = _(
@@ -710,11 +720,14 @@ class PaymentTransaction(models.Model):
         status = refund.get("status")
         if status in const.REFUND_STATUSES:
             self.payu_gpo_status = status
+        was_given_up = self.payu_gpo_unconfirmed
+        if was_given_up and status in ("FINALIZED", "CANCELED"):
+            # PayU's final answer came after all: the outcome is known.
+            self.payu_gpo_unconfirmed = False
         if status == "FINALIZED":
-            self._payu_gpo_clear_unconfirmed()
             self._set_done()
         elif status == "CANCELED":
-            if self._payu_gpo_clear_unconfirmed():
+            if was_given_up:
                 # Given up already: Odoo keeps the error, which PayU's answer
                 # now explains.
                 self.state_message = _("PayU canceled the refund.")
@@ -724,14 +737,6 @@ class PaymentTransaction(models.Model):
             _logger.warning(
                 "PayU: unexpected refund status %s for %s", status, self.reference
             )
-
-    def _payu_gpo_clear_unconfirmed(self):
-        """PayU's final answer came for a payment given up as unconfirmed:
-        its outcome is known now. Returns whether it had been given up."""
-        unconfirmed = self.payu_gpo_unconfirmed
-        if unconfirmed:
-            self.payu_gpo_unconfirmed = False
-        return unconfirmed
 
     def _payu_gpo_mismatch(self, data, payu_id, amount, amount_key="amount"):
         """Why the order or refund PayU reports is not this transaction's, or
