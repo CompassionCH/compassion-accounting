@@ -350,6 +350,14 @@ class PaymentTransaction(models.Model):
                 )
             )
 
+    def _payu_gpo_state_message(self, staff_message, buyer_message):
+        """The state message of this transaction: a plain sentence when a
+        buyer can read it (status page, portal), the staff wording for a
+        charge made without the buyer or a refund."""
+        if self.operation in ("offline", "refund"):
+            return staff_message
+        return buyer_message
+
     def _payu_gpo_log_detail(self, detail, level=logging.WARNING):
         """What PayU answered, for staff: in the log, and in the chatter of
         the documents the transaction is for. The buyer only reads a plain
@@ -660,23 +668,7 @@ class PaymentTransaction(models.Model):
         if status in const.STATUS_MAPPING["done"] + const.STATUS_MAPPING["canceled"]:
             self._payu_gpo_settled()
         if status == "WAITING_FOR_CONFIRMATION":
-            # Authorized, waiting to be captured: only happens when automatic
-            # collection is off for this payment method, and PayU then cancels
-            # the order after a few days.
-            _logger.warning(
-                "PayU: %s waits for a capture: enable automatic collection"
-                " (auto-receive) for its payment method on the POS.",
-                self.reference,
-            )
-            message = _(
-                "PayU holds this payment until it is captured: automatic"
-                " collection must be enabled on the PayU point of sale."
-            )
-            if self.state == "pending":
-                # _set_pending only leaves draft: it would drop the message.
-                self.state_message = message
-            else:
-                self._set_pending(message)
+            self._payu_gpo_apply_waiting(previous_status)
         elif status in const.STATUS_MAPPING["pending"]:
             self._set_pending()
         elif status in const.STATUS_MAPPING["done"]:
@@ -684,35 +676,61 @@ class PaymentTransaction(models.Model):
             if self.tokenize and not self.token_id:
                 self._payu_gpo_tokenize()
         elif status in const.STATUS_MAPPING["canceled"]:
-            never_captured = (
-                _(
-                    "PayU canceled the payment: it was authorized but never"
-                    " captured, as automatic collection is off on the PayU"
-                    " point of sale."
-                )
-                if previous_status == "WAITING_FOR_CONFIRMATION"
-                else None
-            )
-            if self.operation == "offline":
-                # Nobody could give up a charge made without the buyer: PayU
-                # cancels the order when the bank refuses it, or when nobody
-                # captured it.
-                self._set_error(
-                    never_captured or _("PayU: the bank refused the charge.")
-                )
-            elif was_given_up:
-                # Given up already: Odoo keeps the error, which PayU's answer
-                # now explains.
-                self.state_message = _(
-                    "PayU canceled this payment: no money was taken."
-                )
-            elif self.state != "error":
-                # An error (e.g. no payment page) stays: PayU's cancellation
-                # only confirms it.
-                self._set_canceled(never_captured)
+            self._payu_gpo_apply_canceled(previous_status, was_given_up)
         else:
             # Not a status PayU documents: nothing to conclude, never a refusal.
             _logger.warning("PayU: unexpected status %s for %s", status, self.reference)
+
+    def _payu_gpo_apply_waiting(self, previous_status):
+        """Authorized, waiting to be captured: only happens when automatic
+        collection is off for this payment method, and PayU then cancels the
+        order after a few days."""
+        staff_message = _(
+            "PayU holds this payment until it is captured: automatic"
+            " collection must be enabled on the PayU point of sale."
+        )
+        if previous_status != "WAITING_FOR_CONFIRMATION":
+            # Once: the status page and the cron read it again and again.
+            self._payu_gpo_log_detail(staff_message)
+        message = self._payu_gpo_state_message(
+            staff_message, _("PayU is still processing this payment.")
+        )
+        if self.state == "pending":
+            # _set_pending only leaves draft: it would drop the message.
+            self.state_message = message
+        else:
+            self._set_pending(message)
+
+    def _payu_gpo_apply_canceled(self, previous_status, was_given_up):
+        """PayU canceled the order."""
+        never_captured = (
+            _(
+                "PayU canceled the payment: it was authorized but never"
+                " captured, as automatic collection is off on the PayU"
+                " point of sale."
+            )
+            if previous_status == "WAITING_FOR_CONFIRMATION"
+            else None
+        )
+        if self.operation == "offline":
+            # Nobody could give up a charge made without the buyer: PayU
+            # cancels the order when the bank refuses it, or when nobody
+            # captured it.
+            self._set_error(never_captured or _("PayU: the bank refused the charge."))
+        elif was_given_up:
+            # Given up already: Odoo keeps the error, which PayU's answer now
+            # explains.
+            self.state_message = _("PayU canceled this payment: no money was taken.")
+        elif self.state != "error":
+            # An error (e.g. no payment page) stays: PayU's cancellation only
+            # confirms it.
+            if never_captured:
+                self._payu_gpo_log_detail(never_captured)
+                never_captured = self._payu_gpo_state_message(
+                    never_captured,
+                    _("PayU canceled this payment: no money was taken."),
+                )
+            self._set_canceled(never_captured)
 
     def _payu_gpo_apply_refund(self, refund):
         """Update the state and PayU id of a refund from PayU data."""
@@ -788,17 +806,24 @@ class PaymentTransaction(models.Model):
         yet."""
         if not self.provider_reference and self._payu_gpo_is_payu_id(payu_id):
             self.provider_reference = payu_id
+        staff_message = _(
+            "PayU sent data that does not match this transaction, so it was not"
+            " applied: %s Check it in the PayU panel.",
+            reason,
+        )
+        message = self._payu_gpo_state_message(
+            staff_message,
+            _(
+                "This payment is being checked with PayU: it will be updated"
+                " once the check is done."
+            ),
+        )
         _logger.warning(
             "PayU: data for %s not applied, it does not match: %s",
             self.reference,
             reason,
         )
-        message = _(
-            "PayU sent data that does not match this transaction, so it was not"
-            " applied: %s Check it in the PayU panel.",
-            reason,
-        )
-        self._log_message_on_linked_documents(message)
+        self._log_message_on_linked_documents(staff_message)
         if self.state == "draft":
             self.payu_gpo_held = True
             self._set_pending(message)

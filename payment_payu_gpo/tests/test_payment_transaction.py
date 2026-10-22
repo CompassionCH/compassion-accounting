@@ -636,14 +636,36 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(tx.state, "done")
         self.assertEqual(tx.provider_reference, self.order_id)
 
+    def _offline_tx(self, **values):
+        token = self._create_token(provider_ref="TOKC_ABC")
+        return self._create_transaction(
+            flow="token", operation="offline", token_id=token.id, **values
+        )
+
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_waiting_for_confirmation_tells_why(self):
-        tx = self._create_transaction(flow="redirect")
-        tx._handle_notification_data(
-            "payu_gpo", self._order_notification("WAITING_FOR_CONFIRMATION")
-        )
-        self.assertEqual(tx.state, "pending")
-        self.assertIn("automatic collection", tx.state_message)
+        """The buyer reads a plain sentence; why PayU holds the payment goes
+        to staff, once (the status reads repeat it), in the log and on the
+        documents the payment is for. An offline charge keeps the staff
+        wording."""
+        online = self._create_transaction(flow="redirect")
+        offline = self._offline_tx(state="pending", reference="payu-waiting-offline")
+        Transaction = type(self.env["payment.transaction"])
+        with patch.object(Transaction, "_log_message_on_linked_documents") as chatter:
+            for tx in (online, online, offline):
+                tx._handle_notification_data(
+                    "payu_gpo",
+                    self._order_notification("WAITING_FOR_CONFIRMATION", tx.reference),
+                )
+        self.assertEqual(online.state, "pending")
+        self.assertIn("still processing", online.state_message)
+        self.assertNotIn("automatic collection", online.state_message)
+        self.assertEqual(offline.state, "pending")
+        self.assertIn("automatic collection", offline.state_message)
+        told = [
+            c for c in chatter.call_args_list if "automatic collection" in c.args[0]
+        ]
+        self.assertEqual(len(told), 2, "once per payment")
 
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_waiting_for_confirmation_on_a_pending_payment(self):
@@ -655,7 +677,7 @@ class TestPaymentTransaction(PayuGpoCommon):
             "payu_gpo", self._order_notification("WAITING_FOR_CONFIRMATION")
         )
         self.assertEqual(tx.state, "pending")
-        self.assertIn("automatic collection", tx.state_message)
+        self.assertIn("still processing", tx.state_message)
 
     def test_canceled_order(self):
         tx = self._create_transaction(flow="redirect")
@@ -687,7 +709,8 @@ class TestPaymentTransaction(PayuGpoCommon):
             with self.assertLogs(LOGGER, "WARNING"):
                 tx._handle_notification_data("payu_gpo", notification)
             self.assertEqual(tx.state, "pending", change)
-            self.assertIn("does not match", tx.state_message, change)
+            self.assertTrue(tx.payu_gpo_held, change)
+            self.assertIn("being checked", tx.state_message, change)
             self.assertEqual(tx.provider_reference, self.order_id, change)
 
     def test_supplied_but_unusable_values_are_held(self):
@@ -742,6 +765,34 @@ class TestPaymentTransaction(PayuGpoCommon):
                 refund_tx._handle_notification_data("payu_gpo", {"refund": refund})
             self.assertEqual(refund_tx.state, "pending", value)
 
+    def test_held_payment_with_a_buyer_reads_plainly(self):
+        """The buyer reads a plain sentence; the discrepancy goes to the log
+        and to the documents the payment is for. An offline charge keeps it
+        in its message for staff."""
+        online = self._create_transaction(
+            flow="direct", state="pending", provider_reference=self.order_id
+        )
+        offline = self._offline_tx(
+            state="pending",
+            provider_reference=self.order_id,
+            reference="payu-held-offline",
+        )
+        Transaction = type(self.env["payment.transaction"])
+        for tx in (online, offline):
+            notification = self._order_notification("COMPLETED", tx.reference)
+            notification["order"]["totalAmount"] = "100"
+            with (
+                patch.object(
+                    Transaction, "_log_message_on_linked_documents"
+                ) as chatter,
+                self.assertLogs(LOGGER, "WARNING"),
+            ):
+                tx._handle_notification_data("payu_gpo", notification)
+            self.assertIn("PayU reported the amount 100", chatter.call_args.args[0])
+        self.assertIn("being checked", online.state_message)
+        self.assertNotIn("PayU reported", online.state_message)
+        self.assertIn("PayU reported the amount 100", offline.state_message)
+
     def test_held_payment_is_flagged_until_settled(self):
         """Staff find the held payments; PayU's matching final answer settles
         the payment and clears the flag."""
@@ -783,7 +834,8 @@ class TestPaymentTransaction(PayuGpoCommon):
         ):
             tx._cron_payu_gpo_sync_pending()
         self.assertEqual(tx.state, "pending")
-        self.assertIn("does not match", tx.state_message)
+        self.assertTrue(tx.payu_gpo_held)
+        self.assertIn("being checked", tx.state_message)
 
     def test_refund_notification_that_does_not_match_is_held(self):
         tx = self._create_transaction(
@@ -1383,13 +1435,10 @@ class TestPaymentTransaction(PayuGpoCommon):
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_payment_never_captured(self):
         """PayU held the payment for a capture (automatic collection off),
-        then cancelled it: an offline charge is in error and a buyer's
-        payment cancelled, both saying so rather than blaming the bank."""
-        token = self._create_token(provider_ref="TOKC_ABC")
-        offline = self._create_transaction(
-            flow="token",
-            operation="offline",
-            token_id=token.id,
+        then cancelled it: an offline charge is in error, saying it was never
+        captured rather than blaming the bank; a buyer's payment is cancelled
+        with a plain sentence, the reason going to staff."""
+        offline = self._offline_tx(
             state="pending",
             provider_reference=self.order_id,
             reference="payu-held-offline",
@@ -1400,14 +1449,23 @@ class TestPaymentTransaction(PayuGpoCommon):
             provider_reference=self.order_id,
             reference="payu-held-online",
         )
-        for tx, state in ((offline, "error"), (online, "cancel")):
-            for status in ("WAITING_FOR_CONFIRMATION", "CANCELED"):
-                tx._handle_notification_data(
-                    "payu_gpo", self._order_notification(status, tx.reference)
-                )
-            self.assertEqual(tx.state, state, tx.reference)
-            self.assertIn("never captured", tx.state_message, tx.reference)
-            self.assertNotIn("bank", tx.state_message, tx.reference)
+        Transaction = type(self.env["payment.transaction"])
+        with patch.object(Transaction, "_log_message_on_linked_documents") as chatter:
+            for tx in (offline, online):
+                for status in ("WAITING_FOR_CONFIRMATION", "CANCELED"):
+                    tx._handle_notification_data(
+                        "payu_gpo", self._order_notification(status, tx.reference)
+                    )
+        self.assertEqual(offline.state, "error")
+        self.assertIn("never captured", offline.state_message)
+        self.assertNotIn("bank", offline.state_message)
+        self.assertEqual(online.state, "cancel")
+        self.assertIn("no money was taken", online.state_message)
+        self.assertNotIn("captured", online.state_message)
+        self.assertTrue(
+            any("never captured" in c.args[0] for c in chatter.call_args_list)
+        )
+        for tx in (offline, online):
             self.assertEqual(tx.payu_gpo_status, "CANCELED", tx.reference)
 
     def test_charge_asking_for_the_cardholder_is_refused(self):
