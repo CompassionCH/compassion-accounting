@@ -367,8 +367,9 @@ class PaymentTransaction(models.Model):
     def _payu_gpo_refresh_from_api(self):
         """Read the order status from PayU (no webhook needed, e.g. on dev).
 
-        :raise PayuUnknownOutcome: when the answer is not this order's status:
-                                   the payment is then left as it is
+        :raise PayuUnknownOutcome: when the answer is not a documented status
+                                   of this order: the payment is then left
+                                   as it is, for the next read
         """
         if not self.provider_reference:
             return
@@ -377,7 +378,7 @@ class PaymentTransaction(models.Model):
         if not isinstance(orders, list) or not all(
             isinstance(order, dict)
             and order.get("orderId") == self.provider_reference
-            and isinstance(order.get("status"), str)
+            and order.get("status") in const.ORDER_STATUSES
             for order in orders
         ):
             raise PayuUnknownOutcome("PayU sent an unreadable order status")
@@ -614,8 +615,8 @@ class PaymentTransaction(models.Model):
             else:
                 self._set_canceled()
         else:
+            # Not a status PayU documents: nothing to conclude, never a refusal.
             _logger.warning("PayU: unexpected status %s for %s", status, self.reference)
-            self._set_error(_("PayU: received data with invalid status: %s", status))
 
     def _payu_gpo_apply_refund(self, refund):
         """Update the state and PayU id of a refund from PayU data."""
@@ -636,6 +637,10 @@ class PaymentTransaction(models.Model):
                 self.state_message = _("PayU canceled the refund.")
             else:
                 self._set_canceled(_("PayU canceled the refund."))
+        elif status not in const.REFUND_STATUSES:
+            _logger.warning(
+                "PayU: unexpected refund status %s for %s", status, self.reference
+            )
 
     def _payu_gpo_clear_unconfirmed(self):
         """PayU's final answer came for a payment given up as unconfirmed:

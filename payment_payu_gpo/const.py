@@ -78,3 +78,7 @@ STATUS_MAPPING = {
     "done": ("COMPLETED",),
     "canceled": ("CANCELED",),
 }
+# Any other order status, or refund status, concludes nothing: the payment is
+# left as it is.
+ORDER_STATUSES = tuple(status for group in STATUS_MAPPING.values() for status in group)
+REFUND_STATUSES = ("PENDING", "CANCELED", "FINALIZED")

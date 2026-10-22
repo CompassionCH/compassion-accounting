@@ -356,6 +356,35 @@ class TestPaymentTransaction(PayuGpoCommon):
             self.assertEqual(tx.state, "pending", i)
             self.assertEqual(tx.provider_reference, self.order_id, i)
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_unknown_status_read_after_an_accepted_card_order(self):
+        """A status read right after the card route with a status PayU does
+        not document: nothing to conclude, the payment stays pending."""
+        for status in ("", "SOMETHING_NEW"):
+            tx = self._create_transaction(
+                flow="direct", reference=f"payu-unknown-status-{status}"
+            )
+            order = {**self._completed()["orders"][0], "status": status}
+            with (
+                patch(
+                    f"{CLIENT}.create_order",
+                    return_value=self._card_response(token=None),
+                ),
+                patch(f"{CLIENT}.get_order", return_value={"orders": [order]}),
+            ):
+                tx._payu_gpo_pay_with_card_token("TOK_ONCE")
+            self.assertEqual(tx.state, "pending", status)
+
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_unknown_status_notification_is_not_a_refusal(self):
+        tx = self._create_transaction(
+            flow="redirect", state="pending", provider_reference=self.order_id
+        )
+        tx._handle_notification_data(
+            "payu_gpo", self._order_notification("SOMETHING_NEW")
+        )
+        self.assertEqual(tx.state, "pending")
+
     def test_canceled_first_payment_saves_no_card(self):
         tx = self._create_transaction(flow="direct", tokenize=True)
         with (
@@ -761,6 +790,35 @@ class TestPaymentTransaction(PayuGpoCommon):
             self.assertEqual(tx.state, "cancel")
             tx._payu_gpo_refresh_if_due()  # final: never asked again
         self.assertEqual(get.call_count, 1)
+
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_status_page_reads_again_after_an_unknown_status(self):
+        tx = self._create_transaction(
+            flow="redirect", state="pending", provider_reference=self.order_id
+        )
+        unknown = {"orders": [self._order_notification("")["order"]]}
+        with patch(f"{CLIENT}.get_order", return_value=unknown):
+            tx._payu_gpo_refresh_if_due()
+        self.assertEqual(tx.state, "pending")
+        tx.payu_gpo_sync_date = fields.Datetime.now() - timedelta(minutes=1)
+        with patch(f"{CLIENT}.get_order", return_value=self._completed()):
+            tx._payu_gpo_refresh_if_due()
+        self.assertEqual(tx.state, "done")
+
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_cron_reads_again_after_an_unknown_status(self):
+        tx = self._create_transaction(
+            flow="token", state="pending", provider_reference=self.order_id
+        )
+        tx.last_state_change = fields.Datetime.now() - timedelta(minutes=30)
+        unknown = {"orders": [self._order_notification("SOMETHING_NEW")["order"]]}
+        with patch(f"{CLIENT}.get_order", return_value=unknown):
+            tx._cron_payu_gpo_sync_pending()
+        self.assertEqual(tx.state, "pending")
+        tx.payu_gpo_sync_date = fields.Datetime.now() - timedelta(hours=1)
+        with patch(f"{CLIENT}.get_order", return_value=self._completed()):
+            tx._cron_payu_gpo_sync_pending()
+        self.assertEqual(tx.state, "done")
 
     def test_cron_syncs_pending_without_notification(self):
         """A pending payment whose notification never came is read from PayU."""
