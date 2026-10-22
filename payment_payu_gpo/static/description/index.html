@@ -380,16 +380,21 @@ Secure cardholder data and as the buyer’s name, so the payer’s name
 comes back in PayU’s notification.</li>
 <li>Card tokenization: a card saved on payment is a card on file
 (<tt class="docutils literal">cardOnFile: FIRST</tt>), or a card for scheduled recurring charges
-(<tt class="docutils literal">recurring: FIRST</tt>) when <tt class="docutils literal">_payu_gpo_card_is_recurring()</tt> says
-so. The multi-use <tt class="docutils literal">TOKC_</tt> token PayU returns with the order is
-saved as a <tt class="docutils literal">payment.token</tt> once the order is <tt class="docutils literal">COMPLETED</tt>.</li>
+(<tt class="docutils literal">recurring: FIRST</tt>) when <tt class="docutils literal">_payu_gpo_card_is_recurring()</tt> says so.
+The multi-use <tt class="docutils literal">TOKC_</tt> token PayU returns with the order is saved as
+a <tt class="docutils literal">payment.token</tt> once the order is <tt class="docutils literal">COMPLETED</tt>.</li>
 <li>Merchant-initiated charges: <tt class="docutils literal">_send_payment_request()</tt> charges the
 token without the buyer (<tt class="docutils literal">recurring: STANDARD</tt>, or
 <tt class="docutils literal">cardOnFile: STANDARD_MERCHANT</tt>), so any off-session charge (cron,
-subscription) works with the standard payment API.</li>
+subscription) works with the standard payment API. A charge the bank
+refuses (PayU cancels the order, or asks for the cardholder) is set to
+error, not cancelled: nobody gave it up.</li>
 <li>A request PayU did not answer (timeout, 5xx) leaves the payment
-pending, never failed: the order may exist, and its notification
-settles it.</li>
+pending: the order may exist, and its notification settles it. A
+payment or refund PayU never confirms (no PayU id, no notification) is
+set to error after four days, once PayU has stopped retrying its
+notifications (72 hours), and flagged <tt class="docutils literal">payu_gpo_unconfirmed</tt>: its
+outcome is unknown, which is not a refusal.</li>
 <li>When the card of a completed payment cannot be read from PayU, an
 hourly cron retries saving it for three days.</li>
 <li>When PayU’s notification of a payment is lost (Odoo down or not
@@ -433,8 +438,8 @@ Providers</em> and fill in the POS id, the OAuth <tt class="docutils literal">cl
 module does not capture payments, and PayU cancels an uncaptured one
 (<tt class="docutils literal">WAITING_FOR_CONFIRMATION</tt>) after a few days;</li>
 <li><strong>card tokens</strong>: recurring payments (<tt class="docutils literal">recurring</tt>) and/or cards on
-file (<tt class="docutils literal">cardOnFile</tt>), and the <tt class="docutils literal">trusted_merchant</tt> grant used to
-list the buyer’s card tokens.</li>
+file (<tt class="docutils literal">cardOnFile</tt>), and the <tt class="docutils literal">trusted_merchant</tt> grant used to list
+the buyer’s card tokens.</li>
 </ul>
 <p>PayU must reach the notification URL. When Odoo’s base URL is not public
 (reverse proxy, development behind a tunnel), set the system parameter
@@ -459,25 +464,23 @@ zero-amount order, enabled on a POS on request;</li>
 (<tt class="docutils literal">cardOnFile: STANDARD_CARDHOLDER</tt> and the 3DS / CVV redirects):
 saved PayU cards are only charged without the buyer;</li>
 <li>the CVV that PayU may ask for a card (<tt class="docutils literal">WARNING_CONTINUE_CVV</tt>,
-through the Secure Form <tt class="docutils literal">sendCvv</tt>): the payment is refused with
-a clear message;</li>
-<li>manual capture (<tt class="docutils literal">WAITING_FOR_CONFIRMATION</tt>, <tt class="docutils literal">authorized</tt>
-state);</li>
+through the Secure Form <tt class="docutils literal">sendCvv</tt>): the payment is refused with a
+clear message;</li>
+<li>manual capture (<tt class="docutils literal">WAITING_FOR_CONFIRMATION</tt>, <tt class="docutils literal">authorized</tt> state);</li>
 <li>refunds made in the PayU panel, and reading the status of a refund
 whose notification was lost.</li>
 </ul>
 </li>
-<li>BLIK recurring (PAYID token, model “O”, 2000 PLN cap) needs a
-contract annex with PayU; it is Poland-specific and belongs in a
-separate module.</li>
+<li>BLIK recurring (PAYID token, model “O”, 2000 PLN cap) needs a contract
+annex with PayU; it is Poland-specific and belongs in a separate
+module.</li>
 <li>PayU does not retry declined merchant-initiated charges: the retry
 policy is left to the calling module.</li>
 <li>Odoo 19/20 port: <tt class="docutils literal">payu_client.py</tt> has no Odoo import. The
-<tt class="docutils literal">_payu_gpo_*</tt> helpers of <tt class="docutils literal">payment.transaction</tt> map one-to-one
-onto the Odoo 19/20 hooks <tt class="docutils literal">_extract_reference</tt>, <tt class="docutils literal">_apply_updates</tt>
-and <tt class="docutils literal">_extract_token_values</tt>. Odoo 20 also forbids direct
-<tt class="docutils literal">write()</tt> on transactions outside <tt class="docutils literal">payment_safe_write</tt> /
-<tt class="docutils literal">_record()</tt>.</li>
+<tt class="docutils literal">_payu_gpo_*</tt> helpers of <tt class="docutils literal">payment.transaction</tt> map one-to-one onto
+the Odoo 19/20 hooks <tt class="docutils literal">_extract_reference</tt>, <tt class="docutils literal">_apply_updates</tt> and
+<tt class="docutils literal">_extract_token_values</tt>. Odoo 20 also forbids direct <tt class="docutils literal">write()</tt> on
+transactions outside <tt class="docutils literal">payment_safe_write</tt> / <tt class="docutils literal">_record()</tt>.</li>
 </ul>
 </div>
 <div class="section" id="bug-tracker">
