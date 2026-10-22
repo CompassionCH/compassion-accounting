@@ -18,7 +18,7 @@ from odoo.http import request
 from odoo.addons.payment import utils as payment_utils
 from odoo.addons.payment.controllers.post_processing import PaymentPostProcessing
 
-from ..const import PROVIDER_CODE
+from ..const import PROVIDER_CODE, SECURE_FORM_TOKEN_PREFIXES
 from ..payu_client import verify_signature
 
 _logger = logging.getLogger(__name__)
@@ -101,7 +101,7 @@ class PayuGpoController(http.Controller):
     ):
         """Pay a direct-flow transaction with the Secure Form token.
 
-        :param str card_token: the single-use TOK_ token of the Secure Form
+        :param str card_token: the token the Secure Form returned (TOK_, TOKD_)
         :param dict browser: screen/timezone/language data collected by the
                              browser; HTTP headers and IP are added here
         :param str cardholder_name: name on the card, typed next to the form
@@ -110,7 +110,9 @@ class PayuGpoController(http.Controller):
         :return: {"redirect_url": 3DS page to send the buyer to, or None}
         """
         tx = self._payu_gpo_lock_transaction(reference, access_token)
-        if not isinstance(card_token, str) or not card_token.startswith("TOK_"):
+        if not isinstance(card_token, str) or not card_token.startswith(
+            SECURE_FORM_TOKEN_PREFIXES
+        ):
             raise ValidationError(_("PayU: invalid card token."))
         if tx.state != "draft":
             if tx.provider_reference:

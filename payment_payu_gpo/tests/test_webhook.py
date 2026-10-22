@@ -1,5 +1,6 @@
 import hashlib
 import json
+from unittest.mock import patch
 
 from odoo.tests import tagged
 from odoo.tests.common import JsonRpcException
@@ -9,6 +10,8 @@ from odoo.addons.payment.tests.http_common import PaymentHttpCommon
 
 from ..controllers.main import PayuGpoController
 from .common import SECOND_KEY, PayuGpoCommon
+
+TX = "odoo.addons.payment_payu_gpo.models.payment_transaction.PaymentTransaction"
 
 
 @tagged("post_install", "-at_install")
@@ -98,6 +101,17 @@ class TestWebhook(PayuGpoCommon, PaymentHttpCommon):
             self._pay_card(tx, card_token="TOKC_SAVED")
         tx.invalidate_recordset()
         self.assertEqual(tx.state, "draft")
+
+    def test_card_payment_takes_the_secure_form_tokens(self):
+        """The Secure Form returns TOK_ for a card to save (MULTI) and TOKD_
+        for a one-off payment (SINGLE), as seen on the sandbox."""
+        for card_token in ("TOK_X", "TOKD_X"):
+            tx = self._create_transaction(
+                flow="direct", reference=f"payu-secure-form-{card_token}"
+            )
+            with patch(f"{TX}._payu_gpo_pay_with_card_token", return_value=None) as pay:
+                self.assertEqual(self._pay_card(tx, card_token), {"redirect_url": None})
+            self.assertEqual(pay.call_args.args[0], card_token)
 
     def test_card_payment_replayed_goes_to_the_status_page(self):
         """A replay of the request (Odoo retries it on a concurrent update)

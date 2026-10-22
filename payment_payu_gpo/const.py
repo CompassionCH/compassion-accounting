@@ -32,6 +32,11 @@ DEFAULT_PAYMENT_METHOD_CODES = {"card", "blik", "visa", "mastercard"}
 # hosted page: PayU only stores a card for recurring charges from a form token.
 CARD_PAYMENT_METHOD_CODES = {"card", "visa", "mastercard", "maestro"}
 
+# Tokens the Secure Form returns: TOK_ for a card to save (MULTI), TOKD_ for a
+# one-off payment (SINGLE). The card route takes nothing else, never a saved
+# card's TOKC_ token.
+SECURE_FORM_TOKEN_PREFIXES = ("TOK_", "TOKD_")
+
 # Days during which the cron retries saving the card of a completed payment.
 TOKENIZATION_RETRY_DAYS = 3
 # Transactions per cron batch (committed one by one), and the minimal delay

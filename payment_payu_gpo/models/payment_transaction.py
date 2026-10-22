@@ -165,7 +165,7 @@ class PaymentTransaction(models.Model):
     def _payu_gpo_pay_with_card_token(
         self, card_token, browser=None, cardholder_name=None, card_mask=None
     ):
-        """Charge the TOK_ token the Secure Form returned.
+        """Charge the token the Secure Form returned (TOK_, TOKD_).
 
         :param dict browser: threeDsAuthentication.browser data; without it
                              PayU can only attempt 3DS, which issuers refuse
