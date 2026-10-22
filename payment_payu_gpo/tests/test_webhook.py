@@ -9,6 +9,7 @@ from odoo.tools import mute_logger
 from odoo.addons.payment.tests.http_common import PaymentHttpCommon
 
 from ..controllers.main import PayuGpoController
+from ..payu_client import PayuUnknownOutcome
 from .common import SECOND_KEY, PayuGpoCommon
 
 CLIENT = "odoo.addons.payment_payu_gpo.payu_client.PayuClient"
@@ -168,3 +169,38 @@ class TestWebhook(PayuGpoCommon, PaymentHttpCommon):
         self._cancel(tx)
         tx.invalidate_recordset()
         self.assertEqual(tx.state, "pending")
+
+    def test_card_and_cancel_routes_lock_the_payment(self):
+        """Both routes lock the payment: a cancel never overlaps the card
+        payment of the same draft, it waits and then finds it pending."""
+        paid, canceled = (
+            self._create_transaction(flow="direct", reference=reference)
+            for reference in ("payu-lock-paid", "payu-lock-canceled")
+        )
+        with (
+            patch(f"{TX}._payu_gpo_pay_with_card_token", return_value=None),
+            patch.object(self.cr, "execute", wraps=self.cr.execute) as execute,
+        ):
+            self._pay_card(paid)
+            self._cancel(canceled)
+        for tx in (paid, canceled):
+            locks = [
+                call
+                for call in execute.call_args_list
+                if "FOR NO KEY UPDATE" in str(call.args[0])
+                and len(call.args) > 1
+                and list(call.args[1]) == [tx.id]
+            ]
+            self.assertEqual(len(locks), 1, tx.reference)
+
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_cancel_after_the_card_route_changes_nothing(self):
+        """Once the card route ran, the payment is no longer a draft, even
+        without a PayU id (PayU did not answer): the cancel leaves it."""
+        tx = self._create_transaction(flow="direct")
+        with patch(f"{CLIENT}.create_order", side_effect=PayuUnknownOutcome("slow")):
+            self.assertEqual(self._pay_card(tx), {"redirect_url": None})
+        self._cancel(tx)
+        tx.invalidate_recordset()
+        self.assertEqual(tx.state, "pending")
+        self.assertFalse(tx.provider_reference)
