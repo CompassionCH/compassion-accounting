@@ -87,6 +87,14 @@ class PaymentTransaction(models.Model):
         copy=False,
         help="Last status PayU reported for this order or refund.",
     )
+    payu_gpo_held = fields.Boolean(
+        string="Held for a PayU check",
+        readonly=True,
+        copy=False,
+        help="PayU sent data that does not match this payment (order, amount or"
+        " currency): it was not applied, and the payment stays pending until"
+        " PayU's matching answer. Check it in the PayU panel.",
+    )
     payu_gpo_unconfirmed = fields.Boolean(
         string="PayU outcome unknown",
         readonly=True,
@@ -649,11 +657,8 @@ class PaymentTransaction(models.Model):
         if status in const.ORDER_STATUSES:
             self.payu_gpo_status = status
         was_given_up = self.payu_gpo_unconfirmed
-        if was_given_up and status in (
-            const.STATUS_MAPPING["done"] + const.STATUS_MAPPING["canceled"]
-        ):
-            # PayU's final answer came after all: the outcome is known.
-            self.payu_gpo_unconfirmed = False
+        if status in const.STATUS_MAPPING["done"] + const.STATUS_MAPPING["canceled"]:
+            self._payu_gpo_settled()
         if status == "WAITING_FOR_CONFIRMATION":
             # Authorized, waiting to be captured: only happens when automatic
             # collection is off for this payment method, and PayU then cancels
@@ -721,9 +726,8 @@ class PaymentTransaction(models.Model):
         if status in const.REFUND_STATUSES:
             self.payu_gpo_status = status
         was_given_up = self.payu_gpo_unconfirmed
-        if was_given_up and status in ("FINALIZED", "CANCELED"):
-            # PayU's final answer came after all: the outcome is known.
-            self.payu_gpo_unconfirmed = False
+        if status in ("FINALIZED", "CANCELED"):
+            self._payu_gpo_settled()
         if status == "FINALIZED":
             self._set_done()
         elif status == "CANCELED":
@@ -770,6 +774,12 @@ class PaymentTransaction(models.Model):
             and int(text) == int(self._payu_gpo_minor(amount))
         )
 
+    def _payu_gpo_settled(self):
+        """PayU's matching final answer came: the outcome is known, whether
+        the payment was given up as unconfirmed or held for a check."""
+        if self.payu_gpo_unconfirmed or self.payu_gpo_held:
+            self.write({"payu_gpo_unconfirmed": False, "payu_gpo_held": False})
+
     def _payu_gpo_hold(self, reason, payu_id):
         """PayU reported an order or refund that does not match this
         transaction: nothing is applied, and nothing is concluded either, as
@@ -790,8 +800,10 @@ class PaymentTransaction(models.Model):
         )
         self._log_message_on_linked_documents(message)
         if self.state == "draft":
+            self.payu_gpo_held = True
             self._set_pending(message)
         elif self.state == "pending":
+            self.payu_gpo_held = True
             self.state_message = message
 
     def _payu_gpo_tokenize(self):

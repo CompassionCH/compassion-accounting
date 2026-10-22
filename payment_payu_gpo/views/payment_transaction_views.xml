@@ -11,6 +11,7 @@
                     name="payu_gpo_unconfirmed"
                     invisible="provider_code != 'payu_gpo'"
                 />
+                <field name="payu_gpo_held" invisible="provider_code != 'payu_gpo'" />
             </field>
         </field>
     </record>
@@ -26,6 +27,11 @@
                     string="Unconfirmed by PayU"
                     name="payu_gpo_unconfirmed"
                     domain="[('payu_gpo_unconfirmed', '=', True)]"
+                />
+                <filter
+                    string="Held for a PayU check"
+                    name="payu_gpo_held"
+                    domain="[('payu_gpo_held', '=', True)]"
                 />
             </field>
         </field>

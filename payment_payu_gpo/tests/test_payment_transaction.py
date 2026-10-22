@@ -742,6 +742,25 @@ class TestPaymentTransaction(PayuGpoCommon):
                 refund_tx._handle_notification_data("payu_gpo", {"refund": refund})
             self.assertEqual(refund_tx.state, "pending", value)
 
+    def test_held_payment_is_flagged_until_settled(self):
+        """Staff find the held payments; PayU's matching final answer settles
+        the payment and clears the flag."""
+        tx = self._create_transaction(
+            flow="redirect", state="pending", provider_reference=self.order_id
+        )
+        notification = self._order_notification("COMPLETED")
+        notification["order"]["totalAmount"] = "100"
+        with self.assertLogs(LOGGER, "WARNING"):
+            tx._handle_notification_data("payu_gpo", notification)
+        self.assertTrue(tx.payu_gpo_held)
+        self.assertIn(
+            tx,
+            self.env["payment.transaction"].search([("payu_gpo_held", "=", True)]),
+        )
+        tx._handle_notification_data("payu_gpo", self._order_notification("COMPLETED"))
+        self.assertEqual(tx.state, "done")
+        self.assertFalse(tx.payu_gpo_held)
+
     def test_held_notification_keeps_a_payu_id_that_fits(self):
         """A payment without a PayU id yet takes the one of data it holds."""
         tx = self._create_transaction(flow="direct", state="pending")
@@ -1244,10 +1263,14 @@ class TestPaymentTransaction(PayuGpoCommon):
         views = self.env["payment.transaction"].get_views(
             [(False, "form"), (False, "search")]
         )["views"]
-        for field in ("payu_gpo_unconfirmed", "payu_gpo_status"):
+        for field in ("payu_gpo_unconfirmed", "payu_gpo_held", "payu_gpo_status"):
             self.assertIn(f'name="{field}"', views["form"]["arch"])
-        self.assertIn('name="payu_gpo_unconfirmed"', views["search"]["arch"])
-        self.assertIn("Unconfirmed by PayU", views["search"]["arch"])
+        for name, label in (
+            ("payu_gpo_unconfirmed", "Unconfirmed by PayU"),
+            ("payu_gpo_held", "Held for a PayU check"),
+        ):
+            self.assertIn(f'name="{name}"', views["search"]["arch"])
+            self.assertIn(label, views["search"]["arch"])
 
     def test_cron_sync_pending_skips_refunds(self):
         """A refund's reference is a refund id: never read as an order."""
