@@ -265,9 +265,14 @@ class PaymentTransaction(models.Model):
             # 3DS: the buyer comes back through the return route.
             return values["redirectUri"]
         try:
-            self._payu_gpo_refresh_from_api()
+            with self.env.cr.savepoint():
+                self._payu_gpo_refresh_from_api()
         except PayuError as e:
             _logger.warning("PayU: could not refresh %s: %s", self.reference, e)
+        except Exception:
+            # PayU has the order: nothing the status read does may undo the
+            # pending payment. The status page and the cron read it again.
+            _logger.exception("PayU: could not refresh %s", self.reference)
         return None
 
     def _payu_gpo_set_failed(self, error):
@@ -340,11 +345,23 @@ class PaymentTransaction(models.Model):
         self.sudo().write(values)
 
     def _payu_gpo_refresh_from_api(self):
-        """Read the order status from PayU (no webhook needed, e.g. on dev)."""
+        """Read the order status from PayU (no webhook needed, e.g. on dev).
+
+        :raise PayuUnknownOutcome: when the answer is not this order's status:
+                                   the payment is then left as it is
+        """
         if not self.provider_reference:
             return
-        order = self.provider_id._payu_gpo_client().get_order(self.provider_reference)
-        for payu_order in order.get("orders", []):
+        answer = self.provider_id._payu_gpo_client().get_order(self.provider_reference)
+        orders = answer.get("orders", [])
+        if not isinstance(orders, list) or not all(
+            isinstance(order, dict)
+            and order.get("orderId") == self.provider_reference
+            and isinstance(order.get("status"), str)
+            for order in orders
+        ):
+            raise PayuUnknownOutcome("PayU sent an unreadable order status")
+        for payu_order in orders:
             self._handle_notification_data(const.PROVIDER_CODE, {"order": payu_order})
 
     def _payu_gpo_order_values(self, with_continue_url=False):

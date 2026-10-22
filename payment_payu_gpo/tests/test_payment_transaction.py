@@ -263,6 +263,41 @@ class TestPaymentTransaction(PayuGpoCommon):
         tx._handle_notification_data("payu_gpo", self._order_notification("COMPLETED"))
         self.assertEqual(tx.token_id.provider_ref, "TOKC_NEW")
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_unreadable_status_after_an_accepted_card_order(self):
+        """PayU accepted the order: whatever the status read that follows
+        returns or raises, the payment stays pending with its order id, for
+        the status page and the cron to read again."""
+        completed = self._completed()["orders"][0]
+        for i, read in enumerate(
+            (
+                {"orders": "COMPLETED"},
+                {"orders": [None]},
+                {"orders": [{**completed, "orderId": None}]},
+                {"orders": [{**completed, "orderId": "ANOTHER-ORDER"}]},
+                {"orders": [{**completed, "status": None}]},
+                ValueError("bug"),
+            )
+        ):
+            tx = self._create_transaction(
+                flow="direct", reference=f"payu-unreadable-{i}"
+            )
+            read_kwarg = (
+                {"side_effect": read}
+                if isinstance(read, Exception)
+                else {"return_value": read}
+            )
+            with (
+                patch(
+                    f"{CLIENT}.create_order",
+                    return_value=self._card_response(token=None),
+                ),
+                patch(f"{CLIENT}.get_order", **read_kwarg),
+            ):
+                self.assertIsNone(tx._payu_gpo_pay_with_card_token("TOK_ONCE"), i)
+            self.assertEqual(tx.state, "pending", i)
+            self.assertEqual(tx.provider_reference, self.order_id, i)
+
     def test_canceled_first_payment_saves_no_card(self):
         tx = self._create_transaction(flow="direct", tokenize=True)
         with (

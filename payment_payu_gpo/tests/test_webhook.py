@@ -11,6 +11,7 @@ from odoo.addons.payment.tests.http_common import PaymentHttpCommon
 from ..controllers.main import PayuGpoController
 from .common import SECOND_KEY, PayuGpoCommon
 
+CLIENT = "odoo.addons.payment_payu_gpo.payu_client.PayuClient"
 TX = "odoo.addons.payment_payu_gpo.models.payment_transaction.PaymentTransaction"
 
 
@@ -112,6 +113,28 @@ class TestWebhook(PayuGpoCommon, PaymentHttpCommon):
             with patch(f"{TX}._payu_gpo_pay_with_card_token", return_value=None) as pay:
                 self.assertEqual(self._pay_card(tx, card_token), {"redirect_url": None})
             self.assertEqual(pay.call_args.args[0], card_token)
+
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_card_payment_accepted_survives_an_unreadable_status(self):
+        """PayU accepted the order, the status read right after fails: the
+        request still ends with the payment pending, never rolled back to a
+        draft (which the cancel route would take for a payment PayU never
+        got)."""
+        tx = self._create_transaction(flow="direct")
+        with (
+            patch(
+                f"{CLIENT}.create_order",
+                return_value={
+                    "orderId": self.order_id,
+                    "status": {"statusCode": "SUCCESS"},
+                },
+            ),
+            patch(f"{CLIENT}.get_order", return_value={"orders": "COMPLETED"}),
+        ):
+            self.assertEqual(self._pay_card(tx), {"redirect_url": None})
+        tx.invalidate_recordset()
+        self.assertEqual(tx.state, "pending")
+        self.assertEqual(tx.provider_reference, self.order_id)
 
     def test_card_payment_replayed_goes_to_the_status_page(self):
         """A replay of the request (Odoo retries it on a concurrent update)
