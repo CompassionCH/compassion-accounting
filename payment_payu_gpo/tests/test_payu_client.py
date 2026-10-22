@@ -194,6 +194,22 @@ class TestPayuClient(BaseCase):
             with self.assertRaises(PayuUnknownOutcome):
                 client.create_order({})
 
+    def test_unknown_status_of_an_accepted_request(self):
+        """PayU accepted the request but its status code is missing, empty,
+        not a string or not a success code: nothing says PayU refused it."""
+        for status in (
+            {},
+            {"statusCode": None},
+            {"statusCode": ""},
+            {"statusCode": 201},
+            {"statusCode": "ERROR_VALUE_INVALID"},
+        ):
+            client, _session = self._client(
+                _response(201, {"orderId": "O1", "status": status})
+            )
+            with self.assertRaises(PayuUnknownOutcome, msg=status):
+                client.create_order({})
+
     def test_invalid_authentication_answers_are_payu_errors(self):
         """Only PayuError leaves the client, whatever PayU sends back."""
         html = _response(200, None)

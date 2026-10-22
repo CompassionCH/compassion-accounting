@@ -118,6 +118,14 @@ def verify_signature(raw_body, header, second_key):
     return hmac.compare_digest(computed, expected.lower())
 
 
+# Status codes of an answer to a request PayU carried out.
+SUCCESS_STATUS_CODES = (
+    "SUCCESS",
+    "WARNING_CONTINUE_REDIRECT",
+    "WARNING_CONTINUE_3DS",
+    "WARNING_CONTINUE_CVV",
+)
+
 # OAuth client_credentials tokens, per process: (host, client_id, secret) ->
 # (token, expiry). A client is created for every API call.
 _TOKEN_CACHE = {}
@@ -330,27 +338,27 @@ class PayuClient:
             data = response.json()
         except ValueError:
             data = None
-        status = data.get("status", {}) if isinstance(data, dict) else None
-        readable = isinstance(status, dict)
-        if not readable:
-            status = {}
-        if response.status_code not in ok or status.get(
-            "statusCode", "SUCCESS"
-        ) not in (
-            "SUCCESS",
-            "WARNING_CONTINUE_REDIRECT",
-            "WARNING_CONTINUE_3DS",
-            "WARNING_CONTINUE_CVV",
-        ):
+        if response.status_code not in ok:
+            status = data.get("status") if isinstance(data, dict) else None
+            status = status if isinstance(status, dict) else {}
             raise PayuError(
                 status.get("statusDesc") or f"PayU error {response.status_code}",
                 status_code=response.status_code,
                 payu_status=status.get("statusCode"),
             )
-        if not readable:
-            # Accepted, but what PayU answered can't be read: the request may
-            # have been carried out all the same.
+        # Accepted: anything but a known success is an unknown outcome, never
+        # a refusal, as the request may have been carried out all the same.
+        # Some answers (e.g. reads) carry no status at all.
+        if not isinstance(data, dict):
             raise PayuUnknownOutcome(
                 "PayU sent an unreadable answer", status_code=response.status_code
+            )
+        status = data.get("status", {"statusCode": "SUCCESS"})
+        status_code = status.get("statusCode") if isinstance(status, dict) else None
+        if status_code not in SUCCESS_STATUS_CODES:
+            raise PayuUnknownOutcome(
+                f"PayU sent an unexpected status: {status_code!r:.40}",
+                status_code=response.status_code,
+                payu_status=status_code,
             )
         return data

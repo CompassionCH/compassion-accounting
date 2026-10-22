@@ -112,6 +112,28 @@ class TestPaymentTransaction(PayuGpoCommon):
         ):
             tx._get_specific_rendering_values(None)
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_accepted_order_without_a_known_status_code(self):
+        """Through the real client: a hosted order and an offline charge PayU
+        accepted without a usable status code stay pending, never refused."""
+        hosted = self._create_transaction(flow="redirect", reference="payu-hosted")
+        answer = {
+            "orderId": self.order_id,
+            "redirectUri": "https://pay.example/",
+            "status": {"statusCode": None},
+        }
+        with self._payu_answers((302, answer)):
+            values = hosted._get_specific_rendering_values(None)
+        self.assertEqual(values["api_url"], "/payment/status")
+        self.assertEqual(hosted.state, "pending")
+        token = self._create_token(provider_ref="TOKC_ABC")
+        offline = self._create_transaction(
+            flow="token", operation="offline", token_id=token.id
+        )
+        with self._payu_answers((201, {"orderId": "O2", "status": {"statusCode": ""}})):
+            offline._send_payment_request()
+        self.assertEqual(offline.state, "pending")
+
     def test_notify_base_url_parameter(self):
         """Only the notifications go to the public URL, the buyer returns
         to the base URL."""

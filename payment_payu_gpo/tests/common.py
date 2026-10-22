@@ -1,6 +1,23 @@
+from unittest.mock import MagicMock, patch
+
 from odoo.addons.payment.tests.common import PaymentCommon
 
+from .. import payu_client
+from ..payu_client import PayuClient
+
 SECOND_KEY = "b6ca15b0d1020e8094d9b5f8d163db54"
+
+INVALID_JSON = object()
+
+
+def payu_response(status_code, body):
+    """An HTTP answer of PayU; body INVALID_JSON is not JSON at all."""
+    response = MagicMock(status_code=status_code)
+    if body is INVALID_JSON:
+        response.json.side_effect = ValueError("not JSON")
+    else:
+        response.json.return_value = body
+    return response
 
 
 class PayuGpoCommon(PaymentCommon):
@@ -40,3 +57,18 @@ class PayuGpoCommon(PaymentCommon):
                 "currencyCode": "PLN",
             }
         }
+
+    def _payu_answers(self, *answers):
+        """Patch the provider's client: the real PayuClient, whose transport
+        gives these (HTTP status, body) answers in turn."""
+        session = MagicMock()
+        session.post.return_value = payu_response(
+            200, {"access_token": "T", "expires_in": 3600}
+        )
+        session.request.side_effect = [payu_response(*answer) for answer in answers]
+        payu_client._TOKEN_CACHE.clear()
+        self.addCleanup(payu_client._TOKEN_CACHE.clear)
+        client = PayuClient("300746", "300746", "s", sandbox=True, session=session)
+        return patch.object(
+            type(self.env["payment.provider"]), "_payu_gpo_client", return_value=client
+        )
