@@ -19,6 +19,12 @@ msgid "Code"
 msgstr "Kod"
 
 #. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_held
+#: model_terms:ir.ui.view,arch_db:payment_payu_gpo.payment_transaction_search
+msgid "Held for a PayU check"
+msgstr "Wstrzymane do sprawdzenia w PayU"
+
+#. module: payment_payu_gpo
 #. odoo-javascript
 #: code:addons/payment_payu_gpo/static/src/js/payment_form.esm.js:0
 msgid "Incorrect payment details"
@@ -202,6 +208,12 @@ msgstr ""
 #. module: payment_payu_gpo
 #. odoo-python
 #: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU is still processing this payment."
+msgstr "PayU wciąż przetwarza tę płatność."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
 msgid ""
 "PayU never confirmed %s. Check the PayU panel for this reference before "
 "trying again."
@@ -249,6 +261,17 @@ msgstr "PayU zgłosiło kwotę %s (w groszach)."
 #: code:addons/payment_payu_gpo/models/payment_transaction.py:0
 msgid "PayU reported the currency %s."
 msgstr "PayU zgłosiło walutę %s."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_held
+msgid ""
+"PayU sent data that does not match this payment (order, amount or currency):"
+" it was not applied, and the payment stays pending until PayU's matching "
+"answer. Check it in the PayU panel."
+msgstr ""
+"PayU przesłało dane, które nie pasują do tej płatności (zamówienie, kwota "
+"lub waluta): nie zostały zastosowane, a płatność pozostaje oczekująca do "
+"czasu zgodnej odpowiedzi PayU. Sprawdź ją w panelu PayU."
 
 #. module: payment_payu_gpo
 #. odoo-python
@@ -426,6 +449,16 @@ msgstr "Zwrot w PayU nie został zrealizowany: nic nie zostało zwrócone."
 #: model:ir.model.fields,help:payment_payu_gpo.field_payment_provider__code
 msgid "The technical code of this payment provider."
 msgstr "Kod techniczny tego dostawcy płatności."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid ""
+"This payment is being checked with PayU: it will be updated once the check "
+"is done."
+msgstr ""
+"Ta płatność jest sprawdzana z PayU: zostanie zaktualizowana po zakończeniu "
+"sprawdzania."
 
 #. module: payment_payu_gpo
 #: model_terms:ir.ui.view,arch_db:payment_payu_gpo.payment_transaction_search
