@@ -15,6 +15,7 @@ from ..payu_client import PayuError, PayuUnknownOutcome
 from .common import PayuGpoCommon
 
 CLIENT = "odoo.addons.payment_payu_gpo.payu_client.PayuClient"
+LOGGER = "odoo.addons.payment_payu_gpo.models.payment_transaction"
 TX = "odoo.addons.payment_payu_gpo.models.payment_transaction.PaymentTransaction"
 
 
@@ -594,23 +595,75 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(tx.state, "cancel")
 
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
-    def test_notification_of_another_payment_is_rejected(self):
-        """Amount, currency and PayU order must be this payment's."""
-        for change in (
-            {"totalAmount": "100"},
-            {"currencyCode": "EUR"},
-            {"orderId": "ANOTHER-ORDER"},
+    def test_notification_that_does_not_match_is_held(self):
+        """Amount, currency and PayU order must be this payment's. Otherwise
+        nothing is applied, and nothing is concluded either, as PayU may have
+        charged: the payment stays pending, the discrepancy is logged and
+        told on the payment."""
+        for i, change in enumerate(
+            (
+                {"totalAmount": "100"},
+                {"totalAmount": "garbage"},
+                {"currencyCode": "EUR"},
+                {"orderId": "ANOTHER-ORDER"},
+            )
         ):
             tx = self._create_transaction(
                 flow="redirect",
                 state="pending",
                 provider_reference=self.order_id,
-                reference=f"payu-mismatch-{next(iter(change))}",
+                reference=f"payu-mismatch-{i}",
             )
             notification = self._order_notification("COMPLETED", tx.reference)
             notification["order"].update(change)
+            with self.assertLogs(LOGGER, "WARNING"):
+                tx._handle_notification_data("payu_gpo", notification)
+            self.assertEqual(tx.state, "pending", change)
+            self.assertIn("does not match", tx.state_message, change)
+            self.assertEqual(tx.provider_reference, self.order_id, change)
+
+    def test_held_notification_keeps_a_payu_id_that_fits(self):
+        """A payment without a PayU id yet takes the one of data it holds."""
+        tx = self._create_transaction(flow="direct", state="pending")
+        notification = self._order_notification("COMPLETED")
+        notification["order"]["totalAmount"] = "100"
+        with self.assertLogs(LOGGER, "WARNING"):
             tx._handle_notification_data("payu_gpo", notification)
-            self.assertEqual(tx.state, "error", change)
+        self.assertEqual(tx.state, "pending")
+        self.assertEqual(tx.provider_reference, self.order_id)
+
+    def test_status_read_that_does_not_match_is_held(self):
+        tx = self._create_transaction(
+            flow="token", state="pending", provider_reference=self.order_id
+        )
+        tx.last_state_change = fields.Datetime.now() - timedelta(minutes=30)
+        order = {**self._completed()["orders"][0], "currencyCode": "EUR"}
+        with (
+            patch(f"{CLIENT}.get_order", return_value={"orders": [order]}),
+            self.assertLogs(LOGGER, "WARNING"),
+        ):
+            tx._cron_payu_gpo_sync_pending()
+        self.assertEqual(tx.state, "pending")
+        self.assertIn("does not match", tx.state_message)
+
+    def test_refund_notification_that_does_not_match_is_held(self):
+        tx = self._create_transaction(
+            flow="redirect", state="done", provider_reference=self.order_id
+        )
+        with patch(f"{CLIENT}.refund", return_value={}):
+            refund_tx = tx._send_refund_request(amount_to_refund=10.0)
+        refund = {
+            "refundId": "5001592615",
+            "extRefundId": refund_tx.reference,
+            "amount": "999",
+            "currencyCode": "PLN",
+            "status": "FINALIZED",
+        }
+        with self.assertLogs(LOGGER, "WARNING"):
+            refund_tx._handle_notification_data("payu_gpo", {"refund": refund})
+        self.assertEqual(refund_tx.state, "pending")
+        self.assertEqual(refund_tx.provider_reference, "5001592615")
+        self.assertIn("does not match", refund_tx.state_message)
 
     def test_tokenization_matches_the_card_number(self):
         """Without a token in the order, the card is found by its number among

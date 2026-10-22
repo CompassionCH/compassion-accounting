@@ -30,5 +30,7 @@ Not to be confused with PayU India (`payu.in`).
   a cron reads the status of the payments still pending every 15 minutes, for
   two days, and the payment status page reads it while the buyer waits.
 - Signed notifications (`OpenPayu-Signature`, POS second key) for orders and
-  refunds, checked against the payment (PayU order, amount, currency).
+  refunds, checked against the payment (PayU order, amount, currency). Data
+  that does not match, from a notification or a status read, is not applied:
+  the payment stays pending, with the discrepancy on it and in the log.
 - Partial and full refunds.

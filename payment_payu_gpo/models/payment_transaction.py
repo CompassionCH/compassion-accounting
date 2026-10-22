@@ -596,7 +596,7 @@ class PaymentTransaction(models.Model):
             order, order.get("orderId"), self.amount, amount_key="totalAmount"
         )
         if mismatch:
-            self._payu_gpo_reject(mismatch)
+            self._payu_gpo_hold(mismatch, order.get("orderId"))
             return
         if order.get("orderId"):
             self.provider_reference = order["orderId"]
@@ -647,7 +647,7 @@ class PaymentTransaction(models.Model):
         """Update the state and PayU id of a refund from PayU data."""
         mismatch = self._payu_gpo_mismatch(refund, refund.get("refundId"), -self.amount)
         if mismatch:
-            self._payu_gpo_reject(mismatch)
+            self._payu_gpo_hold(mismatch, refund.get("refundId"))
             return
         if refund.get("refundId"):
             self.provider_reference = refund["refundId"]
@@ -692,11 +692,29 @@ class PaymentTransaction(models.Model):
             return _("PayU reported the amount %s (in minor units).", payu_amount)
         return ""
 
-    def _payu_gpo_reject(self, reason):
+    def _payu_gpo_hold(self, reason, payu_id):
+        """PayU reported an order or refund that does not match this
+        transaction: nothing is applied, and nothing is concluded either, as
+        PayU may have charged. The transaction stays pending, the discrepancy
+        is logged and told on it, and its PayU id is kept when it has none
+        yet."""
+        if not self.provider_reference and self._payu_gpo_is_payu_id(payu_id):
+            self.provider_reference = payu_id
         _logger.warning(
-            "PayU: notification for %s rejected: %s", self.reference, reason
+            "PayU: data for %s not applied, it does not match: %s",
+            self.reference,
+            reason,
         )
-        self._set_error(_("PayU: %s", reason))
+        message = _(
+            "PayU sent data that does not match this transaction, so it was not"
+            " applied: %s Check it in the PayU panel.",
+            reason,
+        )
+        self._log_message_on_linked_documents(message)
+        if self.state == "draft":
+            self._set_pending(message)
+        elif self.state == "pending":
+            self.state_message = message
 
     def _payu_gpo_tokenize(self):
         """Save the card of this completed payment, once."""
