@@ -13,8 +13,8 @@ helpers below, which hold the logic (see ROADMAP.md for the Odoo 19/20 port).
 Extension points for other PayU methods (e.g. BLIK recurring, PAYID tokens):
 _payu_gpo_create_direct_order, _payu_gpo_token_payment_values and
 _payu_gpo_token_values_from_pay_methods; for the calling module:
-_payu_gpo_buyer_names, _payu_gpo_card_is_recurring and
-_payu_gpo_on_tokenization_abandoned.
+_payu_gpo_buyer_names, _payu_gpo_card_is_recurring,
+_payu_gpo_check_card_submission and _payu_gpo_on_tokenization_abandoned.
 """
 
 import logging
