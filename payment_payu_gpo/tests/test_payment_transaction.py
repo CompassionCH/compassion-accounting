@@ -807,6 +807,56 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(txs[1].state, "error")
         self.assertTrue(txs[1].payu_gpo_unconfirmed)
 
+    def _given_up(self, tx):
+        tx.last_state_change = fields.Datetime.now() - timedelta(
+            days=const.UNCONFIRMED_FAIL_DAYS, hours=1
+        )
+        self.env["payment.transaction"]._payu_gpo_fail_unconfirmed()
+        self.assertEqual(tx.state, "error")
+        self.assertTrue(tx.payu_gpo_unconfirmed)
+        return tx
+
+    def test_late_cancellation_of_a_payment_given_up(self):
+        """PayU's answer, however late, settles the outcome: the payment
+        stays in error (Odoo does not cancel an error), now a certain
+        refusal, with PayU's answer as its message."""
+        tx = self._given_up(self._create_transaction(flow="direct", state="pending"))
+        tx._handle_notification_data("payu_gpo", self._order_notification("CANCELED"))
+        self.assertEqual(tx.state, "error")
+        self.assertFalse(tx.payu_gpo_unconfirmed)
+        self.assertIn("no money was taken", tx.state_message)
+        self.assertEqual(tx.provider_reference, self.order_id)
+
+    def test_late_completion_of_a_payment_given_up(self):
+        tx = self._given_up(self._create_transaction(flow="direct", state="pending"))
+        tx._handle_notification_data("payu_gpo", self._order_notification("COMPLETED"))
+        self.assertEqual(tx.state, "done")
+        self.assertFalse(tx.payu_gpo_unconfirmed)
+
+    def test_late_answers_to_a_refund_given_up(self):
+        tx = self._create_transaction(
+            flow="redirect", state="done", provider_reference=self.order_id
+        )
+        for status, state in (("CANCELED", "error"), ("FINALIZED", "done")):
+            with patch(f"{CLIENT}.refund", return_value={}):
+                refund_tx = self._given_up(
+                    tx._send_refund_request(amount_to_refund=1.0)
+                )
+            refund_tx._handle_notification_data(
+                "payu_gpo",
+                {
+                    "refund": {
+                        "refundId": f"R-{status}",
+                        "extRefundId": refund_tx.reference,
+                        "amount": "100",
+                        "currencyCode": "PLN",
+                        "status": status,
+                    }
+                },
+            )
+            self.assertEqual(refund_tx.state, state, status)
+            self.assertFalse(refund_tx.payu_gpo_unconfirmed, status)
+
     def test_cron_sync_pending_skips_refunds(self):
         """A refund's reference is a refund id: never read as an order."""
         tx = self._create_transaction(

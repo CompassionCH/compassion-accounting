@@ -46,7 +46,9 @@ v2.1). Not to be confused with PayU India (``payu.in``).
   payment or refund PayU never confirms (no PayU id, no notification) is
   set to error after four days, once PayU has stopped retrying its
   notifications (72 hours), and flagged ``payu_gpo_unconfirmed``: its
-  outcome is unknown, which is not a refusal.
+  outcome is unknown, which is not a refusal. A final answer from PayU
+  that still comes clears the flag: the payment is then done, or stays
+  in error as a certain refusal.
 - When the card of a completed payment cannot be read from PayU, an
   hourly cron retries saving it for three days.
 - When PayU's notification of a payment is lost (Odoo down or not

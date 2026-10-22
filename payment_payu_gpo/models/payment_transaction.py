@@ -545,19 +545,7 @@ class PaymentTransaction(models.Model):
         """Update state, provider reference and token from PayU data."""
         refund = notification_data.get("refund")
         if refund:
-            mismatch = self._payu_gpo_mismatch(
-                refund, refund.get("refundId"), -self.amount
-            )
-            if mismatch:
-                self._payu_gpo_reject(mismatch)
-                return
-            if refund.get("refundId"):
-                self.provider_reference = refund["refundId"]
-            status = refund.get("status")
-            if status == "FINALIZED":
-                self._set_done()
-            elif status == "CANCELED":
-                self._set_canceled(_("PayU canceled the refund."))
+            self._payu_gpo_apply_refund(refund)
             return
 
         order = notification_data.get("order") or {}
@@ -591,6 +579,7 @@ class PaymentTransaction(models.Model):
         elif status in const.STATUS_MAPPING["pending"]:
             self._set_pending()
         elif status in const.STATUS_MAPPING["done"]:
+            self._payu_gpo_clear_unconfirmed()
             self._set_done()
             if self.tokenize and not self.token_id:
                 self._payu_gpo_tokenize()
@@ -599,11 +588,45 @@ class PaymentTransaction(models.Model):
                 # Nobody could give up a charge made without the buyer: PayU
                 # cancels the order when the bank refuses it.
                 self._set_error(_("PayU: the bank refused the charge."))
+            elif self._payu_gpo_clear_unconfirmed():
+                # Given up already: Odoo keeps the error, which PayU's answer
+                # now explains.
+                self.state_message = _(
+                    "PayU canceled this payment: no money was taken."
+                )
             else:
                 self._set_canceled()
         else:
             _logger.warning("PayU: unexpected status %s for %s", status, self.reference)
             self._set_error(_("PayU: received data with invalid status: %s", status))
+
+    def _payu_gpo_apply_refund(self, refund):
+        """Update the state and PayU id of a refund from PayU data."""
+        mismatch = self._payu_gpo_mismatch(refund, refund.get("refundId"), -self.amount)
+        if mismatch:
+            self._payu_gpo_reject(mismatch)
+            return
+        if refund.get("refundId"):
+            self.provider_reference = refund["refundId"]
+        status = refund.get("status")
+        if status == "FINALIZED":
+            self._payu_gpo_clear_unconfirmed()
+            self._set_done()
+        elif status == "CANCELED":
+            if self._payu_gpo_clear_unconfirmed():
+                # Given up already: Odoo keeps the error, which PayU's answer
+                # now explains.
+                self.state_message = _("PayU canceled the refund.")
+            else:
+                self._set_canceled(_("PayU canceled the refund."))
+
+    def _payu_gpo_clear_unconfirmed(self):
+        """PayU's final answer came for a payment given up as unconfirmed:
+        its outcome is known now. Returns whether it had been given up."""
+        unconfirmed = self.payu_gpo_unconfirmed
+        if unconfirmed:
+            self.payu_gpo_unconfirmed = False
+        return unconfirmed
 
     def _payu_gpo_mismatch(self, data, payu_id, amount, amount_key="amount"):
         """Why the order or refund PayU reports is not this transaction's, or
