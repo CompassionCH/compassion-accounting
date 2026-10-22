@@ -1,0 +1,513 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-19 17:11+0000\n"
+"PO-Revision-Date: 2026-10-17 20:09+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: pl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_provider__code
+msgid "Code"
+msgstr "Kod"
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_held
+#: model_terms:ir.ui.view,arch_db:payment_payu_gpo.payment_transaction_search
+msgid "Held for a PayU check"
+msgstr "Wstrzymane do sprawdzenia w PayU"
+
+#. module: payment_payu_gpo
+#. odoo-javascript
+#: code:addons/payment_payu_gpo/static/src/js/payment_form.esm.js:0
+msgid "Incorrect payment details"
+msgstr "Nieprawidłowe dane płatności"
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_status
+msgid "Last status PayU reported for this order or refund."
+msgstr "Ostatni status zgłoszony przez PayU dla tego zamówienia lub zwrotu."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_token_retry_date
+msgid "Last time the cron tried to save the card of this payment."
+msgstr "Ostatni raz, kiedy cron próbował zapisać kartę tej płatności."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_sync_date
+msgid ""
+"Last time the status of this pending payment was read from PayU (cron or "
+"payment status page)."
+msgstr ""
+"Ostatni odczyt statusu tej oczekującej płatności z PayU (zadanie cykliczne "
+"lub strona statusu płatności)."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_card_mask
+msgid ""
+"Masked number of the card of this payment, used to find its token among the "
+"buyer's cards when PayU did not return it."
+msgstr ""
+"Zamaskowany numer karty tej płatności, używany do odnalezienia jej tokenu "
+"wśród kart kupującego, gdy PayU go nie zwróciło."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_card_token
+msgid ""
+"Multi-use TOKC_ token PayU returned for the card of this payment; saved as a"
+" payment token once the payment is completed."
+msgstr ""
+"Wielokrotny token TOKC_ zwrócony przez PayU dla karty tej płatności; "
+"zapisywany jako token płatności po zakończeniu płatności."
+
+#. module: payment_payu_gpo
+#: model_terms:ir.ui.view,arch_db:payment_payu_gpo.inline_form
+msgid "Name on card"
+msgstr "Imię i nazwisko na karcie"
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_cardholder_name
+msgid ""
+"Name on the card, as typed in the card form: sent to PayU for 3-D Secure and"
+" as the buyer's name."
+msgstr ""
+"Imię i nazwisko na karcie, wpisane w formularzu karty: przesyłane do PayU na"
+" potrzeby 3-D Secure i jako dane kupującego."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_provider__payu_gpo_client_id
+msgid "OAuth client_id"
+msgstr "OAuth client_id"
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_provider__payu_gpo_client_secret
+msgid "OAuth client_secret"
+msgstr "OAuth client_secret"
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_provider__payu_gpo_pos_id
+msgid "POS ID"
+msgstr "ID punktu płatności (POS ID)"
+
+#. module: payment_payu_gpo
+#: model:payment.provider,name:payment_payu_gpo.payment_provider_payu_gpo
+msgid "PayU"
+msgstr "PayU"
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields.selection,name:payment_payu_gpo.selection__payment_provider__code__payu_gpo
+msgid "PayU GPO"
+msgstr "PayU GPO"
+
+#. module: payment_payu_gpo
+#: model:ir.actions.server,name:payment_payu_gpo.cron_sync_pending_ir_actions_server
+msgid "PayU GPO: read the status of pending payments"
+msgstr "PayU GPO: odczytaj status oczekujących płatności"
+
+#. module: payment_payu_gpo
+#: model:ir.actions.server,name:payment_payu_gpo.cron_retry_tokenization_ir_actions_server
+msgid "PayU GPO: save the cards of completed payments"
+msgstr "PayU GPO: zapisz karty zakończonych płatności"
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid ""
+"PayU canceled the payment: it was authorized but never captured, as "
+"automatic collection is off on the PayU point of sale."
+msgstr ""
+"PayU anulowało płatność: została autoryzowana, ale nigdy nie została "
+"odebrana, ponieważ w punkcie płatności PayU automatyczny odbiór jest "
+"wyłączony."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU canceled the refund."
+msgstr "PayU anulowało zwrot."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU canceled this payment: no money was taken."
+msgstr "PayU anulowało tę płatność: nie pobrano żadnych pieniędzy."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_card_mask
+msgid "PayU card number"
+msgstr "Numer karty PayU"
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_token_retry_date
+msgid "PayU card save retried on"
+msgstr "Ponowna próba zapisu karty PayU"
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_card_token
+msgid "PayU card token"
+msgstr "Token karty PayU"
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_cardholder_name
+msgid "PayU cardholder name"
+msgstr "Imię i nazwisko posiadacza karty (PayU)"
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid ""
+"PayU could not start the payment. Please try again later, or choose another "
+"payment method."
+msgstr ""
+"PayU nie mogło rozpocząć płatności. Spróbuj ponownie później lub wybierz "
+"inną metodę płatności."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU did not return a payment page: nothing was paid."
+msgstr "PayU nie zwróciło strony płatności: nic nie zostało zapłacone."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid ""
+"PayU has not confirmed this payment yet. It may have gone through: it will "
+"be updated as soon as PayU confirms it."
+msgstr ""
+"PayU nie potwierdziło jeszcze tej płatności. Mogła zostać zrealizowana: "
+"zostanie zaktualizowana, gdy tylko PayU ją potwierdzi."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid ""
+"PayU has not confirmed this payment. Please contact us before paying again."
+msgstr ""
+"PayU nie potwierdziło tej płatności. Skontaktuj się z nami, zanim zapłacisz "
+"ponownie."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid ""
+"PayU has not confirmed this refund yet: it will be updated as soon as PayU "
+"does."
+msgstr ""
+"PayU nie potwierdziło jeszcze tego zwrotu: zostanie on zaktualizowany, gdy "
+"tylko PayU to zrobi."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid ""
+"PayU holds this payment until it is captured: automatic collection must be "
+"enabled on the PayU point of sale."
+msgstr ""
+"PayU wstrzymuje tę płatność do jej odebrania: w punkcie płatności PayU musi "
+"być włączony automatyczny odbiór."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU is still processing this payment."
+msgstr "PayU wciąż przetwarza tę płatność."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid ""
+"PayU never confirmed %s. Check the PayU panel for this reference before "
+"trying again."
+msgstr ""
+"PayU nigdy nie potwierdziło %s. Przed ponowną próbą sprawdź ten numer "
+"referencyjny w panelu PayU."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_unconfirmed
+msgid ""
+"PayU never confirmed this payment: it was set to error after PayU's "
+"notification retries, but PayU may have carried it out. Check the PayU panel"
+" before asking the buyer to pay again."
+msgstr ""
+"PayU nigdy nie potwierdziło tej płatności: po zakończeniu ponownych prób "
+"powiadomień ze strony PayU płatność otrzymała status błędu, ale PayU mogło "
+"ją zrealizować. Zanim poprosisz kupującego o ponowną płatność, sprawdź panel"
+" PayU."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_unconfirmed
+msgid "PayU outcome unknown"
+msgstr "Nieznany wynik PayU"
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_token__payu_gpo_recurring
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_recurring
+msgid "PayU recurring card"
+msgstr "Karta cykliczna PayU"
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU reported %(payu)s, this payment is %(ours)s."
+msgstr "PayU zgłosiło %(payu)s, ta płatność to %(ours)s."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU reported the amount %s (in minor units)."
+msgstr "PayU zgłosiło kwotę %s (w groszach)."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU reported the currency %s."
+msgstr "PayU zgłosiło walutę %s."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_held
+msgid ""
+"PayU sent data that does not match this payment (order, amount or currency):"
+" it was not applied, and the payment stays pending until PayU's matching "
+"answer. Check it in the PayU panel."
+msgstr ""
+"PayU przesłało dane, które nie pasują do tej płatności (zamówienie, kwota "
+"lub waluta): nie zostały zastosowane, a płatność pozostaje oczekująca do "
+"czasu zgodnej odpowiedzi PayU. Sprawdź ją w panelu PayU."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid ""
+"PayU sent data that does not match this transaction, so it was not applied: "
+"%s Check it in the PayU panel."
+msgstr ""
+"PayU przesłało dane, które nie pasują do tej transakcji, więc nie zostały "
+"zastosowane: %s Sprawdź ją w panelu PayU."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_status
+msgid "PayU status"
+msgstr "Status PayU"
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_sync_date
+msgid "PayU status read on"
+msgstr "Status PayU odczytany"
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU: %s"
+msgstr "PayU: %s"
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU: a card can only be saved with a payment."
+msgstr "PayU: kartę można zapisać tylko przy płatności."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU: a saved card can only be charged without the buyer."
+msgstr "PayU: zapisaną kartę można obciążyć tylko bez udziału kupującego."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/controllers/main.py:0
+msgid "PayU: invalid card token."
+msgstr "PayU: nieprawidłowy token karty."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU: no transaction found for reference %s."
+msgstr "PayU: nie znaleziono transakcji o numerze referencyjnym %s."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU: received data with missing reference."
+msgstr "PayU: otrzymano dane bez numeru referencyjnego."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/controllers/main.py:0
+msgid "PayU: received tampered payment request data."
+msgstr "PayU: otrzymano zmodyfikowane dane żądania płatności."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU: the bank refused the charge."
+msgstr "PayU: bank odrzucił obciążenie."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "PayU: the transaction is not linked to a token."
+msgstr "PayU: transakcja nie jest powiązana z tokenem."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/controllers/main.py:0
+msgid "PayU: this payment was already processed."
+msgstr "PayU: ta płatność została już przetworzona."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/controllers/main.py:0
+msgid "PayU: unknown payment."
+msgstr "PayU: nieznana płatność."
+
+#. module: payment_payu_gpo
+#: model:ir.model,name:payment_payu_gpo.model_payment_provider
+msgid "Payment Provider"
+msgstr "Dostawca płatności"
+
+#. module: payment_payu_gpo
+#: model:ir.model,name:payment_payu_gpo.model_payment_token
+msgid "Payment Token"
+msgstr "Token płatności"
+
+#. module: payment_payu_gpo
+#: model:ir.model,name:payment_payu_gpo.model_payment_transaction
+msgid "Payment Transaction"
+msgstr "Transakcja płatnicza"
+
+#. module: payment_payu_gpo
+#. odoo-javascript
+#: code:addons/payment_payu_gpo/static/src/js/payment_form.esm.js:0
+msgid "Payment processing failed"
+msgstr "Przetwarzanie płatności nie powiodło się"
+
+#. module: payment_payu_gpo
+#. odoo-javascript
+#: code:addons/payment_payu_gpo/static/src/js/payment_form.esm.js:0
+msgid "Please enter the name on the card."
+msgstr "Wpisz imię i nazwisko widniejące na karcie."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_token__payu_gpo_recurring
+msgid ""
+"Saved for scheduled recurring charges (recurring=STANDARD); other cards are "
+"charged as cards on file (cardOnFile=STANDARD_MERCHANT)."
+msgstr ""
+"Zapisana do zaplanowanych obciążeń cyklicznych (recurring=STANDARD); "
+"pozostałe karty są obciążane jako karty zapisane "
+"(cardOnFile=STANDARD_MERCHANT)."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_provider__payu_gpo_second_key
+msgid "Second key (MD5)"
+msgstr "Drugi klucz (MD5)"
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid ""
+"The bank refused the charge: it asked for the cardholder, who is not there "
+"for an automatic charge."
+msgstr ""
+"Bank odrzucił obciążenie: wymagał obecności posiadacza karty, którego nie ma"
+" przy obciążeniu automatycznym."
+
+#. module: payment_payu_gpo
+#. odoo-javascript
+#: code:addons/payment_payu_gpo/static/src/js/payment_form.esm.js:0
+msgid "The card could not be read. Please try again."
+msgstr "Nie udało się odczytać karty. Spróbuj ponownie."
+
+#. module: payment_payu_gpo
+#. odoo-javascript
+#: code:addons/payment_payu_gpo/static/src/js/payment_form.esm.js:0
+msgid "The card form of PayU could not be loaded. Please reload the page."
+msgstr "Nie udało się załadować formularza karty PayU. Odśwież stronę."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_recurring
+msgid ""
+"The card is saved for scheduled recurring charges (recurring=FIRST) rather "
+"than as a card on file."
+msgstr ""
+"Karta jest zapisana do zaplanowanych obciążeń cyklicznych (recurring=FIRST),"
+" a nie jako karta zapisana."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "The payment did not go through at PayU: no money was taken."
+msgstr ""
+"Płatność w PayU nie została zrealizowana: nie pobrano żadnych pieniędzy."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid "The refund did not go through at PayU: nothing was refunded."
+msgstr "Zwrot w PayU nie został zrealizowany: nic nie zostało zwrócone."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_provider__code
+msgid "The technical code of this payment provider."
+msgstr "Kod techniczny tego dostawcy płatności."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid ""
+"This payment is being checked with PayU: it will be updated once the check "
+"is done."
+msgstr ""
+"Ta płatność jest sprawdzana z PayU: zostanie zaktualizowana po zakończeniu "
+"sprawdzania."
+
+#. module: payment_payu_gpo
+#: model_terms:ir.ui.view,arch_db:payment_payu_gpo.payment_transaction_search
+msgid "Unconfirmed by PayU"
+msgstr "Niepotwierdzone przez PayU"
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_provider__payu_gpo_second_key
+msgid "Used to verify the OpenPayu-Signature of notifications."
+msgstr "Służy do weryfikacji podpisu OpenPayu-Signature powiadomień."
+
+#. module: payment_payu_gpo
+#. odoo-python
+#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
+msgid ""
+"Your bank asked for an extra security check (CVV code) that this payment "
+"form can't handle yet. No money has been taken. Please try again, and if it "
+"happens again, contact us."
+msgstr ""
+"Twój bank poprosił o dodatkową weryfikację (kod CVV), której ten formularz "
+"płatności jeszcze nie obsługuje. Nie pobrano żadnych pieniędzy. Spróbuj "
+"ponownie, a jeśli to się powtórzy, skontaktuj się z nami."
+
+#. module: payment_payu_gpo
+#: model_terms:payment.provider,auth_msg:payment_payu_gpo.payment_provider_payu_gpo
+msgid "Your payment has been authorized."
+msgstr "Twoja płatność została autoryzowana."
+
+#. module: payment_payu_gpo
+#: model_terms:payment.provider,cancel_msg:payment_payu_gpo.payment_provider_payu_gpo
+msgid "Your payment has been cancelled."
+msgstr "Twoja płatność została anulowana."
+
+#. module: payment_payu_gpo
+#: model_terms:payment.provider,pending_msg:payment_payu_gpo.payment_provider_payu_gpo
+msgid ""
+"Your payment has been successfully processed but is waiting for approval."
+msgstr "Twoja płatność została przetworzona i oczekuje na zatwierdzenie."
+
+#. module: payment_payu_gpo
+#: model_terms:payment.provider,done_msg:payment_payu_gpo.payment_provider_payu_gpo
+msgid "Your payment has been successfully processed."
+msgstr "Twoja płatność została pomyślnie przetworzona."
