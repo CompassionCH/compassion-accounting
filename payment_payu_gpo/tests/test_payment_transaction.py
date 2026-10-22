@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from odoo import fields
 from odoo.exceptions import UserError, ValidationError
+from odoo.modules.neutralize import get_neutralization_queries
 from odoo.tests import tagged
 from odoo.tools import mute_logger
 
@@ -737,6 +738,25 @@ class TestPaymentTransaction(PayuGpoCommon):
             with self.assertRaises(PayuError):
                 self.provider._payu_gpo_client()
         get.assert_not_called()
+
+    def test_neutralized_copy_keeps_no_payu_settings(self):
+        """Neither the keys nor the notification URL: a copy pointed at the
+        sandbox must not have PayU notify production."""
+        self.env["ir.config_parameter"].set_param(
+            "payment_payu_gpo.notify_base_url", "https://hooks.example"
+        )
+        self.env.flush_all()
+        for query in get_neutralization_queries(["payment_payu_gpo"]):
+            self.env.cr.execute(query)
+        self.env.invalidate_all()
+        self.env.registry.clear_cache()
+        self.assertFalse(
+            self.env["ir.config_parameter"].get_param(
+                "payment_payu_gpo.notify_base_url"
+            )
+        )
+        self.assertFalse(self.provider.payu_gpo_pos_id)
+        self.assertFalse(self.provider.payu_gpo_second_key)
 
     # --- token charges ------------------------------------------------------
 
