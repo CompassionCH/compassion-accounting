@@ -117,7 +117,13 @@ class PaymentTransaction(models.Model):
         try:
             order = client.create_order(payload)
         except PayuError as e:
-            raise ValidationError(_("PayU: %s", e)) from e
+            if e.definitive:
+                raise ValidationError(_("PayU: %s", e)) from e
+            # PayU may have the order: keep the payment, so that its
+            # notification finds it and the next attempt gets another
+            # reference (PayU refuses a second order with the same one).
+            self._payu_gpo_set_failed(e)
+            return {"api_url": "/payment/status", "url_params": {}}
         redirect_uri = order.get("redirectUri")
         if not order.get("orderId") or not redirect_uri:
             raise ValidationError(_("PayU did not return a payment page."))

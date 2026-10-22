@@ -3,7 +3,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from odoo import fields
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.tests import tagged
 from odoo.tools import mute_logger
 
@@ -63,6 +63,28 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(values["url_params"], {"a": "1"})
         self.assertEqual(tx.provider_reference, self.order_id)
         self.assertEqual(tx.state, "pending")
+
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_hosted_order_without_answer_is_kept(self):
+        """PayU may have created the order: the payment is kept, pending, so
+        that the next attempt gets another reference, and the buyer goes to
+        the status page instead of PayU's."""
+        tx = self._create_transaction(flow="redirect")
+        with patch(f"{CLIENT}.create_order", side_effect=PayuUnknownOutcome("slow")):
+            values = tx._get_specific_rendering_values(None)
+        self.assertEqual(values, {"api_url": "/payment/status", "url_params": {}})
+        self.assertEqual(tx.state, "pending")
+        self.assertFalse(tx.provider_reference)
+        self.assertIn("did not answer", tx.state_message)
+
+    def test_hosted_order_refused(self):
+        """PayU refused the order: nothing to keep, the buyer sees why."""
+        tx = self._create_transaction(flow="redirect")
+        with (
+            patch(f"{CLIENT}.create_order", side_effect=PayuError("refused")),
+            self.assertRaises(ValidationError),
+        ):
+            tx._get_specific_rendering_values(None)
 
     def test_notify_base_url_parameter(self):
         """Only the notifications go to the public URL, the buyer returns
