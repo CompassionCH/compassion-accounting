@@ -31,7 +31,7 @@ from odoo.addons.payment import utils as payment_utils
 
 from .. import const
 from ..controllers.main import PayuGpoController
-from ..payu_client import PayuError
+from ..payu_client import PayuError, PayuUnknownOutcome
 
 _logger = logging.getLogger(__name__)
 
@@ -116,6 +116,7 @@ class PaymentTransaction(models.Model):
         )
         try:
             order = client.create_order(payload)
+            values = self._payu_gpo_accepted_order(order, "orderId", "redirectUri")
         except PayuError as e:
             if e.definitive:
                 raise ValidationError(_("PayU: %s", e)) from e
@@ -124,13 +125,10 @@ class PaymentTransaction(models.Model):
             # reference (PayU refuses a second order with the same one).
             self._payu_gpo_set_failed(e)
             return {"api_url": "/payment/status", "url_params": {}}
-        redirect_uri = order.get("redirectUri")
-        if not order.get("orderId") or not redirect_uri:
-            raise ValidationError(_("PayU did not return a payment page."))
-        self.provider_reference = order["orderId"]
         # The order exists at PayU: from now on PayU owns the outcome, and the
         # status reads (cron, status page) watch this payment.
         self._set_pending()
+        redirect_uri = values["redirectUri"]
         parsed = urlsplit(redirect_uri)
         return {
             "api_url": redirect_uri,
@@ -236,12 +234,18 @@ class PaymentTransaction(models.Model):
         )
         try:
             response = client.create_order(payload)
+            values = self._payu_gpo_accepted_order(response, "orderId", "statusCode")
+            status_code = values["statusCode"]
+            if (
+                status_code.startswith("WARNING")
+                and status_code != "WARNING_CONTINUE_CVV"
+                and "redirectUri" not in values
+            ):
+                raise PayuUnknownOutcome("PayU's answer has no redirectUri")
         except PayuError as e:
             self._payu_gpo_set_failed(e)
             return None
-        self.provider_reference = response.get("orderId")
         self._payu_gpo_store_card_token(response)
-        status_code = response.get("status", {}).get("statusCode", "")
         if status_code == "WARNING_CONTINUE_CVV":
             # PayU then needs the CVV through the Secure Form, not a page.
             # Without it the order is never paid, and PayU cancels it.
@@ -259,7 +263,7 @@ class PaymentTransaction(models.Model):
         self._set_pending()
         if status_code.startswith("WARNING"):
             # 3DS: the buyer comes back through the return route.
-            return response.get("redirectUri")
+            return values["redirectUri"]
         try:
             self._payu_gpo_refresh_from_api()
         except PayuError as e:
@@ -273,29 +277,65 @@ class PaymentTransaction(models.Model):
             self._set_error(_("PayU: %s", error))
         else:
             _logger.warning(
-                "PayU: no answer for %s, waiting for its notification: %s",
+                "PayU: no usable answer for %s, waiting for its notification: %s",
                 self.reference,
                 error,
             )
             self._set_pending(
                 _(
-                    "PayU did not answer (%s). The payment may have been made:"
-                    " PayU's notification will update it.",
+                    "No usable answer from PayU (%s). The payment may have been"
+                    " made: PayU's notification will update it.",
                     error,
                 )
             )
+
+    def _payu_gpo_accepted_order(self, answer, *required):
+        """The usable values of PayU's answer to a new order: orderId,
+        statusCode (of its status) and redirectUri, when they are non-empty
+        strings. The order id is kept as the provider reference.
+
+        :param str required: the values the next step needs
+        :raise PayuUnknownOutcome: when one of them is missing: PayU accepted
+                                   the order, which may exist all the same
+        """
+        status = answer.get("status")
+        if not isinstance(status, dict):
+            status = {}
+        values = {
+            "orderId": answer.get("orderId"),
+            "statusCode": status.get("statusCode"),
+            "redirectUri": answer.get("redirectUri"),
+        }
+        values = {
+            key: value
+            for key, value in values.items()
+            if value and isinstance(value, str)
+        }
+        if "orderId" in values:
+            self.provider_reference = values["orderId"]
+        missing = [key for key in required if key not in values]
+        if missing:
+            raise PayuUnknownOutcome(f"PayU's answer has no {', '.join(missing)}")
+        return values
 
     def _payu_gpo_store_card_token(self, response):
         """Keep the multi-use token PayU returns with the order, 3DS or not.
 
         Extension point for other token types (e.g. BLIK PAYID).
         """
-        pay_method = response.get("payMethods", {}).get("payMethod", {})
-        if not self.tokenize or not pay_method.get("value", "").startswith("TOKC_"):
+        pay_methods = response.get("payMethods")
+        pay_method = (
+            pay_methods.get("payMethod") if isinstance(pay_methods, dict) else None
+        )
+        if not self.tokenize or not isinstance(pay_method, dict):
             return
-        values = {"payu_gpo_card_token": pay_method["value"]}
-        number = pay_method.get("card", {}).get("number")
-        if number:
+        token = pay_method.get("value")
+        if not isinstance(token, str) or not token.startswith("TOKC_"):
+            return
+        values = {"payu_gpo_card_token": token}
+        card = pay_method.get("card")
+        number = card.get("number") if isinstance(card, dict) else None
+        if number and isinstance(number, str):
             values["payu_gpo_card_mask"] = number
         self.sudo().write(values)
 
@@ -391,11 +431,11 @@ class PaymentTransaction(models.Model):
         )
         try:
             order = client.create_order(payload)
+            values = self._payu_gpo_accepted_order(order, "orderId", "statusCode")
         except PayuError as e:
             self._payu_gpo_set_failed(e)
             return
-        self.provider_reference = order.get("orderId")
-        status_code = order.get("status", {}).get("statusCode", "")
+        status_code = values["statusCode"]
         if status_code.startswith("WARNING"):
             # The bank wants the cardholder (3DS, CVV), who is not there: a
             # refusal. PayU cancels the order later.
@@ -439,8 +479,9 @@ class PaymentTransaction(models.Model):
         except PayuError as e:
             refund_tx._payu_gpo_set_failed(e)
             return refund_tx
-        refund_id = (response.get("refund") or {}).get("refundId")
-        if refund_id:
+        refund = response.get("refund")
+        refund_id = refund.get("refundId") if isinstance(refund, dict) else None
+        if refund_id and isinstance(refund_id, str):
             refund_tx.provider_reference = refund_id
         # The refund notification (refund.status FINALIZED) settles it.
         refund_tx._set_pending()
