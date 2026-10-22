@@ -103,6 +103,34 @@ class TestPaymentTransaction(PayuGpoCommon):
             self.assertEqual(tx.provider_reference or None, order_id)
             self.assertIn("usable answer", tx.state_message)
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_malformed_payment_page_is_an_unknown_outcome(self):
+        """A payment page (hosted or 3DS) that is no https URL: the payment
+        stays pending with its order id, and the buyer goes to the status
+        page."""
+        for i, uri in enumerate(("https://[", "javascript:alert(1)", "//pay")):
+            hosted = self._create_transaction(
+                flow="redirect", reference=f"payu-bad-page-{i}"
+            )
+            card = self._create_transaction(
+                flow="direct", reference=f"payu-bad-3ds-{i}"
+            )
+            with patch(
+                f"{CLIENT}.create_order",
+                return_value={
+                    "orderId": self.order_id,
+                    "status": {"statusCode": "WARNING_CONTINUE_3DS"},
+                    "redirectUri": uri,
+                },
+            ):
+                values = hosted._get_specific_rendering_values(None)
+                redirect_url = card._payu_gpo_pay_with_card_token("TOK_ONCE")
+            self.assertEqual(values, {"api_url": "/payment/status", "url_params": {}})
+            self.assertIsNone(redirect_url, uri)
+            for tx in hosted | card:
+                self.assertEqual(tx.state, "pending", uri)
+                self.assertEqual(tx.provider_reference, self.order_id, uri)
+
     def test_hosted_order_refused(self):
         """PayU refused the order: nothing to keep, the buyer sees why."""
         tx = self._create_transaction(flow="redirect")

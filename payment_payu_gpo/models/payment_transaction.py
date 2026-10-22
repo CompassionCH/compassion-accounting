@@ -296,9 +296,10 @@ class PaymentTransaction(models.Model):
             )
 
     def _payu_gpo_accepted_order(self, answer, *required):
-        """The usable values of PayU's answer to a new order: orderId,
-        statusCode (of its status) and redirectUri, when they are non-empty
-        strings. The order id is kept as the provider reference.
+        """The usable values of PayU's answer to a new order: orderId and
+        statusCode (of its status) when they are non-empty strings, the
+        order id a PayU id, and redirectUri when it is an https URL. The
+        order id is kept as the provider reference.
 
         :param str required: the values the next step needs
         :raise PayuUnknownOutcome: when one of them is missing: PayU accepted
@@ -319,6 +320,8 @@ class PaymentTransaction(models.Model):
         }
         if not self._payu_gpo_is_payu_id(values.get("orderId")):
             values.pop("orderId", None)
+        if not self._payu_gpo_is_page_url(values.get("redirectUri")):
+            values.pop("redirectUri", None)
         self._payu_gpo_keep_payu_id(answer)
         missing = [key for key in required if key not in values]
         if missing:
@@ -342,6 +345,18 @@ class PaymentTransaction(models.Model):
     @staticmethod
     def _payu_gpo_is_payu_id(value):
         return isinstance(value, str) and bool(const.PAYU_ID_PATTERN.fullmatch(value))
+
+    @staticmethod
+    def _payu_gpo_is_page_url(value):
+        """Whether value is an https URL, the only pages PayU sends the
+        buyer to (payment page, 3DS)."""
+        if not isinstance(value, str):
+            return False
+        try:
+            url = urlsplit(value)
+        except ValueError:
+            return False
+        return url.scheme == "https" and bool(url.netloc)
 
     def _payu_gpo_store_card_token(self, response):
         """Keep the multi-use token PayU returns with the order, 3DS or not.
