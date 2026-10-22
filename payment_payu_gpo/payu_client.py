@@ -17,6 +17,7 @@ API reference: https://developers.payu.com/europe/api/
 import hashlib
 import hmac
 import logging
+import ssl
 import time
 
 import requests
@@ -43,8 +44,9 @@ SIGNATURE_ALGORITHMS = {
 class PayuError(Exception):
     """Anything that goes wrong talking to PayU: the client raises nothing else.
 
-    definitive: PayU answered and refused the request, so nothing happened on
-    its side. Otherwise the outcome is unknown (see PayuUnknownOutcome).
+    definitive: PayU refused the request, or the request never reached it, so
+    nothing happened on its side. Otherwise the outcome is unknown (see
+    PayuUnknownOutcome).
     """
 
     definitive = True
@@ -60,6 +62,29 @@ class PayuUnknownOutcome(PayuError):
     request may have been carried out all the same, e.g. an order created."""
 
     definitive = False
+
+
+def _wraps(error, error_class):
+    """Whether error is, or wraps, an error_class: requests and urllib3 wrap
+    the error of the socket in their own (args, reason, cause, context)."""
+    seen = set()
+    stack = [error]
+    while stack:
+        current = stack.pop()
+        if not isinstance(current, BaseException) or id(current) in seen:
+            continue
+        if isinstance(current, error_class):
+            return True
+        seen.add(id(current))
+        stack.extend(
+            (
+                getattr(current, "reason", None),
+                current.__cause__,
+                current.__context__,
+                *current.args,
+            )
+        )
+    return False
 
 
 def parse_signature_header(header):
@@ -275,16 +300,19 @@ class PayuClient:
                 timeout=TIMEOUT,
                 allow_redirects=False,
             )
-        except (
-            requests.exceptions.ConnectTimeout,
-            requests.exceptions.SSLError,
-        ) as e:
+        except requests.exceptions.ConnectTimeout as e:
             # The request never reached PayU.
             raise PayuError(f"Could not reach PayU: {e}") from e
+        except requests.exceptions.SSLError as e:
+            if _wraps(e, ssl.SSLCertVerificationError):
+                # The certificate is checked before anything is sent.
+                raise PayuError(f"Could not reach PayU: {e}") from e
+            # Also raised by a TLS error while reading the answer, after the
+            # request was sent: the order may exist.
+            raise PayuUnknownOutcome(f"PayU did not answer: {e}") from e
         except requests.exceptions.ConnectionError as e:
             # Refused or unresolved: no connection, so nothing was sent.
-            reason = getattr(e.args[0] if e.args else None, "reason", None)
-            if isinstance(reason, NewConnectionError):
+            if _wraps(e, NewConnectionError):
                 raise PayuError(f"Could not reach PayU: {e}") from e
             raise PayuUnknownOutcome(f"PayU did not answer: {e}") from e
         except requests.exceptions.RequestException as e:

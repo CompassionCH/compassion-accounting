@@ -1,7 +1,9 @@
 import hashlib
+import ssl
 from unittest.mock import MagicMock
 
 import requests
+import urllib3
 from urllib3.exceptions import MaxRetryError, NewConnectionError
 
 from odoo.tests import BaseCase, tagged
@@ -158,6 +160,24 @@ class TestPayuClient(BaseCase):
         with self.assertRaises(PayuError) as ctx:
             client.create_order({})
         self.assertTrue(ctx.exception.definitive)
+
+    def test_ssl_error_may_come_after_the_request(self):
+        """A TLS error may happen while reading PayU's answer, the order
+        sent: only a certificate check is sure to come before (requests
+        wraps both the same way)."""
+        for ssl_error, definitive in (
+            (ssl.SSLError(1, "[SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC]"), False),
+            (ssl.SSLCertVerificationError(1, "certificate verify failed"), True),
+        ):
+            failure = requests.exceptions.SSLError(
+                MaxRetryError(
+                    None, "/api", reason=urllib3.exceptions.SSLError(ssl_error)
+                )
+            )
+            client, _session = self._client(failure)
+            with self.assertRaises(PayuError) as ctx:
+                client.create_order({})
+            self.assertEqual(ctx.exception.definitive, definitive, ssl_error)
 
     def test_invalid_authentication_answers_are_payu_errors(self):
         """Only PayuError leaves the client, whatever PayU sends back."""
