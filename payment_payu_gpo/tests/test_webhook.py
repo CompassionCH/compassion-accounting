@@ -138,6 +138,20 @@ class TestWebhook(PayuGpoCommon, PaymentHttpCommon):
         self.assertEqual(tx.state, "pending")
         self.assertEqual(tx.provider_reference, self.order_id)
 
+    @mute_logger("odoo.http")
+    def test_card_to_save_needs_a_multi_use_token(self):
+        """A card to save needs the Secure Form's MULTI token (TOK_): a
+        one-off TOKD_ is refused before anything reaches PayU."""
+        tx = self._create_transaction(flow="direct", tokenize=True)
+        with (
+            patch(f"{CLIENT}.create_order") as create_order,
+            self.assertRaises(JsonRpcException),
+        ):
+            self._pay_card(tx, card_token="TOKD_X")
+        create_order.assert_not_called()
+        tx.invalidate_recordset()
+        self.assertEqual(tx.state, "draft")
+
     def test_card_payment_replayed_goes_to_the_status_page(self):
         """A replay of the request (Odoo retries it on a concurrent update)
         must not fail a payment PayU already has."""

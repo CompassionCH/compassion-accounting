@@ -35,8 +35,9 @@ CARD_PAYMENT_METHOD_CODES = {"card", "visa", "mastercard", "maestro"}
 
 # Tokens the Secure Form returns: TOK_ for a card to save (MULTI), TOKD_ for a
 # one-off payment (SINGLE). The card route takes nothing else, never a saved
-# card's TOKC_ token.
-SECURE_FORM_TOKEN_PREFIXES = ("TOK_", "TOKD_")
+# card's TOKC_ token, and only TOK_ when the card is to be saved.
+MULTI_USE_TOKEN_PREFIX = "TOK_"
+SECURE_FORM_TOKEN_PREFIXES = (MULTI_USE_TOKEN_PREFIX, "TOKD_")
 
 # What a PayU order or refund id looks like (e.g. WZHF5FFDRJ140731GUEST000P01,
 # 5001592615): only such a value is kept as a provider reference.

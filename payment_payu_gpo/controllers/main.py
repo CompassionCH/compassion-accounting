@@ -18,7 +18,7 @@ from odoo.http import request
 from odoo.addons.payment import utils as payment_utils
 from odoo.addons.payment.controllers.post_processing import PaymentPostProcessing
 
-from ..const import PROVIDER_CODE, SECURE_FORM_TOKEN_PREFIXES
+from ..const import MULTI_USE_TOKEN_PREFIX, PROVIDER_CODE, SECURE_FORM_TOKEN_PREFIXES
 from ..payu_client import verify_signature
 
 _logger = logging.getLogger(__name__)
@@ -112,9 +112,9 @@ class PayuGpoController(http.Controller):
                  reaching PayU (_payu_gpo_check_card_submission)
         """
         tx = self._payu_gpo_lock_transaction(reference, access_token)
-        if not isinstance(card_token, str) or not card_token.startswith(
-            SECURE_FORM_TOKEN_PREFIXES
-        ):
+        # A card to save needs the multi-use (MULTI) token.
+        prefixes = MULTI_USE_TOKEN_PREFIX if tx.tokenize else SECURE_FORM_TOKEN_PREFIXES
+        if not isinstance(card_token, str) or not card_token.startswith(prefixes):
             raise ValidationError(_("PayU: invalid card token."))
         if tx.state != "draft":
             if tx.provider_reference:
