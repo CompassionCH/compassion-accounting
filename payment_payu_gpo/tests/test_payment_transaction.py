@@ -1294,6 +1294,36 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(read.state, "error")
         self.assertIn("refused", read.state_message)
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_payment_never_captured(self):
+        """PayU held the payment for a capture (automatic collection off),
+        then cancelled it: an offline charge is in error and a buyer's
+        payment cancelled, both saying so rather than blaming the bank."""
+        token = self._create_token(provider_ref="TOKC_ABC")
+        offline = self._create_transaction(
+            flow="token",
+            operation="offline",
+            token_id=token.id,
+            state="pending",
+            provider_reference=self.order_id,
+            reference="payu-held-offline",
+        )
+        online = self._create_transaction(
+            flow="direct",
+            state="pending",
+            provider_reference=self.order_id,
+            reference="payu-held-online",
+        )
+        for tx, state in ((offline, "error"), (online, "cancel")):
+            for status in ("WAITING_FOR_CONFIRMATION", "CANCELED"):
+                tx._handle_notification_data(
+                    "payu_gpo", self._order_notification(status, tx.reference)
+                )
+            self.assertEqual(tx.state, state, tx.reference)
+            self.assertIn("never captured", tx.state_message, tx.reference)
+            self.assertNotIn("bank", tx.state_message, tx.reference)
+            self.assertEqual(tx.payu_gpo_status, "CANCELED", tx.reference)
+
     def test_charge_asking_for_the_cardholder_is_refused(self):
         """Without the buyer, nobody can authenticate: the charge is refused
         at once, and PayU's cancellation of the order changes nothing."""

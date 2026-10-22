@@ -81,6 +81,12 @@ class PaymentTransaction(models.Model):
         copy=False,
         help="Last time the cron tried to save the card of this payment.",
     )
+    payu_gpo_status = fields.Char(
+        string="PayU status",
+        readonly=True,
+        copy=False,
+        help="Last status PayU reported for this order or refund.",
+    )
     payu_gpo_unconfirmed = fields.Boolean(
         string="PayU outcome unknown",
         readonly=True,
@@ -634,6 +640,9 @@ class PaymentTransaction(models.Model):
         if order.get("orderId"):
             self.provider_reference = order["orderId"]
         status = order.get("status")
+        previous_status = self.payu_gpo_status
+        if status in const.ORDER_STATUSES:
+            self.payu_gpo_status = status
         if status == "WAITING_FOR_CONFIRMATION":
             # Authorized, waiting to be captured: only happens when automatic
             # collection is off for this payment method, and PayU then cancels
@@ -660,10 +669,22 @@ class PaymentTransaction(models.Model):
             if self.tokenize and not self.token_id:
                 self._payu_gpo_tokenize()
         elif status in const.STATUS_MAPPING["canceled"]:
+            never_captured = (
+                _(
+                    "PayU canceled the payment: it was authorized but never"
+                    " captured, as automatic collection is off on the PayU"
+                    " point of sale."
+                )
+                if previous_status == "WAITING_FOR_CONFIRMATION"
+                else None
+            )
             if self.operation == "offline":
                 # Nobody could give up a charge made without the buyer: PayU
-                # cancels the order when the bank refuses it.
-                self._set_error(_("PayU: the bank refused the charge."))
+                # cancels the order when the bank refuses it, or when nobody
+                # captured it.
+                self._set_error(
+                    never_captured or _("PayU: the bank refused the charge.")
+                )
             elif self._payu_gpo_clear_unconfirmed():
                 # Given up already: Odoo keeps the error, which PayU's answer
                 # now explains.
@@ -673,7 +694,7 @@ class PaymentTransaction(models.Model):
             elif self.state != "error":
                 # An error (e.g. no payment page) stays: PayU's cancellation
                 # only confirms it.
-                self._set_canceled()
+                self._set_canceled(never_captured)
         else:
             # Not a status PayU documents: nothing to conclude, never a refusal.
             _logger.warning("PayU: unexpected status %s for %s", status, self.reference)
@@ -687,6 +708,8 @@ class PaymentTransaction(models.Model):
         if refund.get("refundId"):
             self.provider_reference = refund["refundId"]
         status = refund.get("status")
+        if status in const.REFUND_STATUSES:
+            self.payu_gpo_status = status
         if status == "FINALIZED":
             self._payu_gpo_clear_unconfirmed()
             self._set_done()
