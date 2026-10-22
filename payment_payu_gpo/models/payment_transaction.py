@@ -381,10 +381,12 @@ class PaymentTransaction(models.Model):
         self.provider_reference = order.get("orderId")
         status_code = order.get("status", {}).get("statusCode", "")
         if status_code.startswith("WARNING"):
-            # The bank wants the cardholder (3DS, CVV): PayU will cancel it.
-            self._set_pending(
+            # The bank wants the cardholder (3DS, CVV), who is not there: a
+            # refusal. PayU cancels the order later.
+            self._set_error(
                 _(
-                    "PayU asked for the cardholder (%s): the charge will fail.",
+                    "PayU: the bank refused the charge, it asked for the"
+                    " cardholder (%s).",
                     status_code,
                 )
             )
@@ -519,7 +521,12 @@ class PaymentTransaction(models.Model):
             if self.tokenize and not self.token_id:
                 self._payu_gpo_tokenize()
         elif status in const.STATUS_MAPPING["canceled"]:
-            self._set_canceled()
+            if self.operation == "offline":
+                # Nobody could give up a charge made without the buyer: PayU
+                # cancels the order when the bank refuses it.
+                self._set_error(_("PayU: the bank refused the charge."))
+            else:
+                self._set_canceled()
         else:
             _logger.warning("PayU: unexpected status %s for %s", status, self.reference)
             self._set_error(_("PayU: received data with invalid status: %s", status))

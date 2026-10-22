@@ -14,7 +14,9 @@ Not to be confused with PayU India (`payu.in`).
 - Merchant-initiated charges: `_send_payment_request()` charges the token
   without the buyer (`recurring: STANDARD`, or `cardOnFile:
   STANDARD_MERCHANT`), so any off-session charge (cron, subscription) works
-  with the standard payment API.
+  with the standard payment API. A charge the bank refuses (PayU cancels the
+  order, or asks for the cardholder) is set to error, not cancelled: nobody
+  gave it up.
 - A request PayU did not answer (timeout, 5xx) leaves the payment pending:
   the order may exist, and its notification settles it. A payment or refund
   PayU never confirms (no PayU id, no notification) is set to error after

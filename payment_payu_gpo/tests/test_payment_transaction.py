@@ -707,6 +707,58 @@ class TestPaymentTransaction(PayuGpoCommon):
             self.assertEqual(tx.state, "pending")
             self.assertEqual(tx.provider_reference, "O2")
 
+    def test_refused_charge_without_the_buyer_is_an_error(self):
+        """Nobody can give up a charge made without the buyer: PayU cancels
+        it when the bank refuses it, whether the notification or the status
+        read tells it."""
+        token = self._create_token(provider_ref="TOKC_ABC")
+        notified, read = (
+            self._create_transaction(
+                flow="token",
+                operation="offline",
+                token_id=token.id,
+                state="pending",
+                provider_reference=self.order_id,
+                reference=reference,
+            )
+            for reference in ("payu-refused-notified", "payu-refused-read")
+        )
+        notified._handle_notification_data(
+            "payu_gpo", self._order_notification("CANCELED", notified.reference)
+        )
+        self.assertEqual(notified.state, "error")
+        self.assertIn("refused", notified.state_message)
+        read.last_state_change = fields.Datetime.now() - timedelta(minutes=30)
+        order = self._order_notification("CANCELED", read.reference)["order"]
+        with patch(f"{CLIENT}.get_order", return_value={"orders": [order]}):
+            read._cron_payu_gpo_sync_pending()
+        self.assertEqual(read.state, "error")
+        self.assertIn("refused", read.state_message)
+
+    def test_charge_asking_for_the_cardholder_is_refused(self):
+        """Without the buyer, nobody can authenticate: the charge is refused
+        at once, and PayU's cancellation of the order changes nothing."""
+        token = self._create_token(provider_ref="TOKC_ABC")
+        tx = self._create_transaction(
+            flow="token", operation="offline", token_id=token.id
+        )
+        with patch(
+            f"{CLIENT}.create_order",
+            return_value={
+                "orderId": self.order_id,
+                "status": {"statusCode": "WARNING_CONTINUE_3DS"},
+                "redirectUri": "https://3ds.example/",
+            },
+        ):
+            tx._send_payment_request()
+        self.assertEqual(tx.state, "error")
+        self.assertIn("refused", tx.state_message)
+        self.assertEqual(tx.provider_reference, self.order_id)
+        message = tx.state_message
+        tx._handle_notification_data("payu_gpo", self._order_notification("CANCELED"))
+        self.assertEqual(tx.state, "error")
+        self.assertEqual(tx.state_message, message)
+
     def test_offline_charge_error_does_not_raise(self):
         token = self._create_token(provider_ref="TOKC_ABC")
         tx = self._create_transaction(
