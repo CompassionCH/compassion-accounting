@@ -938,11 +938,14 @@ class PaymentTransaction(models.Model):
         Extension point for other token types (e.g. BLIK PAYID).
         """
         mask = self.payu_gpo_card_mask
+        cards = methods.get("cardTokens")
         cards = [
             card
-            for card in methods.get("cardTokens", [])
-            if card.get("status") == "ACTIVE"
-            and card.get("value", "").startswith("TOKC_")
+            for card in (cards if isinstance(cards, list) else [])
+            if isinstance(card, dict)
+            and card.get("status") == "ACTIVE"
+            and isinstance(card.get("value"), str)
+            and card["value"].startswith("TOKC_")
             and mask
             and card.get("cardNumberMasked") == mask
         ]

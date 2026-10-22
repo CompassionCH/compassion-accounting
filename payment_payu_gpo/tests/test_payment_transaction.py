@@ -644,6 +644,40 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertFalse(tx.token_id)
         self.assertTrue(tx.tokenize, "the cron tries again")
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
+    def test_unreadable_card_list_saves_nothing(self):
+        """The payment is done whatever PayU lists as the buyer's cards; the
+        cron tries to save the card again."""
+        for i, methods in enumerate(
+            (
+                {"cardTokens": "TOKC_NEW"},
+                {"cardTokens": [None, "TOKC_NEW"]},
+                {
+                    "cardTokens": [
+                        {
+                            "value": None,
+                            "status": "ACTIVE",
+                            "cardNumberMasked": "424242******4242",
+                        }
+                    ]
+                },
+            )
+        ):
+            tx = self._create_transaction(
+                flow="redirect", tokenize=True, reference=f"payu-cards-{i}"
+            )
+            tx.payu_gpo_card_mask = "424242******4242"
+            with (
+                patch(f"{CLIENT}.get_trusted_merchant_token", return_value="BUYER"),
+                patch(f"{CLIENT}.get_pay_methods", return_value=methods),
+            ):
+                tx._handle_notification_data(
+                    "payu_gpo", self._order_notification("COMPLETED", tx.reference)
+                )
+            self.assertEqual(tx.state, "done", i)
+            self.assertFalse(tx.token_id, i)
+            self.assertTrue(tx.tokenize, i)
+
     # --- crons --------------------------------------------------------------
 
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
