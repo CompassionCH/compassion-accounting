@@ -155,14 +155,21 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(tx.state, "error")
         self.assertIn("did not return a payment page", tx.state_message)
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_hosted_order_refused(self):
-        """PayU refused the order: nothing to keep, the buyer sees why."""
+        """PayU refused the order: nothing to keep, the buyer reads a plain
+        sentence, not what PayU answered."""
         tx = self._create_transaction(flow="redirect")
         with (
-            patch(f"{CLIENT}.create_order", side_effect=PayuError("refused")),
-            self.assertRaises(ValidationError),
+            patch(
+                f"{CLIENT}.create_order",
+                side_effect=PayuError("ERROR_VALUE_INVALID buyer.email"),
+            ),
+            self.assertRaises(ValidationError) as ctx,
         ):
             tx._get_specific_rendering_values(None)
+        self.assertIn("could not start the payment", str(ctx.exception))
+        self.assertNotIn("ERROR_VALUE_INVALID", str(ctx.exception))
 
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_accepted_order_without_a_known_status_code(self):
@@ -573,8 +580,12 @@ class TestPaymentTransaction(PayuGpoCommon):
             )
         ):
             tx = self._create_transaction(flow="direct", reference=f"payu-plain-{i}")
+            Transaction = type(tx)
             with (
                 patch(f"{CLIENT}.create_order", side_effect=error),
+                patch.object(
+                    Transaction, "_log_message_on_linked_documents"
+                ) as chatter,
                 self.assertLogs(LOGGER, "INFO") as logs,
             ):
                 tx._payu_gpo_pay_with_card_token("TOK_ONCE")
@@ -582,14 +593,20 @@ class TestPaymentTransaction(PayuGpoCommon):
             self.assertIn(message, tx.state_message)
             self.assertNotIn(str(error), tx.state_message)
             self.assertIn(str(error), "\n".join(logs.output))
+            # On the documents the payment is for (sale order, invoice).
+            self.assertIn(f"PayU: {error}", [c.args[0] for c in chatter.call_args_list])
             with (
                 patch(f"{CLIENT}.refund", side_effect=error),
+                patch.object(
+                    Transaction, "_log_message_on_linked_documents"
+                ) as chatter,
                 self.assertLogs(LOGGER, "INFO"),
             ):
                 refund = done._send_refund_request(amount_to_refund=1.0)
             self.assertEqual(refund.state, state)
             self.assertIn("refund", refund.state_message)
             self.assertNotIn(str(error), refund.state_message)
+            self.assertIn(f"PayU: {error}", [c.args[0] for c in chatter.call_args_list])
 
     def test_card_token_refused(self):
         tx = self._create_transaction(flow="direct")
@@ -811,6 +828,19 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(chatter.call_count, 1)
         self.assertEqual(len(logs.output), 1)
         self.assertTrue(tx.payu_gpo_held)
+
+    def test_held_draft_becomes_pending(self):
+        """PayU has an order for a draft, with data that does not match: the
+        payment is no longer a draft (PayU has it) but held, pending."""
+        tx = self._create_transaction(flow="direct")
+        notification = self._order_notification("COMPLETED")
+        notification["order"]["totalAmount"] = "100"
+        with self.assertLogs(LOGGER, "WARNING"):
+            tx._handle_notification_data("payu_gpo", notification)
+        self.assertEqual(tx.state, "pending")
+        self.assertTrue(tx.payu_gpo_held)
+        self.assertEqual(tx.provider_reference, self.order_id)
+        self.assertIn("being checked", tx.state_message)
 
     def test_held_payment_is_flagged_until_settled(self):
         """Staff find the held payments; PayU's matching final answer settles
@@ -1505,6 +1535,7 @@ class TestPaymentTransaction(PayuGpoCommon):
             tx._send_payment_request()
         self.assertEqual(tx.state, "error")
         self.assertIn("refused", tx.state_message)
+        self.assertNotIn("WARNING_CONTINUE_3DS", tx.state_message)
         self.assertEqual(tx.provider_reference, self.order_id)
         message = tx.state_message
         tx._handle_notification_data("payu_gpo", self._order_notification("CANCELED"))

@@ -274,13 +274,16 @@ class TestWebhook(PayuGpoCommon, PaymentHttpCommon):
 
     @mute_logger("odoo.addons.payment_payu_gpo.controllers.main")
     def test_refused_card_submission_leaves_nothing_of_the_check(self):
-        """The check runs in a savepoint: what it wrote before refusing is
-        undone, while the draft is still cancelled and the reason returned."""
+        """The check runs in a savepoint: what it wrote, even written to the
+        database before refusing, is undone, while the draft is still
+        cancelled and the reason returned."""
         tx = self._create_transaction(flow="direct")
         refusal = ValidationError("This donation is already paid.")
 
         def write_then_refuse(transaction):
             transaction.payu_gpo_cardholder_name = "Written by the check"
+            # Flushed: the UPDATE runs inside the savepoint before the refusal.
+            transaction.flush_recordset()
             raise refusal
 
         with (
