@@ -68,22 +68,24 @@ class TestPaymentTransaction(PayuGpoCommon):
 
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_hosted_order_without_answer_is_kept(self):
-        """PayU may have created the order: the payment is kept, pending, so
-        that the next attempt gets another reference, and the buyer goes to
-        the status page instead of PayU's."""
+        """The buyer never got a payment page, so nothing was paid: the
+        payment is kept, in error at once (not an unknown outcome), so that
+        the next attempt gets another reference, and the buyer goes to the
+        status page instead of PayU's."""
         tx = self._create_transaction(flow="redirect")
         with patch(f"{CLIENT}.create_order", side_effect=PayuUnknownOutcome("slow")):
             values = tx._get_specific_rendering_values(None)
         self.assertEqual(values, {"api_url": "/payment/status", "url_params": {}})
-        self.assertEqual(tx.state, "pending")
+        self.assertEqual(tx.state, "error")
+        self.assertFalse(tx.payu_gpo_unconfirmed)
         self.assertFalse(tx.provider_reference)
-        self.assertIn("not confirmed", tx.state_message)
+        self.assertIn("did not return a payment page", tx.state_message)
 
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_hosted_order_with_an_incomplete_answer_is_kept(self):
         """PayU accepted the order but sent no payment page or no usable
-        order id: the payment is kept pending, with the order id PayU gave,
-        and the buyer goes to the status page."""
+        order id: the buyer can't have paid. The payment is kept in error,
+        with the order id PayU gave, and the buyer goes to the status page."""
         for i, (answer, order_id) in enumerate(
             (
                 (
@@ -100,15 +102,17 @@ class TestPaymentTransaction(PayuGpoCommon):
             with patch(f"{CLIENT}.create_order", return_value=answer):
                 values = tx._get_specific_rendering_values(None)
             self.assertEqual(values, {"api_url": "/payment/status", "url_params": {}})
-            self.assertEqual(tx.state, "pending")
+            self.assertEqual(tx.state, "error")
+            self.assertFalse(tx.payu_gpo_unconfirmed)
             self.assertEqual(tx.provider_reference or None, order_id)
-            self.assertIn("not confirmed", tx.state_message)
+            self.assertIn("did not return a payment page", tx.state_message)
 
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_malformed_payment_page_is_an_unknown_outcome(self):
-        """A payment page (hosted or 3DS) that is no https URL: the payment
-        stays pending with its order id, and the buyer goes to the status
-        page."""
+        """A payment page (hosted or 3DS) that is no https URL: the buyer goes
+        to the status page, and the payment keeps its order id. A 3DS payment
+        stays pending (the card may be charged); a hosted one is in error, as
+        nothing can be paid without the page."""
         for i, uri in enumerate(("https://[", "javascript:alert(1)", "//pay")):
             hosted = self._create_transaction(
                 flow="redirect", reference=f"payu-bad-page-{i}"
@@ -128,9 +132,28 @@ class TestPaymentTransaction(PayuGpoCommon):
                 redirect_url = card._payu_gpo_pay_with_card_token("TOK_ONCE")
             self.assertEqual(values, {"api_url": "/payment/status", "url_params": {}})
             self.assertIsNone(redirect_url, uri)
-            for tx in hosted | card:
-                self.assertEqual(tx.state, "pending", uri)
+            for tx, state in ((hosted, "error"), (card, "pending")):
+                self.assertEqual(tx.state, state, uri)
                 self.assertEqual(tx.provider_reference, self.order_id, uri)
+
+    def test_late_cancellation_of_a_hosted_order_without_page(self):
+        """PayU cancels the order the buyer never saw: it stays in error,
+        quietly (Odoo does not cancel an error)."""
+        tx = self._create_transaction(flow="redirect")
+        answer = {"orderId": self.order_id, "status": {"statusCode": "SUCCESS"}}
+        with (
+            patch(f"{CLIENT}.create_order", return_value=answer),
+            self.assertLogs(LOGGER, "WARNING"),
+        ):
+            tx._get_specific_rendering_values(None)
+        with self.assertNoLogs(
+            "odoo.addons.payment.models.payment_transaction", "WARNING"
+        ):
+            tx._handle_notification_data(
+                "payu_gpo", self._order_notification("CANCELED")
+            )
+        self.assertEqual(tx.state, "error")
+        self.assertIn("did not return a payment page", tx.state_message)
 
     def test_hosted_order_refused(self):
         """PayU refused the order: nothing to keep, the buyer sees why."""
@@ -143,8 +166,9 @@ class TestPaymentTransaction(PayuGpoCommon):
 
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_accepted_order_without_a_known_status_code(self):
-        """Through the real client: a hosted order and an offline charge PayU
-        accepted without a usable status code stay pending, never refused."""
+        """Through the real client: PayU accepted without a usable status
+        code. An offline charge stays pending, never refused; a hosted order
+        that never gave its page is in error, not unconfirmed."""
         hosted = self._create_transaction(flow="redirect", reference="payu-hosted")
         answer = {
             "orderId": self.order_id,
@@ -154,7 +178,9 @@ class TestPaymentTransaction(PayuGpoCommon):
         with self._payu_answers((302, answer)):
             values = hosted._get_specific_rendering_values(None)
         self.assertEqual(values["api_url"], "/payment/status")
-        self.assertEqual(hosted.state, "pending")
+        self.assertEqual(hosted.state, "error")
+        self.assertFalse(hosted.payu_gpo_unconfirmed)
+        self.assertEqual(hosted.provider_reference, self.order_id)
         token = self._create_token(provider_ref="TOKC_ABC")
         offline = self._create_transaction(
             flow="token", operation="offline", token_id=token.id
@@ -190,13 +216,13 @@ class TestPaymentTransaction(PayuGpoCommon):
             (200, {"refund": {"refundId": "5001592615"}, "status": {"statusCode": 0}})
         ):
             refund = done._send_refund_request(amount_to_refund=10.0)
-        for tx, payu_id in (
-            (card, self.order_id),
-            (offline, "O2"),
-            (hosted, False),
-            (refund, "5001592615"),
+        for tx, state, payu_id in (
+            (card, "pending", self.order_id),
+            (offline, "pending", "O2"),
+            (hosted, "error", False),
+            (refund, "pending", "5001592615"),
         ):
-            self.assertEqual(tx.state, "pending", tx.reference)
+            self.assertEqual(tx.state, state, tx.reference)
             self.assertEqual(tx.provider_reference, payu_id, tx.reference)
 
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
@@ -1063,11 +1089,19 @@ class TestPaymentTransaction(PayuGpoCommon):
             flow="direct", state="pending", reference="payu-unsent-retried"
         )
         retried.last_state_change = fields.Datetime.now() - timedelta(hours=72)
+        hosted = self._create_transaction(
+            flow="redirect", state="pending", reference="payu-unsent-hosted"
+        )
+        hosted.last_state_change = too_old
         with patch(f"{CLIENT}.get_order", return_value={"orders": []}):
             self.env["payment.transaction"]._cron_payu_gpo_sync_pending()
         self.assertEqual(unsent.state, "error")
         self.assertIn("never confirmed", unsent.state_message)
         self.assertTrue(unsent.payu_gpo_unconfirmed)
+        # Never on the PayU page: nothing paid, nothing unconfirmed.
+        self.assertEqual(hosted.state, "error")
+        self.assertFalse(hosted.payu_gpo_unconfirmed)
+        self.assertIn("did not return a payment page", hosted.state_message)
         for tx in offline | known | retried:
             self.assertEqual(tx.state, "pending", tx.reference)
             self.assertFalse(tx.payu_gpo_unconfirmed, tx.reference)

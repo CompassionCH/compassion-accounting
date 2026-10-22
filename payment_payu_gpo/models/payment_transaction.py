@@ -126,10 +126,13 @@ class PaymentTransaction(models.Model):
                         " later, or choose another payment method."
                     )
                 ) from e
-            # PayU may have the order: keep the payment, so that its
-            # notification finds it and the next attempt gets another
-            # reference (PayU refuses a second order with the same one).
-            self._payu_gpo_set_failed(e)
+            # The buyer never got PayU's page, so nothing can have been paid,
+            # even if PayU created the order. The payment is kept with the
+            # PayU id it may have: the next attempt gets another reference
+            # (PayU refuses a second order with the same one).
+            self._payu_gpo_keep_payu_id(e.data)
+            self._payu_gpo_log_detail(e)
+            self._payu_gpo_set_no_payment_page()
             return {"api_url": "/payment/status", "url_params": {}}
         # The order exists at PayU: from now on PayU owns the outcome, and the
         # status reads (cron, status page) watch this payment.
@@ -141,6 +144,9 @@ class PaymentTransaction(models.Model):
             # GET forms drop the query string of their action: re-post it as inputs
             "url_params": dict(parse_qsl(parsed.query)),
         }
+
+    def _payu_gpo_set_no_payment_page(self):
+        self._set_error(_("PayU did not return a payment page: nothing was paid."))
 
     # --- outgoing: cards, Secure Form token (direct flow) --------------------
 
@@ -664,7 +670,9 @@ class PaymentTransaction(models.Model):
                 self.state_message = _(
                     "PayU canceled this payment: no money was taken."
                 )
-            else:
+            elif self.state != "error":
+                # An error (e.g. no payment page) stays: PayU's cancellation
+                # only confirms it.
                 self._set_canceled()
         else:
             # Not a status PayU documents: nothing to conclude, never a refusal.
@@ -878,9 +886,10 @@ class PaymentTransaction(models.Model):
         while PayU retries them.
 
         They are set to error and flagged payu_gpo_unconfirmed: PayU may have
-        carried them out all the same, so this is not a refusal. Each one is
-        handled in a savepoint: a failing one is logged and never stops the
-        others.
+        carried them out all the same, so this is not a refusal. A hosted-page
+        payment is never flagged: without a PayU id the buyer never reached
+        PayU's page, so nothing was paid. Each one is handled in a savepoint:
+        a failing one is logged and never stops the others.
 
         Charges Odoo makes on its own with a saved card are skipped: the
         module that started them decides when they fail."""
@@ -897,6 +906,10 @@ class PaymentTransaction(models.Model):
         for tx in txs:
             try:
                 with self.env.cr.savepoint():
+                    if tx.operation == "online_redirect":
+                        # Never on PayU's page: nothing can have been paid.
+                        tx._payu_gpo_set_no_payment_page()
+                        continue
                     # Set first: whatever reacts to the error reads it.
                     tx.payu_gpo_unconfirmed = True
                     tx._set_error(

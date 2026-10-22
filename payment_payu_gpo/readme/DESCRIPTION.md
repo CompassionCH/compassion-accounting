@@ -17,8 +17,11 @@ Not to be confused with PayU India (`payu.in`).
   with the standard payment API. A charge the bank refuses (PayU cancels the
   order, or asks for the cardholder) is set to error, not cancelled: nobody
   gave it up.
-- A request PayU did not answer (timeout, 5xx) leaves the payment pending:
-  the order may exist, and its notification settles it. A payment or refund
+- A request PayU did not answer (timeout, 5xx), or answered in a way that
+  can't be used, leaves the payment pending with any PayU id it gave: the
+  order may exist, and its notification or a status read settles it. A
+  hosted-page payment whose page PayU did not return is set to error at once
+  instead: the buyer never reached PayU, so nothing was paid. A payment or refund
   PayU never confirms (no PayU id, no notification) is set to error after
   four days, once PayU has stopped retrying its notifications (72 hours),
   and flagged `payu_gpo_unconfirmed`: its outcome is unknown, which is not a
