@@ -949,7 +949,6 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(tx.state, "error")
 
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
-    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_offline_charge_with_an_incomplete_answer_stays_pending(self):
         token = self._create_token(provider_ref="TOKC_ABC")
         tx = self._create_transaction(
@@ -964,6 +963,7 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertFalse(tx.provider_reference)
         self.assertIn("usable answer", tx.state_message)
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_offline_charge_without_answer_stays_pending(self):
         """Never "failed" while PayU may have charged: no second charge."""
         token = self._create_token(provider_ref="TOKC_ABC")
@@ -1068,7 +1068,6 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(refund_tx.provider_reference, "5001592615")
         self.assertEqual(tx.provider_reference, self.order_id)
 
-    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_refund_with_an_incomplete_answer_stays_pending(self):
         """Its notification (found by reference) settles it."""
         tx = self._create_transaction(
@@ -1079,6 +1078,7 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(refund_tx.state, "pending")
         self.assertFalse(refund_tx.provider_reference)
 
+    @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_refund_without_answer_stays_pending(self):
         tx = self._create_transaction(
             flow="redirect", state="done", provider_reference=self.order_id
