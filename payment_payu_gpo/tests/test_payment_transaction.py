@@ -530,6 +530,47 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertEqual(get.call_count, 2)
         self.assertTrue(all(txs.mapped("payu_gpo_sync_date")))
 
+    @mute_logger(
+        "odoo.addons.payment_payu_gpo.models.payment_transaction", "odoo.sql_db"
+    )
+    def test_cron_stamp_failure_does_not_stop_the_batch(self):
+        """Writing the stamp can fail too, e.g. on a serialization error when
+        PayU's notification of that payment commits during the batch: the
+        payment is skipped, the database transaction stays usable, and the
+        batch goes on."""
+        txs = self.env["payment.transaction"]
+        for i in range(2):
+            tx = self._create_transaction(
+                flow="token",
+                state="pending",
+                provider_reference=f"S{i}",
+                reference=f"payu-stamp-{i}",
+            )
+            tx.last_state_change = fields.Datetime.now() - timedelta(minutes=30)
+            txs |= tx
+        self.env.flush_all()
+        # The database refuses the first payment's stamp when it is flushed.
+        self.env.cr.execute(
+            """
+            CREATE FUNCTION payu_gpo_test_refuse_stamp() RETURNS trigger
+            LANGUAGE plpgsql AS $$
+            BEGIN
+                RAISE EXCEPTION 'could not serialize access';
+            END $$;
+            CREATE TRIGGER payu_gpo_test_refuse_stamp
+            BEFORE UPDATE OF payu_gpo_sync_date ON payment_transaction
+            FOR EACH ROW WHEN (NEW.id = %s)
+            EXECUTE FUNCTION payu_gpo_test_refuse_stamp();
+            """,
+            [txs[0].id],
+        )
+        with patch(f"{CLIENT}.get_order", return_value={"orders": []}) as get:
+            txs._cron_payu_gpo_sync_pending()
+        self.assertEqual(get.call_args.args, ("S1",))
+        self.assertEqual(get.call_count, 1)
+        self.assertFalse(txs[0].payu_gpo_sync_date)
+        self.assertTrue(txs[1].payu_gpo_sync_date)
+
     def test_cron_stops_at_its_time_budget(self):
         txs = self.env["payment.transaction"]
         for i in range(2):

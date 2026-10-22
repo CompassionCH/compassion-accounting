@@ -638,18 +638,22 @@ class PaymentTransaction(models.Model):
     def _payu_gpo_cron_run(self, txs, total, stamp_field, work):
         """Run work on each transaction of a cron batch, then report progress.
 
-        Each payment is stamped first, then handled in a savepoint: a failing
-        one is logged and never rolls back the others. The batch stops after
-        CRON_TIME_BUDGET_SECONDS, before Odoo's time limit kills it unsaved.
+        Each payment is stamped, then handled, each in its own savepoint: a
+        failing one is logged and never rolls back the others. The stamp is
+        written to the database when its savepoint ends, so that a failing
+        write (a notification of the same payment committed meanwhile) is
+        rolled back with it. The batch stops after CRON_TIME_BUDGET_SECONDS,
+        before Odoo's time limit kills it unsaved.
         """
         deadline = time.monotonic() + const.CRON_TIME_BUDGET_SECONDS
         done = 0
         for tx in txs:
             if time.monotonic() > deadline:
                 break
-            tx[stamp_field] = fields.Datetime.now()
             done += 1
             try:
+                with self.env.cr.savepoint():
+                    tx[stamp_field] = fields.Datetime.now()
                 with self.env.cr.savepoint():
                     work(tx)
             except PayuError as e:
