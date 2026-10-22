@@ -245,12 +245,6 @@ msgstr "PayU: nie znaleziono transakcji o numerze referencyjnym %s."
 #. module: payment_payu_gpo
 #. odoo-python
 #: code:addons/payment_payu_gpo/models/payment_transaction.py:0
-msgid "PayU: received data with invalid status: %s"
-msgstr "PayU: otrzymano dane z nieprawidłowym statusem: %s"
-
-#. module: payment_payu_gpo
-#. odoo-python
-#: code:addons/payment_payu_gpo/models/payment_transaction.py:0
 msgid "PayU: received data with missing reference."
 msgstr "PayU: otrzymano dane bez numeru referencyjnego."
 
