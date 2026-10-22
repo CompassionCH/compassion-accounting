@@ -1455,6 +1455,19 @@ class TestPaymentTransaction(PayuGpoCommon):
             tx._get_processing_values()
         create_order.assert_not_called()
 
+    def test_card_validation_refused_when_rendering_on_its_own(self):
+        """A caller that renders the redirect form without the processing
+        values is refused all the same."""
+        tx = self._create_transaction(
+            flow="redirect", operation="validation", amount=0.0, tokenize=True
+        )
+        with (
+            patch(f"{CLIENT}.create_order") as create_order,
+            self.assertRaises(UserError),
+        ):
+            tx._get_specific_rendering_values(None)
+        create_order.assert_not_called()
+
     # --- refunds ------------------------------------------------------------
 
     def test_refund(self):
