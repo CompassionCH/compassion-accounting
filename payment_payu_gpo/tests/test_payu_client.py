@@ -179,6 +179,21 @@ class TestPayuClient(BaseCase):
                 client.create_order({})
             self.assertEqual(ctx.exception.definitive, definitive, ssl_error)
 
+    def test_unreadable_success_is_an_unknown_outcome(self):
+        """PayU accepted the request but its answer can't be read (invalid
+        JSON, null, not an object, a malformed status): the order may exist."""
+        invalid_json = _response(201, None)
+        invalid_json.json.side_effect = ValueError("not JSON")
+        for answer in (
+            invalid_json,
+            _response(201, None),
+            _response(201, ["O1"]),
+            _response(302, {"orderId": "O1", "status": "SUCCESS"}),
+        ):
+            client, _session = self._client(answer)
+            with self.assertRaises(PayuUnknownOutcome):
+                client.create_order({})
+
     def test_invalid_authentication_answers_are_payu_errors(self):
         """Only PayuError leaves the client, whatever PayU sends back."""
         html = _response(200, None)

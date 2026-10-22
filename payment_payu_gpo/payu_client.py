@@ -329,8 +329,11 @@ class PayuClient:
         try:
             data = response.json()
         except ValueError:
-            data = {}
-        status = data.get("status", {}) if isinstance(data, dict) else {}
+            data = None
+        status = data.get("status", {}) if isinstance(data, dict) else None
+        readable = isinstance(status, dict)
+        if not readable:
+            status = {}
         if response.status_code not in ok or status.get(
             "statusCode", "SUCCESS"
         ) not in (
@@ -343,5 +346,11 @@ class PayuClient:
                 status.get("statusDesc") or f"PayU error {response.status_code}",
                 status_code=response.status_code,
                 payu_status=status.get("statusCode"),
+            )
+        if not readable:
+            # Accepted, but what PayU answered can't be read: the request may
+            # have been carried out all the same.
+            raise PayuUnknownOutcome(
+                "PayU sent an unreadable answer", status_code=response.status_code
             )
         return data
