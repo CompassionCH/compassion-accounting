@@ -1186,6 +1186,17 @@ class TestPaymentTransaction(PayuGpoCommon):
             self.assertEqual(refund_tx.state, state, status)
             self.assertFalse(refund_tx.payu_gpo_unconfirmed, status)
 
+    def test_unconfirmed_payments_are_visible(self):
+        """Staff see the flag and PayU's status on the form, and can list
+        the payments PayU never confirmed."""
+        views = self.env["payment.transaction"].get_views(
+            [(False, "form"), (False, "search")]
+        )["views"]
+        for field in ("payu_gpo_unconfirmed", "payu_gpo_status"):
+            self.assertIn(f'name="{field}"', views["form"]["arch"])
+        self.assertIn('name="payu_gpo_unconfirmed"', views["search"]["arch"])
+        self.assertIn("Unconfirmed by PayU", views["search"]["arch"])
+
     def test_cron_sync_pending_skips_refunds(self):
         """A refund's reference is a refund id: never read as an order."""
         tx = self._create_transaction(
