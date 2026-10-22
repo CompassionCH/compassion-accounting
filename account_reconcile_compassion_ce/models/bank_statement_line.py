@@ -103,6 +103,42 @@ class BankStatementLine(models.Model):
                     line["contract_id"] = [contract.id, contract.display_name]
         return new_data, reconcile_auxiliary_id
 
+    def _default_reconcile_data(self, from_unreconcile=False):
+        res = super()._default_reconcile_data(from_unreconcile=from_unreconcile)
+        if from_unreconcile or any(
+            line["kind"] not in ("liquidity", "suspense") for line in res["data"]
+        ):
+            return res
+        # No rule matched: prefill the gift button matching the QRR gift type
+        reconcile_model = self._get_gift_reconcile_model()
+        if not reconcile_model:
+            return res
+        data = [line for line in res["data"] if line["kind"] == "liquidity"]
+        return self._recompute_suspense_line(
+            *self._reconcile_data_by_model(
+                data, reconcile_model, res["reconcile_auxiliary_id"]
+            ),
+            self.manual_reference,
+        )
+
+    def _get_gift_reconcile_model(self):
+        model_obj = self.env["account.reconcile.model"]
+        if not self._get_contract_from_reference():
+            return model_obj
+        gift_type = self.env["sponsorship.gift.type"].browse(
+            int(self.payment_ref.strip()[21])
+        )
+        if not gift_type.exists() or not gift_type.product_id:
+            return model_obj
+        return model_obj.search(
+            [
+                ("rule_type", "=", "writeoff_button"),
+                ("company_id", "=", self.company_id.id),
+                ("line_ids.product_id.product_tmpl_id", "=", gift_type.product_id.id),
+            ],
+            limit=1,
+        )
+
     def _get_contract_from_reference(self):
         """Find the sponsorship of a gift QRR reference, built as
         9 digits + partner ref (7) + commitment number (5) + gift type (1-6)
