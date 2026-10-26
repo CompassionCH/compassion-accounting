@@ -84,7 +84,9 @@ class TestPain002(TestPaymentOrderOutboundBase):
             lambda p: invoice in p.payment_line_ids.move_line_id.move_id
         )
 
-    def _process(self, order_name, status, transactions="", reason=""):
+    def _process(
+        self, order_name, status, transactions="", reason="", name="pain002.xml"
+    ):
         content = PAIN002.format(
             order_name=order_name,
             status=status,
@@ -93,7 +95,7 @@ class TestPain002(TestPaymentOrderOutboundBase):
         )
         ebics_file = self.env["ebics.file"].create(
             {
-                "name": "pain002.xml",
+                "name": name,
                 "date": fields.Datetime.now(),
                 "format_id": self.pain002_format.id,
                 "data": base64.b64encode(content.encode()),
@@ -137,6 +139,25 @@ class TestPain002(TestPaymentOrderOutboundBase):
         self.assertFalse(rejected_line.move_line_id)
         self.assertFalse(accepted.payment_line_ids.returned)
         self.assertIn("Account closed", ebics_file.note_process)
+
+    def test_transaction_rejected_twice(self):
+        order = self._generate_order()
+        rejected = self._payment_of(order, self.invoice)
+        transactions = TRANSACTION.format(
+            end_to_end_id=rejected.id,
+            status="RJCT",
+            reason=REASON.format(code="AC04", info="Account closed"),
+        )
+        self._process(order.name, "PART", transactions)
+        messages = order.message_ids
+
+        ebics_file = self._process(
+            order.name, "PART", transactions, name="pain002-resent.xml"
+        )
+
+        self.assertIn("already freed", ebics_file.note_process)
+        self.assertEqual(order.message_ids, messages)
+        self.assertEqual(rejected.state, "canceled")
 
     def test_grouped_transaction_rejected(self):
         order = self._generate_order(same_partner=True)

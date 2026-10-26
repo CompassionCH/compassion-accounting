@@ -91,9 +91,15 @@ class EbicsFile(models.Model):
             ) % {"ref": end_to_end_id, "rsn": reason}
             order.message_post(body=message)
             return message
+        # The same rejection can be reported again: free each line only once.
+        lines = payment.payment_line_ids.filtered(lambda line: not line.returned)
+        if not lines:
+            return self.env._(
+                "Rejected payment %(payment)s was already freed: %(rsn)s"
+            ) % {"payment": payment.name, "rsn": reason}
         try:
             with self.env.cr.savepoint():
-                payment.payment_line_ids.free_line(reason)
+                lines.free_line(reason)
         except UserError as e:
             message = self.env._(
                 "Rejected payment %(payment)s could not be freed (%(err)s): %(rsn)s"
