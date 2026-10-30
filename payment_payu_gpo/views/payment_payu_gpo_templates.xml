@@ -16,20 +16,40 @@
             t-value="provider_sudo._payu_gpo_get_inline_form_values(pm_sudo.code)"
         />
         <t t-if="payu_gpo_values">
-            <!-- The Secure Form asks no name: 3DS and the receipt need it. -->
-            <div class="mt-2">
-                <label
-                    t-attf-for="o_payu_gpo_cardholder_{{pm_sudo.id}}"
-                    class="form-label"
-                >Name on card</label>
-                <input
-                    type="text"
-                    name="o_payu_gpo_cardholder_name"
-                    t-attf-id="o_payu_gpo_cardholder_{{pm_sudo.id}}"
-                    class="form-control"
-                    autocomplete="cc-name"
-                    maxlength="100"
-                />
+            <!-- The Secure Form asks no name: 3DS and the receipt need it.
+                 The page may prefill it with payu_gpo_cardholder_firstname
+                 and payu_gpo_cardholder_lastname. -->
+            <div class="row mt-2">
+                <div class="col-sm-6">
+                    <label
+                        t-attf-for="o_payu_gpo_cardholder_firstname_{{pm_sudo.id}}"
+                        class="form-label"
+                    >First name</label>
+                    <input
+                        type="text"
+                        name="o_payu_gpo_cardholder_firstname"
+                        t-attf-id="o_payu_gpo_cardholder_firstname_{{pm_sudo.id}}"
+                        class="form-control"
+                        autocomplete="cc-given-name"
+                        maxlength="100"
+                        t-att-value="payu_gpo_cardholder_firstname"
+                    />
+                </div>
+                <div class="col-sm-6 mt-2 mt-sm-0">
+                    <label
+                        t-attf-for="o_payu_gpo_cardholder_lastname_{{pm_sudo.id}}"
+                        class="form-label"
+                    >Last name</label>
+                    <input
+                        type="text"
+                        name="o_payu_gpo_cardholder_lastname"
+                        t-attf-id="o_payu_gpo_cardholder_lastname_{{pm_sudo.id}}"
+                        class="form-control"
+                        autocomplete="cc-family-name"
+                        maxlength="100"
+                        t-att-value="payu_gpo_cardholder_lastname"
+                    />
+                </div>
             </div>
             <div
                 name="o_payu_gpo_card_container"

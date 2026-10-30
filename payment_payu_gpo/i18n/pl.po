@@ -69,17 +69,40 @@ msgstr ""
 
 #. module: payment_payu_gpo
 #: model_terms:ir.ui.view,arch_db:payment_payu_gpo.inline_form
-msgid "Name on card"
-msgstr "Imię i nazwisko na karcie"
+msgid "First name"
+msgstr "Imię"
+
+#. module: payment_payu_gpo
+#: model_terms:ir.ui.view,arch_db:payment_payu_gpo.inline_form
+msgid "Last name"
+msgstr "Nazwisko"
 
 #. module: payment_payu_gpo
 #: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_cardholder_name
 msgid ""
-"Name on the card, as typed in the card form: sent to PayU for 3-D Secure and"
-" as the buyer's name."
+"Full name on the card, as typed in the card form: sent to PayU for 3-D "
+"Secure."
 msgstr ""
 "Imię i nazwisko na karcie, wpisane w formularzu karty: przesyłane do PayU na"
-" potrzeby 3-D Secure i jako dane kupującego."
+" potrzeby 3-D Secure."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_cardholder_firstname
+msgid ""
+"First name on the card, as typed in the card form: sent to PayU as the "
+"buyer's first name."
+msgstr ""
+"Imię na karcie, wpisane w formularzu karty: przesyłane do PayU jako imię "
+"kupującego."
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,help:payment_payu_gpo.field_payment_transaction__payu_gpo_cardholder_lastname
+msgid ""
+"Last name on the card, as typed in the card form: sent to PayU as the "
+"buyer's last name."
+msgstr ""
+"Nazwisko na karcie, wpisane w formularzu karty: przesyłane do PayU jako "
+"nazwisko kupującego."
 
 #. module: payment_payu_gpo
 #: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_provider__payu_gpo_client_id
@@ -158,6 +181,16 @@ msgstr "Token karty PayU"
 #: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_cardholder_name
 msgid "PayU cardholder name"
 msgstr "Imię i nazwisko posiadacza karty (PayU)"
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_cardholder_firstname
+msgid "PayU cardholder first name"
+msgstr "Imię posiadacza karty (PayU)"
+
+#. module: payment_payu_gpo
+#: model:ir.model.fields,field_description:payment_payu_gpo.field_payment_transaction__payu_gpo_cardholder_lastname
+msgid "PayU cardholder last name"
+msgstr "Nazwisko posiadacza karty (PayU)"
 
 #. module: payment_payu_gpo
 #. odoo-python
@@ -392,7 +425,7 @@ msgstr "Przetwarzanie płatności nie powiodło się"
 #. module: payment_payu_gpo
 #. odoo-javascript
 #: code:addons/payment_payu_gpo/static/src/js/payment_form.esm.js:0
-msgid "Please enter the name on the card."
+msgid "Please enter the first and last name on the card."
 msgstr "Wpisz imię i nazwisko widniejące na karcie."
 
 #. module: payment_payu_gpo

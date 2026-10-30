@@ -10,7 +10,7 @@
 ##############################################################################
 {
     "name": "Payment Provider: PayU GPO",
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.1.0",
     "category": "Accounting/Payment Providers",
     "summary": "PayU GPO (secure.payu.com) with card tokens for recurring charges",
     "author": "Compassion CH, Odoo Community Association (OCA)",

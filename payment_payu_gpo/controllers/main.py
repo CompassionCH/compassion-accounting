@@ -99,16 +99,23 @@ class PayuGpoController(http.Controller):
         access_token,
         card_token,
         browser=None,
-        cardholder_name=None,
         card_mask=None,
+        cardholder_firstname=None,
+        cardholder_lastname=None,
+        cardholder_name=None,
     ):
         """Pay a direct-flow transaction with the Secure Form token.
 
         :param str card_token: the token the Secure Form returned (TOK_, TOKD_)
         :param dict browser: screen/timezone/language data collected by the
                              browser; HTTP headers and IP are added here
-        :param str cardholder_name: name on the card, typed next to the form
         :param str card_mask: masked card number returned by the Secure Form
+        :param str cardholder_firstname: first name on the card, typed next to
+                                         the form
+        :param str cardholder_lastname: last name on the card, likewise
+        :param str cardholder_name: full name on the card, sent instead by a
+                                    page loaded before the form asked the
+                                    first and last names apart
 
         :return: {"redirect_url": 3DS page to send the buyer to, or None}, and
                  "error": the reason, when the payment was refused before
@@ -145,12 +152,23 @@ class PayuGpoController(http.Controller):
             }
         else:
             browser = None
+        firstname, lastname = (
+            name if isinstance(name, str) else None
+            for name in (cardholder_firstname, cardholder_lastname)
+        )
+        if (
+            not (firstname or lastname)
+            and isinstance(cardholder_name, str)
+            and cardholder_name.strip()
+        ):
+            firstname, lastname = payment_utils.split_partner_name(cardholder_name)
         return {
             "redirect_url": tx._payu_gpo_pay_with_card_token(
                 card_token,
                 browser,
-                cardholder_name if isinstance(cardholder_name, str) else None,
                 card_mask if isinstance(card_mask, str) else None,
+                firstname,
+                lastname,
             )
         }
 

@@ -31,13 +31,14 @@ class TestWebhook(PayuGpoCommon, PaymentHttpCommon):
             self._build_url(PayuGpoController._webhook_url), data=body, headers=headers
         )
 
-    def _pay_card(self, tx, card_token="TOK_X"):
+    def _pay_card(self, tx, card_token="TOK_X", **params):
         return self.make_jsonrpc_request(
             self._build_url(PayuGpoController._card_payment_url),
             {
                 "reference": tx.reference,
                 "access_token": self._generate_test_access_token(tx.reference),
                 "card_token": card_token,
+                **params,
             },
         )
 
@@ -115,6 +116,23 @@ class TestWebhook(PayuGpoCommon, PaymentHttpCommon):
             with patch(f"{TX}._payu_gpo_pay_with_card_token", return_value=None) as pay:
                 self.assertEqual(self._pay_card(tx, card_token), {"redirect_url": None})
             self.assertEqual(pay.call_args.args[0], card_token)
+
+    def test_card_payment_passes_the_cardholder_names(self):
+        """The first and last names reach the payment apart; the full name
+        a page loaded before they were asked apart sends is split."""
+        cases = (
+            (
+                {"cardholder_firstname": "Jan", "cardholder_lastname": "Kowalski"},
+                ("Jan", "Kowalski"),
+            ),
+            ({"cardholder_name": " Anna Maria Nowak "}, ("Anna Maria", "Nowak")),
+            ({"cardholder_name": "  "}, (None, None)),
+        )
+        for i, (params, names) in enumerate(cases):
+            tx = self._create_transaction(flow="direct", reference=f"payu-names-{i}")
+            with patch(f"{TX}._payu_gpo_pay_with_card_token", return_value=None) as pay:
+                self._pay_card(tx, **params)
+            self.assertEqual(tuple(pay.call_args.args[3:]), names, params)
 
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_card_payment_accepted_survives_an_unreadable_status(self):

@@ -82,11 +82,11 @@ paymentForm.include({
                 this._enableButton();
                 return;
             }
-            const cardholderInput = this._payuGpoCardholderInput();
-            if (cardholderInput && !cardholderInput.value.trim()) {
+            const cardholderInputs = this._payuGpoCardholderInputs();
+            if (cardholderInputs.some((input) => !input.value.trim())) {
                 this._displayErrorDialog(
                     _t("Incorrect payment details"),
-                    _t("Please enter the name on the card."),
+                    _t("Please enter the first and last name on the card."),
                 );
                 this._enableButton();
                 return;
@@ -118,9 +118,8 @@ paymentForm.include({
             await this._super(...arguments);
             return;
         }
-        const cardholderName = (
-            this._payuGpoCardholderInput()?.value || ""
-        ).trim();
+        const [cardholderFirstname, cardholderLastname] =
+            this._payuGpoCardholderInputs().map((input) => input.value.trim());
         let tokenization = null;
         try {
             tokenization = await this.payuGpoSdks[paymentOptionId].tokenize(
@@ -148,8 +147,9 @@ paymentForm.include({
                 access_token: processingValues.payu_gpo_access_token,
                 card_token: tokenization.body.token,
                 browser: this._payuGpoBrowserData(),
-                cardholder_name: cardholderName,
                 card_mask: tokenization.body.mask,
+                cardholder_firstname: cardholderFirstname || "",
+                cardholder_lastname: cardholderLastname || "",
             });
             if (result.error) {
                 // Refused before reaching PayU: the server cancelled the draft.
@@ -195,15 +195,22 @@ paymentForm.include({
     },
 
     /**
-     * The "Name on card" input of the selected card option, if any.
+     * The first and last name inputs of the selected card option, if any.
      *
      * @private
-     * @returns {HTMLInputElement|null}
+     * @returns {HTMLInputElement[]}
      */
-    _payuGpoCardholderInput() {
-        return this._getInlineForm(
+    _payuGpoCardholderInputs() {
+        const inlineForm = this._getInlineForm(
             document.querySelector('input[name="o_payment_radio"]:checked'),
-        )?.querySelector('[name="o_payu_gpo_cardholder_name"]');
+        );
+        return ["firstname", "lastname"]
+            .map((part) =>
+                inlineForm?.querySelector(
+                    `[name="o_payu_gpo_cardholder_${part}"]`,
+                ),
+            )
+            .filter(Boolean);
     },
 
     /**

@@ -43,8 +43,22 @@ class PaymentTransaction(models.Model):
         string="PayU cardholder name",
         readonly=True,
         copy=False,
-        help="Name on the card, as typed in the card form: sent to PayU for 3-D"
-        " Secure and as the buyer's name.",
+        help="Full name on the card, as typed in the card form: sent to PayU"
+        " for 3-D Secure.",
+    )
+    payu_gpo_cardholder_firstname = fields.Char(
+        string="PayU cardholder first name",
+        readonly=True,
+        copy=False,
+        help="First name on the card, as typed in the card form: sent to PayU"
+        " as the buyer's first name.",
+    )
+    payu_gpo_cardholder_lastname = fields.Char(
+        string="PayU cardholder last name",
+        readonly=True,
+        copy=False,
+        help="Last name on the card, as typed in the card form: sent to PayU"
+        " as the buyer's last name.",
     )
     payu_gpo_card_token = fields.Char(
         string="PayU card token",
@@ -202,25 +216,42 @@ class PaymentTransaction(models.Model):
         """
 
     def _payu_gpo_pay_with_card_token(
-        self, card_token, browser=None, cardholder_name=None, card_mask=None
+        self,
+        card_token,
+        browser=None,
+        card_mask=None,
+        cardholder_firstname=None,
+        cardholder_lastname=None,
     ):
         """Charge the token the Secure Form returned (TOK_, TOKD_).
 
         :param dict browser: threeDsAuthentication.browser data; without it
                              PayU can only attempt 3DS, which issuers refuse
                              for a first recurring payment
-        :param str cardholder_name: name on the card typed by the buyer (the
-                             Secure Form does not ask it): 3DS data, and the
-                             buyer's name PayU sends back in its notification
         :param str card_mask: masked card number from the Secure Form, to find
                              the card among the buyer's ones if PayU does not
                              return its token
+        :param str cardholder_firstname: first name on the card typed by the
+                             buyer (the Secure Form does not ask it): the
+                             buyer's first name PayU sends back in its
+                             notification, and with the last name 3DS data
+        :param str cardholder_lastname: last name on the card, likewise
         :return: the URL where the buyer must authenticate (3DS), or None
         """
-        cardholder_name = " ".join((cardholder_name or "").split())[:100]
+        firstname, lastname = (
+            " ".join((name or "").split())[:100]
+            for name in (cardholder_firstname, cardholder_lastname)
+        )
+        cardholder_name = " ".join(filter(None, (firstname, lastname)))[:100]
         values = {}
         if cardholder_name:
-            values["payu_gpo_cardholder_name"] = cardholder_name
+            values.update(
+                {
+                    "payu_gpo_cardholder_name": cardholder_name,
+                    "payu_gpo_cardholder_firstname": firstname,
+                    "payu_gpo_cardholder_lastname": lastname,
+                }
+            )
         if card_mask:
             values["payu_gpo_card_mask"] = str(card_mask)[:32]
         three_ds = {"browser": browser} if browser else {}
@@ -502,13 +533,18 @@ class PaymentTransaction(models.Model):
         return str(payment_utils.to_minor_currency_units(amount, self.currency_id))
 
     def _payu_gpo_buyer_names(self):
-        """First and last name of the buyer sent to PayU: the name on the
-        card when the buyer typed one, else the partner's name.
+        """First and last name of the buyer sent to PayU: the names on the
+        card when the buyer typed them, else the partner's name split.
 
         Extension point: a module whose partners can be known by email only
         returns ("", "") for them, so that PayU asks the name instead of
         showing a placeholder (empty values are not sent).
         """
+        if self.payu_gpo_cardholder_firstname or self.payu_gpo_cardholder_lastname:
+            return (
+                self.payu_gpo_cardholder_firstname or "",
+                self.payu_gpo_cardholder_lastname or "",
+            )
         name = (self.payu_gpo_cardholder_name or self.partner_name or "").strip()
         return payment_utils.split_partner_name(name) if name else ("", "")
 
