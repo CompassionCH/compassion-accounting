@@ -423,7 +423,9 @@ msgid "Payment processing failed"
 msgstr "Przetwarzanie płatności nie powiodło się"
 
 #. module: payment_payu_gpo
+#. odoo-python
 #. odoo-javascript
+#: code:addons/payment_payu_gpo/controllers/main.py:0
 #: code:addons/payment_payu_gpo/static/src/js/payment_form.esm.js:0
 msgid "Please enter the first and last name on the card."
 msgstr "Wpisz imię i nazwisko widniejące na karcie."

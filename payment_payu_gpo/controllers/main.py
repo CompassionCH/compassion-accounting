@@ -20,6 +20,7 @@ from odoo.addons.payment.controllers.post_processing import PaymentPostProcessin
 
 from ..const import MULTI_USE_TOKEN_PREFIX, PROVIDER_CODE, SECURE_FORM_TOKEN_PREFIXES
 from ..payu_client import verify_signature
+from ..utils import clean_cardholder_name
 
 _logger = logging.getLogger(__name__)
 
@@ -119,7 +120,8 @@ class PayuGpoController(http.Controller):
 
         :return: {"redirect_url": 3DS page to send the buyer to, or None}, and
                  "error": the reason, when the payment was refused before
-                 reaching PayU (_payu_gpo_check_card_submission)
+                 reaching PayU (a name missing, or
+                 _payu_gpo_check_card_submission)
         """
         tx = self._payu_gpo_lock_transaction(reference, access_token)
         # A card to save needs the multi-use (MULTI) token.
@@ -132,8 +134,20 @@ class PayuGpoController(http.Controller):
                 # page tells the outcome.
                 return {"redirect_url": None}
             raise ValidationError(_("PayU: this payment was already processed."))
+        firstname, lastname = (
+            clean_cardholder_name(name)
+            for name in (cardholder_firstname, cardholder_lastname)
+        )
+        legacy_name = clean_cardholder_name(cardholder_name)
+        if not (firstname or lastname) and legacy_name:
+            firstname, lastname = payment_utils.split_partner_name(legacy_name)
         try:
             with request.env.cr.savepoint():
+                # The form requires both, but a posted request can omit them.
+                if not (firstname and lastname):
+                    raise ValidationError(
+                        _("Please enter the first and last name on the card.")
+                    )
                 tx._payu_gpo_check_card_submission()
         except (UserError, ValidationError) as e:
             # Refused before PayU got anything: the draft must not block what
@@ -152,16 +166,6 @@ class PayuGpoController(http.Controller):
             }
         else:
             browser = None
-        firstname, lastname = (
-            name if isinstance(name, str) else None
-            for name in (cardholder_firstname, cardholder_lastname)
-        )
-        if (
-            not (firstname or lastname)
-            and isinstance(cardholder_name, str)
-            and cardholder_name.strip()
-        ):
-            firstname, lastname = payment_utils.split_partner_name(cardholder_name)
         return {
             "redirect_url": tx._payu_gpo_pay_with_card_token(
                 card_token,

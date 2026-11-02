@@ -32,6 +32,7 @@ from odoo.addons.payment import utils as payment_utils
 from .. import const
 from ..controllers.main import PayuGpoController
 from ..payu_client import PayuError, PayuUnknownOutcome
+from ..utils import clean_cardholder_name
 
 _logger = logging.getLogger(__name__)
 
@@ -239,7 +240,7 @@ class PaymentTransaction(models.Model):
         :return: the URL where the buyer must authenticate (3DS), or None
         """
         firstname, lastname = (
-            " ".join((name or "").split())[:100]
+            clean_cardholder_name(name)
             for name in (cardholder_firstname, cardholder_lastname)
         )
         cardholder_name = " ".join(filter(None, (firstname, lastname)))[:100]
