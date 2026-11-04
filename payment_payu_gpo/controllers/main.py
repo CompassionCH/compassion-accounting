@@ -20,6 +20,7 @@ from odoo.addons.payment.controllers.post_processing import PaymentPostProcessin
 
 from ..const import MULTI_USE_TOKEN_PREFIX, PROVIDER_CODE, SECURE_FORM_TOKEN_PREFIXES
 from ..payu_client import verify_signature
+from ..utils import clean_cardholder_name
 
 _logger = logging.getLogger(__name__)
 
@@ -92,6 +93,20 @@ class PayuGpoController(http.Controller):
         )
         return tx
 
+    @staticmethod
+    def _payu_gpo_use_page_lang():
+        """Answer in the language of the page the donor pays on.
+
+        This route is not a website route: Odoo gives it the session's
+        language, which comes from the browser, and ignores the frontend_lang
+        cookie that the website sets to the page's language.
+        """
+        lang = request.env["ir.http"].get_nearest_lang(
+            request.cookies.get("frontend_lang")
+        )
+        if lang:
+            request.update_context(lang=lang)
+
     @http.route(_card_payment_url, type="json", auth="public")
     def payu_gpo_card_payment(
         self,
@@ -99,21 +114,30 @@ class PayuGpoController(http.Controller):
         access_token,
         card_token,
         browser=None,
-        cardholder_name=None,
         card_mask=None,
+        cardholder_firstname=None,
+        cardholder_lastname=None,
+        cardholder_name=None,
     ):
         """Pay a direct-flow transaction with the Secure Form token.
 
         :param str card_token: the token the Secure Form returned (TOK_, TOKD_)
         :param dict browser: screen/timezone/language data collected by the
                              browser; HTTP headers and IP are added here
-        :param str cardholder_name: name on the card, typed next to the form
         :param str card_mask: masked card number returned by the Secure Form
+        :param str cardholder_firstname: first name on the card, typed next to
+                                         the form
+        :param str cardholder_lastname: last name on the card, likewise
+        :param str cardholder_name: full name on the card, sent instead by a
+                                    page loaded before the form asked the
+                                    first and last names apart
 
         :return: {"redirect_url": 3DS page to send the buyer to, or None}, and
                  "error": the reason, when the payment was refused before
-                 reaching PayU (_payu_gpo_check_card_submission)
+                 reaching PayU (a name missing, or
+                 _payu_gpo_check_card_submission)
         """
+        self._payu_gpo_use_page_lang()
         tx = self._payu_gpo_lock_transaction(reference, access_token)
         # A card to save needs the multi-use (MULTI) token.
         prefixes = MULTI_USE_TOKEN_PREFIX if tx.tokenize else SECURE_FORM_TOKEN_PREFIXES
@@ -125,8 +149,20 @@ class PayuGpoController(http.Controller):
                 # page tells the outcome.
                 return {"redirect_url": None}
             raise ValidationError(_("PayU: this payment was already processed."))
+        firstname, lastname = (
+            clean_cardholder_name(name)
+            for name in (cardholder_firstname, cardholder_lastname)
+        )
+        legacy_name = clean_cardholder_name(cardholder_name)
+        if not (firstname or lastname) and legacy_name:
+            firstname, lastname = payment_utils.split_partner_name(legacy_name)
         try:
             with request.env.cr.savepoint():
+                # The form requires both, but a posted request can omit them.
+                if not (firstname and lastname):
+                    raise ValidationError(
+                        _("Please enter the first and last name on the card.")
+                    )
                 tx._payu_gpo_check_card_submission()
         except (UserError, ValidationError) as e:
             # Refused before PayU got anything: the draft must not block what
@@ -149,8 +185,9 @@ class PayuGpoController(http.Controller):
             "redirect_url": tx._payu_gpo_pay_with_card_token(
                 card_token,
                 browser,
-                cardholder_name if isinstance(cardholder_name, str) else None,
                 card_mask if isinstance(card_mask, str) else None,
+                firstname,
+                lastname,
             )
         }
 

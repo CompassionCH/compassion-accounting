@@ -31,13 +31,21 @@ class TestWebhook(PayuGpoCommon, PaymentHttpCommon):
             self._build_url(PayuGpoController._webhook_url), data=body, headers=headers
         )
 
-    def _pay_card(self, tx, card_token="TOK_X"):
+    def _pay_card(self, tx, card_token="TOK_X", **params):
+        names = {"cardholder_firstname", "cardholder_lastname", "cardholder_name"}
+        if not names & params.keys():
+            params = {
+                "cardholder_firstname": "Anna",
+                "cardholder_lastname": "Nowak",
+                **params,
+            }
         return self.make_jsonrpc_request(
             self._build_url(PayuGpoController._card_payment_url),
             {
                 "reference": tx.reference,
                 "access_token": self._generate_test_access_token(tx.reference),
                 "card_token": card_token,
+                **params,
             },
         )
 
@@ -115,6 +123,67 @@ class TestWebhook(PayuGpoCommon, PaymentHttpCommon):
             with patch(f"{TX}._payu_gpo_pay_with_card_token", return_value=None) as pay:
                 self.assertEqual(self._pay_card(tx, card_token), {"redirect_url": None})
             self.assertEqual(pay.call_args.args[0], card_token)
+
+    def test_card_payment_passes_the_cardholder_names(self):
+        """The first and last names reach the payment apart and cleaned; the
+        full name a page loaded before they were asked apart sends is split."""
+        cases = (
+            (
+                {"cardholder_firstname": "Jan", "cardholder_lastname": "Kowalski"},
+                ("Jan", "Kowalski"),
+            ),
+            (
+                {"cardholder_firstname": "Ja\x00n", "cardholder_lastname": "Nowak\n"},
+                ("Jan", "Nowak"),
+            ),
+            ({"cardholder_name": " Anna Maria Nowak "}, ("Anna Maria", "Nowak")),
+        )
+        for i, (params, names) in enumerate(cases):
+            tx = self._create_transaction(flow="direct", reference=f"payu-names-{i}")
+            with patch(f"{TX}._payu_gpo_pay_with_card_token", return_value=None) as pay:
+                self._pay_card(tx, **params)
+            self.assertEqual(tuple(pay.call_args.args[3:]), names, params)
+
+    @mute_logger("odoo.addons.payment_payu_gpo.controllers.main")
+    def test_card_payment_needs_both_names(self):
+        """A request without both names is refused before PayU gets anything,
+        and its draft is cancelled for the buyer to try again."""
+        for i, params in enumerate(
+            (
+                {"cardholder_firstname": "Jan", "cardholder_lastname": "  "},
+                {"cardholder_firstname": "\x00", "cardholder_lastname": "Nowak"},
+                {"cardholder_name": "Jan"},
+                {"cardholder_name": "  "},
+            )
+        ):
+            tx = self._create_transaction(flow="direct", reference=f"payu-nameless-{i}")
+            with patch(f"{CLIENT}.create_order") as create_order:
+                result = self._pay_card(tx, **params)
+            create_order.assert_not_called()
+            self.assertEqual(
+                result["error"], "Please enter the first and last name on the card."
+            )
+            tx.invalidate_recordset()
+            self.assertEqual(tx.state, "cancel", params)
+
+    @mute_logger("odoo.addons.payment_payu_gpo.controllers.main")
+    def test_card_payment_refuses_in_the_page_language(self):
+        """The refusal follows the page's language (the frontend_lang cookie),
+        not the browser's: the payment form shows it under its own title."""
+        self.env["res.lang"]._activate_lang("pl_PL")
+        self.opener.cookies["frontend_lang"] = "pl_PL"
+        tx = self._create_transaction(flow="direct", reference="payu-page-lang")
+        result = self.make_jsonrpc_request(
+            self._build_url(PayuGpoController._card_payment_url),
+            {
+                "reference": tx.reference,
+                "access_token": self._generate_test_access_token(tx.reference),
+                "card_token": "TOK_X",
+                "cardholder_firstname": "Jan",
+            },
+            headers={"Accept-Language": "en-US"},
+        )
+        self.assertEqual(result["error"], "Wpisz imię i nazwisko widniejące na karcie.")
 
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_card_payment_accepted_survives_an_unreadable_status(self):

@@ -369,8 +369,9 @@ class TestPaymentTransaction(PayuGpoCommon):
         self.assertNotIn("lastName", payload["buyer"])
         self.assertEqual(payload["buyer"]["email"], tx.partner_email)
 
-    def test_card_token_sends_cardholder_name(self):
-        """The name typed next to the Secure Form goes to 3DS and the buyer."""
+    def test_card_token_sends_cardholder_names(self):
+        """The first and last names typed next to the Secure Form go to the
+        buyer as typed, not split again, and together to 3DS."""
         tx = self._create_transaction(flow="direct", tokenize=False)
         with (
             patch(
@@ -379,14 +380,21 @@ class TestPaymentTransaction(PayuGpoCommon):
             ) as create_order,
             patch(f"{CLIENT}.get_order", return_value=self._completed()),
         ):
-            tx._payu_gpo_pay_with_card_token("TOK_ONCE", None, "  Anna   Nowak ")
+            tx._payu_gpo_pay_with_card_token(
+                "TOK_ONCE",
+                cardholder_firstname="  Jan ",
+                cardholder_lastname=" Kowalski   Nowak",
+            )
         payload = create_order.call_args.args[0]
         self.assertEqual(
-            payload["threeDsAuthentication"], {"cardholder": {"name": "Anna Nowak"}}
+            payload["threeDsAuthentication"],
+            {"cardholder": {"name": "Jan Kowalski Nowak"}},
         )
-        self.assertEqual(payload["buyer"]["firstName"], "Anna")
-        self.assertEqual(payload["buyer"]["lastName"], "Nowak")
-        self.assertEqual(tx.payu_gpo_cardholder_name, "Anna Nowak")
+        self.assertEqual(payload["buyer"]["firstName"], "Jan")
+        self.assertEqual(payload["buyer"]["lastName"], "Kowalski Nowak")
+        self.assertEqual(tx.payu_gpo_cardholder_name, "Jan Kowalski Nowak")
+        self.assertEqual(tx.payu_gpo_cardholder_firstname, "Jan")
+        self.assertEqual(tx.payu_gpo_cardholder_lastname, "Kowalski Nowak")
 
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_card_accepted_keeps_its_token_until_completed(self):

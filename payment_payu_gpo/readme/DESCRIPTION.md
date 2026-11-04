@@ -2,10 +2,12 @@ Payment provider for **PayU GPO** (Europe, `secure.payu.com`, REST API v2.1).
 Not to be confused with PayU India (`payu.in`).
 
 - Hosted payment page (redirect) for BLIK and other non-card methods.
-- Card payments through the PayU Secure Form, with a "Name on card" field
-  next to it (the Secure Form asks none): sent to PayU as 3-D Secure
-  cardholder data and as the buyer's name, so the payer's name comes back in
-  PayU's notification.
+- Card payments through the PayU Secure Form, with "First name" and "Last
+  name" fields next to it (the Secure Form asks none): sent to PayU as the
+  buyer's first and last name, as typed, and together as 3-D Secure
+  cardholder data, so the payer's name comes back in PayU's notification. A
+  page may prefill them with `payu_gpo_cardholder_firstname` and
+  `payu_gpo_cardholder_lastname`.
 - Card tokenization: a card saved on payment is a card on file
   (`cardOnFile: FIRST`), or a card for scheduled recurring charges
   (`recurring: FIRST`) when `_payu_gpo_card_is_recurring()` says so. The
