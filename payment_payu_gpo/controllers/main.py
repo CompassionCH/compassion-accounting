@@ -93,6 +93,20 @@ class PayuGpoController(http.Controller):
         )
         return tx
 
+    @staticmethod
+    def _payu_gpo_use_page_lang():
+        """Answer in the language of the page the donor pays on.
+
+        This route is not a website route: Odoo gives it the session's
+        language, which comes from the browser, and ignores the frontend_lang
+        cookie that the website sets to the page's language.
+        """
+        lang = request.env["ir.http"].get_nearest_lang(
+            request.cookies.get("frontend_lang")
+        )
+        if lang:
+            request.update_context(lang=lang)
+
     @http.route(_card_payment_url, type="json", auth="public")
     def payu_gpo_card_payment(
         self,
@@ -123,6 +137,7 @@ class PayuGpoController(http.Controller):
                  reaching PayU (a name missing, or
                  _payu_gpo_check_card_submission)
         """
+        self._payu_gpo_use_page_lang()
         tx = self._payu_gpo_lock_transaction(reference, access_token)
         # A card to save needs the multi-use (MULTI) token.
         prefixes = MULTI_USE_TOKEN_PREFIX if tx.tokenize else SECURE_FORM_TOKEN_PREFIXES

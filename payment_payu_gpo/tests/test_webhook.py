@@ -166,6 +166,25 @@ class TestWebhook(PayuGpoCommon, PaymentHttpCommon):
             tx.invalidate_recordset()
             self.assertEqual(tx.state, "cancel", params)
 
+    @mute_logger("odoo.addons.payment_payu_gpo.controllers.main")
+    def test_card_payment_refuses_in_the_page_language(self):
+        """The refusal follows the page's language (the frontend_lang cookie),
+        not the browser's: the payment form shows it under its own title."""
+        self.env["res.lang"]._activate_lang("pl_PL")
+        self.opener.cookies["frontend_lang"] = "pl_PL"
+        tx = self._create_transaction(flow="direct", reference="payu-page-lang")
+        result = self.make_jsonrpc_request(
+            self._build_url(PayuGpoController._card_payment_url),
+            {
+                "reference": tx.reference,
+                "access_token": self._generate_test_access_token(tx.reference),
+                "card_token": "TOK_X",
+                "cardholder_firstname": "Jan",
+            },
+            headers={"Accept-Language": "en-US"},
+        )
+        self.assertEqual(result["error"], "Wpisz imię i nazwisko widniejące na karcie.")
+
     @mute_logger("odoo.addons.payment_payu_gpo.models.payment_transaction")
     def test_card_payment_accepted_survives_an_unreadable_status(self):
         """PayU accepted the order, the status read right after fails: the
