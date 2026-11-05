@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2026 Compassion CH
+     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<odoo>
+    <record id="bank_statement_line_form_reconcile_view" model="ir.ui.view">
+        <field name="name">account.bank.statement.line.reconcile.utm</field>
+        <field name="model">account.bank.statement.line</field>
+        <field
+            name="inherit_id"
+            ref="account_reconcile_oca.bank_statement_line_form_reconcile_view"
+        />
+        <field name="arch" type="xml">
+            <page name="manual" position="inside">
+                <group string="Marketing" name="utm">
+                    <group>
+                        <field
+                            name="campaign_id"
+                            options="{'create_name_field': 'title'}"
+                        />
+                        <field name="medium_id" />
+                    </group>
+                    <group>
+                        <field name="source_id" />
+                    </group>
+                </group>
+            </page>
+        </field>
+    </record>
+</odoo>
