@@ -42,6 +42,23 @@ class BankStatementLine(models.Model):
             self.analytic_distribution = self.env[
                 "account.analytic.distribution.model"
             ]._get_distribution(arguments)
+            if not self.manual_contract_id:
+                self._set_default_utm()
+
+    def _set_default_utm(self):
+        """Income without a contract is attributed to the UTM of the move:
+        fill in the empty ones with the defaults of the system parameters
+        account_reconcile_compassion_ce.default_utm_medium_id and
+        account_reconcile_compassion_ce.default_utm_source_id."""
+        params = self.env["ir.config_parameter"].sudo()
+        for field, model in (("medium_id", "utm.medium"), ("source_id", "utm.source")):
+            if self[field]:
+                continue
+            default_id = params.get_param(
+                f"account_reconcile_compassion_ce.default_utm_{field}"
+            )
+            if default_id:
+                self[field] = self.env[model].browse(int(default_id)).exists()
 
     @api.onchange("manual_contract_id")
     def on_change_manual_contract_id(self):

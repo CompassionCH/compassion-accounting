@@ -29,13 +29,14 @@
 # pylint: disable=C8101
 {
     "name": "Community Bank Statement Reconcile for Compassion",
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.1.0",
     "author": "Compassion CH",
     "license": "AGPL-3",
     "category": "Finance",
     "website": "https://github.com/CompassionCH/compassion-accounting",
     "depends": [
         "account_reconcile_oca_queue",
+        "account_reconcile_oca_utm",
         "analytic",
         "gift_compassion",
         "thankyou_letters",
