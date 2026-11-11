@@ -65,7 +65,17 @@ class BankStatementLine(models.Model):
 
     @api.onchange("manual_contract_id")
     def on_change_manual_contract_id(self):
-        if self.manual_contract_id.ambassador_id:
+        # Take the ambassador of a newly chosen contract (or none), but keep
+        # the one of the line when it is only reloaded (line selected again)
+        line = next(
+            (
+                line
+                for line in self.reconcile_data_info.get("data", [])
+                if line["reference"] == self.manual_reference
+            ),
+            {},
+        )
+        if self.manual_contract_id.id != self._get_line_id(line, "contract_id"):
             self.manual_ambassador_id = self.manual_contract_id.ambassador_id
         # Make sure the reconcile data is updated when the contract changes
         self._onchange_manual_reconcile_vals()
