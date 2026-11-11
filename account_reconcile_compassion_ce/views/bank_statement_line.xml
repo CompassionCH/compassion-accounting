@@ -18,6 +18,12 @@
                        domain="[('state','!=','draft'),'|', ('partner_id', '=', manual_partner_id),('correspondent_id', '=', manual_partner_id)]"
                 />
             </field>
+            <field name="manual_name" position="after">
+                <field name="avoid_thankyou_letter"
+                       string="No thank-you letter"
+                       readonly="is_reconciled"
+                />
+            </field>
         </field>
     </record>
 </odoo>
