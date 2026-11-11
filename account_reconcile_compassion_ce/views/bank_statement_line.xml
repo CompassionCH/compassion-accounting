@@ -17,6 +17,16 @@
                        modifiers="{'readonly': ['|', '|', '|', ('manual_exchange_counterpart', '=', True),('manual_reference', '=', False), ('is_reconciled', '=', True), ('manual_line_id', '!=', False)]}"
                        domain="[('state','!=','draft'),'|', ('partner_id', '=', manual_partner_id),('correspondent_id', '=', manual_partner_id)]"
                 />
+                <field name="manual_ambassador_id"
+                       string="Ambassador"
+                       modifiers="{'readonly': ['|', '|', '|', ('manual_exchange_counterpart', '=', True),('manual_reference', '=', False), ('is_reconciled', '=', True), ('manual_line_id', '!=', False)]}"
+                />
+                <field name="manual_is_gift" invisible="1" />
+                <field name="manual_gift_instructions"
+                       string="Gift message"
+                       invisible="not manual_is_gift"
+                       modifiers="{'readonly': ['|', '|', '|', ('manual_exchange_counterpart', '=', True),('manual_reference', '=', False), ('is_reconciled', '=', True), ('manual_line_id', '!=', False)]}"
+                />
             </field>
             <field name="manual_name" position="after">
                 <field name="avoid_thankyou_letter"
