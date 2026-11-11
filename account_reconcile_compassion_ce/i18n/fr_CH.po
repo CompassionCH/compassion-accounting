@@ -122,6 +122,12 @@ msgid "Active"
 msgstr "Actif"
 
 #. module: account_reconcile_compassion_ce
+#: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_bank_statement_line__manual_ambassador_id
+#: model_terms:ir.ui.view,arch_db:account_reconcile_compassion_ce.bank_statement_line_form_reconcile_view
+msgid "Ambassador"
+msgstr "Ambassadeur"
+
+#. module: account_reconcile_compassion_ce
 #. odoo-python
 #: code:addons/account_reconcile_compassion_ce/models/bank_statement_line.py:0
 msgid "Automatic reconciliation skipped: %(error)s"
@@ -168,6 +174,12 @@ msgid "Extract Value"
 msgstr "Extraire la valeur"
 
 #. module: account_reconcile_compassion_ce
+#: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_bank_statement_line__manual_gift_instructions
+#: model_terms:ir.ui.view,arch_db:account_reconcile_compassion_ce.bank_statement_line_form_reconcile_view
+msgid "Gift message"
+msgstr "Message du cadeau"
+
+#. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__id
 msgid "ID"
 msgstr "Identifiant"
@@ -204,6 +216,11 @@ msgid "Manual Contract"
 msgstr "Contrat manuel"
 
 #. module: account_reconcile_compassion_ce
+#: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_bank_statement_line__manual_is_gift
+msgid "Manual Is Gift"
+msgstr "Est un cadeau"
+
+#. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_bank_statement_line__manual_product_id
 msgid "Manual Product"
 msgstr "Produit manuel"
@@ -217,6 +234,11 @@ msgstr "Compte de correspondance"
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model_partner_matching__lookup_model
 msgid "Model"
 msgstr "Modèle"
+
+#. module: account_reconcile_compassion_ce
+#: model_terms:ir.ui.view,arch_db:account_reconcile_compassion_ce.bank_statement_line_form_reconcile_view
+msgid "No thank-you letter"
+msgstr "Pas de lettre de remerciement"
 
 #. module: account_reconcile_compassion_ce
 #: model:ir.model.fields,field_description:account_reconcile_compassion_ce.field_account_reconcile_model__only_this_month
