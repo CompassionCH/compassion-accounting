@@ -37,6 +37,7 @@
     "depends": [
         "account_reconcile_oca_queue",
         "analytic",
+        "crm_compassion",
         "gift_compassion",
         "thankyou_letters",
     ],

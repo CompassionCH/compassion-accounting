@@ -24,6 +24,26 @@ class BankStatementLine(models.Model):
         default=False,
         prefetch=False,
     )
+    manual_ambassador_id = fields.Many2one(
+        comodel_name="res.partner",
+        string="Ambassador",
+        store=False,
+        default=False,
+        prefetch=False,
+    )
+    manual_gift_instructions = fields.Char(
+        string="Gift message",
+        store=False,
+        default=False,
+        prefetch=False,
+    )
+    manual_is_gift = fields.Boolean(compute="_compute_manual_is_gift")
+
+    @api.depends("manual_product_id")
+    def _compute_manual_is_gift(self):
+        gift_category = self.env.ref("sponsorship_compassion.product_category_gift")
+        for line in self:
+            line.manual_is_gift = line.manual_product_id.categ_id == gift_category
 
     @api.onchange("manual_product_id")
     def on_change_manual_product_id(self):
@@ -45,11 +65,25 @@ class BankStatementLine(models.Model):
 
     @api.onchange("manual_contract_id")
     def on_change_manual_contract_id(self):
+        if self.manual_contract_id.ambassador_id:
+            self.manual_ambassador_id = self.manual_contract_id.ambassador_id
         # Make sure the reconcile data is updated when the contract changes
         self._onchange_manual_reconcile_vals()
 
+    @api.onchange("manual_ambassador_id", "manual_gift_instructions")
+    def on_change_manual_ambassador_gift_instructions(self):
+        self._onchange_manual_reconcile_vals()
+
+    @staticmethod
+    def _get_line_id(line, key):
+        """Many2one values of the reconcile data are [id, name] or an id."""
+        value = line.get(key)
+        if isinstance(value, list | tuple):
+            value = value[0]
+        return value or False
+
     def _process_manual_reconcile_from_line(self, line):
-        """Also restore manual_product_id and manual_contract_id from line data.
+        """Also restore the custom manual fields from line data.
 
         The base implementation sets manual_account_id, manual_amount, etc. but
         not the custom fields added by this module. Without this override,
@@ -57,14 +91,10 @@ class BankStatementLine(models.Model):
         _onchange_manual_reconcile_vals clears the product from the line dict.
         """
         res = super()._process_manual_reconcile_from_line(line)
-        product_id = line.get("product_id")
-        if isinstance(product_id, list | tuple):
-            product_id = product_id[0]
-        contract_id = line.get("contract_id")
-        if isinstance(contract_id, list | tuple):
-            contract_id = contract_id[0]
-        self.manual_product_id = product_id or False
-        self.manual_contract_id = contract_id or False
+        self.manual_product_id = self._get_line_id(line, "product_id")
+        self.manual_contract_id = self._get_line_id(line, "contract_id")
+        self.manual_ambassador_id = self._get_line_id(line, "user_id")
+        self.manual_gift_instructions = line.get("gift_instructions") or False
         return res
 
     def _get_manual_reconcile_vals(self):
@@ -77,18 +107,19 @@ class BankStatementLine(models.Model):
             self.manual_contract_id.id,
             self.manual_contract_id.display_name,
         )
+        vals["user_id"] = (
+            self.manual_ambassador_id.id,
+            self.manual_ambassador_id.display_name,
+        )
+        vals["gift_instructions"] = self.manual_gift_instructions or False
         return vals
 
     def _reconcile_move_line_vals(self, line, move_id=False):
         vals = super()._reconcile_move_line_vals(line, move_id=move_id)
-        product_id = line.get("product_id")
-        if isinstance(product_id, list | tuple):
-            product_id = product_id[0]
-        contract_id = line.get("contract_id")
-        if isinstance(contract_id, list | tuple):
-            contract_id = contract_id[0]
-        vals["product_id"] = product_id or False
-        vals["contract_id"] = contract_id or False
+        vals["product_id"] = self._get_line_id(line, "product_id")
+        vals["contract_id"] = self._get_line_id(line, "contract_id")
+        vals["user_id"] = self._get_line_id(line, "user_id")
+        vals["gift_instructions"] = line.get("gift_instructions") or False
         return vals
 
     def _reconcile_data_by_model(self, data, reconcile_model, reconcile_auxiliary_id):
@@ -101,6 +132,9 @@ class BankStatementLine(models.Model):
             for line in new_data[nb_kept_lines:]:
                 if not line.get("contract_id"):
                     line["contract_id"] = [contract.id, contract.display_name]
+                ambassador = contract.ambassador_id
+                if ambassador and not line.get("user_id"):
+                    line["user_id"] = [ambassador.id, ambassador.display_name]
         return new_data, reconcile_auxiliary_id
 
     def _default_reconcile_data(self, from_unreconcile=False):
@@ -177,16 +211,13 @@ class BankStatementLine(models.Model):
 
     def _check_line_changed(self, line):
         res = super()._check_line_changed(line)
-        product_id = line.get("product_id", (False,))
-        if isinstance(product_id, int):
-            product_id = (product_id,)
-        contract_id = line.get("contract_id", (False,))
-        if isinstance(contract_id, int):
-            contract_id = (contract_id,)
         return (
             res
-            or self.manual_product_id.id != product_id[0]
-            or self.manual_contract_id.id != contract_id[0]
+            or self.manual_product_id.id != self._get_line_id(line, "product_id")
+            or self.manual_contract_id.id != self._get_line_id(line, "contract_id")
+            or self.manual_ambassador_id.id != self._get_line_id(line, "user_id")
+            or (self.manual_gift_instructions or False)
+            != (line.get("gift_instructions") or False)
         )
 
     def _do_auto_reconcile(self, models):
