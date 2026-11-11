@@ -47,6 +47,11 @@
         "views/bank_statement_line.xml",
         "views/account_move_view.xml",
     ],
+    "assets": {
+        "web.assets_backend": [
+            "account_reconcile_compassion_ce/static/src/scss/reconcile.scss",
+        ],
+    },
     "excludes": ["account_accountant"],
     "auto_install": False,
     "installable": True,
