@@ -20,4 +20,30 @@
             </field>
         </field>
     </record>
+
+    <!-- T3677 Show the open items of the company and all its contacts -->
+    <record id="bank_statement_line_form_reconcile_company_contacts" model="ir.ui.view">
+        <field name="name">account.bank.statement.line.reconcile.company.contacts</field>
+        <field name="model">account.bank.statement.line</field>
+        <field name="inherit_id" ref="account_reconcile_oca.bank_statement_line_form_reconcile_view" />
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="reconcile_commercial_partner_id" invisible="1" />
+            </field>
+            <field name="add_account_move_line_id" position="attributes">
+                <attribute name="context">{'search_default_partner_id': reconcile_commercial_partner_id, 'list_view_ref': 'account_reconcile_oca.account_move_line_tree_reconcile_view', 'search_view_ref': 'account_reconcile_oca.account_move_line_search_reconcile_view'}</attribute>
+            </field>
+        </field>
+    </record>
+
+    <record id="account_move_line_search_reconcile_company_contacts" model="ir.ui.view">
+        <field name="name">account.move.line.search.reconcile.company.contacts</field>
+        <field name="model">account.move.line</field>
+        <field name="inherit_id" ref="account_reconcile_oca.account_move_line_search_reconcile_view" />
+        <field name="arch" type="xml">
+            <field name="partner_id" position="attributes">
+                <attribute name="operator">child_of</attribute>
+            </field>
+        </field>
+    </record>
 </odoo>
