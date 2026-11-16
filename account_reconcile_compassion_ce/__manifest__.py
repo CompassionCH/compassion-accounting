@@ -29,7 +29,7 @@
 # pylint: disable=C8101
 {
     "name": "Community Bank Statement Reconcile for Compassion",
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.0.1",
     "author": "Compassion CH",
     "license": "AGPL-3",
     "category": "Finance",
@@ -37,6 +37,7 @@
     "depends": [
         "account_reconcile_oca_queue",
         "analytic",
+        "crm_compassion",
         "gift_compassion",
         "thankyou_letters",
     ],
@@ -46,6 +47,11 @@
         "views/bank_statement_line.xml",
         "views/account_move_view.xml",
     ],
+    "assets": {
+        "web.assets_backend": [
+            "account_reconcile_compassion_ce/static/src/scss/reconcile.scss",
+        ],
+    },
     "excludes": ["account_accountant"],
     "auto_install": False,
     "installable": True,
