@@ -1,6 +1,10 @@
+import re
+
 from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models
+
+YEAR_TOKEN = re.compile(r"(19|20)\d{2}")
 
 
 class AccountReconcileModel(models.Model):
@@ -63,6 +67,18 @@ class AccountReconcileModel(models.Model):
                 for item in domain
             ]
         return domain
+
+    def _get_invoice_matching_st_line_tokens(self, st_line):
+        # T3677 A year in the payer's message ("Spende 2026") is not a
+        # reference: it would match every invoice whose customer reference
+        # names a period of that year ("Periode: Oktober 2026.").
+        numerical_tokens, exact_tokens, text_tokens = (
+            super()._get_invoice_matching_st_line_tokens(st_line)
+        )
+        numerical_tokens = [
+            token for token in numerical_tokens if not YEAR_TOKEN.fullmatch(token)
+        ]
+        return numerical_tokens, exact_tokens, text_tokens
 
     def _get_invoice_matching_amls_candidates(self, st_line, partner):
         # T3677 A payment made by a contact can pay an item of its company
