@@ -10,6 +10,12 @@ _logger = logging.getLogger(__name__)
 class BankStatementLine(models.Model):
     _inherit = "account.bank.statement.line"
 
+    # T3677 Company of the partner (or the partner itself), used to show the
+    # open items of the company and all its contacts in the Reconcile tab
+    reconcile_commercial_partner_id = fields.Many2one(
+        related="partner_id.commercial_partner_id"
+    )
+
     manual_product_id = fields.Many2one(
         comodel_name="product.product",
         check_company=True,
