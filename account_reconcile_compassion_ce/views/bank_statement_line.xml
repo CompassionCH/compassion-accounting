@@ -36,6 +36,23 @@
         </field>
     </record>
 
+    <!-- T3677 Show the bank reference (e.g. QR reference) under the payer's message -->
+    <record id="bank_statement_line_reconcile_view_reference" model="ir.ui.view">
+        <field name="name">account.bank.statement.line.reconcile.reference</field>
+        <field name="model">account.bank.statement.line</field>
+        <field name="inherit_id" ref="account_reconcile_oca.bank_statement_line_reconcile_view" />
+        <field name="arch" type="xml">
+            <xpath expr="//t[@t-name='card']//field[@name='payment_ref']" position="after">
+                <div
+                    t-if="record.ref.raw_value and record.ref.raw_value != record.payment_ref.raw_value"
+                    class="text-muted small text-break"
+                >
+                    <field name="ref" />
+                </div>
+            </xpath>
+        </field>
+    </record>
+
     <record id="account_move_line_search_reconcile_company_contacts" model="ir.ui.view">
         <field name="name">account.move.line.search.reconcile.company.contacts</field>
         <field name="model">account.move.line</field>
