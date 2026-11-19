@@ -23,9 +23,6 @@ class AccountMove(models.Model):
     last_payment = fields.Date(
         "Paid on", compute="_compute_last_payment", store=True, tracking=True
     )
-    recurring_invoicer_id = fields.Many2one(
-        "recurring.invoicer", "Invoicer", readonly=False
-    )
 
     def _filter_open_invoices(self):
         """Return the invoices of self that are still open, i.e. not fully paid.
