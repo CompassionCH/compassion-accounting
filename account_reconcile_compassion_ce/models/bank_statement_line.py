@@ -175,6 +175,19 @@ class BankStatementLine(models.Model):
             return current
         return contracts if len(contracts) == 1 else contract_obj
 
+    def action_undo_reconciliation(self):
+        # Re-reconciling would create a duplicate of a gift GMC already has
+        sent_gifts = self.line_ids.gift_id.filtered("gmc_gift_id")
+        if sent_gifts:
+            raise UserError(
+                self.env._(
+                    "Gift %(gifts)s is already sent to GMC, so this line cannot "
+                    "be unreconciled. Please contact an administrator.",
+                    gifts=", ".join(sent_gifts.mapped("name")),
+                )
+            )
+        return super().action_undo_reconciliation()
+
     def _check_line_changed(self, line):
         res = super()._check_line_changed(line)
         product_id = line.get("product_id", (False,))
