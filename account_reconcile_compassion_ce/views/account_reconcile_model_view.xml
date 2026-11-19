@@ -87,6 +87,20 @@
                     </field>
                 </page>
             </xpath>
+            <xpath expr="//field[@name='line_ids']/list">
+                <field name="product_id" />
+            </xpath>
+        </field>
+    </record>
+
+    <record id="reconcile_model_line_form" model="ir.ui.view">
+        <field name="name">account.reconcile.model.line.compassion.form</field>
+        <field name="model">account.reconcile.model.line</field>
+        <field name="inherit_id" ref="account.view_account_reconcile_model_line_form"/>
+        <field name="arch" type="xml">
+            <field name="account_id" position="before">
+                <field name="product_id" />
+            </field>
         </field>
     </record>
 </odoo>

@@ -24,6 +24,23 @@ class AccountMove(models.Model):
         "Paid on", compute="_compute_last_payment", store=True, tracking=True
     )
 
+    def _filter_open_invoices(self):
+        """Return the invoices of self that are still open, i.e. not fully paid.
+
+        This is the single definition of "open invoice" used by the stat
+        buttons of recurring.contract and recurring.contract.group, so that
+        both levels always agree. It matches the criterion used by
+        amount_due / months_due (see recurring.contract._filter_due_invoices).
+
+        Not to be confused with recurring.contract.open_invoice_ids, which is
+        stricter on purpose: that field drives invoice generation and the write
+        cascade, which both reset invoices to draft, and button_draft()
+        unreconciles the payments of the invoice.
+        """
+        return self.filtered(
+            lambda i: i.payment_state != "paid" and i.state not in ("cancel", "draft")
+        )
+
     @api.depends("partner_id", "company_id")
     def _compute_pricelist_id(self):
         # Prevent overriding the pricelist_id if it is already set for a new move
@@ -49,15 +66,12 @@ class AccountMove(models.Model):
                     payment_lines = line.full_reconcile_id.reconciled_line_ids.filtered(
                         lambda r, _mv_filter=mv_filter: r[_mv_filter]
                     )
-                    # Direct Debit : the payment is not linked
-                    # with a bank statement line
-                    if not payment_lines.move_id.statement_line_id:
-                        # We search for the reconciled
-                        # bank statement lines to get the date
-                        st_lines = payment_lines.mapped(
-                            "move_id.line_ids.full_reconcile_id.reconciled_line_ids"
-                            ".statement_line_id"
-                        )
+                    # Direct Debit : the statement line reconciles the payment
+                    st_lines = payment_lines.mapped(
+                        "move_id.line_ids.full_reconcile_id.reconciled_line_ids"
+                        ".statement_line_id"
+                    )
+                    if st_lines:
                         payment_dates.extend(st_lines.mapped("date"))
                     else:
                         payment_dates.extend(payment_lines.mapped("date"))

@@ -113,7 +113,6 @@ class ContractGroup(models.Model):
     has_active_contracts = fields.Boolean(
         compute="_compute_active_contracts",
         search="_search_has_active_contracts",
-        string="Has active contracts",
     )
     current_invoice_date = fields.Date(
         compute="_compute_current_invoice_date",
@@ -124,7 +123,7 @@ class ContractGroup(models.Model):
     ##########################################################################
     #                             FIELDS METHODS                             #
     ##########################################################################
-    @api.depends("contract_ids")
+    @api.depends("contract_ids", "contract_ids.state")
     def _compute_active_contracts(self):
         for pay_opt in self:
             pay_opt.active_contract_ids = pay_opt.contract_ids.filtered(
@@ -154,14 +153,25 @@ class ContractGroup(models.Model):
                 or [False]
             )
 
+    @api.depends(
+        "contract_ids.state",
+        "contract_ids.invoice_line_ids",
+        "contract_ids.invoice_line_ids.payment_state",
+        "contract_ids.invoice_line_ids.parent_state",
+    )
     def _compute_invoices(self):
         for pay_opt in self:
-            pay_opt.nb_invoices = len(
-                pay_opt.mapped("active_contract_ids.invoice_line_ids.move_id").filtered(
-                    lambda i: i.state not in ("cancel", "draft")
-                    and i.payment_state != "paid"
-                )
-            )
+            pay_opt.nb_invoices = len(pay_opt._get_open_invoices())
+
+    def _get_open_invoices(self):
+        """Invoices displayed by the "Open invoices" stat button.
+
+        Same contract as recurring.contract._get_open_invoices(): the counter
+        and the list opened by the button both go through this method.
+        """
+        return self.mapped(
+            "active_contract_ids.invoice_line_ids.move_id"
+        )._filter_open_invoices()
 
     @staticmethod
     def day_selection():
@@ -229,15 +239,13 @@ class ContractGroup(models.Model):
     ##########################################################################
     def open_invoices(self):
         self.ensure_one()
-        invoice_ids = self.mapped("active_contract_ids.invoice_line_ids.move_id").ids
         return {
-            "name": _("Contract invoices"),
+            "name": _("Open invoices"),
             "type": "ir.actions.act_window",
             "view_mode": "list,form",
             "res_model": "account.move",
-            "domain": [("id", "in", invoice_ids)],
+            "domain": [("id", "in", self._get_open_invoices().ids)],
             "target": "current",
-            "context": {"search_default_unpaid": 1},
         }
 
     def button_generate_invoices(self):
@@ -313,9 +321,25 @@ class ContractGroup(models.Model):
             # Calculate the initial invoicing date and starting offset
             invoicing_date, starting_offset = group._calculate_start_date_and_offset()
 
-            # Iterate through invoice offsets to generate invoices
+            # Iterate through invoice offsets to generate invoices.
+            # Upper bound (exclusive) = advance_billing_months + 1, independent
+            # of starting_offset: starting_offset only shifts where the range
+            # starts (0 = current month, 1 = skip to next month for a waiting
+            # contract), it must not also shift where it ends, or the number
+            # of invoices generated changes depending on offset.
+            #
+            #   rec val | rec unit| advance | mo | offset| invoices
+            #   1       | month   |  1      |  1 |   0   | 2 (curr + next month)
+            #   1       | month   |  1      |  1 |   1   | 1 (next month)
+            #   1       | month   | 12      |  1 |   0   | 13 (curr + 12 more)
+            #   1       | year    | 12      | 12 |   0   | 2 (curr+next yr)
+            #
+            # _should_skip_invoice_generation will skip any period already covered
+            # by an existing non-cancelled invoice, so re-running is always safe.
             for invoice_offset in range(
-                starting_offset, group.advance_billing_months + 1, group.month_interval
+                starting_offset,
+                group.advance_billing_months + 1,
+                group.month_interval,
             ):
                 # Calculate the current invoicing date for this offset
                 current_invoicing_date = invoicing_date + relativedelta(
@@ -393,6 +417,7 @@ class ContractGroup(models.Model):
                 ("invoice_date", "=", invoicing_date),
                 ("partner_id", "=", self.partner_id.id),
                 ("move_type", "=", "out_invoice"),
+                ("state", "not in", ["cancel"]),
                 ("line_ids.contract_id", "in", contracts.ids),
                 ("line_ids.product_id", "in", contracts.mapped("product_ids").ids),
             ]
@@ -587,7 +612,7 @@ class ContractGroup(models.Model):
             contract = contract_line.contract_id
             product = contract_line.product_id.with_company(self.company_id.id)
             line_name = product.name
-            if contract_line.pricelist_item_count:
+            if contract_line.amount_from_pricelist:
                 price = self.pricelist_id._get_product_price(
                     product, qty, date=invoicing_date
                 )
