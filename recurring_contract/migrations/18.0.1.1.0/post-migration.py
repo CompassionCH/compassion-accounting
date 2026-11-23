@@ -18,9 +18,14 @@ def migrate(env, version):
     cr.execute("DROP TABLE IF EXISTS recurring_invoicer_wizard CASCADE")
     _logger.info("Dropped recurring_invoicer tables and account_move column")
 
-    # Saved filters using the removed field would raise an error when used.
+    # Saved filters using the removed field (in their domain, grouping or
+    # sorting) would raise an error when used.
     cr.execute(
-        "DELETE FROM ir_filters WHERE domain LIKE %s RETURNING id",
-        ("%recurring_invoicer_id%",),
+        """
+        DELETE FROM ir_filters
+        WHERE domain LIKE %(f)s OR context LIKE %(f)s OR sort LIKE %(f)s
+        RETURNING id
+        """,
+        {"f": "%recurring_invoicer_id%"},
     )
     _logger.info("Deleted saved filters %s", [row[0] for row in cr.fetchall()])
