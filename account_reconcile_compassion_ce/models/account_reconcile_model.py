@@ -107,3 +107,49 @@ class AccountReconcileModel(models.Model):
         ):
             result["auto_reconcile"] = True
         return result
+
+    def _get_invoice_matching_rules_map(self):
+        rules_map = super()._get_invoice_matching_rules_map()
+        if not (
+            self.match_text_location_label
+            or self.match_text_location_note
+            or self.match_text_location_reference
+        ):
+            rules_map[10] = [
+                self._get_invoice_matching_proposal_candidates
+                if rule == self._get_invoice_matching_amls_candidates
+                else rule
+                for rule in rules_map[10]
+            ]
+        return rules_map
+
+    def _get_invoice_matching_proposal_candidates(self, st_line, partner):
+        """T3692 Without Label/Note/Reference option, the rule proposes the
+        payer's open items whatever their reference or amount. Propose
+        nothing for a gift QR payment (its reference never matches an
+        invoice: the gift invoice is created at reconcile, so the gift button
+        is prefilled instead), and otherwise only an open item of the same
+        amount as the payment."""
+        if st_line._get_gift_reference():
+            return None
+        result = self._get_invoice_matching_amls_candidates(st_line, partner)
+        if not result or not result.get("amls"):
+            return result
+        amls = result["amls"].filtered(
+            lambda aml: self._is_same_open_amount(st_line, aml)
+        )
+        if not amls:
+            return None
+        return {**result, "amls": amls}
+
+    def _is_same_open_amount(self, st_line, aml):
+        st_line_currency = st_line.foreign_currency_id or st_line.currency_id
+        if aml.currency_id != st_line_currency:
+            return False
+        st_line_amount = st_line._prepare_move_line_default_vals()[1]["amount_currency"]
+        return (
+            st_line_currency.compare_amounts(
+                st_line_amount, -aml.amount_residual_currency
+            )
+            == 0
+        )
