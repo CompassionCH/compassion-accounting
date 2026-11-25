@@ -30,7 +30,6 @@
 {
     "name": "Community Bank Statement Reconcile for Compassion",
     "version": "18.0.1.0.2",
-
     "author": "Compassion CH",
     "license": "AGPL-3",
     "category": "Finance",
