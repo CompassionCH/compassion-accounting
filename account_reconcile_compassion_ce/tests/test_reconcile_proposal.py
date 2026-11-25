@@ -1,5 +1,6 @@
 from odoo import fields
 from odoo.tests import TransactionCase, tagged
+from odoo.tools import mod10r
 
 
 @tagged("post_install", "-at_install")
@@ -190,10 +191,9 @@ class TestReconcileProposal(TransactionCase):
             partner = contract.gift_partner_id
             if not (partner.ref or "").isdigit():
                 continue
-            reference = (
+            reference = mod10r(
                 f"000000000{partner.ref.zfill(7)}"
                 f"{str(contract.commitment_number).zfill(5)}10000"
-                "0"
             )
             # Larger than the sponsor's open items: they would all be proposed
             st_line = self._payment(
@@ -204,6 +204,24 @@ class TestReconcileProposal(TransactionCase):
         else:
             self.skipTest("No sponsorship found from a gift QR reference")
         invoice_item = self._open_item(partner, 42.0, fields.Date.today())
+        # T3622 The gift button is prefilled by the (manual) gift QR rule
+        self.env["account.reconcile.model"].create(
+            {
+                "name": "T3622 QR gifts",
+                "rule_type": "writeoff_suggestion",
+                "auto_reconcile": False,
+                "match_partner": True,
+                "sequence": 1,
+                "company_id": self.company.id,
+                "qr_type_ids": [
+                    (
+                        6,
+                        0,
+                        self.env.ref("account_reconcile_compassion_ce.qr_type_1").ids,
+                    )
+                ],
+            }
+        )
         # Without option, the rule finds the sponsor's open items
         self.assertIn(
             invoice_item,

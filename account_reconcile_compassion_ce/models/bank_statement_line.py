@@ -1,8 +1,9 @@
 import logging
 import re
 
-from odoo import api, fields, models
+from odoo import Command, api, fields, models
 from odoo.exceptions import UserError
+from odoo.tools import mod10r
 
 _logger = logging.getLogger(__name__)
 
@@ -139,12 +140,20 @@ class BankStatementLine(models.Model):
         return vals
 
     def _reconcile_data_by_model(self, data, reconcile_model, reconcile_auxiliary_id):
+        qr_rule = reconcile_model if reconcile_model.qr_type_ids else False
+        if qr_rule:
+            # T3622 Book the product decoded from the QR reference
+            reconcile_model = self._get_qr_reconcile_model()
         new_data, reconcile_auxiliary_id = super()._reconcile_data_by_model(
             data, reconcile_model, reconcile_auxiliary_id
         )
+        nb_kept_lines = len([line for line in data if line["kind"] != "suspense"])
+        if qr_rule and not reconcile_model.id:
+            # Temporary model, it can't be referenced on the journal items
+            for line in new_data[nb_kept_lines:]:
+                line["reconcile_model_id"] = qr_rule.id
         contract = self._get_contract_from_reference()
         if contract:
-            nb_kept_lines = len([line for line in data if line["kind"] != "suspense"])
             for line in new_data[nb_kept_lines:]:
                 if not line.get("contract_id"):
                     line["contract_id"] = [contract.id, contract.display_name]
@@ -153,40 +162,105 @@ class BankStatementLine(models.Model):
                     line["user_id"] = [ambassador.id, ambassador.display_name]
         return new_data, reconcile_auxiliary_id
 
-    def _default_reconcile_data(self, from_unreconcile=False):
-        res = super()._default_reconcile_data(from_unreconcile=from_unreconcile)
-        if from_unreconcile or any(
-            line["kind"] not in ("liquidity", "suspense") for line in res["data"]
-        ):
-            return res
-        # No rule matched: prefill the gift button matching the QRR gift type
-        reconcile_model = self._get_gift_reconcile_model()
-        if not reconcile_model:
-            return res
-        data = [line for line in res["data"] if line["kind"] == "liquidity"]
-        return self._recompute_suspense_line(
-            *self._reconcile_data_by_model(
-                data, reconcile_model, res["reconcile_auxiliary_id"]
-            ),
-            self.manual_reference,
+    def _get_qr_reference(self):
+        """T3622 QR (BVR) reference of the line: 27 digits with a valid check
+        digit (see Code_ref_QR (BVR)). The bank puts it in the label, or in
+        the move ref when the donor wrote a message."""
+        for ref in (self.ref, self.payment_ref):
+            ref = (ref or "").strip()
+            if re.fullmatch(r"\d{27}", ref) and mod10r(ref[:-1]) == ref:
+                return ref
+        return ""
+
+    def _get_qr_type(self):
+        """T3622 Type of the QR reference (22nd digit)."""
+        ref = self._get_qr_reference()
+        if not ref:
+            return self.env["account.reconcile.qr.type"]
+        return self.env["account.reconcile.qr.type"].search(
+            [("code", "=", ref[21])], limit=1
         )
 
-    def _get_gift_reconcile_model(self):
-        model_obj = self.env["account.reconcile.model"]
+    def _get_qr_partner(self):
+        """T3622 Partner whose reference is in the QR reference (digits 10-16)."""
+        partner_ref = self._get_qr_reference()[9:16].lstrip("0")
+        if not partner_ref:
+            return self.env["res.partner"]
+        return self.env["res.partner"].search([("ref", "=", partner_ref)], limit=1)
+
+    def _get_qr_product(self):
+        """T3622 Product to book for the QR reference of the line: here the
+        gift of the sponsorship (types 1-5). Other types are added by the
+        country modules (e.g. funds).
+        :return: product.product, empty if none
+        """
+        product_obj = self.env["product.product"]
         if not self._get_contract_from_reference():
-            return model_obj
+            return product_obj
         gift_type = self.env["sponsorship.gift.type"].browse(
             int(self._get_gift_reference()[21])
         )
-        if not gift_type.exists() or not gift_type.product_id:
+        if not gift_type.exists():
+            return product_obj
+        return gift_type.product_id.product_variant_id
+
+    def _get_qr_reconcile_model(self):
+        """T3622 How to book the product of the QR reference: with the
+        write-off button of the product if there is one, otherwise with a
+        temporary model booking everything on the income account of the
+        product.
+        :return: account.reconcile.model (maybe a new record), empty if none
+        """
+        model_obj = self.env["account.reconcile.model"]
+        product = self._get_qr_product()
+        if not product:
             return model_obj
-        return model_obj.search(
+        reconcile_model = model_obj.search(
             [
                 ("rule_type", "=", "writeoff_button"),
                 ("company_id", "=", self.company_id.id),
-                ("line_ids.product_id.product_tmpl_id", "=", gift_type.product_id.id),
+                (
+                    "line_ids.product_id.product_tmpl_id",
+                    "=",
+                    product.product_tmpl_id.id,
+                ),
             ],
             limit=1,
+        )
+        if reconcile_model:
+            return reconcile_model
+        account = product.with_company(self.company_id).property_account_income_id
+        if not account:
+            return model_obj
+        partner = self._get_qr_partner()
+        analytic_distribution = self.env[
+            "account.analytic.distribution.model"
+        ]._get_distribution(
+            {
+                "product_id": product.id,
+                "product_categ_id": product.categ_id.id,
+                "partner_id": partner.id,
+                "partner_category_id": partner.category_id.ids,
+                "account_prefix": account.code,
+                "company_id": self.company_id.id,
+            }
+        )
+        return model_obj.new(
+            {
+                "name": product.name,
+                "rule_type": "writeoff_button",
+                "company_id": self.company_id.id,
+                "line_ids": [
+                    Command.create(
+                        {
+                            "account_id": account.id,
+                            "product_id": product.id,
+                            "label": product.name,
+                            "analytic_distribution": analytic_distribution,
+                        }
+                    )
+                ],
+            }
         )
 
     def _get_gift_reference(self):

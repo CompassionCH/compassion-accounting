@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- T3622 Types of QR (BVR) references, 22nd digit of the reference -->
+<odoo noupdate="1">
+    <record id="qr_type_0" model="account.reconcile.qr.type">
+        <field name="code">0</field>
+        <field name="name">Sponsorship</field>
+    </record>
+    <record id="qr_type_1" model="account.reconcile.qr.type">
+        <field name="code">1</field>
+        <field name="name">Birthday gift</field>
+    </record>
+    <record id="qr_type_2" model="account.reconcile.qr.type">
+        <field name="code">2</field>
+        <field name="name">General gift</field>
+    </record>
+    <record id="qr_type_3" model="account.reconcile.qr.type">
+        <field name="code">3</field>
+        <field name="name">Family gift</field>
+    </record>
+    <record id="qr_type_4" model="account.reconcile.qr.type">
+        <field name="code">4</field>
+        <field name="name">Project gift</field>
+    </record>
+    <record id="qr_type_5" model="account.reconcile.qr.type">
+        <field name="code">5</field>
+        <field name="name">Graduation gift</field>
+    </record>
+    <record id="qr_type_6" model="account.reconcile.qr.type">
+        <field name="code">6</field>
+        <field name="name">Fund</field>
+    </record>
+    <record id="qr_type_7" model="account.reconcile.qr.type">
+        <field name="code">7</field>
+        <field name="name">Fund campaign</field>
+    </record>
+    <record id="qr_type_8" model="account.reconcile.qr.type">
+        <field name="code">8</field>
+        <field name="name">Free</field>
+    </record>
+    <record id="qr_type_9" model="account.reconcile.qr.type">
+        <field name="code">9</field>
+        <field name="name">Grouped commitment</field>
+    </record>
+</odoo>
