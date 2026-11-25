@@ -8,14 +8,30 @@
                 <field name="manual_partner_id" position="move" />
                 <field name="manual_product_id"
                        string="Product"
-                       modifiers="{'readonly': ['|', '|', '|', ('manual_exchange_counterpart', '=', True),('manual_reference', '=', False), ('is_reconciled', '=', True), ('manual_line_id', '!=', False)]}"
+                       readonly="manual_exchange_counterpart or not manual_reference or is_reconciled or manual_line_id"
                 />
             </field>
             <field name="manual_account_id" position="after">
                 <field name="manual_contract_id"
                        string="Contract"
-                       modifiers="{'readonly': ['|', '|', '|', ('manual_exchange_counterpart', '=', True),('manual_reference', '=', False), ('is_reconciled', '=', True), ('manual_line_id', '!=', False)]}"
+                       readonly="manual_exchange_counterpart or not manual_reference or is_reconciled or manual_line_id"
                        domain="[('state','!=','draft'),'|', ('partner_id', '=', manual_partner_id),('correspondent_id', '=', manual_partner_id)]"
+                />
+                <field name="manual_ambassador_id"
+                       string="Ambassador"
+                       readonly="manual_exchange_counterpart or not manual_reference or is_reconciled or manual_line_id"
+                />
+                <field name="manual_is_gift" invisible="1" />
+                <field name="manual_gift_instructions"
+                       string="Gift message"
+                       invisible="not manual_is_gift"
+                       readonly="manual_exchange_counterpart or not manual_reference or is_reconciled or manual_line_id"
+                />
+            </field>
+            <field name="manual_name" position="after">
+                <field name="avoid_thankyou_letter"
+                       string="No thank-you letter"
+                       readonly="is_reconciled"
                 />
             </field>
         </field>
