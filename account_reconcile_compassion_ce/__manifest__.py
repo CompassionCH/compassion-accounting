@@ -29,7 +29,7 @@
 # pylint: disable=C8101
 {
     "name": "Community Bank Statement Reconcile for Compassion",
-    "version": "18.0.1.0.2",
+    "version": "18.0.1.0.3",
     "author": "Compassion CH",
     "license": "AGPL-3",
     "category": "Finance",
@@ -43,6 +43,7 @@
     ],
     "data": [
         "security/ir.model.access.csv",
+        "data/qr_reference_types.xml",
         "views/account_reconcile_model_view.xml",
         "views/bank_statement_line.xml",
         "views/account_move_view.xml",
