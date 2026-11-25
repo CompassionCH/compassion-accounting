@@ -26,8 +26,14 @@ class AccountPaymentOrder(models.Model):
             lambda o: len(o.payment_ids) > ASYNC_PAYMENT_THRESHOLD
         )
         for order in async_orders:
-            draft_payments = order.payment_ids.filtered(lambda p: p.state == "draft")
-            draft_payments.with_delay_sh(
+            todo = order.payment_ids._payment_order_todo()
+            if not todo:
+                # Everything was already posted and reconciled
+                order.with_context(
+                    payment_order_posted_by_jobs=True
+                ).generated2uploaded()
+                continue
+            todo.with_delay_sh(
                 "payment_order_post_and_reconcile",
                 split=PAYMENTS_PER_JOB,
                 chain=True,
@@ -37,7 +43,7 @@ class AccountPaymentOrder(models.Model):
                 body=self.env._(
                     "%(count)s payments are being posted in background jobs. "
                     "The order will be set to uploaded once they are all posted.",
-                    count=len(draft_payments),
+                    count=len(todo),
                 )
             )
         super(AccountPaymentOrder, self - async_orders).generated2uploaded()
@@ -66,20 +72,44 @@ class AccountPaymentOrder(models.Model):
 class AccountPayment(models.Model):
     _inherit = "account.payment"
 
+    def _payment_order_lines_to_reconcile(self):
+        """The unreconciled lines of the payment and of the paid items."""
+        self.ensure_one()
+        return (
+            self.payment_line_ids.move_line_id
+            + self.move_id.line_ids.filtered(
+                lambda x: x.account_id == self.destination_account_id
+            )
+        ).filtered(lambda line: not line.reconciled)
+
+    def _payment_order_todo(self):
+        """The payments still to post, or posted but not reconciled (e.g. by
+        a manual post or a job that failed after posting)."""
+        return self.filtered(
+            lambda p: p.state == "draft"
+            or (
+                p.state != "canceled"
+                and not all(
+                    p.move_id.line_ids.filtered(
+                        lambda x, p=p: x.account_id == p.destination_account_id
+                    ).mapped("reconciled")
+                )
+            )
+        )
+
     def payment_order_post_and_reconcile(self):
         """Job method: same as account.payment.order.post_and_reconcile, for
         a chunk of payments. The last chunk sets the order to uploaded."""
-        for payment in self.filtered(lambda p: p.state == "draft"):
-            payment.action_post()
-            (
-                payment.payment_line_ids.move_line_id
-                + payment.move_id.line_ids.filtered(
-                    lambda x, p=payment: x.account_id == p.destination_account_id
-                )
-            ).reconcile()
+        for payment in self._payment_order_todo():
+            if payment.state == "draft":
+                payment.action_post()
+            lines = payment._payment_order_lines_to_reconcile()
+            if len(lines) > 1:
+                lines.reconcile()
         for order in self.payment_order_id:
-            if order.state == "generated" and not order.payment_ids.filtered(
-                lambda p: p.state == "draft"
+            if (
+                order.state == "generated"
+                and not order.payment_ids._payment_order_todo()
             ):
                 order.with_context(
                     payment_order_posted_by_jobs=True
