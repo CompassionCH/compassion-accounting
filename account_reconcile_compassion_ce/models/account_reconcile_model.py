@@ -1,6 +1,10 @@
+import re
+
 from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models
+
+YEAR_TOKEN = re.compile(r"(19|20)\d{2}")
 
 
 class AccountReconcileModel(models.Model):
@@ -54,7 +58,42 @@ class AccountReconcileModel(models.Model):
             )
         if self.matching_account_id:
             domain.append(("account_id", "=", self.matching_account_id.id))
+        if partner and self.env.context.get("match_commercial_partner"):
+            # T3677 Look for the open items of the company and all its contacts
+            domain = [
+                ("partner_id", "child_of", partner.commercial_partner_id.id)
+                if item == ("partner_id", "=", partner.id)
+                else item
+                for item in domain
+            ]
         return domain
+
+    def _get_invoice_matching_st_line_tokens(self, st_line):
+        # T3677 A year in the payer's message ("Spende 2026") is not a
+        # reference: it would match every invoice whose customer reference
+        # names a period of that year ("Periode: Oktober 2026.").
+        numerical_tokens, exact_tokens, text_tokens = (
+            super()._get_invoice_matching_st_line_tokens(st_line)
+        )
+        numerical_tokens = [
+            token for token in numerical_tokens if not YEAR_TOKEN.fullmatch(token)
+        ]
+        return numerical_tokens, exact_tokens, text_tokens
+
+    def _get_invoice_matching_amls_candidates(self, st_line, partner):
+        # T3677 A payment made by a contact can pay an item of its company
+        # or of another contact of the company, when its reference matches.
+        # Without a matching reference, the proposals stay on the exact partner.
+        commercial_partner = partner.commercial_partner_id
+        if partner and (commercial_partner != partner or partner.child_ids):
+            result = super(
+                AccountReconcileModel,
+                self.with_context(match_commercial_partner=True),
+            )._get_invoice_matching_amls_candidates(st_line, partner)
+            if result and result.get("allow_auto_reconcile"):
+                result["amls"] = result["amls"].with_env(self.env)
+                return result
+        return super()._get_invoice_matching_amls_candidates(st_line, partner)
 
     def _get_invoice_matching_amls_result(self, st_line, partner, candidate_vals):
         result = super()._get_invoice_matching_amls_result(
