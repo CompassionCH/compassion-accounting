@@ -1,14 +1,21 @@
 import logging
 import re
 
-from odoo import api, fields, models
+from odoo import Command, api, fields, models
 from odoo.exceptions import UserError
+from odoo.tools import mod10r
 
 _logger = logging.getLogger(__name__)
 
 
 class BankStatementLine(models.Model):
     _inherit = "account.bank.statement.line"
+
+    # T3677 Company of the partner (or the partner itself), used to show the
+    # open items of the company and all its contacts in the Reconcile tab
+    reconcile_commercial_partner_id = fields.Many2one(
+        related="partner_id.commercial_partner_id"
+    )
 
     manual_product_id = fields.Many2one(
         comodel_name="product.product",
@@ -24,6 +31,26 @@ class BankStatementLine(models.Model):
         default=False,
         prefetch=False,
     )
+    manual_ambassador_id = fields.Many2one(
+        comodel_name="res.partner",
+        string="Ambassador",
+        store=False,
+        default=False,
+        prefetch=False,
+    )
+    manual_gift_instructions = fields.Char(
+        string="Gift message",
+        store=False,
+        default=False,
+        prefetch=False,
+    )
+    manual_is_gift = fields.Boolean(compute="_compute_manual_is_gift")
+
+    @api.depends("manual_product_id")
+    def _compute_manual_is_gift(self):
+        gift_category = self.env.ref("sponsorship_compassion.product_category_gift")
+        for line in self:
+            line.manual_is_gift = line.manual_product_id.categ_id == gift_category
 
     @api.onchange("manual_product_id")
     def on_change_manual_product_id(self):
@@ -45,11 +72,35 @@ class BankStatementLine(models.Model):
 
     @api.onchange("manual_contract_id")
     def on_change_manual_contract_id(self):
+        # Take the ambassador of a newly chosen contract (or none), but keep
+        # the one of the line when it is only reloaded (line selected again)
+        line = next(
+            (
+                line
+                for line in self.reconcile_data_info.get("data", [])
+                if line["reference"] == self.manual_reference
+            ),
+            {},
+        )
+        if self.manual_contract_id.id != self._get_line_id(line, "contract_id"):
+            self.manual_ambassador_id = self.manual_contract_id.ambassador_id
         # Make sure the reconcile data is updated when the contract changes
         self._onchange_manual_reconcile_vals()
 
+    @api.onchange("manual_ambassador_id", "manual_gift_instructions")
+    def on_change_manual_ambassador_gift_instructions(self):
+        self._onchange_manual_reconcile_vals()
+
+    @staticmethod
+    def _get_line_id(line, key):
+        """Many2one values of the reconcile data are [id, name] or an id."""
+        value = line.get(key)
+        if isinstance(value, list | tuple):
+            value = value[0]
+        return value or False
+
     def _process_manual_reconcile_from_line(self, line):
-        """Also restore manual_product_id and manual_contract_id from line data.
+        """Also restore the custom manual fields from line data.
 
         The base implementation sets manual_account_id, manual_amount, etc. but
         not the custom fields added by this module. Without this override,
@@ -57,14 +108,10 @@ class BankStatementLine(models.Model):
         _onchange_manual_reconcile_vals clears the product from the line dict.
         """
         res = super()._process_manual_reconcile_from_line(line)
-        product_id = line.get("product_id")
-        if isinstance(product_id, list | tuple):
-            product_id = product_id[0]
-        contract_id = line.get("contract_id")
-        if isinstance(contract_id, list | tuple):
-            contract_id = contract_id[0]
-        self.manual_product_id = product_id or False
-        self.manual_contract_id = contract_id or False
+        self.manual_product_id = self._get_line_id(line, "product_id")
+        self.manual_contract_id = self._get_line_id(line, "contract_id")
+        self.manual_ambassador_id = self._get_line_id(line, "user_id")
+        self.manual_gift_instructions = line.get("gift_instructions") or False
         return res
 
     def _get_manual_reconcile_vals(self):
@@ -77,66 +124,143 @@ class BankStatementLine(models.Model):
             self.manual_contract_id.id,
             self.manual_contract_id.display_name,
         )
+        vals["user_id"] = (
+            self.manual_ambassador_id.id,
+            self.manual_ambassador_id.display_name,
+        )
+        vals["gift_instructions"] = self.manual_gift_instructions or False
         return vals
 
     def _reconcile_move_line_vals(self, line, move_id=False):
         vals = super()._reconcile_move_line_vals(line, move_id=move_id)
-        product_id = line.get("product_id")
-        if isinstance(product_id, list | tuple):
-            product_id = product_id[0]
-        contract_id = line.get("contract_id")
-        if isinstance(contract_id, list | tuple):
-            contract_id = contract_id[0]
-        vals["product_id"] = product_id or False
-        vals["contract_id"] = contract_id or False
+        vals["product_id"] = self._get_line_id(line, "product_id")
+        vals["contract_id"] = self._get_line_id(line, "contract_id")
+        vals["user_id"] = self._get_line_id(line, "user_id")
+        vals["gift_instructions"] = line.get("gift_instructions") or False
         return vals
 
     def _reconcile_data_by_model(self, data, reconcile_model, reconcile_auxiliary_id):
+        qr_rule = reconcile_model if reconcile_model.qr_type_ids else False
+        if qr_rule:
+            # T3622 Book the product decoded from the QR reference
+            reconcile_model = self._get_qr_reconcile_model()
         new_data, reconcile_auxiliary_id = super()._reconcile_data_by_model(
             data, reconcile_model, reconcile_auxiliary_id
         )
+        nb_kept_lines = len([line for line in data if line["kind"] != "suspense"])
+        if qr_rule and not reconcile_model.id:
+            # Temporary model, it can't be referenced on the journal items
+            for line in new_data[nb_kept_lines:]:
+                line["reconcile_model_id"] = qr_rule.id
         contract = self._get_contract_from_reference()
         if contract:
-            nb_kept_lines = len([line for line in data if line["kind"] != "suspense"])
             for line in new_data[nb_kept_lines:]:
                 if not line.get("contract_id"):
                     line["contract_id"] = [contract.id, contract.display_name]
+                ambassador = contract.ambassador_id
+                if ambassador and not line.get("user_id"):
+                    line["user_id"] = [ambassador.id, ambassador.display_name]
         return new_data, reconcile_auxiliary_id
 
-    def _default_reconcile_data(self, from_unreconcile=False):
-        res = super()._default_reconcile_data(from_unreconcile=from_unreconcile)
-        if from_unreconcile or any(
-            line["kind"] not in ("liquidity", "suspense") for line in res["data"]
-        ):
-            return res
-        # No rule matched: prefill the gift button matching the QRR gift type
-        reconcile_model = self._get_gift_reconcile_model()
-        if not reconcile_model:
-            return res
-        data = [line for line in res["data"] if line["kind"] == "liquidity"]
-        return self._recompute_suspense_line(
-            *self._reconcile_data_by_model(
-                data, reconcile_model, res["reconcile_auxiliary_id"]
-            ),
-            self.manual_reference,
+    def _get_qr_reference(self):
+        """T3622 QR (BVR) reference of the line: 27 digits with a valid check
+        digit (see Code_ref_QR (BVR)). The bank puts it in the label, or in
+        the move ref when the donor wrote a message."""
+        for ref in (self.ref, self.payment_ref):
+            ref = (ref or "").strip()
+            if re.fullmatch(r"\d{27}", ref) and mod10r(ref[:-1]) == ref:
+                return ref
+        return ""
+
+    def _get_qr_type(self):
+        """T3622 Type of the QR reference (22nd digit)."""
+        ref = self._get_qr_reference()
+        if not ref:
+            return self.env["account.reconcile.qr.type"]
+        return self.env["account.reconcile.qr.type"].search(
+            [("code", "=", ref[21])], limit=1
         )
 
-    def _get_gift_reconcile_model(self):
-        model_obj = self.env["account.reconcile.model"]
+    def _get_qr_partner(self):
+        """T3622 Partner whose reference is in the QR reference (digits 10-16)."""
+        partner_ref = self._get_qr_reference()[9:16].lstrip("0")
+        if not partner_ref:
+            return self.env["res.partner"]
+        return self.env["res.partner"].search([("ref", "=", partner_ref)], limit=1)
+
+    def _get_qr_product(self):
+        """T3622 Product to book for the QR reference of the line: here the
+        gift of the sponsorship (types 1-5). Other types are added by the
+        country modules (e.g. funds).
+        :return: product.product, empty if none
+        """
+        product_obj = self.env["product.product"]
         if not self._get_contract_from_reference():
-            return model_obj
+            return product_obj
         gift_type = self.env["sponsorship.gift.type"].browse(
             int(self._get_gift_reference()[21])
         )
-        if not gift_type.exists() or not gift_type.product_id:
+        if not gift_type.exists():
+            return product_obj
+        return gift_type.product_id.product_variant_id
+
+    def _get_qr_reconcile_model(self):
+        """T3622 How to book the product of the QR reference: with the
+        write-off button of the product if there is one, otherwise with a
+        temporary model booking everything on the income account of the
+        product.
+        :return: account.reconcile.model (maybe a new record), empty if none
+        """
+        model_obj = self.env["account.reconcile.model"]
+        product = self._get_qr_product()
+        if not product:
             return model_obj
-        return model_obj.search(
+        reconcile_model = model_obj.search(
             [
                 ("rule_type", "=", "writeoff_button"),
                 ("company_id", "=", self.company_id.id),
-                ("line_ids.product_id.product_tmpl_id", "=", gift_type.product_id.id),
+                (
+                    "line_ids.product_id.product_tmpl_id",
+                    "=",
+                    product.product_tmpl_id.id,
+                ),
             ],
             limit=1,
+        )
+        if reconcile_model:
+            return reconcile_model
+        account = product.with_company(self.company_id).property_account_income_id
+        if not account:
+            return model_obj
+        partner = self._get_qr_partner()
+        analytic_distribution = self.env[
+            "account.analytic.distribution.model"
+        ]._get_distribution(
+            {
+                "product_id": product.id,
+                "product_categ_id": product.categ_id.id,
+                "partner_id": partner.id,
+                "partner_category_id": partner.category_id.ids,
+                "account_prefix": account.code,
+                "company_id": self.company_id.id,
+            }
+        )
+        return model_obj.new(
+            {
+                "name": product.name,
+                "rule_type": "writeoff_button",
+                "company_id": self.company_id.id,
+                "line_ids": [
+                    Command.create(
+                        {
+                            "account_id": account.id,
+                            "product_id": product.id,
+                            "label": product.name,
+                            "analytic_distribution": analytic_distribution,
+                        }
+                    )
+                ],
+            }
         )
 
     def _get_gift_reference(self):
@@ -190,16 +314,13 @@ class BankStatementLine(models.Model):
 
     def _check_line_changed(self, line):
         res = super()._check_line_changed(line)
-        product_id = line.get("product_id", (False,))
-        if isinstance(product_id, int):
-            product_id = (product_id,)
-        contract_id = line.get("contract_id", (False,))
-        if isinstance(contract_id, int):
-            contract_id = (contract_id,)
         return (
             res
-            or self.manual_product_id.id != product_id[0]
-            or self.manual_contract_id.id != contract_id[0]
+            or self.manual_product_id.id != self._get_line_id(line, "product_id")
+            or self.manual_contract_id.id != self._get_line_id(line, "contract_id")
+            or self.manual_ambassador_id.id != self._get_line_id(line, "user_id")
+            or (self.manual_gift_instructions or False)
+            != (line.get("gift_instructions") or False)
         )
 
     def _do_auto_reconcile(self, models):

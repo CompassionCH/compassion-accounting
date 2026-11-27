@@ -20,6 +20,23 @@
                     invisible="rule_type != 'invoice_matching'"
                 />
             </field>
+            <field name="match_same_currency" position="after">
+                <field
+                    name="match_exact_reference"
+                    invisible="rule_type != 'invoice_matching'"
+                />
+                <field
+                    name="exact_amount_only"
+                    invisible="rule_type != 'invoice_matching'"
+                />
+            </field>
+            <field name="match_partner_category_ids" position="after">
+                <field
+                    name="qr_type_ids"
+                    widget="many2many_checkboxes"
+                    invisible="rule_type != 'writeoff_suggestion'"
+                />
+            </field>
             <xpath expr="//page[@id='partner_tab']" position="before">
                 <page
                     name="partner_matching_tab"

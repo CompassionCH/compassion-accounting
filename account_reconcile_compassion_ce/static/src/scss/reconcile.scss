@@ -1,0 +1,8 @@
+// The lines of the reconcile table open the manual operation when clicked
+.o_account_reconcile_oca .o_reconcile_widget_table .o_reconcile_widget_line {
+    cursor: pointer;
+
+    &:not(.selected):hover {
+        background-color: rgba($o-brand-primary, 0.08);
+    }
+}

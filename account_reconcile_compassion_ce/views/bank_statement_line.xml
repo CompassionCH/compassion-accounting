@@ -8,15 +8,74 @@
                 <field name="manual_partner_id" position="move" />
                 <field name="manual_product_id"
                        string="Product"
-                       modifiers="{'readonly': ['|', '|', '|', ('manual_exchange_counterpart', '=', True),('manual_reference', '=', False), ('is_reconciled', '=', True), ('manual_line_id', '!=', False)]}"
+                       readonly="manual_exchange_counterpart or not manual_reference or is_reconciled or manual_line_id"
                 />
             </field>
             <field name="manual_account_id" position="after">
                 <field name="manual_contract_id"
                        string="Contract"
-                       modifiers="{'readonly': ['|', '|', '|', ('manual_exchange_counterpart', '=', True),('manual_reference', '=', False), ('is_reconciled', '=', True), ('manual_line_id', '!=', False)]}"
+                       readonly="manual_exchange_counterpart or not manual_reference or is_reconciled or manual_line_id"
                        domain="[('state','!=','draft'),'|', ('partner_id', '=', manual_partner_id),('correspondent_id', '=', manual_partner_id)]"
                 />
+                <field name="manual_ambassador_id"
+                       string="Ambassador"
+                       readonly="manual_exchange_counterpart or not manual_reference or is_reconciled or manual_line_id"
+                />
+                <field name="manual_is_gift" invisible="1" />
+                <field name="manual_gift_instructions"
+                       string="Gift message"
+                       invisible="not manual_is_gift"
+                       readonly="manual_exchange_counterpart or not manual_reference or is_reconciled or manual_line_id"
+                />
+            </field>
+            <field name="manual_name" position="after">
+                <field name="avoid_thankyou_letter"
+                       string="No thank-you letter"
+                       readonly="is_reconciled"
+                />
+            </field>
+        </field>
+    </record>
+
+    <!-- T3677 Show the open items of the company and all its contacts -->
+    <record id="bank_statement_line_form_reconcile_company_contacts" model="ir.ui.view">
+        <field name="name">account.bank.statement.line.reconcile.company.contacts</field>
+        <field name="model">account.bank.statement.line</field>
+        <field name="inherit_id" ref="account_reconcile_oca.bank_statement_line_form_reconcile_view" />
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="reconcile_commercial_partner_id" invisible="1" />
+            </field>
+            <field name="add_account_move_line_id" position="attributes">
+                <attribute name="context">{'search_default_partner_id': reconcile_commercial_partner_id, 'list_view_ref': 'account_reconcile_oca.account_move_line_tree_reconcile_view', 'search_view_ref': 'account_reconcile_oca.account_move_line_search_reconcile_view'}</attribute>
+            </field>
+        </field>
+    </record>
+
+    <!-- T3677 Show the bank reference (e.g. QR reference) under the payer's message -->
+    <record id="bank_statement_line_reconcile_view_reference" model="ir.ui.view">
+        <field name="name">account.bank.statement.line.reconcile.reference</field>
+        <field name="model">account.bank.statement.line</field>
+        <field name="inherit_id" ref="account_reconcile_oca.bank_statement_line_reconcile_view" />
+        <field name="arch" type="xml">
+            <xpath expr="//t[@t-name='card']//field[@name='payment_ref']" position="after">
+                <div
+                    t-if="record.ref.raw_value and record.ref.raw_value != record.payment_ref.raw_value"
+                    class="text-muted small text-break"
+                >
+                    <field name="ref" />
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="account_move_line_search_reconcile_company_contacts" model="ir.ui.view">
+        <field name="name">account.move.line.search.reconcile.company.contacts</field>
+        <field name="model">account.move.line</field>
+        <field name="inherit_id" ref="account_reconcile_oca.account_move_line_search_reconcile_view" />
+        <field name="arch" type="xml">
+            <field name="partner_id" position="attributes">
+                <attribute name="operator">child_of</attribute>
             </field>
         </field>
     </record>
