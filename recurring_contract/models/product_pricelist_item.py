@@ -13,7 +13,9 @@ class ProductPricelistItem(models.Model):
                     ("contract_id.state", "not in", ["cancelled", "terminated"]),
                 ]
             )
-            for cl in contract_lines:
+            # Lines whose amount is their own (amount_from_pricelist unset)
+            # keep it.
+            for cl in contract_lines.filtered("amount_from_pricelist"):
                 price = cl.contract_id.pricelist_id._get_product_price(
                     cl.product_id, cl.quantity
                 )
