@@ -83,17 +83,13 @@ class AccountPayment(models.Model):
         ).filtered(lambda line: not line.reconciled)
 
     def _payment_order_todo(self):
-        """The payments still to post, or posted but not reconciled (e.g. by
-        a manual post or a job that failed after posting)."""
+        """The payments still to post, or posted with lines left to reconcile
+        together. An invoice paid another way leaves only the payment line:
+        nothing to do, so it doesn't block the upload."""
         return self.filtered(
             lambda p: p.state == "draft"
             or (
-                p.state != "canceled"
-                and not all(
-                    p.move_id.line_ids.filtered(
-                        lambda x, p=p: x.account_id == p.destination_account_id
-                    ).mapped("reconciled")
-                )
+                p.state != "canceled" and len(p._payment_order_lines_to_reconcile()) > 1
             )
         )
 
